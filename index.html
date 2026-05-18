@@ -1282,6 +1282,82 @@
   .my-shift-val.red { color:var(--accent-red); }
   .my-shift-val.blue { color:var(--accent-blue); }
 
+  /* ═══════════════════════════════════════════════════
+     MOBILE RESPONSIVE — max-width 768px
+     PC view is completely unaffected by these styles
+  ═══════════════════════════════════════════════════ */
+  @media (max-width: 768px) {
+
+    /* ── TOPBAR ── */
+    .topbar { padding: 0 1rem; height: 54px; }
+    .topbar-brand { font-size: 1.2rem; }
+    .topbar-right { gap: .6rem; }
+    .agent-badge { padding: .28rem .6rem .28rem .28rem; gap: .4rem; }
+    .agent-name { display: none; }
+    .logout-btn { padding: .32rem .7rem; font-size: .75rem; }
+    .dark-toggle { font-size: .95rem; padding: .3rem; }
+    .work-clock-wrap { gap: .4rem; }
+    .work-clock-time { font-size: .72rem; }
+    .wclock-btn { padding: .3rem .65rem; font-size: .72rem; }
+
+    /* ── LAYOUT ── */
+    .dash-body { flex-direction: column; min-height: calc(100vh - 54px); }
+    .sidebar { display: none; }
+    .main-content { padding: 1rem 1rem 7rem 1rem; }
+
+    /* ── BOTTOM NAV ── */
+    .mobile-bottom-nav { display: flex !important; }
+    .mob-nav-more-panel.open { display: block; }
+
+    /* ── BREAK BAR ── */
+    .break-bar { left: 0; padding: .5rem .75rem; flex-direction: column; gap: .4rem; bottom: 56px; }
+    .break-bar-left { gap: .5rem; justify-content: center; flex-wrap: wrap; }
+    .break-bar-label { display: none; }
+    .break-btn { font-size: .7rem; padding: .32rem .65rem; }
+    .break-limit-badge { display: none; }
+    .break-timer { font-size: .72rem; min-width: 32px; }
+    .break-toast { left: 1rem; right: 1rem; transform: none; bottom: 130px; min-width: unset; max-width: unset; }
+
+    /* ── HOME ── */
+    .home-greeting h1 { font-size: 1.6rem; }
+    .home-greeting { margin-bottom: 1.5rem; }
+    .live-stats-row { grid-template-columns: repeat(2,1fr); gap: .75rem; margin-bottom: 1.25rem; }
+    .live-stat-card { padding: .9rem 1rem; }
+    .live-stat-val { font-size: 1.6rem; }
+    .live-stat-icon { width: 36px; height: 36px; }
+    .whos-active-panel { margin-top: 1rem; }
+    .hm-card { padding: .75rem .9rem; }
+    .attendance-badge { font-size: .65rem; padding: .25rem .6rem; }
+
+    /* ── REPORTS ── */
+    .reports-filters { flex-direction: column; gap: .5rem; }
+    .reports-filters select, .reports-filters input { width: 100%; box-sizing: border-box; }
+    .reports-table-wrap { overflow-x: auto; display: block; max-width: 100%; }
+
+    /* ── ROSTER ── */
+    .roster-controls { flex-direction: column; align-items: stretch; }
+    .roster-search { width: 100%; }
+
+    /* ── MODALS — slide up from bottom ── */
+    #stat-modal { max-width: 100% !important; margin: 0 !important; border-radius: var(--radius) var(--radius) 0 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; max-height: 75vh !important; }
+    #stat-modal-overlay { align-items: flex-end !important; }
+
+    /* ── FORMS ── */
+    .field-group input, .field-group select, .field-group textarea { width: 100%; box-sizing: border-box; }
+    .login-card { padding: 2rem 1.25rem; margin: 1rem; }
+  }
+
+  /* Hide bottom nav on desktop — shown only via media query above */
+  .mobile-bottom-nav { display: none; }
+  .mob-nav-more-panel { display: none; position: fixed; bottom: 56px; left: 0; right: 0; background: var(--navy-card); border-top: 1px solid var(--navy-border); z-index: 299; padding: .75rem .5rem; max-height: 60vh; overflow-y: auto; animation: slideUp .2s ease; }
+  .mob-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; color: var(--text-dim); font-size: .58rem; font-weight: 500; transition: color .2s; padding: .3rem .2rem; border: none; background: none; font-family: 'DM Sans',sans-serif; -webkit-tap-highlight-color: transparent; }
+  .mob-nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .mob-nav-item.active { color: var(--gold-light); }
+  .mob-nav-more-item { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border-radius: var(--radius-sm); cursor: pointer; color: var(--text-muted); font-size: .875rem; -webkit-tap-highlight-color: transparent; }
+  .mob-nav-more-item:active { background: var(--navy-hover); color: var(--text-primary); }
+  .mob-nav-more-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: .7; }
+  .mob-nav-section-label { font-size: .6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim); padding: .5rem 1rem .25rem; font-weight: 600; }
+
 </style>
 </head>
 <body>
@@ -4166,6 +4242,50 @@ async function checkWorkClockOnLoad(){
   }
 }
 
+// ===================================================
+//  MOBILE BOTTOM NAV
+// ===================================================
+function mobNav(page, btn){
+  // Close more panel
+  closeMobMore();
+  // Navigate to page
+  showPage(page, null);
+  // Update active state on bottom nav buttons
+  document.querySelectorAll('.mob-nav-item').forEach(function(b){ b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  else {
+    // Try to match by page
+    var map = { home:'mob-nav-home', roster:'mob-nav-roster', quiz:'mob-nav-quiz', reports:'mob-nav-reports' };
+    if(map[page]){ var el = document.getElementById(map[page]); if(el) el.classList.add('active'); }
+  }
+}
+
+function toggleMobMore(btn){
+  var panel = document.getElementById('mob-more-panel');
+  var isOpen = panel.classList.contains('open');
+  if(isOpen){ closeMobMore(); }
+  else { panel.classList.add('open'); btn.classList.add('active'); }
+}
+
+function closeMobMore(){
+  var panel = document.getElementById('mob-more-panel');
+  if(panel) panel.classList.remove('open');
+  var moreBtn = document.getElementById('mob-nav-more');
+  if(moreBtn) moreBtn.classList.remove('active');
+}
+
+// Close more panel when tapping outside
+document.addEventListener('click', function(e){
+  var panel = document.getElementById('mob-more-panel');
+  var moreBtn = document.getElementById('mob-nav-more');
+  if(panel && panel.classList.contains('open')){
+    if(!panel.contains(e.target) && e.target !== moreBtn && !moreBtn.contains(e.target)){
+      closeMobMore();
+    }
+  }
+});
+
+
 </script>
 
 
@@ -4192,6 +4312,65 @@ async function checkWorkClockOnLoad(){
     </div>
     <div style="display:flex;align-items:center;gap:1rem;">
       <span id="login-clock" style="font-size:0.72rem;color:rgba(255,255,255,0.35);"></span>
+    </div>
+  </div>
+
+
+  <!-- MOBILE BOTTOM NAV — hidden on desktop via CSS -->
+  <nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="position:fixed;bottom:0;left:0;right:0;background:rgba(19,23,49,0.98);backdrop-filter:blur(12px);border-top:1px solid var(--navy-border);z-index:300;height:56px;">
+    <button class="mob-nav-item active" id="mob-nav-home" onclick="mobNav('home',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+      Home
+    </button>
+    <button class="mob-nav-item" id="mob-nav-roster" onclick="mobNav('roster',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Roster
+    </button>
+    <button class="mob-nav-item" id="mob-nav-quiz" onclick="mobNav('quiz',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4"/></svg>
+      Quiz
+    </button>
+    <button class="mob-nav-item" id="mob-nav-reports" onclick="mobNav('reports',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M14 3v6h6M8 17v-4M12 17v-7M16 17v-2"/></svg>
+      Reports
+    </button>
+    <button class="mob-nav-item" id="mob-nav-more" onclick="toggleMobMore(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      More
+    </button>
+  </nav>
+
+  <!-- MOBILE MORE PANEL -->
+  <div class="mob-nav-more-panel" id="mob-more-panel">
+    <div class="mob-nav-section-label">Pages</div>
+    <div class="mob-nav-more-item" onclick="mobNav('kb',null);closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      Knowledge Base
+    </div>
+    <div class="mob-nav-more-item" onclick="mobNav('assessment',null);closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Assessment
+    </div>
+    <div class="mob-nav-more-item" onclick="mobNav('moments',null);closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Moments
+    </div>
+    <div class="mob-nav-more-item" onclick="mobNav('announcements',null);closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Announcements
+    </div>
+    <div class="mob-nav-more-item" onclick="mobNav('changepass',null);closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Change Password
+    </div>
+    <div class="mob-nav-section-label admin-only">Admin</div>
+    <div class="mob-nav-more-item admin-only" onclick="mobNav('users',null);closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+      Manage Users
+    </div>
+    <div class="mob-nav-more-item admin-only" onclick="mobNav('quiz-admin',null);closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      Quiz Builder
     </div>
   </div>
 
