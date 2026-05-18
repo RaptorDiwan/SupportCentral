@@ -2420,8 +2420,23 @@ async function toggleBreak(type){
     var startTime = new Date().toISOString();
     _breakState[type] = { active: true, start: startTime, done: false };
 
-    // Persist to localStorage so restore works on same device/tab
+    // Persist to localStorage (fast cache for same device)
     try { localStorage.setItem('tc_break_'+currentUser.id+'_'+type, JSON.stringify({ start: startTime, date: todayStr() })); } catch(e){}
+
+    // Insert open row to Supabase immediately — this is what restoreBreakState reads on refresh/new device
+    try {
+      await sbInsert('breaks', {
+        user_id: currentUser.id,
+        user_name: currentUser.name,
+        date: todayStr(),
+        break_type: type,
+        start_time: startTime,
+        end_time: null,
+        duration_seconds: null,
+        over_limit: false,
+        over_by_seconds: 0
+      });
+    } catch(e){ console.warn('Break start insert failed:', e.message); }
 
     btn.classList.add('active');
     btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
