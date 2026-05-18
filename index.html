@@ -2380,7 +2380,7 @@ function fmtTime(iso){ if(!iso)return'--'; var d=new Date(iso); var h=d.getHours
 function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
 
 // Show toast notification
-function showBreakToast(type, overBy){
+function showBreakToast(type, overBy, elapsed){
   var existing = document.getElementById('break-toast');
   if(existing) existing.remove();
   var toast = document.createElement('div');
@@ -2391,10 +2391,10 @@ function showBreakToast(type, overBy){
   if(isOver){
     var mins = Math.floor(overBy/60), secs = overBy%60;
     title = BREAK_LABELS[type] + ' exceeded by ' + (mins>0?mins+'m ':'') + secs+'s';
-    sub = 'Please make sure to be back on time next time.';
+    sub = 'You took ' + fmtSec(elapsed) + ' of ' + BREAK_LIMITS[type] + ' mins allowed.';
   } else {
     title = BREAK_LABELS[type] + ' ended — welcome back!';
-    sub = 'You took ' + fmtSec(BREAK_LIMITS[type]*60 - overBy) + ' of ' + BREAK_LIMITS[type] + ' mins.';
+    sub = 'You took ' + fmtSec(elapsed) + ' of ' + BREAK_LIMITS[type] + ' mins allowed.';
   }
   toast.innerHTML = '<span class="break-toast-icon">'+(isOver?'⚠️':'✅')+'</span><div class="break-toast-text"><div class="break-toast-title">'+title+'</div><div class="break-toast-sub">'+sub+'</div></div>';
   document.body.appendChild(toast);
@@ -2425,18 +2425,17 @@ async function toggleBreak(type){
 
     // Insert open row to Supabase immediately — this is what restoreBreakState reads on refresh/new device
     try {
-      await sbInsert('breaks', {
+      var insertResult = await sbInsert('breaks', {
         user_id: currentUser.id,
         user_name: currentUser.name,
         date: todayStr(),
         break_type: type,
         start_time: startTime,
-        end_time: null,
-        duration_seconds: null,
         over_limit: false,
         over_by_seconds: 0
       });
-    } catch(e){ console.warn('Break start insert failed:', e.message); }
+      console.log('[Break] Supabase insert on start OK:', type, insertResult);
+    } catch(e){ console.error('[Break] Supabase insert on start FAILED:', type, e.message); }
 
     btn.classList.add('active');
     btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
@@ -2498,7 +2497,7 @@ async function toggleBreak(type){
       }
     } catch(e){ console.warn('Break save failed:', e.message); }
 
-    showBreakToast(type, overBy);
+    showBreakToast(type, overBy, elapsed);
   }
 }
 
@@ -2561,6 +2560,8 @@ async function restoreBreakState(){
     var rows = await sbQuery('breaks',
       'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,break_type,start_time,end_time');
 
+    console.log('[restoreBreakState] Supabase rows returned:', JSON.stringify(rows));
+
     BREAK_TYPES.forEach(function(type){
       var btn = document.getElementById('bb-'+type);
       var timerEl = document.getElementById('bt-'+type);
@@ -2576,6 +2577,7 @@ async function restoreBreakState(){
 
       if(openRow){
         // Active break — restore timer from real start time
+        console.log('[restoreBreakState] Restoring active break:', type, 'start:', openRow.start_time);
         var startTime = openRow.start_time;
         _breakState[type] = { active: true, start: startTime, done: false };
 
