@@ -2418,17 +2418,20 @@ async function toggleBreak(type){
     }
     // Start break
     var startTime = new Date().toISOString();
-    _breakState[type] = { active: true, start: startTime, elapsed: 0, done: false };
+    _breakState[type] = { active: true, start: startTime, done: false };
+
+    // Persist to localStorage so restore works on same device/tab
+    try { localStorage.setItem('tc_break_'+currentUser.id+'_'+type, JSON.stringify({ start: startTime, date: todayStr() })); } catch(e){}
+
     btn.classList.add('active');
     btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
     timerEl.style.display = 'inline';
     timerEl.textContent = '00:00';
 
-    // Tick timer
+    // Tick timer — always calculate elapsed from real start time so it is accurate after refresh
     _breakState[type].interval = setInterval(function(){
       if(!_breakState[type] || !_breakState[type].active) return;
-      _breakState[type].elapsed++;
-      var elapsed = _breakState[type].elapsed;
+      var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
       var limit = BREAK_LIMITS[type] * 60;
       timerEl.textContent = fmtSec(elapsed);
       if(elapsed > limit){
@@ -2438,32 +2441,46 @@ async function toggleBreak(type){
     }, 1000);
 
   } else {
-    // End break
+    // End break — calculate total elapsed from real start time (accurate across refresh/device)
     clearInterval(_breakState[type].interval);
-    var elapsed = _breakState[type].elapsed;
+    var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
     var limit = BREAK_LIMITS[type] * 60;
     var overBy = Math.max(0, elapsed - limit);
     _breakState[type].active = false;
     _breakState[type].done = true;
+
+    // Remove from localStorage — break is done
+    try { localStorage.removeItem('tc_break_'+currentUser.id+'_'+type); } catch(e){}
+
     btn.classList.remove('active','over');
     btn.classList.add('done');
     btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' ✓';
     timerEl.classList.remove('warning');
     timerEl.style.display = 'none';
 
-    // Save to Supabase
+    // Save to Supabase — update the existing open row if found, otherwise insert
     try {
-      await sbInsert('breaks', {
-        user_id: currentUser.id,
-        user_name: currentUser.name,
-        date: todayStr(),
-        break_type: type,
-        start_time: _breakState[type].start,
-        end_time: new Date().toISOString(),
-        duration_seconds: elapsed,
-        over_limit: overBy > 0,
-        over_by_seconds: overBy
-      });
+      var openRow = await sbQuery('breaks', 'user_id=eq.'+currentUser.id+'&date=eq.'+todayStr()+'&break_type=eq.'+type+'&end_time=is.null&select=id');
+      if(openRow && openRow.length){
+        await sbUpdate('breaks', 'id', openRow[0].id, {
+          end_time: new Date().toISOString(),
+          duration_seconds: elapsed,
+          over_limit: overBy > 0,
+          over_by_seconds: overBy
+        });
+      } else {
+        await sbInsert('breaks', {
+          user_id: currentUser.id,
+          user_name: currentUser.name,
+          date: todayStr(),
+          break_type: type,
+          start_time: _breakState[type].start,
+          end_time: new Date().toISOString(),
+          duration_seconds: elapsed,
+          over_limit: overBy > 0,
+          over_by_seconds: overBy
+        });
+      }
     } catch(e){ console.warn('Break save failed:', e.message); }
 
     showBreakToast(type, overBy);
@@ -2512,8 +2529,105 @@ function showAttendanceBadge(loginTime){
   if(bar) bar.style.display='flex';
   // Start clock
   startLoginClock(loginTime);
-  // Reset break state for new day
+  // Restore any active breaks (instead of resetting — handles refresh/new tab/new device)
+  restoreBreakState();
+}
+
+// ===================================================
+//  BREAK STATE RESTORE (Supabase-first, localStorage fallback)
+// ===================================================
+async function restoreBreakState(){
   _breakState = {};
+  var today = todayStr();
+  var BREAK_TYPES = ['breakfast','lunch','beverage','shortbreak'];
+
+  try {
+    // Query ALL of today's break rows for this user in one call
+    var rows = await sbQuery('breaks',
+      'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,break_type,start_time,end_time');
+
+    BREAK_TYPES.forEach(function(type){
+      var btn = document.getElementById('bb-'+type);
+      var timerEl = document.getElementById('bt-'+type);
+      if(!btn || !timerEl) return;
+
+      // Find the row for this break type (prefer open row, then closed)
+      var openRow = null, closedRow = null;
+      if(rows) rows.forEach(function(r){
+        if(r.break_type !== type) return;
+        if(!r.end_time) openRow = r;
+        else closedRow = r;
+      });
+
+      if(openRow){
+        // Active break — restore timer from real start time
+        var startTime = openRow.start_time;
+        _breakState[type] = { active: true, start: startTime, done: false };
+
+        // Update localStorage too (for fast restore on same device)
+        try { localStorage.setItem('tc_break_'+currentUser.id+'_'+type, JSON.stringify({ start: startTime, date: today })); } catch(e){}
+
+        btn.classList.add('active');
+        btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
+        timerEl.style.display = 'inline';
+
+        // Show correct elapsed immediately
+        var elapsedNow = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
+        var limit = BREAK_LIMITS[type] * 60;
+        timerEl.textContent = fmtSec(elapsedNow);
+        if(elapsedNow > limit){ timerEl.classList.add('warning'); btn.classList.add('over'); }
+
+        // Start ticking
+        _breakState[type].interval = setInterval(function(){
+          if(!_breakState[type] || !_breakState[type].active) return;
+          var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
+          timerEl.textContent = fmtSec(elapsed);
+          if(elapsed > limit){ timerEl.classList.add('warning'); btn.classList.add('over'); }
+        }, 1000);
+
+      } else if(closedRow){
+        // Break already completed today — mark as done, disable button
+        _breakState[type] = { active: false, done: true, start: closedRow.start_time };
+        btn.classList.remove('active','over');
+        btn.classList.add('done');
+        btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' ✓';
+        timerEl.style.display = 'none';
+        // Clear any stale localStorage
+        try { localStorage.removeItem('tc_break_'+currentUser.id+'_'+type); } catch(e){}
+
+      } else {
+        // No break record today — idle, clear any stale localStorage
+        try { localStorage.removeItem('tc_break_'+currentUser.id+'_'+type); } catch(e){}
+      }
+    });
+
+  } catch(e){
+    // Supabase failed — fall back to localStorage for same-device restore
+    console.warn('restoreBreakState Supabase failed, using localStorage fallback:', e.message);
+    BREAK_TYPES.forEach(function(type){
+      var btn = document.getElementById('bb-'+type);
+      var timerEl = document.getElementById('bt-'+type);
+      if(!btn || !timerEl) return;
+      var stored = null;
+      try { stored = JSON.parse(localStorage.getItem('tc_break_'+currentUser.id+'_'+type)||'null'); } catch(e2){}
+      if(!stored || stored.date !== today) return; // stale or missing
+      var startTime = stored.start;
+      _breakState[type] = { active: true, start: startTime, done: false };
+      btn.classList.add('active');
+      btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
+      timerEl.style.display = 'inline';
+      var elapsedNow = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
+      var limit = BREAK_LIMITS[type] * 60;
+      timerEl.textContent = fmtSec(elapsedNow);
+      if(elapsedNow > limit){ timerEl.classList.add('warning'); btn.classList.add('over'); }
+      _breakState[type].interval = setInterval(function(){
+        if(!_breakState[type] || !_breakState[type].active) return;
+        var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
+        timerEl.textContent = fmtSec(elapsed);
+        if(elapsed > limit){ timerEl.classList.add('warning'); btn.classList.add('over'); }
+      }, 1000);
+    });
+  }
 }
 
 function startLoginClock(loginTime){
