@@ -2313,7 +2313,8 @@ async function doLogin(){
 }
 
 function doLogout(){
-  recordLogout();
+  // NOTE: recordLogout intentionally NOT called here.
+  // End Work is a separate action — logging out of the portal should not auto-close the work session.
   if(_loginClockInterval)clearInterval(_loginClockInterval);
   currentUser=null;clearSession();
   document.getElementById('dashboard-view').classList.remove('active');
@@ -2334,11 +2335,13 @@ function enterDashboard(){
     document.getElementById('agent-display').textContent='⬡ God Mode';
     document.getElementById('avatar-initials').textContent='SA';
     document.getElementById('greet-name').textContent='Superadmin';
-    var ww=document.querySelector('.work-clock-wrap');if(ww)ww.style.display='none';
+    var ww=document.getElementById('work-clock-wrap');if(ww)ww.style.display='none';
     updateAdminVisibility();setGreetingAndDate();
     setTimeout(function(){ showPage('godmode', document.getElementById('sidebar-godmode')); },100);
     return;
   }
+  // Restore work clock in case superadmin was logged in before
+  var wwn=document.getElementById('work-clock-wrap');if(wwn)wwn.style.display='';
   document.getElementById('agent-display').textContent=currentUser.name;
   const ini=currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('avatar-initials').textContent=ini;
