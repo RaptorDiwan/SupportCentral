@@ -3303,8 +3303,8 @@ async function gmLoadAttendance(){
     var html = rows.map(function(r){
       var lid = 'gm-att-login-'+r.id;
       var loid = 'gm-att-logout-'+r.id;
-      var loginVal = r.login_time ? new Date(r.login_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
-      var logoutVal = r.logout_time ? new Date(r.logout_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+      var loginVal = r.login_time ? gmUTCtoISTtime(r.login_time) : '';
+      var logoutVal = r.logout_time ? gmUTCtoISTtime(r.logout_time) : '';
       return '<div class="gm-row">' +
         '<div><label class="gm-label">'+esc(r.user_name)+'</label><span style="font-size:.72rem;color:var(--text-dim);">ID: '+esc(r.id.toString().slice(0,8))+'…</span></div>' +
         '<div><label class="gm-label">Login Time (HH:MM)</label><input type="time" id="'+lid+'" class="gm-input" value="'+loginVal+'"/></div>' +
@@ -3318,12 +3318,38 @@ async function gmLoadAttendance(){
   }
 }
 
+// Convert "YYYY-MM-DD" + "HH:MM" (IST) → UTC ISO string
+function gmISTtoUTC(date, timeHHMM){
+  // Parse as IST (UTC+5:30) by subtracting 5h30m = 19800 seconds
+  var d = new Date(date + 'T' + timeHHMM + ':00');
+  // d is treated as local time by the browser — but we want to treat the
+  // entered value as IST regardless of where the browser runs.
+  // So: build a UTC ms value = entered wall-clock - 5h30m
+  var istOffsetMs = 5.5 * 60 * 60 * 1000;
+  // Get the "naive" ms as if the date string were UTC
+  var naiveUTC = Date.UTC(
+    parseInt(date.slice(0,4)), parseInt(date.slice(5,7))-1, parseInt(date.slice(8,10)),
+    parseInt(timeHHMM.slice(0,2)), parseInt(timeHHMM.slice(3,5)), 0
+  );
+  return new Date(naiveUTC - istOffsetMs).toISOString();
+}
+
+// Convert UTC ISO string → "HH:MM" in IST for display in time input
+function gmUTCtoISTtime(isoStr){
+  if(!isoStr) return '';
+  var d = new Date(isoStr);
+  var istMs = d.getTime() + 5.5 * 60 * 60 * 1000;
+  var istDate = new Date(istMs);
+  var h = istDate.getUTCHours(), m = istDate.getUTCMinutes();
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
 async function gmSaveAttendance(rowId, date, loginElId, logoutElId){
   var loginVal = document.getElementById(loginElId).value;
   var logoutVal = document.getElementById(logoutElId).value;
   var updates = {};
-  if(loginVal)  updates.login_time  = date+'T'+loginVal+':00';
-  if(logoutVal) updates.logout_time = date+'T'+logoutVal+':00';
+  if(loginVal)  updates.login_time  = gmISTtoUTC(date, loginVal);
+  if(logoutVal) updates.logout_time = gmISTtoUTC(date, logoutVal);
   else          updates.logout_time = null;
   try {
     await sbUpdate('attendance','id',rowId,updates);
