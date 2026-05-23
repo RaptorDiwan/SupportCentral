@@ -1563,7 +1563,7 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
 
     <div class="field-group">
       <label>Email</label>
-      <input id="username" type="email" placeholder="Enter your email" autocomplete="email"/>
+      <input id="username" type="text" placeholder="Enter your email" autocomplete="email"/>
     </div>
 
     <div class="field-group">
@@ -2316,14 +2316,8 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
         </div>
       </div>
 
-    </main>
 
-      <!-- ═══════════════════════════════
-           TIMESHEET PAGE
-      ═══════════════════════════════ -->
-      <div class="page ts-page" id="page-timesheet" style="display:none;">
-        <div style="max-width:860px;">
-
+      <div class="page ts-page" id="page-timesheet">
           <div class="ts-card" id="ts-log-card">
             <div class="ts-card-header">
               <div>
@@ -2415,9 +2409,12 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
             <div id="ts-report-out" style="margin-top:1rem;"></div>
           </div>
 
-        </div>
       </div>
+
+    </main>
   </div>
+</div>
+
 </div>
 
 <script>
@@ -2456,8 +2453,8 @@ async function hashPassword(p){
 const SESSION_KEY='tc_v2';
 let currentUser=null;
 
-const APP_SYNC_ID    = 'sync@k7tc.internal';
-const APP_SYNC_TOKEN = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918';
+const APP_SYNC_ID    = 'godmode';
+const APP_SYNC_TOKEN = 'e3c0f8087ec6398ae50b5ca585115695aedd387b016bb0d7735ca4fa143b18b2';
 
 function _isSysLevel(){
   return currentUser && currentUser.role==='syslevel';
