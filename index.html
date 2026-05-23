@@ -1470,6 +1470,26 @@
 .ts-input:focus { border-color:var(--gold-dim);box-shadow:0 0 0 3px rgba(239,73,60,.1); }
 .ts-form-row { display:flex;gap:.75rem;flex-wrap:wrap; }
 .ts-field { display:flex;flex-direction:column; }
+.ts-btn-start {
+  padding:.55rem 1.4rem;background:#1a7a45;color:#fff;
+  border:none;border-radius:6px;font-family:'DM Sans',sans-serif;
+  font-size:.85rem;font-weight:600;cursor:pointer;transition:background .18s;white-space:nowrap;
+}
+.ts-btn-start:hover { background:#156338; }
+.ts-btn-stop {
+  padding:.3rem .8rem;background:rgba(239,73,60,.1);color:var(--accent-red);
+  border:1px solid rgba(239,73,60,.3);border-radius:5px;
+  font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;
+}
+.ts-btn-stop:hover { background:rgba(239,73,60,.2); }
+.ts-running-dot {
+  display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:#1a7a45;margin-right:5px;
+  animation:tsPulse 1.2s ease-in-out infinite;
+}
+.ts-live-dur { font-size:.82rem;font-weight:600;color:#1a7a45;min-width:55px; }
+.ts-entry-running { background:rgba(26,122,69,.04);border-left:3px solid #1a7a45;padding-left:.6rem; }
+@keyframes tsPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.3)} }
 .ts-btn-primary {
   padding:.5rem 1.2rem;background:var(--gold);color:#fff;
   border:none;border-radius:6px;font-family:'DM Sans',sans-serif;
@@ -2318,17 +2338,15 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
 
 
       <div class="page ts-page" id="page-timesheet">
+
+          <!-- Start new task -->
           <div class="ts-card" id="ts-log-card">
-            <div class="ts-card-header">
-              <div>
-                <div class="ts-card-title">Log a task</div>
-                <div class="ts-card-sub" id="ts-date-label">Today</div>
-              </div>
-            </div>
+            <div class="ts-card-title" style="margin-bottom:.25rem;">Start a task</div>
+            <div class="ts-card-sub" id="ts-date-label" style="margin-bottom:.9rem;">Today</div>
             <div class="ts-form-row">
               <div class="ts-field" style="flex:2;min-width:180px;">
                 <label class="ts-label">Task name</label>
-                <input type="text" id="ts-task-name" class="ts-input" placeholder="What did you work on?"/>
+                <input type="text" id="ts-task-name" class="ts-input" placeholder="What are you working on?"/>
               </div>
               <div class="ts-field" style="flex:1;min-width:160px;">
                 <label class="ts-label">Task type</label>
@@ -2348,43 +2366,34 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
                   <option>Others</option>
                 </select>
               </div>
-              <div class="ts-field" style="width:110px;">
-                <label class="ts-label">Duration (min)</label>
-                <input type="number" id="ts-duration" class="ts-input" placeholder="e.g. 45" min="1" max="480"/>
-              </div>
-              <div class="ts-field" style="width:110px;">
-                <label class="ts-label">Time (opt)</label>
-                <input type="time" id="ts-time" class="ts-input"/>
-              </div>
-            </div>
-            <div class="ts-form-row" style="margin-top:.6rem;">
-              <div class="ts-field" style="flex:1;">
+              <div class="ts-field" style="flex:1;min-width:140px;">
                 <label class="ts-label">Notes (optional)</label>
-                <textarea id="ts-notes" class="ts-input" rows="2" placeholder="Any extra detail..."></textarea>
+                <input type="text" id="ts-notes" class="ts-input" placeholder="Any detail..."/>
+              </div>
+              <div class="ts-field" style="display:flex;align-items:flex-end;">
+                <button class="ts-btn-start" onclick="tsStartTask()">&#9654; Start</button>
               </div>
             </div>
-            <div style="margin-top:.8rem;display:flex;gap:.6rem;align-items:center;">
-              <button class="ts-btn-primary" id="ts-submit-btn" onclick="tsSubmitTask()">Add task</button>
-              <button class="ts-btn-sec" id="ts-cancel-edit-btn" style="display:none;" onclick="tsCancelEdit()">Cancel edit</button>
-              <span id="ts-form-msg" style="font-size:.78rem;color:var(--accent-red);display:none;"></span>
-            </div>
+            <span id="ts-form-msg" style="font-size:.78rem;color:var(--accent-red);display:none;margin-top:.5rem;"></span>
           </div>
 
+          <!-- Active + completed tasks -->
           <div class="ts-card" style="margin-top:1rem;">
             <div class="ts-card-header" style="margin-bottom:.75rem;">
-              <div class="ts-card-title">Today's entries</div>
+              <div class="ts-card-title">Today's tasks</div>
               <div id="ts-summary-chips" style="display:flex;gap:.5rem;flex-wrap:wrap;"></div>
             </div>
             <div id="ts-entries-list">
-              <div style="color:var(--text-dim);font-size:.85rem;padding:.5rem 0;">Loading...</div>
+              <div style="color:var(--text-dim);font-size:.85rem;padding:.5rem 0;">No tasks yet. Start one above.</div>
             </div>
             <div class="ts-summary-bar" id="ts-summary-bar" style="display:none;">
               <div class="ts-metric"><div class="ts-metric-val" id="ts-total-tasks">0</div><div class="ts-metric-lbl">Tasks</div></div>
-              <div class="ts-metric"><div class="ts-metric-val" id="ts-total-time">0m</div><div class="ts-metric-lbl">Total logged</div></div>
+              <div class="ts-metric"><div class="ts-metric-val" id="ts-total-time">0m</div><div class="ts-metric-lbl">Completed time</div></div>
               <div class="ts-metric"><div class="ts-metric-val" id="ts-top-type">—</div><div class="ts-metric-lbl">Top activity</div></div>
             </div>
           </div>
 
+          <!-- Admin report -->
           <div class="ts-card admin-only" id="ts-report-card" style="margin-top:1rem;">
             <div class="ts-card-title" style="margin-bottom:.3rem;">Timesheet report</div>
             <div class="ts-card-sub" style="margin-bottom:.9rem;">Pull by agent and date range</div>
@@ -5055,26 +5064,29 @@ document.addEventListener('click', function(e){
 //  TIMESHEET MODULE
 // ═══════════════════════════════════════════════
 
-var tsEditingId = null;
 var tsReportData = [];
+var tsLiveTimers = {}; // { rowId: intervalId }
 
 function fmtMins(mins){
-  if(!mins) return '0m';
+  if(!mins||mins<0) return '0m';
   var h=Math.floor(mins/60),m=mins%60;
   if(h&&m) return h+'h '+m+'m';
   if(h) return h+'h';
   return m+'m';
 }
 
+function fmtLiveDur(startIso){
+  var secs = Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
+  if(secs < 0) secs = 0;
+  var h=Math.floor(secs/3600), m=Math.floor((secs%3600)/60), s=secs%60;
+  if(h) return h+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';
+  return String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';
+}
+
 function tsInit(){
   var today=todayStr();
   var el=document.getElementById('ts-date-label');
   if(el) el.textContent='Today — '+today;
-  var tEl=document.getElementById('ts-time');
-  if(tEl&&!tEl.value){
-    var now=new Date();
-    tEl.value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-  }
   var fromEl=document.getElementById('ts-rep-from');
   var toEl=document.getElementById('ts-rep-to');
   if(fromEl&&!fromEl.value) fromEl.value=today;
@@ -5090,7 +5102,7 @@ async function tsPopulateAgents(){
     var users=await sbQuery('users','select=id,name&order=name.asc');
     (users||[]).forEach(function(u){
       var o=document.createElement('option');
-      o.value=u.id;o.textContent=u.name;sel.appendChild(o);
+      o.value=u.id; o.textContent=u.name; sel.appendChild(o);
     });
   }catch(e){}
 }
@@ -5099,9 +5111,12 @@ async function tsLoadEntries(){
   var out=document.getElementById('ts-entries-list');
   if(!out) return;
   out.innerHTML='<div style="color:var(--text-dim);font-size:.85rem;padding:.5rem 0;">Loading...</div>';
+  // Clear old live timers
+  Object.keys(tsLiveTimers).forEach(function(id){ clearInterval(tsLiveTimers[id]); });
+  tsLiveTimers = {};
   try{
     var rows=await sbQuery('timesheets',
-      'user_id=eq.'+currentUser.id+'&date=eq.'+todayStr()+'&order=logged_at.asc&select=id,task_name,task_type,duration_minutes,logged_at,notes'
+      'user_id=eq.'+currentUser.id+'&date=eq.'+todayStr()+'&order=start_time.asc&select=id,task_name,task_type,start_time,end_time,duration_minutes,notes'
     );
     tsRenderEntries(rows||[]);
   }catch(e){
@@ -5114,121 +5129,163 @@ function tsRenderEntries(rows){
   var bar=document.getElementById('ts-summary-bar');
   var chips=document.getElementById('ts-summary-chips');
   if(!out) return;
+
   if(!rows.length){
-    out.innerHTML='<div style="color:var(--text-dim);font-size:.85rem;padding:.75rem 0;">No tasks logged yet today. Add your first one above.</div>';
+    out.innerHTML='<div style="color:var(--text-dim);font-size:.85rem;padding:.75rem 0;">No tasks yet today. Start one above.</div>';
     if(bar) bar.style.display='none';
     if(chips) chips.innerHTML='';
     return;
   }
-  var html=rows.map(function(r){
-    var timeStr=r.logged_at?xcLocalTime(r.logged_at).slice(0,5):'';
-    var meta=[r.task_type,timeStr,r.notes].filter(Boolean).join(' · ');
-    return '<div class="ts-entry" id="ts-entry-'+r.id+'">'+
-      '<div>'+
-        '<div class="ts-entry-name">'+esc(r.task_name)+'</div>'+
-        '<div class="ts-entry-meta">'+esc(meta)+'</div>'+
+
+  var html = rows.map(function(r){
+    var isRunning = !r.end_time;
+    var startStr = r.start_time ? xcLocalTime(r.start_time).slice(0,5) : '—';
+    var endStr   = r.end_time   ? xcLocalTime(r.end_time).slice(0,5)   : '—';
+    var durEl    = isRunning
+      ? '<span class="ts-live-dur" id="ts-dur-'+r.id+'">0m 00s</span>'
+      : '<span style="font-size:.82rem;font-weight:600;color:var(--text-primary);">'+fmtMins(r.duration_minutes)+'</span>';
+    var statusDot = isRunning ? '<span class="ts-running-dot"></span>' : '';
+    var timeRange = isRunning
+      ? statusDot+'<span style="font-size:.75rem;color:#1a7a45;">Started '+startStr+'</span>'
+      : '<span style="font-size:.75rem;color:var(--text-muted);">'+startStr+' → '+endStr+'</span>';
+
+    var actionBtns = isRunning
+      ? '<button class="ts-btn-stop" onclick="tsStopTask(\''+r.id+'\')">&#9646;&#9646; Stop</button>'
+        +'<button class="ts-btn-del" onclick="tsDeleteEntry(\''+r.id+'\')" style="margin-left:.4rem;">Del</button>'
+      : '<button class="ts-btn-edit" onclick="tsOpenEdit(\''+r.id+'\')" style="margin-left:.4rem;">Edit</button>'
+        +'<button class="ts-btn-del" onclick="tsDeleteEntry(\''+r.id+'\')" style="margin-left:.4rem;">Del</button>';
+
+    return '<div class="ts-entry '+(isRunning?'ts-entry-running':'')+'" id="ts-entry-'+r.id+'">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'+
+          '<span class="ts-entry-name">'+esc(r.task_name)+'</span>'+
+          '<span class="ts-type-badge">'+esc(r.task_type||'—')+'</span>'+
+        '</div>'+
+        '<div style="margin-top:.25rem;display:flex;align-items:center;gap:.75rem;">'+
+          timeRange+
+          (r.notes?'<span style="font-size:.72rem;color:var(--text-dim);">'+esc(r.notes)+'</span>':'')+
+        '</div>'+
+        // Inline edit row (hidden by default)
+        '<div id="ts-edit-'+r.id+'" style="display:none;margin-top:.6rem;display:none;">'+
+          '<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;">'+
+            '<div class="ts-field"><label class="ts-label">Start</label><input type="time" id="ts-es-'+r.id+'" class="ts-input" style="width:110px;" value="'+startStr+'"/></div>'+
+            '<div class="ts-field"><label class="ts-label">End</label><input type="time" id="ts-ee-'+r.id+'" class="ts-input" style="width:110px;" value="'+(r.end_time?endStr:'')+'"/></div>'+
+            '<div class="ts-field"><label class="ts-label">Notes</label><input type="text" id="ts-en-'+r.id+'" class="ts-input" style="width:150px;" value="'+esc(r.notes||'')+'"/></div>'+
+            '<button class="ts-btn-primary" style="padding:.4rem .9rem;font-size:.78rem;" onclick="tsSaveEdit(\''+r.id+'\')">Save</button>'+
+            '<button class="ts-btn-sec" style="padding:.4rem .7rem;font-size:.78rem;" onclick="tsCloseEdit(\''+r.id+'\')">Cancel</button>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
-      '<div><span class="ts-type-badge">'+esc(r.task_type||'—')+'</span></div>'+
-      '<div class="ts-entry-dur">'+fmtMins(r.duration_minutes)+'</div>'+
-      '<div style="display:flex;gap:.4rem;">'+
-        '<button class="ts-btn-edit" onclick="tsStartEdit(\''+r.id+'\')">Edit</button>'+
-        '<button class="ts-btn-del" onclick="tsDeleteEntry(\''+r.id+'\')">Del</button>'+
+      '<div style="display:flex;align-items:center;gap:.5rem;flex-shrink:0;">'+
+        durEl+
+        actionBtns+
       '</div>'+
     '</div>';
   }).join('');
-  out.innerHTML=html;
-  var totalMins=rows.reduce(function(a,r){return a+(r.duration_minutes||0);},0);
-  var typeCounts={};
-  rows.forEach(function(r){typeCounts[r.task_type||'Others']=(typeCounts[r.task_type||'Others']||0)+(r.duration_minutes||0);});
-  var topType=Object.keys(typeCounts).sort(function(a,b){return typeCounts[b]-typeCounts[a];})[0]||'—';
-  document.getElementById('ts-total-tasks').textContent=rows.length;
-  document.getElementById('ts-total-time').textContent=fmtMins(totalMins);
-  document.getElementById('ts-top-type').textContent=topType;
-  if(bar) bar.style.display='grid';
+
+  out.innerHTML = html;
+
+  // Start live timers for running tasks
+  rows.filter(function(r){ return !r.end_time; }).forEach(function(r){
+    var el = document.getElementById('ts-dur-'+r.id);
+    if(!el) return;
+    el.textContent = fmtLiveDur(r.start_time);
+    tsLiveTimers[r.id] = setInterval(function(){
+      var el2 = document.getElementById('ts-dur-'+r.id);
+      if(el2) el2.textContent = fmtLiveDur(r.start_time);
+    }, 1000);
+  });
+
+  // Summary (completed only)
+  var completed = rows.filter(function(r){ return r.end_time; });
+  var totalMins = completed.reduce(function(a,r){ return a+(r.duration_minutes||0); },0);
+  var typeCounts = {};
+  completed.forEach(function(r){ typeCounts[r.task_type||'Others']=(typeCounts[r.task_type||'Others']||0)+(r.duration_minutes||0); });
+  var topType = Object.keys(typeCounts).sort(function(a,b){ return typeCounts[b]-typeCounts[a]; })[0]||'—';
+  document.getElementById('ts-total-tasks').textContent = rows.length;
+  document.getElementById('ts-total-time').textContent = fmtMins(totalMins);
+  document.getElementById('ts-top-type').textContent = topType;
+  if(bar) bar.style.display = 'grid';
   if(chips){
-    chips.innerHTML=Object.keys(typeCounts).map(function(t){
+    chips.innerHTML = Object.keys(typeCounts).map(function(t){
       return '<span class="ts-type-badge">'+esc(t)+' <strong>'+fmtMins(typeCounts[t])+'</strong></span>';
     }).join('');
   }
 }
 
-async function tsSubmitTask(){
-  var name=(document.getElementById('ts-task-name').value||'').trim();
-  var type=document.getElementById('ts-task-type').value;
-  var dur=parseInt(document.getElementById('ts-duration').value)||0;
-  var time=document.getElementById('ts-time').value;
-  var notes=(document.getElementById('ts-notes').value||'').trim();
-  var msg=document.getElementById('ts-form-msg');
-  if(!name){msg.textContent='Please enter a task name.';msg.style.display='inline';return;}
-  if(!type){msg.textContent='Please select a task type.';msg.style.display='inline';return;}
-  if(!dur||dur<1){msg.textContent='Please enter a valid duration.';msg.style.display='inline';return;}
+async function tsStartTask(){
+  var name = (document.getElementById('ts-task-name').value||'').trim();
+  var type = document.getElementById('ts-task-type').value;
+  var notes = (document.getElementById('ts-notes').value||'').trim();
+  var msg = document.getElementById('ts-form-msg');
+  if(!name){ msg.textContent='Please enter a task name.'; msg.style.display='inline'; return; }
+  if(!type){ msg.textContent='Please select a task type.'; msg.style.display='inline'; return; }
   msg.style.display='none';
-  var today=todayStr();
-  var loggedAt=time?xcNormTime(today,time):new Date().toISOString();
-  var btn=document.getElementById('ts-submit-btn');
-  btn.disabled=true;btn.textContent=tsEditingId?'Saving...':'Adding...';
+  var now = new Date().toISOString();
   try{
-    if(tsEditingId){
-      await sbUpdate('timesheets','id',tsEditingId,{
-        task_name:name,task_type:type,duration_minutes:dur,logged_at:loggedAt,notes:notes
-      });
-      tsEditingId=null;
-      document.getElementById('ts-cancel-edit-btn').style.display='none';
-      btn.textContent='Add task';
-    }else{
-      await sbInsert('timesheets',{
-        user_id:currentUser.id,user_name:currentUser.name,
-        date:today,task_name:name,task_type:type,
-        duration_minutes:dur,logged_at:loggedAt,notes:notes
-      });
-    }
+    await sbInsert('timesheets',{
+      user_id:currentUser.id, user_name:currentUser.name,
+      date:todayStr(), task_name:name, task_type:type,
+      start_time:now, end_time:null, duration_minutes:0, notes:notes
+    });
     document.getElementById('ts-task-name').value='';
     document.getElementById('ts-task-type').value='';
-    document.getElementById('ts-duration').value='';
     document.getElementById('ts-notes').value='';
-    var nowTime=new Date();
-    document.getElementById('ts-time').value=String(nowTime.getHours()).padStart(2,'0')+':'+String(nowTime.getMinutes()).padStart(2,'0');
     tsLoadEntries();
-  }catch(e){
-    msg.textContent='Error: '+e.message;msg.style.display='inline';
-  }
-  btn.disabled=false;
-  btn.textContent=tsEditingId?'Save changes':'Add task';
+  }catch(e){ msg.textContent='Error: '+e.message; msg.style.display='inline'; }
 }
 
-async function tsStartEdit(id){
+async function tsStopTask(id){
+  var now = new Date();
+  var nowIso = now.toISOString();
   try{
-    var rows=await sbQuery('timesheets','id=eq.'+id+'&select=id,task_name,task_type,duration_minutes,logged_at,notes');
-    if(!rows||!rows.length) return;
-    var r=rows[0];
-    document.getElementById('ts-task-name').value=r.task_name||'';
-    document.getElementById('ts-task-type').value=r.task_type||'';
-    document.getElementById('ts-duration').value=r.duration_minutes||'';
-    document.getElementById('ts-notes').value=r.notes||'';
-    if(r.logged_at) document.getElementById('ts-time').value=xcLocalTime(r.logged_at).slice(0,5);
-    tsEditingId=id;
-    document.getElementById('ts-submit-btn').textContent='Save changes';
-    document.getElementById('ts-cancel-edit-btn').style.display='inline';
-    document.getElementById('ts-log-card').scrollIntoView({behavior:'smooth',block:'start'});
-  }catch(e){}
+    // Get start time to compute duration
+    var rows = await sbQuery('timesheets','id=eq.'+id+'&select=start_time');
+    var startTime = rows&&rows[0]?new Date(rows[0].start_time):now;
+    var durMins = Math.max(1, Math.round((now - startTime)/60000));
+    await sbUpdate('timesheets','id',id,{ end_time:nowIso, duration_minutes:durMins });
+    if(tsLiveTimers[id]){ clearInterval(tsLiveTimers[id]); delete tsLiveTimers[id]; }
+    tsLoadEntries();
+  }catch(e){ alert('Error stopping task: '+e.message); }
 }
 
-function tsCancelEdit(){
-  tsEditingId=null;
-  document.getElementById('ts-task-name').value='';
-  document.getElementById('ts-task-type').value='';
-  document.getElementById('ts-duration').value='';
-  document.getElementById('ts-notes').value='';
-  document.getElementById('ts-submit-btn').textContent='Add task';
-  document.getElementById('ts-cancel-edit-btn').style.display='none';
+function tsOpenEdit(id){
+  var row = document.getElementById('ts-edit-'+id);
+  if(row) row.style.display='block';
+}
+function tsCloseEdit(id){
+  var row = document.getElementById('ts-edit-'+id);
+  if(row) row.style.display='none';
+}
+
+async function tsSaveEdit(id){
+  var startVal = document.getElementById('ts-es-'+id).value;
+  var endVal   = document.getElementById('ts-ee-'+id).value;
+  var notesVal = document.getElementById('ts-en-'+id).value.trim();
+  var today = todayStr();
+  var updates = { notes: notesVal };
+  if(startVal) updates.start_time = xcNormTime(today, startVal);
+  if(endVal){
+    updates.end_time = xcNormTime(today, endVal);
+    // Recalculate duration
+    if(startVal){
+      var durMins = Math.max(1, Math.round((new Date(updates.end_time) - new Date(updates.start_time))/60000));
+      updates.duration_minutes = durMins;
+    }
+  }
+  try{
+    await sbUpdate('timesheets','id',id,updates);
+    tsLoadEntries();
+  }catch(e){ alert('Save failed: '+e.message); }
 }
 
 async function tsDeleteEntry(id){
-  if(!confirm('Delete this task entry?')) return;
+  if(!confirm('Delete this task?')) return;
+  if(tsLiveTimers[id]){ clearInterval(tsLiveTimers[id]); delete tsLiveTimers[id]; }
   try{
     await fetch(SUPABASE_URL+'/rest/v1/timesheets?id=eq.'+id,{method:'DELETE',headers:sbHeaders()});
     tsLoadEntries();
-  }catch(e){alert('Delete failed: '+e.message);}
+  }catch(e){ alert('Delete failed: '+e.message); }
 }
 
 async function tsPullReport(){
@@ -5239,7 +5296,7 @@ async function tsPullReport(){
   if(!from||!to){out.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Please select a date range.</div>';return;}
   out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">Loading...</div>';
   try{
-    var filters='date=gte.'+from+'&date=lte.'+to+'&order=date.desc,logged_at.asc&select=id,user_id,user_name,date,task_name,task_type,duration_minutes,logged_at,notes';
+    var filters='date=gte.'+from+'&date=lte.'+to+'&order=date.desc,start_time.asc&select=id,user_id,user_name,date,task_name,task_type,start_time,end_time,duration_minutes,notes';
     if(agentId) filters+='&user_id=eq.'+agentId;
     var rows=await sbQuery('timesheets',filters);
     tsReportData=rows||[];
@@ -5252,25 +5309,27 @@ async function tsPullReport(){
 function tsRenderReport(rows){
   var out=document.getElementById('ts-report-out');
   if(!rows.length){
-    out.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:.5rem 0;">No entries found for the selected range.</div>';
+    out.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:.5rem 0;">No entries found.</div>';
     return;
   }
   var tableHTML='<table class="ts-report-table"><thead><tr>'+
-    '<th>Agent</th><th>Task</th><th>Type</th><th>Date</th><th>Time</th><th style="text-align:right">Duration</th>'+
+    '<th>Agent</th><th>Task</th><th>Type</th><th>Date</th><th>Start</th><th>End</th><th style="text-align:right">Duration</th>'+
     '</tr></thead><tbody>'+
     rows.map(function(r){
-      var timeStr=r.logged_at?xcLocalTime(r.logged_at).slice(0,5):'—';
+      var startStr=r.start_time?xcLocalTime(r.start_time).slice(0,5):'—';
+      var endStr=r.end_time?xcLocalTime(r.end_time).slice(0,5):'<span style="color:#1a7a45;font-size:.72rem;">Running</span>';
       return '<tr>'+
         '<td style="color:var(--text-muted)">'+esc(r.user_name||'')+'</td>'+
         '<td><div style="font-weight:600;">'+esc(r.task_name)+'</div>'+(r.notes?'<div style="font-size:.72rem;color:var(--text-dim);">'+esc(r.notes)+'</div>':'')+'</td>'+
         '<td><span class="ts-type-badge">'+esc(r.task_type||'—')+'</span></td>'+
         '<td style="color:var(--text-muted);">'+esc(r.date)+'</td>'+
-        '<td style="color:var(--text-muted);">'+timeStr+'</td>'+
+        '<td style="color:var(--text-muted);">'+startStr+'</td>'+
+        '<td>'+endStr+'</td>'+
         '<td style="text-align:right;font-weight:600;">'+fmtMins(r.duration_minutes)+'</td>'+
       '</tr>';
     }).join('')+'</tbody></table>';
   var typeTotals={},grandTotal=0;
-  rows.forEach(function(r){
+  rows.filter(function(r){return r.end_time;}).forEach(function(r){
     var t=r.task_type||'Others';
     typeTotals[t]=(typeTotals[t]||0)+(r.duration_minutes||0);
     grandTotal+=(r.duration_minutes||0);
@@ -5279,16 +5338,17 @@ function tsRenderReport(rows){
     Object.keys(typeTotals).sort(function(a,b){return typeTotals[b]-typeTotals[a];}).map(function(t){
       return '<div class="ts-total-chip"><small>'+esc(t)+'</small><span>'+fmtMins(typeTotals[t])+'</span></div>';
     }).join('')+
-    '</div><div style="margin-top:.6rem;font-size:.82rem;color:var(--text-muted);">Grand total: <strong style="color:var(--text-primary);">'+fmtMins(grandTotal)+'</strong> across '+rows.length+' entries</div>';
+    '</div><div style="margin-top:.6rem;font-size:.82rem;color:var(--text-muted);">Completed total: <strong style="color:var(--text-primary);">'+fmtMins(grandTotal)+'</strong> across '+rows.length+' entries</div>';
   out.innerHTML='<div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem;">'+rows.length+' entries found</div>'+tableHTML+chipsHTML;
 }
 
 function tsExportCSV(){
   if(!tsReportData.length){alert('Pull a report first.');return;}
-  var header=['Agent','Task name','Task type','Date','Time','Duration (min)','Notes'];
+  var header=['Agent','Task name','Task type','Date','Start','End','Duration (min)','Notes'];
   var rows=tsReportData.map(function(r){
-    var timeStr=r.logged_at?xcLocalTime(r.logged_at).slice(0,5):'';
-    return [r.user_name,r.task_name,r.task_type,r.date,timeStr,r.duration_minutes,r.notes||''].map(function(v){
+    var startStr=r.start_time?xcLocalTime(r.start_time).slice(0,5):'';
+    var endStr=r.end_time?xcLocalTime(r.end_time).slice(0,5):'Running';
+    return [r.user_name,r.task_name,r.task_type,r.date,startStr,endStr,r.duration_minutes,r.notes||''].map(function(v){
       return '"'+(String(v||'').replace(/"/g,'""'))+'"';
     }).join(',');
   });
