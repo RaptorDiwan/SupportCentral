@@ -1569,6 +1569,14 @@
 .ts-switch input:checked + .ts-slider:before { transform:translateX(16px); }
 body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
 
+  .qa-save-btn{padding:.45rem 1.1rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;}
+  .qa-save-btn:hover{background:var(--gold-light);}
+  .qa-cancel-btn{padding:.45rem .9rem;background:transparent;color:var(--text-muted);border:1px solid var(--navy-border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;}
+  .ass-sticky-header{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.5rem;background:var(--navy-card);border-bottom:1px solid var(--navy-border);border-radius:var(--radius) var(--radius) 0 0;}
+  .ass-q-block{padding:1.1rem 0;border-bottom:1px solid var(--navy-border);}
+  .ass-q-block:last-of-type{border-bottom:none;}
+  .ass-q-num{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem;}
+  .ass-q-text{font-size:.92rem;font-weight:500;color:var(--text-primary);line-height:1.55;}
 </style>
 </head>
 <body>
@@ -4167,9 +4175,26 @@ async function loadAssessmentBuilderList(){
           '</div>'+
           '<div style="display:flex;align-items:center;gap:.5rem;">'+
             '<span class="qa-status-pill '+status+'">'+statusLabels[status]+'</span>'+
+            '<button class="qa-toggle-btn" onclick="editAssessmentDetails(\''+a.id+'\')">&#9998; Edit</button>'+
             '<button class="qa-toggle-btn'+(a.review_enabled?' on':'')+'" onclick="toggleAssessmentReview(\''+a.id+'\','+a.review_enabled+')" >&#128065; Review '+(a.review_enabled?'ON':'OFF')+'</button>'+
             '<button class="qa-toggle-btn" onclick="showAssessmentQuestions(\''+a.id+'\',\''+a.title.replace(/'/g,"\\'")+'\')">&#10010; Questions</button>'+
             '<button class="qa-del-btn" onclick="deleteAssessment(\''+a.id+'\')">Delete</button>'+
+          '</div>'+
+        '</div>'+
+        '<div id="ae-panel-'+a.id+'" style="display:none;margin-top:1rem;padding:1rem;background:var(--navy-hover);border-radius:var(--radius-sm);border:1px solid var(--navy-border);">'+
+          '<div style="font-size:.72rem;font-weight:600;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;">Edit Assessment</div>'+
+          '<div class="qa-form-grid">'+
+            '<div class="qa-field" style="grid-column:1/-1"><label>Title</label><input type="text" id="ae-title-'+a.id+'" value="'+a.title.replace(/"/g,'&quot;')+'"/></div>'+
+            '<div class="qa-field"><label>Active Date</label><input type="date" id="ae-date-'+a.id+'" value="'+a.date+'"/></div>'+
+            '<div class="qa-field"><label>Opens At</label><input type="time" id="ae-open-'+a.id+'" value="'+(a.open_time?a.open_time.slice(11,16):'')+'"/></div>'+
+            '<div class="qa-field"><label>Closes At</label><input type="time" id="ae-close-'+a.id+'" value="'+(a.close_time?a.close_time.slice(11,16):'')+'"/></div>'+
+            '<div class="qa-field"><label>Time Limit (min)</label><input type="number" id="ae-limit-'+a.id+'" value="'+a.time_limit_minutes+'" min="1"/></div>'+
+            '<div class="qa-field"><label>Max Attempts</label><input type="number" id="ae-attempts-'+a.id+'" value="'+a.max_attempts+'" min="1" max="5"/></div>'+
+          '</div>'+
+          '<div style="margin-top:.75rem;display:flex;gap:.6rem;align-items:center;">'+
+            '<button class="qa-save-btn" onclick="saveAssessmentEdit(\''+a.id+'\')">Save changes</button>'+
+            '<button class="qa-cancel-btn" onclick="document.getElementById(\'ae-panel-'+a.id+'\').style.display=\'none\'">Cancel</button>'+
+            '<span id="ae-msg-'+a.id+'" style="font-size:.78rem;color:var(--accent-red);display:none;"></span>'+
           '</div>'+
         '</div>'+
         '<div id="aq-panel-'+a.id+'" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--navy-border);"></div>'+
@@ -4181,6 +4206,35 @@ async function loadAssessmentBuilderList(){
 async function toggleAssessmentReview(id,current){
   try{await sbUpdate('assessments','id',id,{review_enabled:!current});loadAssessmentBuilderList();}
   catch(e){alert('Toggle failed: '+e.message);}
+}
+
+function editAssessmentDetails(id){
+  var panel=document.getElementById('ae-panel-'+id);
+  if(!panel)return;
+  panel.style.display=panel.style.display==='block'?'none':'block';
+}
+
+async function saveAssessmentEdit(id){
+  var title=(document.getElementById('ae-title-'+id).value||'').trim();
+  var date=document.getElementById('ae-date-'+id).value;
+  var open=document.getElementById('ae-open-'+id).value;
+  var close=document.getElementById('ae-close-'+id).value;
+  var limit=parseInt(document.getElementById('ae-limit-'+id).value)||30;
+  var attempts=parseInt(document.getElementById('ae-attempts-'+id).value)||1;
+  var msg=document.getElementById('ae-msg-'+id);
+  if(!title||!date||!open||!close){
+    msg.textContent='Please fill in all fields.';msg.style.display='inline';return;
+  }
+  msg.style.display='none';
+  try{
+    await sbUpdate('assessments','id',id,{
+      title:title,date:date,
+      open_time:date+'T'+open+':00',
+      close_time:date+'T'+close+':00',
+      time_limit_minutes:limit,max_attempts:attempts
+    });
+    loadAssessmentBuilderList();
+  }catch(e){msg.textContent='Save failed: '+e.message;msg.style.display='inline';}
 }
 
 async function deleteAssessment(id){
@@ -4387,51 +4441,79 @@ function startAssessmentTimer(){
 function renderAssessmentQuestion(){
   var content=document.getElementById('assessment-agent-content');
   if(!_assQuestions.length){content.innerHTML='<div class="quiz-lock-screen"><div class="quiz-lock-icon">&#9888;</div><div class="quiz-lock-title">No Questions</div><div class="quiz-lock-sub">This assessment has no questions yet.</div></div>';return;}
-  var q=_assQuestions[_assCurrentQ];
   var total=_assQuestions.length;
-  var choices=q.choices?JSON.parse(q.choices):[];
-  var curAnswer=_assAnswers[q.id]||null;
   var m=Math.floor(_assSecondsLeft/60),s=_assSecondsLeft%60;
 
-  var progressDots=_assQuestions.map(function(qq,i){
-    var cls='aq-dot';
-    if(i===_assCurrentQ)cls+=' current';
-    else if(_assAnswers[qq.id])cls+=' answered';
-    return '<div class="'+cls+'" onclick="jumpAssessmentQ('+i+')">'+(i+1)+'</div>';
+  var questionsHtml=_assQuestions.map(function(q,i){
+    var choices=q.choices?JSON.parse(q.choices):[];
+    var curAnswer=_assAnswers[q.id]||null;
+    var answerHtml='';
+    if(q.type==='mcq'||q.type==='truefalse'){
+      answerHtml='<div class="quiz-options" style="margin-top:.6rem;">'+
+        choices.map(function(ch){
+          var sel=curAnswer===ch?' selected':'';
+          return '<label class="quiz-option'+sel+'" style="cursor:pointer;">'+
+            '<input type="radio" name="ass-ans-'+q.id+'" value="'+ch.replace(/"/g,'&quot;')+'" '+
+            (curAnswer===ch?'checked':'')+
+            ' onchange="selectAssessmentOption(\''+ch.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+q.id+'\')"'+
+            ' style="accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;"/>'+
+            ch+'</label>';
+        }).join('')+
+      '</div>';
+    }else{
+      answerHtml='<textarea class="quiz-essay" id="ass-essay-'+q.id+'" placeholder="Type your answer here..." '+
+        'oninput="selectAssessmentOption(this.value,\''+q.id+'\')" style="margin-top:.6rem;">'+
+        (curAnswer||'')+
+      '</textarea>';
+    }
+    return '<div class="ass-q-block" id="ass-q-block-'+q.id+'">'+
+      '<div class="ass-q-num">Q'+(i+1)+' <span style="font-weight:400;color:var(--text-muted);">'+q.type+'</span></div>'+
+      '<div class="ass-q-text">'+q.question+'</div>'+
+      answerHtml+
+    '</div>';
   }).join('');
 
-  var choicesHtml='';
-  if(q.type==='mcq'||q.type==='truefalse'){
-    choicesHtml='<div class="quiz-options">'+choices.map(function(ch){
-      var sel=curAnswer===ch?' selected':'';
-      return '<label class="quiz-option'+sel+'">'+
-        '<input type="radio" name="ass-answer" value="'+ch+'" '+(curAnswer===ch?'checked':'')+' onchange="selectAssessmentOption(\''+ch.replace(/'/g,"\\'")+'\',\''+q.id+'\')" style="accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;"/>'+
-        ch+'</label>';
-    }).join('')+'</div>';
-  } else {
-    choicesHtml='<textarea class="quiz-essay" id="ass-essay-input" placeholder="Type your answer..." oninput="selectAssessmentOption(this.value,\''+q.id+'\')">'+( curAnswer||'')+'</textarea>';
-  }
+  content.innerHTML=
+    '<div class="quiz-card" style="padding:0;">'+
+      '<div class="ass-sticky-header">'+
+        '<div style="font-size:.9rem;font-weight:600;color:var(--text-primary);">'+_assData.title+'</div>'+
+        '<div style="display:flex;align-items:center;gap:.75rem;">'+
+          '<span style="font-size:.78rem;color:var(--text-muted);">'+total+' questions</span>'+
+          '<span class="quiz-timer-badge" id="ass-timer">'+m+':'+(s<10?'0':'')+s+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:1.2rem 1.5rem;">'+
+        questionsHtml+
+        '<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--navy-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">'+
+          '<div id="ass-unanswered-note" style="font-size:.8rem;color:var(--text-muted);"></div>'+
+          '<button class="quiz-submit-btn" style="width:auto;padding:.65rem 2.2rem;" onclick="submitAssessment(false)">Submit Assessment</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
 
-  content.innerHTML='<div class="quiz-card">'+
-    '<div class="quiz-card-header">'+
-      '<span class="quiz-q-label">'+_assData.title+' &nbsp;&#8226;&nbsp; Q'+(  _assCurrentQ+1)+'/'+total+'</span>'+
-      '<span class="quiz-timer-badge" id="ass-timer">'+m+':'+(s<10?'0':'')+s+'</span>'+
-    '</div>'+
-    '<div class="assessment-progress">'+progressDots+'</div>'+
-    '<div class="quiz-question">'+q.question+'</div>'+
-    choicesHtml+
-    '<div class="qa-nav-row">'+
-      '<button class="qa-nav-btn" onclick="navAssessmentQ(-1)" '+(_assCurrentQ===0?'disabled':'')+'>&#8592; Previous</button>'+
-      (_assCurrentQ===total-1?
-        '<button class="quiz-submit-btn" style="width:auto;padding:.6rem 2rem;" onclick="submitAssessment(false)">Submit Assessment</button>':
-        '<button class="qa-nav-btn" onclick="navAssessmentQ(1)">Next &#8594;</button>')+
-    '</div>'+
-  '</div>';
+  updateAssUnanswered();
 }
 
-function selectAssessmentOption(val, qId){ _assAnswers[qId]=val; }
-function jumpAssessmentQ(i){ _assCurrentQ=i; renderAssessmentQuestion(); }
-function navAssessmentQ(dir){ _assCurrentQ=Math.max(0,Math.min(_assQuestions.length-1,_assCurrentQ+dir)); renderAssessmentQuestion(); }
+function updateAssUnanswered(){
+  var el=document.getElementById('ass-unanswered-note');
+  if(!el)return;
+  var unanswered=_assQuestions.filter(function(q){return!_assAnswers[q.id];}).length;
+  el.textContent=unanswered>0?unanswered+' question(s) not yet answered':'✓ All questions answered';
+  el.style.color=unanswered>0?'var(--text-muted)':'var(--accent-green)';
+}
+
+function selectAssessmentOption(val,qId){
+  _assAnswers[qId]=val;
+  var block=document.getElementById('ass-q-block-'+qId);
+  if(block){
+    block.querySelectorAll('.quiz-option').forEach(function(el){el.classList.remove('selected');});
+    var checked=block.querySelector('input[name="ass-ans-'+qId+'"]:checked');
+    if(checked)checked.closest('.quiz-option').classList.add('selected');
+  }
+  updateAssUnanswered();
+}
+function jumpAssessmentQ(i){ _assCurrentQ=i; }
+function navAssessmentQ(dir){ _assCurrentQ=Math.max(0,Math.min(_assQuestions.length-1,_assCurrentQ+dir)); }
 
 async function submitAssessment(autoSubmit){
   if(!autoSubmit){
