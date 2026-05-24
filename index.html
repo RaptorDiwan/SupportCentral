@@ -1750,7 +1750,7 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .chat-conv-header{padding:.75rem 1rem;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;gap:.65rem;}
   .chat-back-btn{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:.2rem .4rem;font-size:1rem;}
   .chat-conv-hname{font-size:.875rem;font-weight:600;color:var(--text-primary);flex:1;}
-  .chat-e2e-bar{padding:.4rem 1rem;background:rgba(26,122,69,.07);border-bottom:1px solid rgba(26,122,69,.12);font-size:.65rem;color:#1a7a45;display:flex;align-items:center;gap:.35rem;}
+  .chat-e2e-bar{padding:.3rem 1rem;background:rgba(26,122,69,.06);border-bottom:1px solid rgba(26,122,69,.1);font-size:.62rem;color:#1a7a45;display:flex;align-items:center;justify-content:center;gap:.35rem;letter-spacing:.02em;}
   .chat-messages{flex:1;overflow-y:auto;padding:.5rem .75rem;display:flex;flex-direction:column;gap:.35rem;}
   .chat-msg{max-width:82%;display:flex;flex-direction:column;}
   .chat-msg.mine{align-self:flex-end;align-items:flex-end;}
@@ -6736,7 +6736,18 @@ async function chatLoadMessages(){
 
 function chatRenderMessages(rows){
   var out=document.getElementById('chat-messages');
-  if(!rows.length){out.innerHTML='<div class="chat-empty">No messages yet.<br>Say hello! 👋</div>';return;}
+  if(!rows.length){
+    out.innerHTML=
+      '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;text-align:center;gap:.5rem;">'+
+        '<div style="width:42px;height:42px;border-radius:50%;background:rgba(26,122,69,.1);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.25rem;">🔒</div>'+
+        '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">End-to-End Encrypted</div>'+
+        '<div style="font-size:.72rem;color:var(--text-muted);line-height:1.5;max-width:200px;">Messages are secured with end-to-end encryption. Only you and the recipient can read them.</div>'+
+        '<div style="margin-top:.4rem;display:flex;align-items:center;gap:.3rem;font-size:.65rem;color:var(--text-dim);background:var(--navy-hover);padding:.3rem .75rem;border-radius:20px;border:1px solid var(--navy-border);">'+
+          '<span style="color:#1a7a45;">●</span> Auto-deletes in 24h'+
+        '</div>'+
+      '</div>';
+    return;
+  }
   var lastDate='';
   var html=rows.map(function(m){
     var isMine=m.from_user_id===currentUser.id;
@@ -6968,7 +6979,7 @@ document.addEventListener('keydown',function(e){
         <button onclick="chatTogglePanel()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;">✕</button>
       </div>
       <div class="chat-e2e-bar">
-        🔒 Messages auto-delete in 24h · Only you and this person can see these messages
+        🔒 End-to-end encrypted
       </div>
       <div class="chat-messages" id="chat-messages"></div>
 
