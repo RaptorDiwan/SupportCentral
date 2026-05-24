@@ -1642,6 +1642,83 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .qbr-mark-btn.correct:hover{background:rgba(46,197,111,.2);}
   .qbr-mark-btn.wrong{background:rgba(239,73,60,.08);color:var(--accent-red);border-color:rgba(239,73,60,.25);}
   .qbr-mark-btn.wrong:hover{background:rgba(239,73,60,.18);}
+  /* ═══════════════════ PEOPLE PAGE ═══════════════════ */
+  .ppl-page{display:flex;flex-direction:column;gap:1.2rem;}
+  .ppl-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+  .ppl-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:500;color:var(--text-primary);margin:0;}
+  .ppl-sub{font-size:.82rem;color:var(--text-muted);margin:.2rem 0 0;}
+  .ppl-search{padding:.5rem 1rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.875rem;color:var(--text-primary);outline:none;width:220px;transition:border-color .2s;}
+  .ppl-search:focus{border-color:var(--gold-dim);}
+  .ppl-add-btn{padding:.5rem 1.1rem;background:var(--gold);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;}
+  .ppl-add-btn:hover{background:var(--gold-light);}
+  .ppl-loading{color:var(--text-dim);font-size:.875rem;padding:2rem;text-align:center;}
+
+  /* Card grid */
+  .ppl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;}
+  .ppl-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.25rem 1rem;text-align:center;cursor:pointer;transition:box-shadow .18s,border-color .18s;position:relative;}
+  .ppl-card:hover{border-color:var(--gold-dim);box-shadow:0 4px 20px rgba(174,123,76,.1);}
+  .ppl-card-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto .75rem;overflow:hidden;flex-shrink:0;}
+  .ppl-card-avatar img{width:100%;height:100%;object-fit:cover;}
+  .ppl-card-initials{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;margin:0 auto .75rem;}
+  .ppl-card-name{font-weight:600;font-size:.92rem;color:var(--text-primary);margin-bottom:.2rem;}
+  .ppl-card-role{font-size:.72rem;color:var(--text-muted);margin-bottom:.5rem;}
+  .ppl-card-badges{display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap;margin-bottom:.5rem;}
+  .ppl-card-badge{font-size:.62rem;padding:2px 7px;border-radius:20px;background:var(--navy-hover);color:var(--text-muted);border:1px solid var(--navy-border);}
+  .ppl-card-status{display:inline-flex;align-items:center;gap:.3rem;font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:20px;}
+  .ppl-card-status.active{background:rgba(46,197,111,.1);color:#1a7a45;}
+  .ppl-card-status.break{background:rgba(239,73,60,.1);color:var(--accent-red);}
+  .ppl-card-status.off{background:rgba(123,135,153,.1);color:var(--text-dim);}
+  .ppl-card-edit{position:absolute;top:.6rem;right:.6rem;padding:.25rem .55rem;font-size:.68rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:5px;cursor:pointer;color:var(--text-muted);display:none;}
+  .ppl-card:hover .ppl-card-edit{display:block;}
+
+  /* Profile modal */
+  .ppl-modal-hero{padding:2rem 1.5rem 1.2rem;text-align:center;border-bottom:1px solid var(--navy-border);}
+  .ppl-modal-avatar{width:88px;height:88px;border-radius:50%;margin:0 auto .9rem;overflow:hidden;}
+  .ppl-modal-avatar img{width:100%;height:100%;object-fit:cover;}
+  .ppl-modal-initials{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;color:#fff;margin:0 auto .9rem;}
+  .ppl-modal-name{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:500;color:var(--text-primary);}
+  .ppl-modal-role{font-size:.8rem;color:var(--text-muted);margin-top:.2rem;}
+  .ppl-modal-body{padding:1.2rem 1.5rem;}
+  .ppl-section{margin-bottom:1.1rem;}
+  .ppl-section-label{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.5rem;}
+  .ppl-bio{font-size:.875rem;color:var(--text-primary);line-height:1.65;font-style:italic;}
+  .ppl-field-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem;}
+  .ppl-field-chip{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;padding:.25rem .7rem;border-radius:20px;background:var(--navy-hover);color:var(--text-muted);border:1px solid var(--navy-border);}
+  .ppl-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;}
+  .ppl-info-item{font-size:.8rem;}
+  .ppl-info-label{color:var(--text-dim);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.15rem;}
+  .ppl-info-val{color:var(--text-primary);font-weight:500;}
+  .ppl-quote{font-size:.82rem;color:var(--text-muted);font-style:italic;padding:.6rem .9rem;border-left:3px solid var(--gold-dim);background:var(--navy-hover);border-radius:0 6px 6px 0;}
+
+  /* Edit form */
+  .ppl-edit-header{padding:1.1rem 1.4rem;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;justify-content:space-between;}
+  .ppl-edit-title{font-size:1rem;font-weight:600;color:var(--text-primary);}
+  .ppl-edit-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);padding:.2rem .5rem;}
+  .ppl-edit-body{padding:1.2rem 1.4rem;}
+  .ppl-edit-section{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin:.9rem 0 .5rem;padding-top:.9rem;border-top:1px solid var(--navy-border);}
+  .ppl-edit-section:first-of-type{margin-top:0;padding-top:0;border-top:none;}
+  .ppl-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;}
+  .ppl-edit-field{display:flex;flex-direction:column;gap:.3rem;}
+  .ppl-edit-field.full{grid-column:1/-1;}
+  .ppl-edit-label{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:500;}
+  .ppl-edit-input{padding:.5rem .8rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.875rem;outline:none;}
+  .ppl-edit-input:focus{border-color:var(--gold-dim);}
+  .ppl-edit-textarea{padding:.5rem .8rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.875rem;outline:none;resize:vertical;min-height:70px;}
+  .ppl-edit-textarea:focus{border-color:var(--gold-dim);}
+  .ppl-photo-upload{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem;}
+  .ppl-photo-preview{width:52px;height:52px;border-radius:50%;overflow:hidden;background:var(--navy-hover);border:1px solid var(--navy-border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:var(--text-dim);}
+  .ppl-photo-preview img{width:100%;height:100%;object-fit:cover;}
+  .ppl-upload-btn{padding:.4rem .9rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.78rem;cursor:pointer;color:var(--text-primary);}
+  .ppl-edit-actions{padding:1rem 1.4rem;border-top:1px solid var(--navy-border);display:flex;gap:.6rem;justify-content:flex-end;}
+  .ppl-save-btn{padding:.5rem 1.3rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;}
+  .ppl-save-btn:hover{background:var(--gold-light);}
+  .ppl-cancel-btn{padding:.5rem 1rem;background:transparent;color:var(--text-muted);border:1px solid var(--navy-border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;}
+
+  @media(max-width:768px){
+    .ppl-grid{grid-template-columns:repeat(2,1fr);}
+    .ppl-edit-grid{grid-template-columns:1fr;}
+    .ppl-info-grid{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
@@ -1770,6 +1847,15 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
           <path d="M21 15l-5-5L5 21"/>
         </svg>
         Team Moments
+      </div>
+      <div class="sidebar-item" onclick="showPage('people', this)">
+        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          <circle cx="19" cy="8" r="3"/>
+          <path d="M22 18c0-2.5-1.5-4.5-3-5"/>
+        </svg>
+        People
       </div>
       <div class="sidebar-item" id="sidebar-ts" style="display:none;" onclick="showPage('timesheet', this)">
         <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -2532,6 +2618,45 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
             <div id="ts-report-out" style="margin-top:1rem;"></div>
           </div>
 
+      </div>
+
+      <!-- ═══════════════════════════════
+           PEOPLE PAGE
+      ═══════════════════════════════ -->
+      <div class="page" id="page-people">
+        <div class="ppl-page">
+
+          <!-- Header -->
+          <div class="ppl-header">
+            <div>
+              <h2 class="ppl-title">👥 People</h2>
+              <p class="ppl-sub">Your team — get to know everyone</p>
+            </div>
+            <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+              <input type="text" class="ppl-search" id="ppl-search" placeholder="🔍 Search by name..." oninput="pplFilter(this.value)"/>
+              <button class="ppl-add-btn admin-only" onclick="pplOpenEdit(null)">+ Add Profile</button>
+            </div>
+          </div>
+
+          <!-- Cards grid -->
+          <div class="ppl-grid" id="ppl-grid">
+            <div class="ppl-loading">Loading team...</div>
+          </div>
+        </div>
+
+        <!-- Profile Modal -->
+        <div id="ppl-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.45);z-index:900;display:none;align-items:center;justify-content:center;padding:1rem;" onclick="pplCloseModal(event)">
+          <div id="ppl-modal" style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:560px;width:100%;max-height:90vh;overflow-y:auto;position:relative;" onclick="event.stopPropagation()">
+            <div id="ppl-modal-content"></div>
+          </div>
+        </div>
+
+        <!-- Edit Modal -->
+        <div id="ppl-edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.45);z-index:901;align-items:center;justify-content:center;padding:1rem;" onclick="pplCloseEdit(event)">
+          <div id="ppl-edit-modal" style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:600px;width:100%;max-height:92vh;overflow-y:auto;" onclick="event.stopPropagation()">
+            <div id="ppl-edit-content"></div>
+          </div>
+        </div>
       </div>
 
     </main>
@@ -5739,7 +5864,386 @@ function closeMobMore(){
   if(moreBtn) moreBtn.classList.remove('active');
 }
 
-// Close more panel when tapping outside
+
+// ═══════════════════════════════════════════════
+//  PEOPLE MODULE
+// ═══════════════════════════════════════════════
+
+var _pplData = [];
+var _pplEditId = null; // null = new, uuid = edit existing
+var _pplUploadedUrl = null;
+
+// Avatar colour palette — consistent per name
+var PPL_COLORS = ['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#84CC16','#F97316','#6366F1'];
+function pplColor(name){
+  var n=0; for(var i=0;i<(name||'').length;i++) n+=name.charCodeAt(i);
+  return PPL_COLORS[n%PPL_COLORS.length];
+}
+function pplInitials(name){
+  return (name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+}
+
+async function pplLoad(){
+  var grid = document.getElementById('ppl-grid');
+  if(!grid) return;
+  grid.innerHTML='<div class="ppl-loading">Loading team...</div>';
+  try{
+    var people = await sbQuery('people','select=*&order=name.asc');
+    _pplData = people||[];
+    pplRender(_pplData);
+  }catch(e){
+    grid.innerHTML='<div class="ppl-loading" style="color:var(--accent-red);">Could not load people: '+e.message+'</div>';
+  }
+}
+
+function pplAvatarHTML(p, size, cls){
+  size = size||64; cls = cls||'ppl-card-initials';
+  if(p && p.photo_url){
+    return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;overflow:hidden;margin:0 auto .75rem;"><img src="'+p.photo_url+'" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.outerHTML=\''+pplInitialsDiv(p,size,cls)+'\'"/></div>';
+  }
+  return pplInitialsDiv(p,size,cls);
+}
+function pplInitialsDiv(p,size,cls){
+  var bg = pplColor(p?p.name:'?');
+  var ini = pplInitials(p?p.name:'?');
+  return '<div class="'+cls+'" style="width:'+size+'px;height:'+size+'px;background:'+bg+';margin:0 auto .75rem;">'+ini+'</div>';
+}
+
+function pplRender(people){
+  var grid = document.getElementById('ppl-grid');
+  if(!people||!people.length){
+    grid.innerHTML='<div class="ppl-loading">No profiles yet. Add the first one!</div>';
+    return;
+  }
+
+  // Get live attendance status
+  var attMap = window._liveAttMap||{};
+
+  grid.innerHTML = people.map(function(p){
+    var ini = pplInitials(p.name);
+    var bg  = pplColor(p.name);
+    var avatar = p.photo_url
+      ? '<div class="ppl-card-avatar"><img src="'+p.photo_url+'" onerror="this.parentElement.innerHTML=\'<div class=ppl-card-initials style=width:64px;height:64px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;>'+ini+'</div>\'"/></div>'
+      : '<div class="ppl-card-initials" style="background:'+bg+';">'+ini+'</div>';
+
+    var statusHtml = '';
+    if(p.user_id && attMap[p.user_id]){
+      var st = attMap[p.user_id];
+      statusHtml = '<div class="ppl-card-status '+st+'">'+
+        (st==='active'?'● Active':st==='break'?'◌ On Break':'○ Not In')+
+      '</div>';
+    }
+
+    var chips = [];
+    if(p.speciality) chips.push(p.speciality.split(',')[0].trim());
+    if(p.languages) chips.push(p.languages.split(',')[0].trim());
+    var chipsHtml = chips.map(function(c){ return '<span class="ppl-card-badge">'+esc(c)+'</span>'; }).join('');
+
+    var canEdit = isAdminUser() || (currentUser && currentUser.id === p.user_id);
+    var editBtn = canEdit ? '<button class="ppl-card-edit" onclick="event.stopPropagation();pplOpenEdit(\''+p.id+'\')">✎ Edit</button>' : '';
+
+    return '<div class="ppl-card" onclick="pplOpenProfile(\''+p.id+'\')">'+
+      editBtn+
+      avatar+
+      '<div class="ppl-card-name">'+esc(p.name||'')+'</div>'+
+      '<div class="ppl-card-role">'+esc(p.role||'')+(p.team?' · '+esc(p.team):'')+'</div>'+
+      (chipsHtml?'<div class="ppl-card-badges">'+chipsHtml+'</div>':'')+
+      statusHtml+
+    '</div>';
+  }).join('');
+}
+
+function pplFilter(search){
+  if(!search) return pplRender(_pplData);
+  var s = search.toLowerCase();
+  pplRender(_pplData.filter(function(p){
+    return (p.name||'').toLowerCase().indexOf(s)>-1 ||
+           (p.role||'').toLowerCase().indexOf(s)>-1 ||
+           (p.speciality||'').toLowerCase().indexOf(s)>-1;
+  }));
+}
+
+// ── Profile view modal ──
+function pplOpenProfile(id){
+  var p = _pplData.find(function(x){return x.id===id;});
+  if(!p) return;
+  var overlay = document.getElementById('ppl-modal-overlay');
+  var content = document.getElementById('ppl-modal-content');
+  var ini = pplInitials(p.name);
+  var bg  = pplColor(p.name);
+
+  var avatar = p.photo_url
+    ? '<div class="ppl-modal-avatar"><img src="'+p.photo_url+'" onerror="this.parentElement.innerHTML=\'<div class=ppl-modal-initials style=background:'+bg+';>'+ini+'</div>\'"/></div>'
+    : '<div class="ppl-modal-initials" style="background:'+bg+';">'+ini+'</div>';
+
+  var canEdit = isAdminUser() || (currentUser && currentUser.id === p.user_id);
+
+  var html = '<div class="ppl-modal-hero">'+
+    avatar+
+    '<div class="ppl-modal-name">'+esc(p.name||'')+'</div>'+
+    '<div class="ppl-modal-role">'+esc(p.role||'')+(p.team?' · '+esc(p.team):'')+'</div>'+
+    (canEdit?'<button class="ppl-upload-btn" style="margin-top:.6rem;" onclick="pplOpenEdit(\''+p.id+'\')">✎ Edit Profile</button>':'')+
+  '</div>'+
+  '<div class="ppl-modal-body">';
+
+  if(p.bio) html += '<div class="ppl-section"><div class="ppl-section-label">About</div><div class="ppl-bio">'+esc(p.bio)+'</div></div>';
+  if(p.favourite_quote) html += '<div class="ppl-section"><div class="ppl-quote">"'+esc(p.favourite_quote)+'"</div></div>';
+
+  // Info grid
+  var infoItems = [];
+  if(p.email) infoItems.push({l:'Email',v:p.email});
+  if(p.phone) infoItems.push({l:'Phone',v:p.phone});
+  if(p.dob) infoItems.push({l:'Birthday',v:p.dob});
+  if(p.hometown) infoItems.push({l:'Hometown',v:p.hometown});
+  if(p.joining_date) infoItems.push({l:'Joined',v:p.joining_date});
+  if(infoItems.length){
+    html += '<div class="ppl-section"><div class="ppl-section-label">Details</div><div class="ppl-info-grid">'+
+      infoItems.map(function(it){ return '<div class="ppl-info-item"><div class="ppl-info-label">'+it.l+'</div><div class="ppl-info-val">'+esc(it.v)+'</div></div>'; }).join('')+
+    '</div></div>';
+  }
+
+  var chipSections = [
+    {l:'Speciality', v:p.speciality},
+    {l:'Hobbies', v:p.hobbies},
+    {l:'Languages', v:p.languages},
+    {l:'Ask me about', v:p.ask_me_about},
+  ];
+  chipSections.forEach(function(s){
+    if(!s.v) return;
+    html += '<div class="ppl-section"><div class="ppl-section-label">'+s.l+'</div><div class="ppl-field-row">'+
+      s.v.split(',').map(function(c){ return c.trim()?'<span class="ppl-field-chip">'+esc(c.trim())+'</span>':''; }).join('')+
+    '</div></div>';
+  });
+
+  if(p.fun_fact) html += '<div class="ppl-section"><div class="ppl-section-label">Fun Fact</div><div style="font-size:.85rem;color:var(--text-primary);">'+esc(p.fun_fact)+'</div></div>';
+
+  html += '</div>';
+  content.innerHTML = html;
+  overlay.style.display = 'flex';
+}
+
+function pplCloseModal(e){
+  if(!e||e.target===document.getElementById('ppl-modal-overlay')){
+    document.getElementById('ppl-modal-overlay').style.display='none';
+  }
+}
+
+// ── Edit form ──
+function pplOpenEdit(id){
+  _pplEditId = id;
+  _pplUploadedUrl = null;
+  var p = id ? _pplData.find(function(x){return x.id===id;}) : null;
+  var isNew = !p;
+  var isAdmin = isAdminUser();
+  var isSelf = p && currentUser && p.user_id === currentUser.id;
+
+  var overlay = document.getElementById('ppl-edit-overlay');
+  var content = document.getElementById('ppl-edit-content');
+
+  var v = function(field){ return esc(p&&p[field]?p[field]:''); };
+  var previewHTML = p && p.photo_url
+    ? '<div class="ppl-photo-preview"><img src="'+p.photo_url+'"/></div>'
+    : '<div class="ppl-photo-preview" id="ppl-preview-placeholder" style="font-size:.7rem;color:var(--text-dim);">No photo</div>';
+
+  var html = '<div class="ppl-edit-header">'+
+    '<div class="ppl-edit-title">'+(isNew?'Add Profile':'Edit Profile — '+esc(p.name||''))+'</div>'+
+    '<button class="ppl-edit-close" onclick="pplCloseEdit()">✕</button>'+
+  '</div>'+
+  '<div class="ppl-edit-body">';
+
+  // Photo upload (everyone can upload their own)
+  html += '<div class="ppl-edit-section">Photo</div>'+
+    '<div class="ppl-photo-upload">'+
+      '<div id="ppl-photo-preview-wrap">'+previewHTML+'</div>'+
+      '<div>'+
+        '<button class="ppl-upload-btn" onclick="document.getElementById(\'ppl-file-input\').click()">📷 Upload Photo</button>'+
+        '<input type="file" id="ppl-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="pplHandlePhoto(this)"/>'+
+        '<div style="font-size:.7rem;color:var(--text-dim);margin-top:.3rem;">Max 100KB · JPG, PNG, WebP</div>'+
+        '<div id="ppl-upload-msg" style="font-size:.72rem;color:var(--accent-red);margin-top:.2rem;display:none;"></div>'+
+      '</div>'+
+    '</div>';
+
+  // Admin-only fields
+  if(isAdmin||isNew){
+    html += '<div class="ppl-edit-section">Basic Info</div>'+
+      '<div class="ppl-edit-grid">'+
+        '<div class="ppl-edit-field full"><label class="ppl-edit-label">Full Name</label><input id="pf-name" class="ppl-edit-input" value="'+v('name')+'" placeholder="Full name"/></div>'+
+        '<div class="ppl-edit-field"><label class="ppl-edit-label">Role / Title</label><input id="pf-role" class="ppl-edit-input" value="'+v('role')+'" placeholder="e.g. Team Lead"/></div>'+
+        '<div class="ppl-edit-field"><label class="ppl-edit-label">Team</label><input id="pf-team" class="ppl-edit-input" value="'+v('team')+'" placeholder="e.g. Online Sales Support"/></div>'+
+        '<div class="ppl-edit-field"><label class="ppl-edit-label">Email</label><input id="pf-email" class="ppl-edit-input" value="'+v('email')+'" placeholder="work email"/></div>'+
+        '<div class="ppl-edit-field"><label class="ppl-edit-label">Phone</label><input id="pf-phone" class="ppl-edit-input" value="'+v('phone')+'" placeholder="contact number"/></div>'+
+        '<div class="ppl-edit-field"><label class="ppl-edit-label">Joining Date</label><input id="pf-joining" class="ppl-edit-input" value="'+v('joining_date')+'" placeholder="e.g. Jan 2020"/></div>'+
+        '<div class="ppl-edit-field"><label class="ppl-edit-label">Birthday (DD/MM)</label><input id="pf-dob" class="ppl-edit-input" value="'+v('dob')+'" placeholder="e.g. 15/08"/></div>'+
+      '</div>';
+
+    if(isNew){
+      // Link to existing user account
+      html += '<div class="ppl-edit-field" style="margin-top:.65rem;"><label class="ppl-edit-label">Link to User Account</label>'+
+        '<select id="pf-userid" class="ppl-edit-input"><option value="">— Select agent —</option></select></div>';
+    }
+  }
+
+  // Personal fields — everyone can edit their own
+  html += '<div class="ppl-edit-section">Personal</div>'+
+    '<div class="ppl-edit-grid">'+
+      '<div class="ppl-edit-field"><label class="ppl-edit-label">Hometown</label><input id="pf-hometown" class="ppl-edit-input" value="'+v('hometown')+'" placeholder="Your city"/></div>'+
+      '<div class="ppl-edit-field"><label class="ppl-edit-label">Languages</label><input id="pf-languages" class="ppl-edit-input" value="'+v('languages')+'" placeholder="Tamil, English"/></div>'+
+      '<div class="ppl-edit-field"><label class="ppl-edit-label">Hobbies</label><input id="pf-hobbies" class="ppl-edit-input" value="'+v('hobbies')+'" placeholder="Cricket, Music"/></div>'+
+      '<div class="ppl-edit-field"><label class="ppl-edit-label">Speciality</label><input id="pf-speciality" class="ppl-edit-input" value="'+v('speciality')+'" placeholder="K7 Total Security, Networking"/></div>'+
+      '<div class="ppl-edit-field full"><label class="ppl-edit-label">Ask me about</label><input id="pf-askme" class="ppl-edit-input" value="'+v('ask_me_about')+'" placeholder="Technical doubts, Cricket scores"/></div>'+
+      '<div class="ppl-edit-field full"><label class="ppl-edit-label">About Me</label><textarea id="pf-bio" class="ppl-edit-textarea" placeholder="Hi, I am...">'+v('bio')+'</textarea></div>'+
+      '<div class="ppl-edit-field full"><label class="ppl-edit-label">Favourite Quote</label><input id="pf-quote" class="ppl-edit-input" value="'+v('favourite_quote')+'" placeholder="Something that inspires you"/></div>'+
+      '<div class="ppl-edit-field full"><label class="ppl-edit-label">Fun Fact</label><input id="pf-funfact" class="ppl-edit-input" value="'+v('fun_fact')+'" placeholder="One surprising thing about you"/></div>'+
+    '</div>';
+
+  html += '</div>'+
+    '<div id="ppl-edit-msg" style="padding:.25rem 1.4rem;font-size:.78rem;color:var(--accent-red);display:none;"></div>'+
+    '<div class="ppl-edit-actions">'+
+      '<button class="ppl-cancel-btn" onclick="pplCloseEdit()">Cancel</button>'+
+      '<button class="ppl-save-btn" id="ppl-save-btn" onclick="pplSaveProfile()">Save Profile</button>'+
+    '</div>';
+
+  content.innerHTML = html;
+  overlay.style.display = 'flex';
+
+  // Populate user dropdown if new
+  if(isNew){
+    sbQuery('users','select=id,name&order=name.asc').then(function(users){
+      var sel = document.getElementById('pf-userid');
+      if(!sel) return;
+      var existingIds = new Set(_pplData.map(function(pp){ return pp.user_id; }));
+      (users||[]).forEach(function(u){
+        if(existingIds.has(u.id)) return; // already has profile
+        var o = document.createElement('option');
+        o.value = u.id; o.textContent = u.name;
+        sel.appendChild(o);
+      });
+    }).catch(function(){});
+  }
+}
+
+function pplCloseEdit(e){
+  if(!e||e.target===document.getElementById('ppl-edit-overlay')){
+    document.getElementById('ppl-edit-overlay').style.display='none';
+    _pplEditId=null; _pplUploadedUrl=null;
+  }
+}
+
+// ── Photo upload ──
+function pplHandlePhoto(input){
+  var file = input.files[0];
+  var msg = document.getElementById('ppl-upload-msg');
+  if(!file) return;
+  if(file.size > 102400){ // 100KB
+    msg.textContent='Image too large. Max 100KB. Please resize and try again.';
+    msg.style.display='block';
+    input.value='';
+    return;
+  }
+  msg.style.display='none';
+  // Preview immediately
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var wrap = document.getElementById('ppl-photo-preview-wrap');
+    if(wrap) wrap.innerHTML='<div class="ppl-photo-preview"><img src="'+e.target.result+'"/></div>';
+    _pplUploadedUrl = '__local__'; // flag — will upload on save
+    // Store file reference
+    window._pplPendingFile = file;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function pplUploadPhoto(file, userId){
+  var ext = file.name.split('.').pop().toLowerCase()||'jpg';
+  var path = 'avatars/'+userId+'.'+ext;
+  var uploadUrl = SUPABASE_URL+'/storage/v1/object/'+path;
+  // Try upsert (overwrite if exists)
+  var r = await fetch(uploadUrl,{
+    method:'POST',
+    headers:Object.assign(sbHeaders(),{'Content-Type':file.type,'x-upsert':'true'}),
+    body:file
+  });
+  if(!r.ok){
+    // Try PATCH instead
+    r = await fetch(uploadUrl,{method:'PUT',headers:Object.assign(sbHeaders(),{'Content-Type':file.type}),body:file});
+  }
+  // Return public URL
+  return SUPABASE_URL+'/storage/v1/object/public/profiles/'+path;
+}
+
+async function pplSaveProfile(){
+  var btn = document.getElementById('ppl-save-btn');
+  var msg = document.getElementById('ppl-edit-msg');
+  btn.disabled=true; btn.textContent='Saving...';
+  msg.style.display='none';
+
+  try{
+    var isAdmin = isAdminUser();
+    var p = _pplEditId ? _pplData.find(function(x){return x.id===_pplEditId;}) : null;
+    var isNew = !p;
+
+    // Build data object
+    var data = {
+      bio: document.getElementById('pf-bio').value.trim(),
+      hometown: document.getElementById('pf-hometown').value.trim(),
+      languages: document.getElementById('pf-languages').value.trim(),
+      hobbies: document.getElementById('pf-hobbies').value.trim(),
+      speciality: document.getElementById('pf-speciality').value.trim(),
+      ask_me_about: document.getElementById('pf-askme').value.trim(),
+      favourite_quote: document.getElementById('pf-quote').value.trim(),
+      fun_fact: document.getElementById('pf-funfact').value.trim(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Admin fields
+    if(isAdmin||isNew){
+      data.name = (document.getElementById('pf-name')||{}).value||'';
+      data.role = (document.getElementById('pf-role')||{}).value||'';
+      data.team = (document.getElementById('pf-team')||{}).value||'';
+      data.email = (document.getElementById('pf-email')||{}).value||'';
+      data.phone = (document.getElementById('pf-phone')||{}).value||'';
+      data.joining_date = (document.getElementById('pf-joining')||{}).value||'';
+      data.dob = (document.getElementById('pf-dob')||{}).value||'';
+      if(isNew){
+        var uid = (document.getElementById('pf-userid')||{}).value||null;
+        data.user_id = uid||null;
+      }
+    }
+
+    if(!data.name && isNew){ msg.textContent='Name is required.'; msg.style.display='block'; btn.disabled=false; btn.textContent='Save Profile'; return; }
+
+    // Upload photo if pending
+    if(window._pplPendingFile){
+      var userId = p?p.user_id:(data.user_id||'unknown');
+      var photoUrl = await pplUploadPhoto(window._pplPendingFile, userId);
+      data.photo_url = photoUrl;
+      window._pplPendingFile = null;
+    }
+
+    if(isNew){
+      await sbInsert('people', data);
+    } else {
+      await sbUpdate('people','id',_pplEditId, data);
+    }
+
+    document.getElementById('ppl-edit-overlay').style.display='none';
+    _pplEditId=null; _pplUploadedUrl=null;
+    await pplLoad(); // refresh grid
+
+  }catch(e){
+    msg.textContent='Save failed: '+e.message;
+    msg.style.display='block';
+  }
+  btn.disabled=false; btn.textContent='Save Profile';
+}
+
+// Hook showPage
+var _pplNavRef = showPage;
+showPage = function(id, elem){
+  _pplNavRef(id, elem);
+  if(id==='people') pplLoad();
+};
+
 document.addEventListener('click', function(e){
   var panel = document.getElementById('mob-more-panel');
   var moreBtn = document.getElementById('mob-nav-more');
