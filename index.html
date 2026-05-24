@@ -1614,6 +1614,34 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .ass-q-block:last-of-type{border-bottom:none;}
   .ass-q-num{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem;}
   .ass-q-text{font-size:.92rem;font-weight:500;color:var(--text-primary);line-height:1.55;}
+  /* ── QUIZ REPORT ── */
+  .qr-tab{padding:.4rem 1rem;border-radius:6px;border:1px solid var(--navy-border);background:var(--navy-card);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .18s;}
+  .qr-tab:hover{background:var(--navy-hover);color:var(--text-primary);}
+  .qr-tab.active{background:rgba(239,73,60,.1);border-color:rgba(239,73,60,.3);color:var(--gold);font-weight:600;}
+  .qr-panel{display:none;}
+  .qr-panel.active{display:block;animation:fadeIn .2s ease;}
+  .qr-tbl{width:100%;border-collapse:collapse;font-size:.78rem;min-width:500px;}
+  .qr-tbl th{padding:.5rem .75rem;background:rgba(7,13,45,.04);border-bottom:2px solid var(--navy-border);border-right:1px solid var(--navy-border);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:600;white-space:nowrap;text-align:center;}
+  .qr-tbl th:first-child{text-align:left;position:sticky;left:0;background:var(--navy-card);z-index:2;}
+  .qr-tbl td{padding:.55rem .75rem;border-right:1px solid var(--navy-border);border-bottom:1px solid var(--navy-border);white-space:nowrap;text-align:center;vertical-align:middle;}
+  .qr-tbl td:first-child{text-align:left;position:sticky;left:0;background:var(--navy-card);font-weight:600;z-index:1;}
+  .qr-tbl tr:last-child td{border-bottom:none;}
+  .qr-tbl tr:hover td{background:var(--navy-hover);}
+  .qr-tbl-wrap{overflow-x:auto;border:1px solid var(--navy-border);border-radius:var(--radius);}
+  .qc-correct{background:rgba(46,197,111,.12);color:#1a7a45;font-weight:600;padding:2px 8px;border-radius:20px;font-size:.72rem;}
+  .qc-wrong{background:rgba(239,73,60,.1);color:var(--accent-red);font-weight:600;padding:2px 8px;border-radius:20px;font-size:.72rem;}
+  .qc-na{background:rgba(239,73,60,.07);color:var(--gold);padding:2px 8px;border-radius:20px;font-size:.72rem;}
+  .qc-np{background:rgba(123,135,153,.1);color:var(--text-dim);padding:2px 8px;border-radius:20px;font-size:.72rem;}
+  .qr-rank-card{display:flex;align-items:center;gap:1rem;padding:.9rem 1.1rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);margin-bottom:.6rem;}
+  .qr-rank-medal{font-size:1.6rem;width:36px;text-align:center;flex-shrink:0;}
+  .qr-rank-name{font-weight:600;font-size:.92rem;color:var(--text-primary);flex:1;}
+  .qr-rank-pts{font-size:1.1rem;font-weight:700;color:var(--gold);}
+  .qr-rank-sub{font-size:.72rem;color:var(--text-muted);margin-top:.1rem;}
+  .qbr-mark-btn{padding:.35rem .8rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;border:1px solid;transition:all .15s;white-space:nowrap;}
+  .qbr-mark-btn.correct{background:rgba(46,197,111,.1);color:#1a7a45;border-color:rgba(46,197,111,.3);}
+  .qbr-mark-btn.correct:hover{background:rgba(46,197,111,.2);}
+  .qbr-mark-btn.wrong{background:rgba(239,73,60,.08);color:var(--accent-red);border-color:rgba(239,73,60,.25);}
+  .qbr-mark-btn.wrong:hover{background:rgba(239,73,60,.18);}
 </style>
 </head>
 <body>
@@ -2127,6 +2155,41 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
             <div style="display:flex;gap:.75rem;margin-top:1rem;"><button class="qa-save-btn" onclick="saveQuiz()">Save Quiz</button><button class="qa-cancel-btn" onclick="resetQuizBuilder()">Clear</button></div>
           </div>
           <div><div class="section-title" style="margin-top:.5rem;">Saved Quizzes</div><div class="qa-list" id="qb-list"><div style="color:var(--text-dim);font-size:.875rem;padding:1rem;">Loading...</div></div></div>
+
+          <!-- ── QUIZ MONTHLY REPORT ── -->
+          <div class="qa-builder-card" style="margin-top:1.5rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">
+              <div>
+                <h3 style="margin:0;">&#128202; Monthly Quiz Report</h3>
+                <p style="font-size:.78rem;color:var(--text-muted);margin:.25rem 0 0;">Pull full report — daily grid, points ranking, question bank, percentage summary</p>
+              </div>
+              <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
+                <select id="qr-month" class="ts-input" style="width:130px;">
+                  <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+                  <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+                  <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+                  <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+                </select>
+                <select id="qr-year" class="ts-input" style="width:95px;"></select>
+                <button class="ts-btn-primary" onclick="qrLoadReport()">Pull Report</button>
+                <button class="ts-btn-sec" id="qr-dl-btn" style="display:none;" onclick="qrDownloadExcel()">&#8659; Download Excel</button>
+              </div>
+            </div>
+
+            <!-- Tab strip -->
+            <div style="display:flex;gap:.4rem;margin-bottom:1rem;border-bottom:1px solid var(--navy-border);padding-bottom:.6rem;flex-wrap:wrap;">
+              <button class="qr-tab active" id="qr-tab-1" onclick="qrTab(1,this)">&#128198; Daily Grid</button>
+              <button class="qr-tab" id="qr-tab-2" onclick="qrTab(2,this)">&#127942; Points &amp; Ranking</button>
+              <button class="qr-tab" id="qr-tab-3" onclick="qrTab(3,this)">&#128214; Question Bank</button>
+              <button class="qr-tab" id="qr-tab-4" onclick="qrTab(4,this)">&#128200; % Summary</button>
+            </div>
+
+            <div id="qr-panel-1" class="qr-panel active"><div style="color:var(--text-dim);font-size:.85rem;padding:1rem 0;">Select month and year, then pull report.</div></div>
+            <div id="qr-panel-2" class="qr-panel"></div>
+            <div id="qr-panel-3" class="qr-panel"></div>
+            <div id="qr-panel-4" class="qr-panel"></div>
+          </div>
+
         </div>
       </div>
 
@@ -3967,6 +4030,368 @@ function qbAddChoice(){
   choices.appendChild(row);
 }
 
+// ═══════════════════════════════════════════════
+//  QUIZ MONTHLY REPORT
+// ═══════════════════════════════════════════════
+
+var _qrData = null; // cached report data
+
+// Init year dropdown on page load
+(function(){
+  var yr = document.getElementById('qr-year');
+  if(!yr) return;
+  var now = new Date();
+  for(var y = now.getFullYear(); y >= now.getFullYear()-2; y--){
+    var o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    yr.appendChild(o);
+  }
+  document.getElementById('qr-month').value = now.getMonth();
+})();
+
+function qrTab(n, btn){
+  document.querySelectorAll('.qr-tab').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.qr-panel').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('qr-panel-'+n).classList.add('active');
+}
+
+async function qrLoadReport(){
+  var month = parseInt(document.getElementById('qr-month').value);
+  var year  = parseInt(document.getElementById('qr-year').value);
+  var p1 = document.getElementById('qr-panel-1');
+  p1.innerHTML = '<div style="color:var(--text-dim);font-size:.85rem;padding:1rem 0;">Loading...</div>';
+
+  try{
+    // Date range for the month
+    var fromDate = year+'-'+String(month+1).padStart(2,'0')+'-01';
+    var lastDay  = new Date(year, month+1, 0).getDate();
+    var toDate   = year+'-'+String(month+1).padStart(2,'0')+'-'+String(lastDay).padStart(2,'0');
+
+    // Fetch all quizzes that month
+    var quizzes = await sbQuery('quizzes',
+      'date=gte.'+fromDate+'&date=lte.'+toDate+'&order=date.asc&select=id,date,question,type,correct_answer'
+    );
+
+    // Fetch all responses that month
+    var responses = await sbQuery('quiz_responses',
+      'date=gte.'+fromDate+'&date=lte.'+toDate+'&order=submitted_at.asc&select=quiz_id,user_id,user_name,answer,is_correct,submitted_at,date'
+    );
+
+    // Fetch all users
+    var users = await sbQuery('users','select=id,name,role&order=name.asc');
+    var agents = (users||[]).filter(function(u){ return u.role!=='syslevel'; });
+
+    // Fetch roster data to check who was on leave/off each day
+    var rosterRows = window.rosterCache || null;
+
+    _qrData = { quizzes:quizzes||[], responses:responses||[], agents:agents, rosterRows:rosterRows, month:month, year:year, fromDate:fromDate, toDate:toDate };
+
+    qrRenderTab1();
+    qrRenderTab2();
+    qrRenderTab3();
+    qrRenderTab4();
+
+    document.getElementById('qr-dl-btn').style.display = 'inline';
+
+  }catch(e){
+    p1.innerHTML = '<div style="color:var(--accent-red);font-size:.85rem;">Error: '+e.message+'</div>';
+  }
+}
+
+// ── Helper: was agent off on this date per roster? ──
+function qrIsOffDay(agentName, dateStr, rosterRows){
+  if(!rosterRows) return false;
+  var dateRow = rosterRows.find(function(r){ return String(r[1]).trim().toUpperCase()==='DATE'; });
+  if(!dateRow) return false;
+  var day = parseInt(dateStr.split('-')[2]);
+  var colIdx = dateRow.findIndex(function(c,i){ return i>=2 && Number(c)===day; });
+  if(colIdx<0) return false;
+  var agentRow = rosterRows.find(function(r){
+    return String(r[1]||'').trim().toLowerCase()===agentName.toLowerCase();
+  });
+  if(!agentRow) return false;
+  var val = String(agentRow[colIdx]||'').toUpperCase().trim();
+  return val==='WO'||val==='SH'||val==='H'||val==='L'||val==='CO'||val==='W'||val==='EO'||val==='-'||val==='';
+}
+
+// ── TAB 1: Daily Grid ──
+function qrRenderTab1(){
+  var d = _qrData;
+  if(!d.quizzes.length){ document.getElementById('qr-panel-1').innerHTML='<div style="color:var(--text-muted);font-size:.85rem;padding:1rem 0;">No quizzes found for this month.</div>'; return; }
+
+  // Build response map: quizId -> { userId -> response }
+  var respMap = {};
+  d.responses.forEach(function(r){
+    if(!respMap[r.quiz_id]) respMap[r.quiz_id] = {};
+    if(!respMap[r.quiz_id][r.user_id]) respMap[r.quiz_id][r.user_id] = r; // first response
+  });
+
+  var thead = '<thead><tr><th style="min-width:90px;">Date</th>'+
+    d.agents.map(function(a){ return '<th style="min-width:110px;">'+esc(a.name)+'</th>'; }).join('')+
+  '</tr></thead>';
+
+  var tbody = '<tbody>'+d.quizzes.map(function(q){
+    return '<tr><td>'+q.date+'</td>'+
+      d.agents.map(function(a){
+        var resp = respMap[q.id] ? respMap[q.id][a.id] : null;
+        var isOff = qrIsOffDay(a.name, q.date, d.rosterRows);
+        var cell = '';
+        if(isOff && !resp){
+          cell = '<span class="qc-np">Not Present</span>';
+        } else if(!resp){
+          cell = '<span class="qc-na">Not Attended</span>';
+        } else if(resp.is_correct){
+          cell = '<span class="qc-correct">1</span>';
+        } else {
+          cell = '<span class="qc-wrong">WA</span>';
+        }
+        return '<td>'+cell+'</td>';
+      }).join('')+
+    '</tr>';
+  }).join('')+'</tbody>';
+
+  document.getElementById('qr-panel-1').innerHTML =
+    '<div class="qr-tbl-wrap"><table class="qr-tbl">'+thead+tbody+'</table></div>';
+}
+
+// ── TAB 2: Points & Ranking ──
+function qrRenderTab2(){
+  var d = _qrData;
+  // For each quiz, sort correct responses by submitted_at, assign points
+  var agentPoints = {}; // userId -> { name, points, correct, wrong, notAtt, notPresent }
+  d.agents.forEach(function(a){
+    agentPoints[a.id] = { name:a.name, points:0, correct:0, wrong:0, notAtt:0, notPresent:0 };
+  });
+
+  var respMap = {};
+  d.responses.forEach(function(r){
+    if(!respMap[r.quiz_id]) respMap[r.quiz_id] = [];
+    respMap[r.quiz_id].push(r);
+  });
+
+  var POINTS = [50,40,30,20];
+
+  d.quizzes.forEach(function(q){
+    var allResp = respMap[q.id] || [];
+    // Sort correct responses by submitted_at
+    var correct = allResp.filter(function(r){ return r.is_correct; })
+      .sort(function(a,b){ return new Date(a.submitted_at)-new Date(b.submitted_at); });
+
+    // Assign points
+    correct.forEach(function(r,i){
+      if(agentPoints[r.user_id]){
+        agentPoints[r.user_id].points += (i<4 ? POINTS[i] : 0);
+        agentPoints[r.user_id].correct++;
+      }
+    });
+
+    // Wrong answers
+    var wrong = allResp.filter(function(r){ return r.is_correct===false; });
+    wrong.forEach(function(r){
+      if(agentPoints[r.user_id]) agentPoints[r.user_id].wrong++;
+    });
+
+    // Not attended / not present
+    var respondedIds = new Set(allResp.map(function(r){ return r.user_id; }));
+    d.agents.forEach(function(a){
+      if(!respondedIds.has(a.id)){
+        var isOff = qrIsOffDay(a.name, q.date, d.rosterRows);
+        if(isOff) agentPoints[a.id].notPresent++;
+        else agentPoints[a.id].notAtt++;
+      }
+    });
+  });
+
+  // Sort by points desc
+  var sorted = Object.values(agentPoints).sort(function(a,b){ return b.points-a.points; });
+  var medals = ['🥇','🥈','🥉'];
+
+  var topThree = sorted.slice(0,3).map(function(a,i){
+    return '<div class="qr-rank-card">'+
+      '<div class="qr-rank-medal">'+medals[i]+'</div>'+
+      '<div style="flex:1;"><div class="qr-rank-name">'+esc(a.name)+'</div>'+
+      '<div class="qr-rank-sub">'+a.correct+' correct · '+a.wrong+' wrong · '+a.notAtt+' not attended</div></div>'+
+      '<div class="qr-rank-pts">'+a.points+' pts</div>'+
+    '</div>';
+  }).join('');
+
+  var tableRows = sorted.map(function(a,i){
+    return '<tr>'+
+      '<td style="text-align:center;font-weight:600;">'+(i+1)+'</td>'+
+      '<td style="text-align:left;">'+esc(a.name)+'</td>'+
+      '<td>'+a.points+'</td>'+
+      '<td>'+a.correct+'</td>'+
+      '<td>'+a.wrong+'</td>'+
+      '<td>'+a.notAtt+'</td>'+
+      '<td>'+a.notPresent+'</td>'+
+    '</tr>';
+  }).join('');
+
+  document.getElementById('qr-panel-2').innerHTML =
+    '<div style="margin-bottom:1rem;">'+topThree+'</div>'+
+    '<div class="qr-tbl-wrap"><table class="qr-tbl">'+
+      '<thead><tr><th>#</th><th style="text-align:left;">Name</th><th>Points</th><th>Correct</th><th>Wrong</th><th>Not Attended</th><th>Not Present</th></tr></thead>'+
+      '<tbody>'+tableRows+'</tbody>'+
+    '</table></div>';
+}
+
+// ── TAB 3: Question Bank ──
+function qrRenderTab3(){
+  var d = _qrData;
+  if(!d.quizzes.length){ document.getElementById('qr-panel-3').innerHTML='<div style="color:var(--text-muted);font-size:.85rem;padding:1rem 0;">No quizzes found.</div>'; return; }
+
+  var rows = d.quizzes.map(function(q,i){
+    return '<tr>'+
+      '<td style="text-align:center;">'+(i+1)+'</td>'+
+      '<td style="text-align:left;">'+q.date+'</td>'+
+      '<td style="text-align:left;white-space:normal;min-width:260px;">'+esc(q.question)+'</td>'+
+      '<td style="text-align:left;">'+esc(q.type)+'</td>'+
+      '<td style="text-align:left;font-weight:600;color:var(--accent-green);">'+esc(q.correct_answer||'Essay')+'</td>'+
+    '</tr>';
+  }).join('');
+
+  document.getElementById('qr-panel-3').innerHTML =
+    '<div class="qr-tbl-wrap"><table class="qr-tbl">'+
+      '<thead><tr><th>#</th><th style="text-align:left;">Date</th><th style="text-align:left;">Question</th><th style="text-align:left;">Type</th><th style="text-align:left;">Correct Answer</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+    '</table></div>';
+}
+
+// ── TAB 4: % Summary ──
+function qrRenderTab4(){
+  var d = _qrData;
+  var respMap = {};
+  d.responses.forEach(function(r){
+    if(!respMap[r.quiz_id]) respMap[r.quiz_id] = {};
+    if(!respMap[r.quiz_id][r.user_id]) respMap[r.quiz_id][r.user_id] = r;
+  });
+
+  var summary = d.agents.map(function(a,i){
+    var daysPresent=0, attempted=0, correct=0, wrong=0, notAtt=0;
+    d.quizzes.forEach(function(q){
+      var isOff = qrIsOffDay(a.name, q.date, d.rosterRows);
+      if(!isOff) daysPresent++;
+      var resp = respMap[q.id] ? respMap[q.id][a.id] : null;
+      if(resp){
+        attempted++;
+        if(resp.is_correct) correct++;
+        else wrong++;
+      } else if(!isOff){
+        notAtt++;
+      }
+    });
+    var pct = attempted>0 ? Math.round(correct/attempted*100)+'%' : '0%';
+    return { no:i+1, name:a.name, daysPresent:daysPresent, attempted:attempted, correct:correct, wrong:wrong, notAtt:notAtt, pct:pct };
+  });
+
+  var rows = summary.map(function(s){
+    var pctNum = parseInt(s.pct);
+    var pctColor = pctNum>=70?'var(--accent-green)':pctNum>=40?'#E65100':'var(--accent-red)';
+    return '<tr>'+
+      '<td style="text-align:center;">'+s.no+'</td>'+
+      '<td style="text-align:left;">'+esc(s.name)+'</td>'+
+      '<td>'+s.daysPresent+'</td>'+
+      '<td>'+s.attempted+'</td>'+
+      '<td style="color:var(--accent-green);font-weight:600;">'+s.correct+'</td>'+
+      '<td style="color:var(--accent-red);">'+s.wrong+'</td>'+
+      '<td style="color:var(--text-muted);">'+s.notAtt+'</td>'+
+      '<td style="font-weight:700;color:'+pctColor+';">'+s.pct+'</td>'+
+    '</tr>';
+  }).join('');
+
+  document.getElementById('qr-panel-4').innerHTML =
+    '<div class="qr-tbl-wrap"><table class="qr-tbl">'+
+      '<thead><tr><th>#</th><th style="text-align:left;">Name</th><th>Days Present</th><th>Attempted</th><th>Correct</th><th>Wrong</th><th>Not Attempted</th><th>%</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+    '</table></div>';
+}
+
+// ── Download Excel (all 4 tabs) ──
+function qrDownloadExcel(){
+  if(!_qrData){ alert('Pull report first.'); return; }
+  var d = _qrData;
+  var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var mLabel = MONTHS[d.month]+' '+d.year;
+
+  // Build CSV for each sheet, combine into one download per tab
+  // Tab 1: Daily Grid
+  var t1 = [['Date'].concat(d.agents.map(function(a){return a.name;}))];
+  var respMap = {};
+  d.responses.forEach(function(r){
+    if(!respMap[r.quiz_id]) respMap[r.quiz_id]={};
+    if(!respMap[r.quiz_id][r.user_id]) respMap[r.quiz_id][r.user_id]=r;
+  });
+  d.quizzes.forEach(function(q){
+    var row=[q.date];
+    d.agents.forEach(function(a){
+      var resp=respMap[q.id]?respMap[q.id][a.id]:null;
+      var isOff=qrIsOffDay(a.name,q.date,d.rosterRows);
+      if(isOff&&!resp) row.push('Not Present');
+      else if(!resp) row.push('Not Attended');
+      else if(resp.is_correct) row.push('1');
+      else row.push('WA');
+    });
+    t1.push(row);
+  });
+
+  // Tab 2: Points
+  var POINTS=[50,40,30,20];
+  var agPts={};
+  d.agents.forEach(function(a){ agPts[a.id]={name:a.name,points:0,correct:0,wrong:0,notAtt:0,notPresent:0}; });
+  var rm2={};
+  d.responses.forEach(function(r){ if(!rm2[r.quiz_id])rm2[r.quiz_id]=[]; rm2[r.quiz_id].push(r); });
+  d.quizzes.forEach(function(q){
+    var cr=(rm2[q.id]||[]).filter(function(r){return r.is_correct;}).sort(function(a,b){return new Date(a.submitted_at)-new Date(b.submitted_at);});
+    cr.forEach(function(r,i){ if(agPts[r.user_id]){agPts[r.user_id].points+=(i<4?POINTS[i]:0);agPts[r.user_id].correct++;} });
+    (rm2[q.id]||[]).filter(function(r){return r.is_correct===false;}).forEach(function(r){ if(agPts[r.user_id])agPts[r.user_id].wrong++; });
+    var rids=new Set((rm2[q.id]||[]).map(function(r){return r.user_id;}));
+    d.agents.forEach(function(a){ if(!rids.has(a.id)){ if(qrIsOffDay(a.name,q.date,d.rosterRows))agPts[a.id].notPresent++;else agPts[a.id].notAtt++; } });
+  });
+  var t2=[['#','Name','Points','Correct','Wrong','Not Attended','Not Present']];
+  Object.values(agPts).sort(function(a,b){return b.points-a.points;}).forEach(function(a,i){ t2.push([i+1,a.name,a.points,a.correct,a.wrong,a.notAtt,a.notPresent]); });
+
+  // Tab 3: Question Bank
+  var t3=[['#','Date','Question','Type','Correct Answer']];
+  d.quizzes.forEach(function(q,i){ t3.push([i+1,q.date,q.question,q.type,q.correct_answer||'Essay']); });
+
+  // Tab 4: % Summary
+  var t4=[['#','Name','Days Present','Attempted','Correct Answer','Wrong Answer','Not Attempted','Percentage']];
+  d.agents.forEach(function(a,i){
+    var dp=0,att=0,cor=0,wr=0,na=0;
+    d.quizzes.forEach(function(q){
+      var isOff=qrIsOffDay(a.name,q.date,d.rosterRows);
+      if(!isOff)dp++;
+      var resp=respMap[q.id]?respMap[q.id][a.id]:null;
+      if(resp){att++;if(resp.is_correct)cor++;else wr++;}
+      else if(!isOff)na++;
+    });
+    t4.push([i+1,a.name,dp,att,cor,wr,na,att>0?Math.round(cor/att*100)+'%':'0%']);
+  });
+
+  // Download as separate CSV files (one per tab) — bundled in a zip would need a library
+  // Instead we download them one by one with a small delay
+  var tabs=[
+    {name:'Tab1_Daily_Grid', data:t1},
+    {name:'Tab2_Points_Ranking', data:t2},
+    {name:'Tab3_Question_Bank', data:t3},
+    {name:'Tab4_Percentage', data:t4}
+  ];
+
+  tabs.forEach(function(tab, i){
+    setTimeout(function(){
+      var csv = tab.data.map(function(row){
+        return row.map(function(v){ return '"'+String(v||'').replace(/"/g,'""')+'"'; }).join(',');
+      }).join('\n');
+      var blob = new Blob([csv],{type:'text/csv'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = mLabel+'_QuizReport_'+tab.name+'.csv';
+      a.click();
+    }, i*400);
+  });
+}
+
 function resetQuizBuilder(){
   document.getElementById('qb-question').value='';
   document.getElementById('qb-type').value='mcq';
@@ -4033,7 +4458,8 @@ async function loadQuizBuilderList(){
     list.innerHTML=rows.map(function(q){
       var status=qaGetStatus(q.open_time,q.close_time);
       var statusLabels={upcoming:'Upcoming',open:'Open Now',closed:'Closed'};
-      return '<div class="qa-item">'+
+      var isEssay = q.type==='essay';
+      return '<div class="qa-item" id="qbi-'+q.id+'">'+
         '<div class="qa-item-left">'+
           '<div class="qa-item-title">'+q.question.slice(0,80)+(q.question.length>80?'...':'')+'</div>'+
           '<div class="qa-item-meta">'+
@@ -4042,14 +4468,89 @@ async function loadQuizBuilderList(){
             '<span>Max '+q.max_attempts+' attempt(s)</span>'+
           '</div>'+
         '</div>'+
-        '<div style="display:flex;align-items:center;gap:.5rem;">'+
+        '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'+
           '<span class="qa-status-pill '+status+'">'+statusLabels[status]+'</span>'+
+          (isEssay?'<button class="qa-toggle-btn" onclick="qbToggleEssayReview(\''+q.id+'\')" id="qbr-btn-'+q.id+'">&#128065; Review Answers</button>':'')+
           '<button class="qa-toggle-btn'+(q.review_enabled?' on':'')+'" onclick="toggleQuizReview(\''+q.id+'\','+q.review_enabled+')" title="Toggle review mode">&#128065; Review '+(q.review_enabled?'ON':'OFF')+'</button>'+
           '<button class="qa-del-btn" onclick="deleteQuiz(\''+q.id+'\')">Delete</button>'+
         '</div>'+
+        // Essay review panel — hidden by default
+        (isEssay?'<div id="qbr-panel-'+q.id+'" style="display:none;width:100%;margin-top:.9rem;border-top:1px solid var(--navy-border);padding-top:.9rem;"></div>':'')+
       '</div>';
     }).join('');
   }catch(e){list.innerHTML='<div style="color:var(--accent-red);padding:1rem;font-size:.875rem;">Error loading quizzes: '+e.message+'</div>';}
+}
+
+async function qbToggleEssayReview(quizId){
+  var panel = document.getElementById('qbr-panel-'+quizId);
+  var btn   = document.getElementById('qbr-btn-'+quizId);
+  if(!panel) return;
+  if(panel.style.display==='block'){
+    panel.style.display='none';
+    btn.textContent='👁 Review Answers';
+    return;
+  }
+  panel.style.display='block';
+  btn.textContent='▲ Close Review';
+  panel.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">Loading responses...</div>';
+  try{
+    var responses = await sbQuery('quiz_responses',
+      'quiz_id=eq.'+quizId+'&order=submitted_at.asc&select=id,user_name,answer,is_correct,submitted_at'
+    );
+    if(!responses||!responses.length){
+      panel.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:.5rem 0;">No responses yet for this quiz.</div>';
+      return;
+    }
+    var cards = responses.map(function(r){
+      var time = r.submitted_at ? xcLocalTime(r.submitted_at).slice(0,8) : '';
+      var ini  = (r.user_name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+      var isC  = r.is_correct===true;
+      var isW  = r.is_correct===false;
+      var statusBadge = isC
+        ? '<span style="font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(46,197,111,.12);color:#1a7a45;">✓ Correct</span>'
+        : isW
+        ? '<span style="font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--accent-red);">✗ Wrong</span>'
+        : '<span style="font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(239,73,60,.07);color:var(--gold);">— Unmarked</span>';
+
+      return '<div id="qbrc-'+r.id+'" style="display:flex;align-items:flex-start;gap:.85rem;padding:.75rem .9rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);margin-bottom:.5rem;'+(isC?'border-left:3px solid var(--accent-green);':isW?'border-left:3px solid var(--accent-red);':'')+'">'+
+        '<div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;flex-shrink:0;">'+ini+'</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.3rem;">'+
+            '<span style="font-weight:600;font-size:.85rem;color:var(--text-primary);">'+esc(r.user_name)+'</span>'+
+            '<span style="font-size:.72rem;color:var(--text-dim);">'+time+'</span>'+
+            statusBadge+
+          '</div>'+
+          '<div style="font-size:.85rem;color:var(--text-primary);background:var(--navy-card);padding:.5rem .75rem;border-radius:6px;border:1px solid var(--navy-border);word-break:break-word;">'+esc(r.answer||'(no answer)')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;gap:.4rem;flex-shrink:0;">'+
+          '<button class="qbr-mark-btn correct" onclick="qbMarkAnswer(\''+r.id+'\',true,\''+quizId+'\')" '+(isC?'style="opacity:.4;cursor:default;" disabled':'')+'>✓ Correct</button>'+
+          '<button class="qbr-mark-btn wrong"   onclick="qbMarkAnswer(\''+r.id+'\',false,\''+quizId+'\')" '+(isW?'style="opacity:.4;cursor:default;" disabled':'')+'>✗ Wrong</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+
+    var pending = responses.filter(function(r){ return r.is_correct===null||r.is_correct===undefined; }).length;
+    panel.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">'+
+        '<span style="font-size:.78rem;color:var(--text-muted);">'+responses.length+' response(s) · <span style="color:'+(pending>0?'var(--gold)':'var(--accent-green)')+';">'+pending+' unmarked</span></span>'+
+        '<button class="ts-btn-sec" style="font-size:.75rem;padding:.3rem .7rem;" onclick="qbToggleEssayReview(\''+quizId+'\')">Close</button>'+
+      '</div>'+
+      cards;
+  }catch(e){
+    panel.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+e.message+'</div>';
+  }
+}
+
+async function qbMarkAnswer(responseId, isCorrect, quizId){
+  try{
+    await sbUpdate('quiz_responses','id',responseId,{is_correct:isCorrect});
+    // Reload the panel content directly without toggle
+    var panel = document.getElementById('qbr-panel-'+quizId);
+    if(panel && panel.style.display==='block'){
+      panel.style.display='none';
+      qbToggleEssayReview(quizId);
+    }
+  }catch(e){ alert('Could not save mark: '+e.message); }
 }
 
 async function toggleQuizReview(id, current){
