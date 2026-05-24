@@ -672,6 +672,66 @@
     margin-bottom: 2rem;
   }
 
+  /* ── Live stat cards ── */
+  .live-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .75rem;
+    margin-bottom: 1rem;
+  }
+  .live-stat-card {
+    background: var(--navy-card);
+    border: 1px solid var(--navy-border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    transition: box-shadow .18s, border-color .18s;
+  }
+  .live-stat-card.stat-clickable { cursor: pointer; }
+  .live-stat-card.stat-clickable:hover { border-color: var(--gold-dim); box-shadow: 0 2px 12px rgba(174,123,76,.1); }
+  .live-stat-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .live-stat-body { flex: 1; min-width: 0; }
+  .live-stat-val {
+    font-size: 1.6rem; font-family: 'Cormorant Garamond', serif;
+    font-weight: 600; color: var(--text-primary); line-height: 1;
+  }
+  .live-stat-label {
+    font-size: .68rem; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--text-muted); margin-top: .2rem;
+  }
+
+  /* ── Who's Active ── */
+  .whos-active-panel {
+    background: var(--navy-card);
+    border: 1px solid var(--navy-border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+  }
+  .whos-active-list { display: flex; flex-direction: column; gap: .5rem; margin-top: .6rem; }
+  .wa-item {
+    display: flex; align-items: center; gap: .7rem;
+    padding: .55rem .75rem;
+    background: var(--navy-hover);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--navy-border);
+  }
+  .wa-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-size: .6rem; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .wa-name { font-size: .82rem; font-weight: 600; color: var(--text-primary); flex: 1; }
+  .wa-status { font-size: .7rem; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .wa-status.active   { background: rgba(46,197,111,.1);  color: #1a7a45; }
+  .wa-status.break    { background: rgba(239,73,60,.1);   color: var(--accent-red); }
+  .wa-status.notin    { background: rgba(123,135,153,.1); color: var(--text-dim); }
+
   .stat-card {
     background: var(--navy-card);
     border: 1px solid var(--navy-border);
@@ -898,6 +958,7 @@
     .home-greeting { margin-bottom: 1.5rem; }
     .live-stats-row { grid-template-columns: repeat(2,1fr); gap: .75rem; margin-bottom: 1.25rem; }
     .live-stat-card { padding: .9rem 1rem; }
+    .live-stats-row { grid-template-columns: repeat(2,1fr); }
     .live-stat-val { font-size: 1.6rem; }
     .live-stat-icon { width: 36px; height: 36px; }
     .whos-active-panel { margin-top: 1rem; }
@@ -2099,7 +2160,7 @@ function showPage(id,elem){
   if(id==='users')loadUsersPage();
   if(id==='changepass')resetChangePasswordForm();
   if(id==='reports'){loadReportAgents();initReportDates();}
-  if(id==='roster'){if(window.rosterCache)renderRosterPage(window.rosterCache);else loadRosterSummary();}
+  if(id==='roster'){if(window.rosterCache)renderRosterPage(window.rosterCache, window._rosterTodayColGlobal||false);else loadRosterSummary();}
   if(id==='moments')setTimeout(function(){_mLoadTab(_mActiveTab);},60);
 }
 
@@ -2269,7 +2330,16 @@ function updateRosterBanner(s){
   updateAbsentStat(s.absent.length);
 }
 // ── Roster week offset (0 = current week) ──
-var _rosterWeekOffset = 0;
+function getTodayStatusTag(val){
+  var v = String(val||'').toUpperCase().trim();
+  var wd = new Date().getDay();
+  if(wd===0||wd===6) return '<span class="rc rc-o">Off</span>';
+  if(!v||v==='-'||v==='WO'||v==='SH'||v==='H') return '<span class="rc rc-o">—</span>';
+  if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W') return '<span class="rc rc-a">Leave</span>';
+  if(v.indexOf('WFH')>-1) return '<span class="rc rc-w">WFH</span>';
+  if(v.indexOf('HL')>-1) return '<span class="rc rc-h">½ Day</span>';
+  return '<span class="rc rc-p">'+(val?String(val).trim():'P')+'</span>';
+}
 
 function rosterNavWeek(dir){
   _rosterWeekOffset += dir;
@@ -4204,9 +4274,9 @@ function renderWhosActive(users,att,onBreakSet){
     var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
     var isBreak=onBreakSet.has(u.name);
     var isIn=attIds.has(u.id);
-    var sc=isBreak?'onbreak':isIn?'active':'out';
+    var sc=isBreak?'break':isIn?'active':'notin';
     var sl=isBreak?'On Break':isIn?'Active':'Not In';
-    return {html:'<div class="wa-agent"><div class="wa-avatar">'+ini+'</div><div class="wa-name">'+u.name+'</div><span class="wa-status '+sc+'">'+sl+'</span></div>',order:isBreak?1:isIn?0:2};
+    return {html:'<div class="wa-item"><div class="wa-avatar">'+ini+'</div><div class="wa-name">'+esc(u.name)+'</div><span class="wa-status '+sc+'">'+sl+'</span></div>',order:isBreak?1:isIn?0:2};
   });
   items.sort(function(a,b){return a.order-b.order;});
   list.innerHTML=items.map(function(x){return x.html;}).join('');
