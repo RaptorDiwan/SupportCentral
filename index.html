@@ -1358,6 +1358,43 @@
   .roster-legend span { display:flex; align-items:center; gap:.35rem; }
   .roster-legend-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
   .roster-empty { text-align:center; padding:3rem; color:var(--text-dim); font-size:.875rem; }
+  /* Week navigation */
+  .roster-week-nav { display:flex;align-items:center;gap:.4rem; }
+  .roster-week-lbl { font-size:.8rem;font-weight:600;color:var(--text-primary);min-width:110px;text-align:center;white-space:nowrap; }
+  .roster-nav-btn { padding:.38rem .7rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;color:var(--text-primary);transition:background .15s; }
+  .roster-nav-btn:hover { background:var(--navy-hover); }
+  .roster-today-btn { font-size:.72rem;padding:.38rem .65rem;color:var(--text-muted); }
+  /* Table layout — proper horizontal scroll */
+  .roster-grid-wrap { background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow-x:auto;overflow-y:visible; }
+  .roster-tbl { width:100%;border-collapse:collapse;min-width:580px; }
+  .roster-tbl thead tr { background:rgba(7,13,45,.03);border-bottom:2px solid var(--navy-border); }
+  .roster-tbl th { padding:.6rem .85rem;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;border-right:1px solid var(--navy-border);text-align:center; }
+  .roster-tbl th:first-child { text-align:left;position:sticky;left:0;background:var(--navy-card);z-index:2;min-width:150px; }
+  .roster-tbl th:nth-child(2) { min-width:80px; }
+  .roster-tbl th.rth-today { background:rgba(239,73,60,.07);color:var(--gold);border-bottom:2px solid var(--gold); }
+  .roster-tbl th.rth-wknd { opacity:.55; }
+  .roster-tbl td { padding:.65rem .85rem;border-right:1px solid var(--navy-border);border-bottom:1px solid var(--navy-border);vertical-align:middle;white-space:nowrap;text-align:center; }
+  .roster-tbl td:first-child { text-align:left;position:sticky;left:0;background:var(--navy-card);z-index:1; }
+  .roster-tbl tr:last-child td { border-bottom:none; }
+  .roster-tbl tr:hover td { background:var(--navy-hover); }
+  .roster-tbl tr:hover td:first-child { background:var(--navy-hover); }
+  .roster-tbl td.rtd-today { background:rgba(239,73,60,.03); }
+  .roster-tbl td.rtd-wknd { background:rgba(123,135,153,.03); }
+  /* Row accent bars */
+  .roster-tbl tr.rrow-absent td:first-child { border-left:3px solid var(--accent-red); }
+  .roster-tbl tr.rrow-wfh td:first-child { border-left:3px solid var(--accent-blue); }
+  /* Name cell */
+  .roster-name-cell { display:flex;align-items:center;gap:.6rem; }
+  .roster-av { width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;flex-shrink:0; }
+  .roster-nm { font-weight:600;font-size:.82rem;color:var(--text-primary); }
+  /* Status chips */
+  .rc { display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:600;padding:.18rem .55rem;border-radius:20px;white-space:nowrap; }
+  .rc-p { background:rgba(46,197,111,.12);color:#1a7a45; }
+  .rc-a { background:rgba(239,73,60,.12);color:var(--accent-red); }
+  .rc-w { background:rgba(76,118,168,.12);color:var(--accent-blue); }
+  .rc-h { background:rgba(230,101,0,.12);color:#E65100; }
+  .rc-o { background:rgba(123,135,153,.1);color:var(--text-dim); }
+  .rc-t { background:rgba(239,73,60,.1);color:var(--gold);font-weight:700; }
   /* My Shift card on home */
   .my-shift-card { background:var(--navy-card); border:1px solid var(--navy-border); border-radius:var(--radius); padding:1.1rem 1.3rem; margin-bottom:0; }
   .my-shift-title { font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:.75rem; font-weight:500; }
@@ -1995,7 +2032,13 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
       <div class="page" id="page-roster">
         <div class="roster-page">
           <div class="roster-controls">
-            <input type="text" class="roster-search" id="roster-search" placeholder="Search agent name..." oninput="filterRoster(this.value)"/>
+            <input type="text" class="roster-search" id="roster-search" placeholder="&#128269; Search agent..." oninput="filterRoster(this.value)"/>
+            <div class="roster-week-nav">
+              <button class="roster-nav-btn" onclick="rosterNavWeek(-1)">&#8592;</button>
+              <span class="roster-week-lbl" id="roster-week-lbl">This week</span>
+              <button class="roster-nav-btn" onclick="rosterNavWeek(1)">&#8594;</button>
+              <button class="roster-nav-btn roster-today-btn" id="roster-today-btn" onclick="rosterGoToday()">Today</button>
+            </div>
             <button class="roster-refresh-btn" onclick="loadRosterSummary()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               Sync Roster
@@ -2006,7 +2049,7 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
             <span><span class="roster-legend-dot" style="background:var(--accent-red);"></span>Leave</span>
             <span><span class="roster-legend-dot" style="background:var(--accent-blue);"></span>WFH</span>
             <span><span class="roster-legend-dot" style="background:#E65100;"></span>Half Day</span>
-            <span><span class="roster-legend-dot" style="background:var(--text-dim);"></span>Off</span>
+            <span><span class="roster-legend-dot" style="background:var(--text-dim);"></span>Off/Weekend</span>
           </div>
           <div id="roster-table-wrap" class="roster-grid-wrap">
             <div class="roster-empty">Loading roster...</div>
@@ -2586,7 +2629,7 @@ function showPage(id,elem){
   if(id==='users')loadUsersPage();
   if(id==='changepass')resetChangePasswordForm();
   if(id==='reports'){loadReportAgents();initReportDates();}
-  if(id==='roster'){if(window.rosterCache)renderRosterPage(window.rosterCache);else loadRosterSummary();}
+  if(id==='roster'){if(window.rosterCache)renderRosterPage(window.rosterCache,window._rosterTodayColGlobal||false);else loadRosterSummary();}
   if(id==='moments')setTimeout(function(){_mLoadTab(_mActiveTab);},60);
 }
 
@@ -2735,109 +2778,174 @@ function updateRosterBanner(s){
   if(bar)bar.style.display=s.absent.length||s.wfh.length||s.halfDay.length?'flex':'none';
   updateAbsentStat(s.absent.length);
 }
-function renderRosterPage(rows,todayCol,error){
-  var wrap=document.getElementById('roster-table-wrap');
-  if(error){wrap.innerHTML='<div class="roster-empty">Could not load roster. Check your Google Sheets link.</div>';return;}
-  if(!rows||!rows.length){wrap.innerHTML='<div class="roster-empty">No roster data found.</div>';return;}
-  var dateRow=rows.find(function(r){return String(r[1]).trim().toUpperCase()==='DATE';});
-  if(!dateRow){wrap.innerHTML='<div class="roster-empty">Could not find roster header row.</div>';return;}
+// ── Week navigation state ──
+var _rosterWeekOffset = 0;
 
-  // Get date columns (index 2 onwards)
-  var today=new Date().getDate();
-  var dateCols=dateRow.slice(2).map(function(d,i){
-    var num=Number(d);
-    return {idx:i+2, day:num, isToday:num===today && todayCol===i+2};
-  }).filter(function(d){return d.day>0;});
+function rosterNavWeek(dir){
+  _rosterWeekOffset += dir;
+  if(window._rosterAllRows) renderRosterPage(window._rosterAllRows, window._rosterTodayColGlobal||false, null);
+}
+function rosterGoToday(){
+  _rosterWeekOffset = 0;
+  if(window._rosterAllRows) renderRosterPage(window._rosterAllRows, window._rosterTodayColGlobal||false, null);
+}
 
-  // Show only a window: 3 days before today and up to 10 days ahead
-  var todayIdx=dateCols.findIndex(function(d){return d.isToday;});
-  var startI=Math.max(0,todayIdx-3);
-  var endI=Math.min(dateCols.length,todayIdx+11);
-  var visibleCols=dateCols.slice(startI,endI);
+function renderRosterPage(rows, todayCol, error){
+  var wrap = document.getElementById('roster-table-wrap');
+  if(error){ wrap.innerHTML='<div class="roster-empty">Could not load roster. Check your Google Sheets link.</div>'; return; }
+  if(!rows||!rows.length){ wrap.innerHTML='<div class="roster-empty">No roster data found.</div>'; return; }
 
-  var agentRows=rows.slice(rows.indexOf(dateRow)+2).filter(function(r){
-    return String(r[0]||'').trim()&&String(r[1]||'').trim()&&/^K\d+/i.test(String(r[0]||'').trim());
+  var dateRow = rows.find(function(r){ return String(r[1]).trim().toUpperCase()==='DATE'; });
+  if(!dateRow){ wrap.innerHTML='<div class="roster-empty">Could not find roster header row.</div>'; return; }
+
+  var todayD = new Date().getDate();
+  var todayM = new Date().getMonth();
+  var todayY = new Date().getFullYear();
+
+  // All date columns
+  var allDateCols = dateRow.slice(2).map(function(d,i){
+    var num = Number(d);
+    return { idx:i+2, day:num, isToday: num===todayD && todayCol===i+2 };
+  }).filter(function(d){ return d.day>0; });
+
+  // Store globally
+  window._rosterAllRows = rows;
+  window._rosterTodayColGlobal = todayCol;
+
+  // Find today's position in dateCols
+  var todayPos = allDateCols.findIndex(function(d){ return d.isToday; });
+  if(todayPos < 0) todayPos = 0;
+
+  // 7-day window based on week offset
+  var weekStart = todayPos - (todayPos % 7) + (_rosterWeekOffset * 7);
+  weekStart = Math.max(0, Math.min(weekStart, allDateCols.length - 7));
+  var visibleCols = allDateCols.slice(weekStart, weekStart + 7);
+
+  // Update week label
+  var lbl = document.getElementById('roster-week-lbl');
+  var todayBtn = document.getElementById('roster-today-btn');
+  if(lbl){
+    if(_rosterWeekOffset===0) lbl.textContent='This week';
+    else if(_rosterWeekOffset===-1) lbl.textContent='Last week';
+    else if(_rosterWeekOffset===1) lbl.textContent='Next week';
+    else { lbl.textContent = (visibleCols[0]?visibleCols[0].day:'')+'–'+(visibleCols[visibleCols.length-1]?visibleCols[visibleCols.length-1].day:''); }
+  }
+  if(todayBtn) todayBtn.style.opacity = _rosterWeekOffset===0?'.4':'1';
+
+  var agentRows = rows.slice(rows.indexOf(dateRow)+2).filter(function(r){
+    return String(r[0]||'').trim() && String(r[1]||'').trim() && /^K\d+/i.test(String(r[0]||'').trim());
   });
 
-  // Store for filtering
-  window._rosterRenderedRows=agentRows;
-  window._rosterVisibleCols=visibleCols;
-  window._rosterTodayCol=todayCol;
+  window._rosterRenderedRows = agentRows;
+  window._rosterVisibleCols = visibleCols;
+  window._rosterTodayCol = todayCol;
+  window._rosterTodayM = todayM;
+  window._rosterTodayY = todayY;
 
-  renderRosterGrid(agentRows, visibleCols, todayCol, '');
+  renderRosterGrid(agentRows, visibleCols, todayCol, document.getElementById('roster-search')?document.getElementById('roster-search').value:'');
 }
 
-function getCellClass(val, isToday){
-  var v=String(val||'').toUpperCase().trim();
-  var base=isToday?'roster-day-cell today-col':'roster-day-cell';
-  if(!v||v==='-') return base+' off';
-  if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W') return base+' absent';
-  if(v.indexOf('WFH')>-1) return base+' wfh';
-  if(v.indexOf('HL')>-1) return base+' half';
-  if(v==='WO'||v==='SH'||v==='H') return base+' weekend';
-  return base+' present';
+function getDayName(day, month, year){
+  return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(year,month,day).getDay()];
+}
+function isWeekend(day, month, year){
+  var wd = new Date(year,month,day).getDay();
+  return wd===0||wd===6;
 }
 
-function getCellDisplay(val){
-  var v=String(val||'').trim();
-  if(!v||v==='-') return '-';
-  return v;
+function getRosterChip(val, isToday, day, month, year){
+  var v = String(val||'').toUpperCase().trim();
+  var wknd = day ? isWeekend(day,month,year) : false;
+  if(!v||v==='-'||v==='') return wknd ? '<span class="rc rc-o">Off</span>' : '<span class="rc rc-o">—</span>';
+  if(v==='WO'||v==='SH'||v==='H') return '<span class="rc rc-o">Off</span>';
+  if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W'||v==='EO') return '<span class="rc rc-a">Leave</span>';
+  if(v.indexOf('WFH')>-1){
+    // Extract number if present e.g. "12-WFH"
+    var num = v.match(/(\d+)/); 
+    return '<span class="rc rc-w">'+(num?num[1]+' WFH':'WFH')+'</span>';
+  }
+  if(v.indexOf('HL')>-1){
+    var nm = v.match(/(\d+)/);
+    return '<span class="rc rc-h">'+(nm?nm[1]+' ½':'½ Day')+'</span>';
+  }
+  var display = String(val).trim();
+  return '<span class="rc '+(isToday?'rc-t':'rc-p')+'">'+display+'</span>';
 }
 
 function getTodayStatusTag(val){
-  var v=String(val||'').toUpperCase().trim();
-  if(!v||v==='-') return '<span class="roster-status-tag off">Off</span>';
-  if(NOT_PRESENT_CODES.has(v)) return '<span class="roster-status-tag absent">Leave</span>';
-  if(v.indexOf('WFH')>-1) return '<span class="roster-status-tag wfh">WFH</span>';
-  if(v.indexOf('HL')>-1) return '<span class="roster-status-tag half">Half Day</span>';
-  if(v==='WO'||v==='SH'||v==='H') return '<span class="roster-status-tag off">Off</span>';
-  return '<span class="roster-status-tag present">Present</span>';
+  var v = String(val||'').toUpperCase().trim();
+  var wd = new Date().getDay();
+  if(wd===0||wd===6) return '<span class="rc rc-o">Off</span>';
+  if(!v||v==='-') return '<span class="rc rc-o">—</span>';
+  if(v==='WO'||v==='SH'||v==='H') return '<span class="rc rc-o">Off</span>';
+  if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W'||v==='EO') return '<span class="rc rc-a">Leave</span>';
+  if(v.indexOf('WFH')>-1) return '<span class="rc rc-w">WFH</span>';
+  if(v.indexOf('HL')>-1) return '<span class="rc rc-h">½ Day</span>';
+  return '<span class="rc rc-p">'+(val?String(val).trim():'P')+'</span>';
 }
 
 function renderRosterGrid(agentRows, visibleCols, todayCol, search){
-  var wrap=document.getElementById('roster-table-wrap');
-  var filtered=search?agentRows.filter(function(r){return String(r[1]||'').toLowerCase().indexOf(search.toLowerCase())>-1;}):agentRows;
-  if(!filtered.length){wrap.innerHTML='<div class="roster-empty">No agents match your search.</div>';return;}
+  var wrap = document.getElementById('roster-table-wrap');
+  var todayM = window._rosterTodayM !== undefined ? window._rosterTodayM : new Date().getMonth();
+  var todayY = window._rosterTodayY !== undefined ? window._rosterTodayY : new Date().getFullYear();
 
-  var colCount=3+visibleCols.length; // avatar+name+today-status+dates
-  var gridCols='180px 90px repeat('+visibleCols.length+',1fr)';
+  var filtered = search ? agentRows.filter(function(r){
+    return String(r[1]||'').toLowerCase().indexOf(search.toLowerCase()) > -1;
+  }) : agentRows;
 
-  var html='<div class="roster-grid-header" style="grid-template-columns:'+gridCols+';">'+
-    '<span>Agent</span>'+
-    '<span style="text-align:center;">Today</span>'+
+  if(!filtered.length){ wrap.innerHTML='<div class="roster-empty">No agents match your search.</div>'; return; }
+  if(!visibleCols||!visibleCols.length){ wrap.innerHTML='<div class="roster-empty">No dates to display.</div>'; return; }
+
+  var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  var thead = '<thead><tr>'+
+    '<th style="text-align:left;">Agent</th>'+
+    '<th>Today</th>'+
     visibleCols.map(function(col){
-      return '<span style="text-align:center;'+(col.isToday?'color:var(--gold);font-weight:700;':'')+'">'+(col.isToday?'Today':col.day)+'</span>';
+      var wknd = isWeekend(col.day, todayM, todayY);
+      var dn = getDayName(col.day, todayM, todayY);
+      return '<th class="'+(col.isToday?'rth-today':wknd?'rth-wknd':'')+'" style="min-width:72px;">'+
+        (col.isToday?'<div style="font-size:.58rem;letter-spacing:.06em;margin-bottom:1px;">TODAY</div>':'')+
+        dn+'<br><span style="font-weight:400;font-size:.6rem;opacity:.7;">'+col.day+'</span>'+
+        (wknd?'<br><span style="font-size:.58rem;opacity:.5;">off</span>':'')+
+      '</th>';
     }).join('')+
-  '</div>';
+  '</tr></thead>';
 
-  html+=filtered.map(function(row){
-    var name=String(row[1]||'').trim();
-    var ini=name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-    var todayVal=todayCol>=0?row[todayCol]:'';
-    var todayTag=getTodayStatusTag(todayVal);
-    var ia=todayCol>=0&&row[todayCol]&&NOT_PRESENT_CODES.has(String(row[todayCol]).toUpperCase().trim());
-    var iw=todayCol>=0&&String(row[todayCol]||'').toUpperCase().indexOf('WFH')>-1;
-    var rowCls='roster-agent-row'+(ia?' highlight-absent':iw?' highlight-wfh':'');
+  var tbody = '<tbody>'+filtered.map(function(row){
+    var name = String(row[1]||'').trim();
+    var ini = name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+    var todayVal = todayCol>=0 ? (row[todayCol]||'') : '';
+    var todayTag = getTodayStatusTag(todayVal);
+    var tv = String(todayVal).toUpperCase().trim();
+    var ia = NOT_PRESENT_CODES.has(tv)||tv==='EO';
+    var iw = tv.indexOf('WFH')>-1;
+    var rowCls = ia?'rrow-absent':iw?'rrow-wfh':'';
 
-    return '<div class="'+rowCls+'" style="grid-template-columns:'+gridCols+';">'+
-      '<div style="display:flex;align-items:center;gap:.65rem;">'+
-        '<div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff;flex-shrink:0;">'+ini+'</div>'+
-        '<span class="roster-agent-name">'+name+'</span>'+
-      '</div>'+
-      '<div style="text-align:center;">'+todayTag+'</div>'+
+    return '<tr class="'+rowCls+'">'+
+      '<td><div class="roster-name-cell">'+
+        '<div class="roster-av">'+ini+'</div>'+
+        '<span class="roster-nm">'+esc(name)+'</span>'+
+      '</div></td>'+
+      '<td>'+todayTag+'</td>'+
       visibleCols.map(function(col){
-        var val=row[col.idx]||'';
-        return '<div class="'+getCellClass(val,col.isToday)+'">'+getCellDisplay(val)+'</div>';
+        var val = row[col.idx]||'';
+        var wknd = isWeekend(col.day, todayM, todayY);
+        var tdCls = col.isToday?'rtd-today':wknd?'rtd-wknd':'';
+        return '<td class="'+tdCls+'">'+getRosterChip(val, col.isToday, col.day, todayM, todayY)+'</td>';
       }).join('')+
-    '</div>';
-  }).join('');
+    '</tr>';
+  }).join('')+'</tbody>';
 
-  wrap.innerHTML=html;
+  wrap.innerHTML = '<table class="roster-tbl">'+thead+tbody+'</table>';
 }
 
+function getCellClass(val,isToday){ return ''; } // kept for compat
+function getCellDisplay(val){ return String(val||'').trim()||'-'; } // kept for compat
+
 function filterRoster(search){
-  if(window._rosterRenderedRows&&window._rosterVisibleCols){
-    renderRosterGrid(window._rosterRenderedRows,window._rosterVisibleCols,window._rosterTodayCol,search);
+  if(window._rosterRenderedRows && window._rosterVisibleCols){
+    renderRosterGrid(window._rosterRenderedRows, window._rosterVisibleCols, window._rosterTodayCol, search);
   }
 }
 
