@@ -1948,7 +1948,7 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
 
     <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
 
-    <div class="login-footer">TeamCore v1.0 &nbsp;·&nbsp; For internal use only</div>
+    <div class="login-footer">TeamCore v5.0 &nbsp;·&nbsp; For internal use only</div>
   </div>
 </div>
 
@@ -8374,7 +8374,7 @@ function chatRenderUserList(users){
     var unread=_chatUnreadMap[u.id]||0;
     var last=_chatLastMsgMap[u.id];
     var preview=last?esc(last.content.slice(0,28))+(last.content.length>28?'...':''):'<span style="opacity:.5">Say hello 👋</span>';
-    return '<div class="chat-conv-item" onclick="chatOpenConv(''+u.id+'',''+esc(u.name)+'',''+bg+'')">'+
+    return '<div class="chat-conv-item" onclick="chatOpenConv(\''+u.id+'\',\''+esc(u.name)+'\',\''+bg+'\')">'+
       '<div class="chat-conv-av" style="background:'+bg+';">'+ini+'</div>'+
       '<div class="chat-conv-info"><div class="chat-conv-name">'+esc(u.name)+'</div><div class="chat-conv-preview">'+preview+'</div></div>'+
       '<div class="chat-conv-meta"><span class="chat-conv-time">'+(last?chatFmtTime(last.time):'')+'</span>'+(unread?'<div class="chat-unread-dot">'+unread+'</div>':'')+' </div>'+
