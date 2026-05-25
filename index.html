@@ -3123,6 +3123,8 @@ async function loadGamingState(){
     }
   }catch(e){}
 }
+
+async function loadUsersPage(){
   if(!isAdminUser())return;
   var listEl=document.getElementById('um-user-list');
   listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>';
