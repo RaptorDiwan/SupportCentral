@@ -1917,6 +1917,12 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
     .msg-left-panel{width:100%;position:absolute;z-index:10;height:100%;}
     .msg-left-panel.hidden{display:none;}
   }
+  @keyframes tyPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,163,0,.4)}50%{box-shadow:0 0 0 8px rgba(239,163,0,0)}}
+  @keyframes tyBounce{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+  @keyframes tyFloat{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-60px);opacity:0}}
+  @keyframes tyGlow{0%,100%{border-color:rgba(74,222,128,.3)}50%{border-color:rgba(74,222,128,.8);box-shadow:0 0 12px rgba(74,222,128,.3)}}
+  .ty-collect-ready{animation:tyGlow 1.5s infinite!important;}
+  .ty-float-money{position:fixed;font-size:1.1rem;font-weight:700;color:#4ade80;pointer-events:none;animation:tyFloat 1.2s ease forwards;z-index:9999;}
 </style>
 </head>
 <body>
@@ -6966,17 +6972,22 @@ function tsExportCSV(){
 // Hook showPage to init timesheet on open
 
 // ═══════════════════════════════════════════════
-//  K7 EMPIRE — "Be The CEO"
-//  Project Kesavan Sir
+//  K7 EMPIRE — Full Idle Tycoon
+//  Concept & Design: Diwan Chowthry
 // ═══════════════════════════════════════════════
 
 var _tyCompany = null;
 var _tyCustomers = [];
-var _tyDealRushTimer = null;
-var _tyFeedInterval = null;
 var _tyActiveTab = 'dashboard';
+var _tyIdleInterval = null;
+var _tyCollectInterval = null;
+var _tyLiveIncomeInterval = null;
+var _tyCollectReady = {};  // teamId -> amount ready to collect
+var _tyManagerNames = {};
+var _tyManualQBank = [];
+var _tyCurrentQuestion = null;
 
-// ── Products ──
+// ── PRODUCTS ──
 var TY_PRODUCTS = [
   {id:'av',      name:'K7 Antivirus Premium',          price:799,   market:'home'},
   {id:'total',   name:'K7 Total Security',             price:999,   market:'home'},
@@ -6986,514 +6997,447 @@ var TY_PRODUCTS = [
   {id:'utm',     name:'K7 UTM',                        price:50000, market:'corp'},
 ];
 
-// ── Upgrades — levelled 1-50 ──
-var TY_UPGRADES = [
-  {id:'server',    name:'Server Room',       icon:'🖥',  base_cost:50000,   cost_mult:1.8, base_effect:1,  effect_unit:'cust/day', desc:'More customers per day'},
-  {id:'marketing', name:'Marketing',         icon:'📢',  base_cost:80000,   cost_mult:1.7, base_effect:5,  effect_unit:'% close rate', desc:'Higher deal success'},
-  {id:'rnd',       name:'R&D Lab',           icon:'🔬',  base_cost:100000,  cost_mult:2.0, base_effect:5,  effect_unit:'% price boost', desc:'Charge more per product'},
-  {id:'chairs',    name:'Office Chairs',     icon:'🪑',  base_cost:20000,   cost_mult:1.5, base_effect:2,  effect_unit:'% productivity', desc:'Team works better'},
-  {id:'pcs',       name:'Computers',         icon:'💻',  base_cost:50000,   cost_mult:1.6, base_effect:3,  effect_unit:'% speed', desc:'Faster development'},
-  {id:'cafeteria', name:'Cafeteria',         icon:'☕',  base_cost:30000,   cost_mult:1.5, base_effect:5,  effect_unit:'% happiness', desc:'Team stays happy'},
-  {id:'gaming_rm', name:'Gaming Room',       icon:'🎮',  base_cost:50000,   cost_mult:1.6, base_effect:8,  effect_unit:'% happiness', desc:'Boost morale big time'},
-  {id:'confroom',  name:'Conference Room',   icon:'🏛',  base_cost:100000,  cost_mult:1.8, base_effect:10, effect_unit:'% corporate deals', desc:'Win bigger deals'},
-  {id:'security',  name:'Security Lab',      icon:'🔒',  base_cost:200000,  cost_mult:2.2, base_effect:15, effect_unit:'% product quality', desc:'Premium products'},
-  {id:'datacenter',name:'Data Centre',       icon:'🏗',  base_cost:500000,  cost_mult:2.5, base_effect:3,  effect_unit:'cust/day', desc:'Handle massive scale'},
-];
-
-function tyUpgradeCost(upgradeId, currentLevel){
-  var u = TY_UPGRADES.find(function(x){return x.id===upgradeId;});
-  if(!u) return 0;
-  return Math.round(u.base_cost * Math.pow(u.cost_mult, currentLevel));
-}
-function tyUpgradeEffect(upgradeId, level){
-  var u = TY_UPGRADES.find(function(x){return x.id===upgradeId;});
-  if(!u||!level) return 0;
-  return Math.round(u.base_effect * level * (1 + level * 0.05));
-}
-
-// ── Teams — levelled ──
+// ── TEAMS — idle income per staff per minute per level ──
 var TY_TEAMS = [
-  {id:'dev',       name:'Development',  icon:'💻', salary:80000,  max_per_lvl:5, effect:'Product quality +%'},
-  {id:'qa',        name:'QA',           icon:'🔬', salary:45000,  max_per_lvl:4, effect:'Bug reduction +%'},
-  {id:'sales',     name:'Sales',        icon:'📈', salary:35000,  max_per_lvl:5, effect:'Close rate +%'},
-  {id:'marketing', name:'Marketing',    icon:'📢', salary:50000,  max_per_lvl:4, effect:'Walk-ins +%'},
-  {id:'support',   name:'Support',      icon:'🎧', salary:30000,  max_per_lvl:5, effect:'Reputation +%'},
-  {id:'accounts',  name:'Accounts',     icon:'📊', salary:55000,  max_per_lvl:3, effect:'Costs -%, profits +%'},
-  {id:'it',        name:'IT Team',      icon:'🔧', salary:60000,  max_per_lvl:4, effect:'Uptime +%, crashes -'},
-  {id:'lab',       name:'Lab',          icon:'🧪', salary:90000,  max_per_lvl:3, effect:'R&D speed +%'},
-  {id:'admin',     name:'Admin',        icon:'🏢', salary:28000,  max_per_lvl:5, effect:'Efficiency +%'},
+  {id:'sales',    name:'Sales Team',   icon:'📈', salary:35000,  base_pm:500,   max_per_lvl:5, cost_mult:1.6, desc:'Sells products, core revenue stream'},
+  {id:'dev',      name:'Dev Team',     icon:'💻', salary:80000,  base_pm:300,   max_per_lvl:5, cost_mult:1.8, desc:'Improves products, higher prices'},
+  {id:'marketing',name:'Marketing',    icon:'📢', salary:50000,  base_pm:400,   max_per_lvl:4, cost_mult:1.7, desc:'More customers, higher close rate'},
+  {id:'support',  name:'Support',      icon:'🎧', salary:30000,  base_pm:200,   max_per_lvl:5, cost_mult:1.5, desc:'Renewals, loyalty, reputation'},
+  {id:'lab',      name:'R&D Lab',      icon:'🔬', salary:90000,  base_pm:600,   max_per_lvl:3, cost_mult:2.0, desc:'Patents, royalty income'},
+  {id:'accounts', name:'Accounts',     icon:'📊', salary:55000,  base_pm:300,   max_per_lvl:3, cost_mult:1.7, desc:'Cost reduction, profit boost'},
+  {id:'it',       name:'IT Team',      icon:'🔧', salary:60000,  base_pm:500,   max_per_lvl:4, cost_mult:1.8, desc:'Uptime, prevents revenue loss'},
+  {id:'admin',    name:'Admin',        icon:'🏢', salary:28000,  base_pm:150,   max_per_lvl:5, cost_mult:1.4, desc:'Efficiency, reduces all costs'},
 ];
 
-// ── Banks ──
-var TY_BANKS = [
-  {name:'South Indian Bank',  rate:12, max_loan:500000},
-  {name:'ICICI Bank',         rate:14, max_loan:2000000},
-  {name:'HDFC Bank',          rate:13, max_loan:1500000},
-  {name:'State Bank of India',rate:10, max_loan:5000000},
-  {name:'American Express',   rate:18, max_loan:3000000},
-  {name:'Axis Bank',          rate:15, max_loan:2500000},
-  {name:'Yes Bank',           rate:16, max_loan:1000000},
+// ── MANAGERS ──
+var TY_MANAGERS = [
+  {id:'sales_mgr',    team:'sales',    name:'Sales Manager',    default_name:'Ravi Kumar',    cost:50000},
+  {id:'tech_lead',    team:'dev',      name:'Tech Lead',        default_name:'Priya Sharma',  cost:100000},
+  {id:'mkt_head',     team:'marketing',name:'Marketing Head',   default_name:'Arjun Nair',    cost:80000},
+  {id:'support_head', team:'support',  name:'Support Head',     default_name:'Meena Raj',     cost:60000},
+  {id:'lab_dir',      team:'lab',      name:'Lab Director',     default_name:'Suresh Kumar',  cost:200000},
+  {id:'finance_mgr',  team:'accounts', name:'Finance Manager',  default_name:'Kavya Pillai',  cost:75000},
+  {id:'it_head',      team:'it',       name:'IT Head',          default_name:'Rahul Verma',   cost:90000},
+  {id:'office_mgr',   team:'admin',    name:'Office Manager',   default_name:'Anitha Bose',   cost:40000},
+  {id:'ceo_asst',     team:'all',      name:'CEO Assistant',    default_name:'Vijay Menon',   cost:500000},
 ];
 
-// ── Investors ──
-var TY_INVESTORS = [
-  {name:'Rajan Mehta (Angel)',     amount:500000,  questions:[
-    {q:'What is K7\'s main product category?',opts:['Gaming','Cybersecurity','Social Media','E-commerce'],ans:1},
-    {q:'What does UTM stand for?',opts:['Unified Threat Management','User Traffic Monitor','Universal Tech Module','Unified Team Manager'],ans:0},
-  ]},
-  {name:'Chennai Ventures (VC)',   amount:2000000, questions:[
-    {q:'Which sector is K7\'s fastest growing?',opts:['Home users','Enterprise','Gaming','Education'],ans:1},
-    {q:'K7 was founded in which city?',opts:['Mumbai','Bangalore','Chennai','Delhi'],ans:2},
-  ]},
-  {name:'TechFund Asia (Series A)',amount:5000000, questions:[
-    {q:'What differentiates K7 from competitors?',opts:['Price only','Indian heritage + global quality','Just brand name','Only marketing'],ans:1},
-    {q:'K7 UTM is designed for?',opts:['Home users','Small offices','Large enterprise networks','Students'],ans:2},
-  ]},
-  {name:'Global Capital (PE)',     amount:20000000,questions:[
-    {q:'K7\'s revenue model is primarily?',opts:['One-time purchase','Subscription + license','Advertising','Freemium only'],ans:1},
-    {q:'Best strategy for enterprise growth?',opts:['Cut prices 50%','Build dedicated sales + support team','Reduce R&D','Focus only on home users'],ans:1},
-  ]},
+// ── UPGRADES level 1-50 ──
+var TY_UPGRADES = [
+  {id:'server',    name:'Server Room',    icon:'🖥',  base:50000,  mult:1.8, desc:'Customers/day +1 per level'},
+  {id:'marketing', name:'Marketing Hub',  icon:'📢',  base:80000,  mult:1.7, desc:'Close rate +2% per level'},
+  {id:'rnd',       name:'R&D Lab',        icon:'🔬',  base:100000, mult:2.0, desc:'Product prices +5% per level'},
+  {id:'pcs',       name:'Computers',      icon:'💻',  base:50000,  mult:1.6, desc:'Team speed +3% per level'},
+  {id:'chairs',    name:'Ergonomic Chairs',icon:'🪑', base:20000,  mult:1.5, desc:'Productivity +2% per level'},
+  {id:'cafeteria', name:'Cafeteria',      icon:'☕',  base:30000,  mult:1.5, desc:'Happiness +3% per level'},
+  {id:'gaming_rm', name:'Gaming Room',    icon:'🎮',  base:50000,  mult:1.6, desc:'Happiness +5% per level'},
+  {id:'confroom',  name:'Conference Room',icon:'🏛',  base:100000, mult:1.8, desc:'Corporate deals +10%'},
+  {id:'security',  name:'Security Lab',   icon:'🔒',  base:200000, mult:2.2, desc:'Product quality +15%'},
+  {id:'datacenter',name:'Data Centre',    icon:'🏗',  base:500000, mult:2.5, desc:'Customers/day +3 per level'},
+  {id:'helipad',   name:'Helipad',        icon:'🚁',  base:1000000,mult:2.8, desc:'VIP clients +20%'},
+  {id:'campus',    name:'Own Campus',     icon:'🏙',  base:5000000,mult:3.0, desc:'All income +10% per level'},
 ];
 
-// ── Projects ──
-var TY_PROJECTS = [
-  {id:'mobile_app',   name:'K7 Mobile App',        days:5,  cost:1000000,  daily_earn:500000,  desc:'Launch mobile security app'},
-  {id:'singapore',    name:'Singapore Office',     days:7,  cost:5000000,  daily_earn:2000000, desc:'Expand to Singapore market'},
-  {id:'cloud',        name:'K7 Cloud Security',    days:10, cost:8000000,  daily_earn:3000000, desc:'Cloud-based security platform'},
-  {id:'ai_engine',    name:'AI Threat Engine',     days:14, cost:15000000, daily_earn:8000000, desc:'AI-powered threat detection'},
-  {id:'govt_contract',name:'Government Contract',  days:7,  cost:3000000,  daily_earn:5000000, desc:'Secure govt infrastructure'},
-  {id:'us_expansion', name:'US Market Entry',      days:21, cost:50000000, daily_earn:25000000,desc:'Break into US market'},
-  {id:'ipo',          name:'K7 IPO',               days:30, cost:100000000,daily_earn:50000000,desc:'Take K7 public'},
+// ── MANUAL SPEND OPTIONS ──
+var TY_MANUAL_SPEND = [
+  {id:'marketing_blast', name:'Marketing Campaign',  icon:'📢', cost:50000,  effect:'All sales 2x for today',      type:'boost'},
+  {id:'party',           name:'Team Party',          icon:'🎉', cost:100000, effect:'Happiness +20% for 3 days',   type:'happiness'},
+  {id:'chair_upgrade',   name:'Premium Chair Setup', icon:'🪑', cost:30000,  effect:'Productivity +5% permanent',  type:'perm'},
+  {id:'pizza',           name:'Pizza Friday',        icon:'🍕', cost:15000,  effect:'Happiness +10% today',        type:'happiness'},
+  {id:'bonus_pay',       name:'Employee Bonus',      icon:'💰', cost:200000, effect:'All teams perf +15% for 7d',  type:'boost'},
+  {id:'team_outing',     name:'Team Outing',         icon:'🚌', cost:150000, effect:'Happiness +25%, loyalty +10%',type:'happiness'},
+  {id:'new_laptop',      name:'New Laptops',          icon:'💻', cost:80000,  effect:'Dev team speed +20%',         type:'perm'},
+  {id:'ads_campaign',    name:'Digital Ads',          icon:'🖥', cost:120000, effect:'Walk-in customers 3x today',  type:'boost'},
+  {id:'hackathon',       name:'Hackathon Event',      icon:'⚡', cost:200000, effect:'Dev team perf +30% for 7d',   type:'boost'},
+  {id:'csr',             name:'CSR Initiative',       icon:'🌱', cost:500000, effect:'Reputation +15 permanent',    type:'perm'},
 ];
 
-// ── Crises ──
+// ── CRISES ──
 var TY_CRISES = [
-  {text:'Key developer resigned!',bad:true,opts:[
-    {label:'Hire contractor ₹2L',cost:200000,effect:'Quality restored',rep:0},
-    {label:'Promote intern (risky)',cost:0,effect:'Quality -10%',rep:-5},
-    {label:'Ignore it',cost:0,effect:'Quality -20%',rep:-10},
+  {text:'Key developer resigned!',opts:[
+    {label:'Hire contractor ₹2L',cost:200000,rep:0,happy:0},
+    {label:'Promote intern (risky)',cost:0,rep:-5,happy:-5},
+    {label:'Ignore it',cost:0,rep:-10,happy:-10},
   ]},
-  {text:'Server crashed — lost 3 days sales!',bad:true,opts:[
-    {label:'Emergency fix ₹1L',cost:100000,effect:'Back online fast',rep:0},
-    {label:'Wait for IT team',cost:0,effect:'Down 2 more days',rep:-8},
+  {text:'Server crashed!',opts:[
+    {label:'Emergency fix ₹1L',cost:100000,rep:0,happy:0},
+    {label:'Wait for IT team',cost:0,rep:-8,happy:-5},
   ]},
-  {text:'Competitor launched free antivirus!',bad:true,opts:[
-    {label:'Slash prices 20%',cost:0,effect:'Keep customers, less revenue',rep:5},
-    {label:'Boost marketing ₹3L',cost:300000,effect:'Counter with brand push',rep:10},
-    {label:'Ignore — focus quality',cost:0,effect:'Lose 15% customers',rep:-5},
+  {text:'Competitor launched free antivirus!',opts:[
+    {label:'Cut prices 20%',cost:0,rep:5,happy:0},
+    {label:'Boost marketing ₹3L',cost:300000,rep:10,happy:5},
+    {label:'Ignore — focus quality',cost:0,rep:-5,happy:0},
   ]},
-  {text:'Government audit incoming!',bad:false,opts:[
-    {label:'Full compliance ₹5L',cost:500000,effect:'Pass audit, +reputation',rep:15},
-    {label:'Partial fix ₹2L',cost:200000,effect:'Minor issues noted',rep:5},
-    {label:'Argue against it',cost:0,effect:'Fine ₹8L, rep hit',rep:-20},
+  {text:'Government audit incoming!',opts:[
+    {label:'Full compliance ₹5L',cost:500000,rep:15,happy:0},
+    {label:'Partial fix ₹2L',cost:200000,rep:5,happy:0},
+    {label:'Argue against it',cost:0,rep:-20,happy:-10},
   ]},
-  {text:'K7 wins Best Antivirus Award! 🏆',bad:false,opts:[
-    {label:'Celebrate & press release ₹1L',cost:100000,effect:'+30% brand value',rep:20},
-    {label:'Just tweet about it',cost:0,effect:'+10% brand value',rep:10},
+  {text:'K7 wins Best Antivirus Award! 🏆',opts:[
+    {label:'Celebrate ₹1L press release',cost:100000,rep:20,happy:15},
+    {label:'Just tweet about it',cost:0,rep:10,happy:5},
   ]},
-  {text:'Key client threatening to leave!',bad:true,opts:[
-    {label:'Offer 30% discount to retain',cost:0,effect:'Keep client, less revenue',rep:5},
-    {label:'Assign dedicated support team',cost:200000,effect:'Client stays + happy',rep:15},
-    {label:'Let them go',cost:0,effect:'Lose ₹5L/month revenue',rep:-10},
-  ]},
-];
-
-// ── Customer types ──
-var TY_CUST_TYPES = [
-  {type:'student',   label:'🎓 Student',    needs:['av','total'],      rate:0.45, quote:'"Need something affordable"',           penalty:5000},
-  {type:'family',    label:'👨‍👩‍👧 Family',   needs:['total','infinity'],rate:0.50, quote:'"3 devices, need full protection"',     penalty:8000},
-  {type:'freelancer',label:'💻 Freelancer', needs:['ultimate','infinity'],rate:0.40,quote:'"Handle client data, need real security"',penalty:10000},
-  {type:'smb',       label:'🏪 Small Biz',  needs:['ent'],             rate:0.30, quote:'"10 computers in our office"',           penalty:20000},
-  {type:'corporate', label:'🏢 Corporate',  needs:['ent','utm'],       rate:0.20, quote:'"200 endpoints, enterprise grade needed"',penalty:50000},
-];
-
-var TY_NAMES = ['Ravi','Priya','Arjun','Meena','Suresh','Kavya','Rahul','Anitha','Vijay','Deepa','Kiran','Pooja','Arun','Saranya','Manoj','Nisha','Dinesh','Rekha','Vinod','Gayatri'];
-var TY_CITIES = ['Chennai','Mumbai','Delhi','Bangalore','Hyderabad','Pune','Coimbatore','Kochi','Kolkata','Ahmedabad'];
-
-var TY_MARKET_EVENTS = [
-  {text:'🦠 Ransomware attack in news — demand spikes +40%!', mult:1.4, type:'good'},
-  {text:'📰 K7 featured as Top Pick in Tech Magazine!', mult:1.25, type:'good'},
-  {text:'🎓 Back-to-school season — student demand up 35%', mult:1.35, type:'good'},
-  {text:'⚡ ISP outage affecting some regions — fewer online customers', mult:0.75, type:'bad'},
-  {text:'🌧 Work from home surge — home user sales +30%', mult:1.30, type:'good'},
-  {text:'💼 Corporate budget freeze — enterprise deals harder today', mult:0.70, type:'bad'},
-  {text:'🏆 K7 wins Best Antivirus Award — brand value up!', mult:1.20, type:'good'},
-  {text:'📉 Market downturn — all deals 20% harder', mult:0.80, type:'bad'},
-  {text:'🔒 Major data breach in news — security awareness up +50%!', mult:1.50, type:'good'},
-  {text:'☀️ Normal trading day — standard market conditions', mult:1.0, type:'neutral'},
-];
-
-var TY_NO_RIGHT_ANSWER = [
-  {q:'Marketing wants ₹5L budget. Finance says cut to ₹2L.',opts:[
-    {label:'Give full ₹5L',effect:'More customers, tighter cash',cash:-500000,rep:5},
-    {label:'Cut to ₹2L',effect:'Save cash, fewer leads',cash:-200000,rep:-5},
-    {label:'Compromise at ₹3.5L',effect:'Balanced approach',cash:-350000,rep:0},
-  ]},
-  {q:'Hire 5 junior devs (₹25K each) OR 1 senior dev (₹1.5L)?',opts:[
-    {label:'5 junior devs',effect:'Volume but slower quality',cash:-125000,rep:0},
-    {label:'1 senior dev',effect:'Expensive but high quality',cash:-150000,rep:5},
-    {label:'2 mid-level devs',effect:'Good balance',cash:-100000,rep:3},
-  ]},
-  {q:'Corporate client wants 25% discount for ₹50L order.',opts:[
-    {label:'Give discount — take ₹37.5L',effect:'Win deal, less margin',cash:3750000,rep:5},
-    {label:'Hold firm — full price or nothing',effect:'May lose deal',cash:0,rep:-3},
-    {label:'10% discount only',effect:'Negotiate middle ground',cash:4500000,rep:2},
+  {text:'Key client threatening to leave!',opts:[
+    {label:'Offer 30% discount',cost:0,rep:5,happy:0},
+    {label:'Dedicated support ₹2L',cost:200000,rep:15,happy:10},
+    {label:'Let them go',cost:0,rep:-10,happy:-5},
   ]},
 ];
 
-function tyFmtMoney(n){
-  n = Math.round(n);
-  if(n>=1000000000000)return '₹'+(n/1000000000000).toFixed(1)+'T';
-  if(n>=10000000)return '₹'+(n/10000000).toFixed(1)+'Cr';
+// ── BANKS ──
+var TY_BANKS=[
+  {name:'South Indian Bank',rate:12,max:500000},
+  {name:'ICICI Bank',rate:14,max:2000000},
+  {name:'HDFC Bank',rate:13,max:1500000},
+  {name:'State Bank of India',rate:10,max:5000000},
+  {name:'American Express',rate:18,max:3000000},
+  {name:'Axis Bank',rate:15,max:2500000},
+  {name:'Yes Bank',rate:16,max:1000000},
+];
+
+// ── PROJECTS ──
+var TY_PROJECTS=[
+  {id:'mobile_app',   name:'K7 Mobile App',       days:5,  cost:1000000,  daily:500000},
+  {id:'singapore',    name:'Singapore Office',    days:7,  cost:5000000,  daily:2000000},
+  {id:'cloud',        name:'K7 Cloud Security',   days:10, cost:8000000,  daily:3000000},
+  {id:'ai_engine',    name:'AI Threat Engine',    days:14, cost:15000000, daily:8000000},
+  {id:'govt',         name:'Government Contract', days:7,  cost:3000000,  daily:5000000},
+  {id:'usa',          name:'US Market Entry',     days:21, cost:50000000, daily:25000000},
+  {id:'ipo',          name:'K7 IPO',              days:30, cost:100000000,daily:50000000},
+];
+
+// ── MANUAL QUIZ QUESTIONS ──
+var TY_QUIZ_POOL = [
+  {q:'What does K7 UTM stand for?',opts:['Unified Threat Management','User Traffic Monitor','Universal Tech Module','Unified Team Manager'],ans:0,reward:8000},
+  {q:'Which K7 product is best for a family with 5 devices?',opts:['K7 Antivirus Premium','K7 Total Security','K7 Ultimate Infinity','K7 UTM'],ans:2,reward:6000},
+  {q:'What is the capital of India?',opts:['Mumbai','Chennai','New Delhi','Bangalore'],ans:2,reward:3000},
+  {q:'Who is the founder of K7 Computing?',opts:['Ratan Tata','J Kesavardhanan','Narayana Murthy','Azim Premji'],ans:1,reward:10000},
+  {q:'What does CPU stand for?',opts:['Central Processing Unit','Computer Personal Unit','Core Processing Utility','Central Program Unit'],ans:0,reward:4000},
+  {q:'Which year was K7 Computing founded?',opts:['1991','1995','2000','1988'],ans:0,reward:7000},
+  {q:'What is RAM used for?',opts:['Permanent storage','Temporary fast storage','Internet connection','Display output'],ans:1,reward:4000},
+  {q:'Indian currency symbol is?',opts:['$','€','₹','£'],ans:2,reward:2000},
+  {q:'What does VPN stand for?',opts:['Virtual Private Network','Very Personal Network','Virtual Protocol Node','Variable Private Number'],ans:0,reward:5000},
+  {q:'Which is NOT a K7 product?',opts:['K7 Total Security','K7 UTM','K7 CloudGuard','K7 Enterprise Security'],ans:2,reward:8000},
+  {q:'What is phishing?',opts:['A sport','Cyber attack stealing info','Network speed test','Software update'],ans:1,reward:6000},
+  {q:'Chennai is located in which state?',opts:['Karnataka','Andhra Pradesh','Tamil Nadu','Kerala'],ans:2,reward:3000},
+  {q:'What does HTTPS mean in a website URL?',opts:['Hyper Text Transfer Protocol Secure','High Tech Transfer Protocol','Home Transfer Text Protocol Secure','Hyper Text Transport Protocol System'],ans:0,reward:5000},
+  {q:'How many bits in a byte?',opts:['4','16','8','32'],ans:2,reward:4000},
+  {q:'What is malware?',opts:['Good software','Malicious software','Mail software','Marketing software'],ans:1,reward:5000},
+  {q:'Which company makes iPhone?',opts:['Samsung','Apple','Google','Microsoft'],ans:1,reward:3000},
+  {q:'K7 Enterprise Security is designed for?',opts:['Home users','Students','Businesses','Gaming'],ans:2,reward:7000},
+  {q:'What is a firewall?',opts:['Physical wall','Network security system','Type of virus','Computer component'],ans:1,reward:5000},
+  {q:'GDP stands for?',opts:['Gross Domestic Product','General Data Protection','Global Data Processing','Government Development Plan'],ans:0,reward:4000},
+  {q:'Which K7 product protects large office networks?',opts:['K7 Antivirus Premium','K7 Total Security','K7 UTM','K7 Mobile Security'],ans:2,reward:9000},
+  {q:'What is ransomware?',opts:['Free software','Malware that demands payment','Antivirus tool','Network cable'],ans:1,reward:6000},
+  {q:'India celebrates Independence Day on?',opts:['26 January','15 August','2 October','1 November'],ans:1,reward:3000},
+  {q:'What is cloud computing?',opts:['Weather forecasting','Internet-based computing services','Computer hardware','Software CD'],ans:1,reward:5000},
+  {q:'Which is fastest internet connection?',opts:['Dial-up','DSL','Fiber optic','3G'],ans:2,reward:4000},
+  {q:'K7 Antivirus Premium targets which users?',opts:['Corporate','Home users','Governments','Schools'],ans:1,reward:5000},
+];
+
+// ── MARKET EVENTS ──
+var TY_EVENTS=[
+  {text:'🦠 Ransomware attack in news — demand up 40%!',mult:1.4,type:'good'},
+  {text:'📰 K7 featured as Top Pick in Tech Magazine!',mult:1.25,type:'good'},
+  {text:'🎓 Back-to-school season — student demand up 35%',mult:1.35,type:'good'},
+  {text:'⚡ ISP outage — fewer online customers today',mult:0.75,type:'bad'},
+  {text:'🌧 WFH surge — home user sales +30%',mult:1.30,type:'good'},
+  {text:'💼 Corporate budget freeze — enterprise deals harder',mult:0.70,type:'bad'},
+  {text:'🏆 K7 wins Best Antivirus Award — brand up!',mult:1.20,type:'good'},
+  {text:'📉 Market downturn — all deals 20% harder',mult:0.80,type:'bad'},
+  {text:'🔒 Major data breach in news — demand up 50%!',mult:1.50,type:'good'},
+  {text:'☀️ Normal trading day — standard conditions',mult:1.0,type:'neutral'},
+];
+
+// ── CUSTOMER TYPES ──
+var TY_CUST_TYPES=[
+  {type:'student',   label:'🎓 Student',    needs:['av','total'],      rate:0.40,quote:'"Need something affordable"',pen:5000},
+  {type:'family',    label:'👨‍👩‍👧 Family',   needs:['total','infinity'],rate:0.45,quote:'"3 devices, need full protection"',pen:8000},
+  {type:'freelancer',label:'💻 Freelancer', needs:['ultimate','infinity'],rate:0.38,quote:'"Handle client data, need real security"',pen:10000},
+  {type:'smb',       label:'🏪 Small Biz',  needs:['ent'],             rate:0.28,quote:'"10 computers in our office"',pen:20000},
+  {type:'corporate', label:'🏢 Corporate',  needs:['ent','utm'],       rate:0.18,quote:'"200 endpoints, enterprise grade needed"',pen:50000},
+];
+
+var TY_NAMES=['Ravi','Priya','Arjun','Meena','Suresh','Kavya','Rahul','Anitha','Vijay','Deepa','Kiran','Pooja','Arun','Saranya','Manoj','Nisha','Dinesh','Rekha','Vinod','Gayatri'];
+var TY_CITIES=['Chennai','Mumbai','Delhi','Bangalore','Hyderabad','Pune','Coimbatore','Kochi','Kolkata','Ahmedabad'];
+
+// ── HELPERS ──
+function tyFmt(n){
+  n=Math.round(n||0);
+  if(n>=1000000000000)return '₹'+(n/1000000000000).toFixed(2)+'T';
+  if(n>=100000000)return '₹'+(n/10000000).toFixed(1)+'Cr';
   if(n>=100000)return '₹'+(n/100000).toFixed(1)+'L';
   if(n>=1000)return '₹'+(n/1000).toFixed(1)+'K';
-  return '₹'+Math.round(n).toLocaleString('en-IN');
+  return '₹'+n.toLocaleString('en-IN');
 }
 function tyColor(name){
   var c=['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#6366F1','#84CC16'];
-  var n=0; for(var i=0;i<(name||'').length;i++) n+=name.charCodeAt(i);
+  var n=0;for(var i=0;i<(name||'').length;i++)n+=name.charCodeAt(i);
   return c[n%c.length];
 }
-function tyIni(name){ return (name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase(); }
-function tyValuation(c){
-  return Math.round((c.total_revenue||0)*10 + (c.balance||0) - (c.total_debt||0));
-}
-function tyGetUpgradeLevels(c){ try{return JSON.parse(c.unlocks||'{}');}catch(e){return {};} }
-function tyGetTeamStaff(c){ try{return JSON.parse(c.team_staff||'{}');}catch(e){return {};} }
-function tyGetTeamLevels(c){ try{return JSON.parse(c.team_levels||'{}');}catch(e){return {};} }
+function tyIni(name){return(name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();}
+function tyUL(c){try{return JSON.parse(c.unlocks||'{}');}catch(e){return{};}}
+function tyTS(c){try{return JSON.parse(c.team_staff||'{}');}catch(e){return{};}}
+function tyTL(c){try{return JSON.parse(c.team_levels||'{}');}catch(e){return{};}}
+function tyMgr(c){try{return JSON.parse(c.managers||'{}');}catch(e){return{};}}
 
-// ── Compute derived stats from company ──
-function tyComputeStats(c){
-  var ul = tyGetUpgradeLevels(c);
-  var ts = tyGetTeamStaff(c);
-  // Base success rate
-  var baseRate = 0.35;
-  baseRate += (tyUpgradeEffect('marketing', ul.marketing||0))/100 * 0.4;
-  var salesStaff = ts.sales||0;
-  baseRate += Math.min(salesStaff * 0.03, 0.20);
-  baseRate = Math.min(0.75, baseRate);
-  // Customers per day
-  var cpd = 3 + (tyUpgradeEffect('server', ul.server||0)||0) + (tyUpgradeEffect('datacenter', ul.datacenter||0)||0);
-  cpd = Math.min(cpd, 20);
-  if(c.difficulty==='easy') cpd+=2;
-  if(c.difficulty==='hard') cpd=Math.max(1,cpd-1);
-  // Price multiplier from R&D
-  var priceMult = 1 + (tyUpgradeEffect('rnd', ul.rnd||0)||0)/100;
-  // Happiness
-  var happy = c.happiness||80;
-  if(happy<40) baseRate = Math.max(0.1, baseRate - 0.15);
-  return {baseRate:baseRate, cpd:Math.round(cpd), priceMult:priceMult};
-}
-
-// ── Monthly salary ──
-function tyMonthlySalary(c){
-  var ts = tyGetTeamStaff(c);
-  var total = 0;
-  TY_TEAMS.forEach(function(t){ total += (ts[t.id]||0) * t.salary; });
+function tyIncomePM(c){
+  var ts=tyTS(c),tl=tyTL(c),ul=tyUL(c),ps=c.prestige_stars||0;
+  var total=0;
+  var prestigeMult=1+(ps*0.25);
+  var rndBonus=1+(tyUpEff('rnd',ul.rnd||0)/100);
+  TY_TEAMS.forEach(function(t){
+    var staff=ts[t.id]||0;
+    var lvl=tl[t.id]||1;
+    var lvlMult=1+((lvl-1)*0.3);
+    var pm=Math.round(t.base_pm*staff*lvlMult*prestigeMult*rndBonus);
+    total+=pm;
+  });
   return total;
 }
 
+function tyValuation(c){
+  return Math.round((c.total_revenue||0)*10+(c.balance||0)-(c.total_debt||0));
+}
+
+function tyUpgradeCost(id,lvl){
+  var u=TY_UPGRADES.find(function(x){return x.id===id;});
+  if(!u)return 0;
+  return Math.round(u.base*Math.pow(u.mult,lvl));
+}
+function tyUpEff(id,lvl){
+  var u=TY_UPGRADES.find(function(x){return x.id===id;});
+  if(!u||!lvl)return 0;
+  return Math.round(u.base*0.00003*lvl*(1+lvl*0.1)*100)/100;
+}
+
+function tySalary(c){
+  var ts=tyTS(c);
+  var total=0;
+  TY_TEAMS.forEach(function(t){total+=(ts[t.id]||0)*t.salary;});
+  return total;
+}
+
+function tyTeamPerf(c,teamId){
+  var ts=tyTS(c),tl=tyTL(c);
+  var staff=ts[teamId]||0;
+  var lvl=tl[teamId]||1;
+  var maxStaff=lvl*TY_TEAMS.find(function(t){return t.id===teamId;}).max_per_lvl;
+  var happy=c.happiness||80;
+  var rep=c.reputation||70;
+  // Performance factors
+  var staffRatio=maxStaff>0?staff/maxStaff:0;
+  var optimalRange=staffRatio>=0.4&&staffRatio<=0.85;
+  var base=optimalRange?80:staffRatio<0.4?Math.round(staffRatio*150):Math.round(110-staffRatio*35);
+  var happyBonus=Math.round((happy-50)*0.3);
+  var repBonus=Math.round((rep-50)*0.2);
+  return Math.min(100,Math.max(0,base+happyBonus+repBonus));
+}
+
+// ── INIT ──
 async function tyInit(){
-  var wrap = document.getElementById('ty-page-content');
+  var wrap=document.getElementById('ty-page-content');
   try{
-    var gset = await sbQuery('settings','key=eq.gaming_enabled&select=value');
+    var gset=await sbQuery('settings','key=eq.gaming_enabled&select=value');
     if(gset&&gset.length&&gset[0].value==='false'){
-      wrap.innerHTML='<div class="ty-loading" style="padding:3rem;text-align:center;"><div style="font-size:2rem;margin-bottom:.75rem;">🎮</div><div style="font-size:.95rem;font-weight:600;color:var(--text-primary);">K7 Empire is currently disabled</div><div style="font-size:.8rem;color:var(--text-muted);margin-top:.4rem;">Your admin has paused the gaming feature.</div></div>';
+      wrap.innerHTML='<div class="ty-loading" style="padding:3rem;text-align:center;"><div style="font-size:2rem;">🎮</div><div style="font-size:.95rem;font-weight:600;color:var(--text-primary);">K7 Empire is currently disabled</div></div>';
       return;
     }
   }catch(e){}
   wrap.innerHTML='<div class="ty-loading">🏢 Loading K7 Empire...</div>';
   try{
-    var rows = await sbQuery('tycoon_companies','user_id=eq.'+currentUser.id+'&select=*');
-    if(!rows||!rows.length){ tyShowWelcome(); return; }
-    _tyCompany = rows[0];
+    var rows=await sbQuery('tycoon_companies','user_id=eq.'+currentUser.id+'&select=*');
+    if(!rows||!rows.length){tyShowWelcome();return;}
+    _tyCompany=rows[0];
+    // Load manager names
+    try{
+      var mgrs=await sbQuery('tycoon_manager_names','select=*');
+      if(mgrs)mgrs.forEach(function(m){_tyManagerNames[m.team_id]=m.manager_name;});
+    }catch(e){}
     await tyCreditDailyBonuses();
     await tyLoadCustomers();
+    await tyCheckOfflineEarnings();
     tyRender();
-    tyStartFeedInterval();
+    tyStartIdleEngine();
   }catch(e){
-    wrap.innerHTML='<div class="ty-loading" style="color:var(--accent-red);">Error: '+e.message+'</div>';
+    wrap.innerHTML='<div class="ty-loading" style="color:var(--accent-red);">Error: '+e.message+'<br><small>Make sure all SQL columns are added.</small></div>';
   }
 }
 
+// ── WELCOME / HOW TO PLAY ──
 function tyShowWelcome(){
-  var wrap = document.getElementById('ty-page-content');
+  var wrap=document.getElementById('ty-page-content');
   wrap.innerHTML=
     '<div style="max-width:600px;margin:0 auto;padding:1.5rem 1rem;">'+
-
-      // Hero
-      '<div style="text-align:center;margin-bottom:1.5rem;">'+
-        '<div style="font-size:2.5rem;margin-bottom:.5rem;">🏢</div>'+
-        '<div style="font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:.3rem;">Project Kesavan Sir</div>'+
-        '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:2.2rem;color:var(--text-primary);margin-bottom:.2rem;">K7 Empire</h2>'+
-        '<div style="font-size:.82rem;color:var(--text-muted);font-style:italic;">A tribute to our CEO — Build K7 Computing into a global empire</div>'+
+    '<div style="text-align:center;margin-bottom:1.5rem;">'+
+      '<div style="font-size:2.5rem;margin-bottom:.5rem;">🏢</div>'+
+      '<div style="font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);font-weight:600;">Project Kesavan Sir</div>'+
+      '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:2.2rem;color:var(--text-primary);margin:.2rem 0;">K7 Empire</h2>'+
+      '<div style="font-size:.78rem;color:var(--text-muted);font-style:italic;">A tribute to our CEO · Build the K7 empire from scratch</div>'+
+    '</div>'+
+    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-bottom:1rem;">'+
+      '<div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.75rem;">⭐ Real Work = Game Money</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;font-size:.78rem;">'+
+        '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:var(--navy-hover);border-radius:4px;"><span>Login on time</span><span style="color:#4ade80;font-weight:700;">+₹5,000</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:var(--navy-hover);border-radius:4px;"><span>All breaks on time</span><span style="color:#4ade80;font-weight:700;">+₹5,000</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:var(--navy-hover);border-radius:4px;"><span>End work properly</span><span style="color:#4ade80;font-weight:700;">+₹3,000</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:var(--navy-hover);border-radius:4px;"><span>Quiz correct</span><span style="color:#4ade80;font-weight:700;">+₹10,000</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:var(--navy-hover);border-radius:4px;"><span>Assessment 90%+</span><span style="color:#4ade80;font-weight:700;">+₹25,000</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:var(--navy-hover);border-radius:4px;"><span>Max per day</span><span style="color:#4ade80;font-weight:700;">+₹50,000</span></div>'+
       '</div>'+
-
-      // What is this game
-      '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-bottom:1rem;">'+
-        '<div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.6rem;">What is K7 Empire?</div>'+
-        '<div style="font-size:.82rem;color:var(--text-primary);line-height:1.6;">'+
-          'You are the CEO of K7 Computing. Start with a small office and grow into a global cybersecurity empire. '+
-          'Sell K7 products to customers, hire teams, upgrade your office, handle crises, take bank loans, attract investors — '+
-          'and grow your company from <strong>₹5 Lakhs to ₹5 Trillion</strong>. '+
-          'Compete with your teammates on the leaderboard. The richest CEO wins!'+
-        '</div>'+
+    '</div>'+
+    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-bottom:1.2rem;">'+
+      '<div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.75rem;">Choose Difficulty</div>'+
+      '<div style="display:flex;flex-direction:column;gap:.5rem;">'+
+        '<label style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border:1px solid var(--navy-border);border-radius:8px;cursor:pointer;background:var(--navy-hover);">'+
+          '<input type="radio" name="ty-diff" value="easy" style="accent-color:var(--gold);"/>'+
+          '<div><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">😊 Easy — Rookie CEO</div>'+
+          '<div style="font-size:.72rem;color:var(--text-muted);">Start ₹10L · 5 customers/day · Rare crises</div></div></label>'+
+        '<label style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border:2px solid var(--gold);border-radius:8px;cursor:pointer;background:rgba(239,73,60,.04);">'+
+          '<input type="radio" name="ty-diff" value="medium" checked style="accent-color:var(--gold);"/>'+
+          '<div><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">💼 Medium — Seasoned Executive</div>'+
+          '<div style="font-size:.72rem;color:var(--text-muted);">Start ₹5L · 3 customers/day · Recommended</div></div></label>'+
+        '<label style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border:1px solid var(--navy-border);border-radius:8px;cursor:pointer;background:var(--navy-hover);">'+
+          '<input type="radio" name="ty-diff" value="hard" style="accent-color:var(--gold);"/>'+
+          '<div><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">🔥 Hard — Kesavan Mode</div>'+
+          '<div style="font-size:.72rem;color:var(--text-muted);">Start ₹2L · 2 customers/day · Weekly crises</div></div></label>'+
       '</div>'+
-
-      // How to earn money
-      '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-bottom:1rem;">'+
-        '<div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.75rem;">💰 How to Earn Money</div>'+
-        '<div style="display:flex;flex-direction:column;gap:.5rem;font-size:.8rem;">'+
-          '<div style="display:flex;gap:.75rem;align-items:flex-start;"><span style="font-size:1rem;flex-shrink:0;">🎯</span><div><strong>Sell to customers</strong> — 3 customers wait every morning. Pitch the right K7 product and close deals. Wrong product = customer leaves a bad review and you pay a penalty.</div></div>'+
-          '<div style="display:flex;gap:.75rem;align-items:flex-start;"><span style="font-size:1rem;flex-shrink:0;">🚶</span><div><strong>Walk-in customers</strong> — Click "Find walk-in customer" anytime for ₹2,000 prospecting fee. Unlimited — keep selling all day!</div></div>'+
-          '<div style="display:flex;gap:.75rem;align-items:flex-start;"><span style="font-size:1rem;flex-shrink:0;">🚀</span><div><strong>Projects</strong> — Invest in big projects like "K7 Mobile App" or "Singapore Office". They take days to complete but earn money every day forever after.</div></div>'+
-          '<div style="display:flex;gap:.75rem;align-items:flex-start;"><span style="font-size:1rem;flex-shrink:0;">💼</span><div><strong>Investors</strong> — Every 3 days a new investor appears. Answer their questions correctly to unlock big funding rounds.</div></div>'+
-          '<div style="display:flex;gap:.75rem;align-items:flex-start;"><span style="font-size:1rem;flex-shrink:0;">🏦</span><div><strong>Bank loans</strong> — If cash is low, borrow from South Indian Bank, ICICI, SBI and others. Pay back with interest or reputation suffers.</div></div>'+
-        '</div>'+
-      '</div>'+
-
-      // Real work bonuses
-      '<div style="background:rgba(26,122,69,.06);border:1px solid rgba(26,122,69,.2);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-bottom:1rem;">'+
-        '<div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#1a7a45;margin-bottom:.75rem;">⭐ Real Work = Real Money in Game</div>'+
-        '<div style="font-size:.78rem;color:var(--text-primary);margin-bottom:.6rem;">Your actual work performance automatically credits game money every day:</div>'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;font-size:.78rem;">'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:5px;"><span>Login on time</span><span style="color:#1a7a45;font-weight:700;">+₹5,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:5px;"><span>All breaks on time</span><span style="color:#1a7a45;font-weight:700;">+₹5,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:5px;"><span>End work properly</span><span style="color:#1a7a45;font-weight:700;">+₹3,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:5px;"><span>Quiz attempted</span><span style="color:#1a7a45;font-weight:700;">+₹2,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:5px;"><span>Quiz correct answer</span><span style="color:#1a7a45;font-weight:700;">+₹10,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:5px;"><span>Assessment 90%+</span><span style="color:#1a7a45;font-weight:700;">+₹25,000</span></div>'+
-        '</div>'+
-        '<div style="margin-top:.6rem;text-align:right;font-size:.78rem;font-weight:700;color:#1a7a45;">Max per day: +₹50,000</div>'+
-      '</div>'+
-
-      // Daily schedule
-      '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-bottom:1rem;">'+
-        '<div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.75rem;">📅 Daily Game Schedule</div>'+
-        '<div style="display:flex;flex-direction:column;gap:.4rem;font-size:.78rem;">'+
-          '<div style="display:flex;gap:.75rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:50px;">Login</span><span style="color:var(--text-muted);">Daily bonuses credited automatically — login, quiz, breaks</span></div>'+
-          '<div style="display:flex;gap:.75rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:50px;">Morning</span><span style="color:var(--text-muted);">3 regular customers waiting — pitch and close deals</span></div>'+
-          '<div style="display:flex;gap:.75rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:50px;">11 AM</span><span style="color:var(--text-muted);">⚡ Deal Rush — 60 second window for special customers</span></div>'+
-          '<div style="display:flex;gap:.75rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:50px;">1 PM</span><span style="color:var(--text-muted);">🤝 Investor available every 3 days — answer Q&A to get funding</span></div>'+
-          '<div style="display:flex;gap:.75rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:50px;">3 PM</span><span style="color:var(--text-muted);">⚡ Second Deal Rush window</span></div>'+
-          '<div style="display:flex;gap:.75rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:50px;">5 PM</span><span style="color:var(--text-muted);">📊 Budget meeting card — allocate resources</span></div>'+
-          '<div style="display:flex;gap:.75rem;padding:.3rem 0;"><span style="color:var(--gold);font-weight:600;min-width:50px;">Anytime</span><span style="color:var(--text-muted);">Walk-in customers, upgrades, projects, bank loans</span></div>'+
-        '</div>'+
-      '</div>'+
-
-      // Tips
-      '<div style="background:rgba(239,163,0,.06);border:1px solid rgba(239,163,0,.2);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-bottom:1.2rem;">'+
-        '<div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#854F0B;margin-bottom:.6rem;">💡 Pro Tips to Win</div>'+
-        '<div style="display:flex;flex-direction:column;gap:.35rem;font-size:.78rem;color:var(--text-primary);">'+
-          '<div>• <strong>Match product to customer</strong> — Students want affordable AV, Corporate needs UTM. Wrong pitch = penalty!</div>'+
-          '<div>• <strong>Upgrade server first</strong> — More customers per day = more revenue. Best early investment.</div>'+
-          '<div>• <strong>Keep team happy above 70%</strong> — Low happiness kills your sales success rate.</div>'+
-          '<div>• <strong>Never miss salary day</strong> — Can\'t pay staff = happiness crashes and team leaves.</div>'+
-          '<div>• <strong>Start projects early</strong> — They pay daily income forever. Compound income = fastest growth.</div>'+
-          '<div>• <strong>Perfect work = perfect bonus</strong> — Login + quiz + breaks + end work = ₹50,000/day free money!</div>'+
-        '</div>'+
-      '</div>'+
-
-      // Difficulty
-      '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.1rem 1.3rem;margin-bottom:1.2rem;">'+
-        '<div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.75rem;">Choose Difficulty</div>'+
-        '<div style="display:flex;flex-direction:column;gap:.5rem;">'+
-          '<label style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border:1px solid var(--navy-border);border-radius:8px;cursor:pointer;background:var(--navy-hover);">'+
-            '<input type="radio" name="ty-diff" value="easy" style="accent-color:var(--gold);"/>'+
-            '<div><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">😊 Easy — Rookie CEO</div>'+
-            '<div style="font-size:.72rem;color:var(--text-muted);">Start ₹10L · 5 customers/day · Rare crises · Great for first timers</div></div></label>'+
-          '<label style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border:2px solid var(--gold);border-radius:8px;cursor:pointer;background:rgba(239,73,60,.04);">'+
-            '<input type="radio" name="ty-diff" value="medium" checked style="accent-color:var(--gold);"/>'+
-            '<div><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">💼 Medium — Seasoned Executive</div>'+
-            '<div style="font-size:.72rem;color:var(--text-muted);">Start ₹5L · 3 customers/day · Balanced · Recommended for most</div></div></label>'+
-          '<label style="display:flex;align-items:center;gap:.75rem;padding:.65rem .85rem;border:1px solid var(--navy-border);border-radius:8px;cursor:pointer;background:var(--navy-hover);">'+
-            '<input type="radio" name="ty-diff" value="hard" style="accent-color:var(--gold);"/>'+
-            '<div><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">🔥 Hard — Kesavan Mode</div>'+
-            '<div style="font-size:.72rem;color:var(--text-muted);">Start ₹2L · 2 customers/day · Weekly crises · Only for legends</div></div></label>'+
-        '</div>'+
-      '</div>'+
-
-      '<button style="width:100%;padding:.85rem;background:var(--gold);color:#fff;border:none;border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;" onclick="tyStartGame()">🏢 Build Your K7 Empire</button>'+
-      '<div style="text-align:center;font-size:.72rem;color:var(--text-dim);margin-top:.6rem;font-style:italic;">Project Kesavan Sir · A tribute to our CEO Kesavan Sir</div>'+
+    '</div>'+
+    '<button style="width:100%;padding:.85rem;background:var(--gold);color:#fff;border:none;border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;" onclick="tyStartGame()">🏢 Build Your K7 Empire</button>'+
+    '<div style="text-align:center;font-size:.65rem;color:var(--text-dim);margin-top:.75rem;">Concept & Design: Diwan Chowthry · Project Kesavan Sir</div>'+
     '</div>';
 }
 
 function tyShowHowToPlay(){
-  var overlay = document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.6);z-index:9000;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;';
-  overlay.onclick=function(e){if(e.target===overlay)document.body.removeChild(overlay);};
-  overlay.innerHTML=
-    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:580px;width:100%;padding:1.5rem;" onclick="event.stopPropagation()">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">'+
-        '<div>'+
-          '<div style="font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600;">Project Kesavan Sir</div>'+
-          '<h3 style="font-size:1.2rem;font-weight:600;color:var(--text-primary);margin:.2rem 0 0;">How to Play K7 Empire</h3>'+
-        '</div>'+
-        '<button onclick="this.closest(\'div[style*=fixed]\').remove?this.closest(\'div[style*=fixed]\').remove():document.body.removeChild(this.closest(\'div[style*=fixed]\'))" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-muted);">✕</button>'+
-      '</div>'+
-
-      '<div style="font-size:.8rem;color:var(--text-primary);line-height:1.6;margin-bottom:1rem;">'+
-        'You are the <strong>CEO of K7 Computing</strong>. Start with seed capital and grow your company from ₹5 Lakhs to ₹5 Trillion. Compete with your teammates — richest CEO wins the leaderboard!'+
-      '</div>'+
-
-      // How to earn
-      '<div style="margin-bottom:1rem;">'+
-        '<div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.6rem;">💰 How to Earn Money</div>'+
-        '<div style="display:flex;flex-direction:column;gap:.4rem;font-size:.78rem;">'+
-          '<div style="padding:.4rem .6rem;background:var(--navy-hover);border-radius:5px;border-left:3px solid var(--gold);">🎯 <strong>Sell to customers</strong> — 3 customers every morning. Pick the right product for each customer type. Wrong product = bad review + penalty!</div>'+
-          '<div style="padding:.4rem .6rem;background:var(--navy-hover);border-radius:5px;border-left:3px solid var(--gold);">🚶 <strong>Walk-in customers</strong> — Find unlimited walk-ins anytime for ₹2,000 fee each. Keep selling all day!</div>'+
-          '<div style="padding:.4rem .6rem;background:var(--navy-hover);border-radius:5px;border-left:3px solid var(--gold);">🚀 <strong>Projects</strong> — Invest in K7 Mobile App, Singapore Office, AI Engine etc. They earn money every day after completion.</div>'+
-          '<div style="padding:.4rem .6rem;background:var(--navy-hover);border-radius:5px;border-left:3px solid var(--gold);">💼 <strong>Investors</strong> — Every 3 days a new investor appears. Answer their questions correctly to unlock big funding.</div>'+
-          '<div style="padding:.4rem .6rem;background:var(--navy-hover);border-radius:5px;border-left:3px solid var(--gold);">🏦 <strong>Bank loans</strong> — Borrow from South Indian Bank, ICICI, SBI, HDFC and others when cash is low.</div>'+
-        '</div>'+
-      '</div>'+
-
-      // Real work bonuses
-      '<div style="background:rgba(26,122,69,.06);border:1px solid rgba(26,122,69,.2);border-radius:var(--radius-sm);padding:1rem 1.1rem;margin-bottom:1rem;">'+
-        '<div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#1a7a45;margin-bottom:.6rem;">⭐ Real Work = Game Money (credited daily)</div>'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;font-size:.75rem;">'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:4px;"><span>Login on time</span><span style="color:#1a7a45;font-weight:700;">+₹5,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:4px;"><span>All breaks on time</span><span style="color:#1a7a45;font-weight:700;">+₹5,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:4px;"><span>End work properly</span><span style="color:#1a7a45;font-weight:700;">+₹3,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:4px;"><span>Quiz attempted</span><span style="color:#1a7a45;font-weight:700;">+₹2,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:4px;"><span>Quiz correct answer</span><span style="color:#1a7a45;font-weight:700;">+₹10,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:4px;"><span>Assessment 90%+</span><span style="color:#1a7a45;font-weight:700;">+₹25,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:4px;"><span>Assessment 75–89%</span><span style="color:#1a7a45;font-weight:700;">+₹15,000</span></div>'+
-          '<div style="display:flex;justify-content:space-between;padding:.3rem .5rem;background:rgba(26,122,69,.05);border-radius:4px;"><span>Assessment 50–74%</span><span style="color:#1a7a45;font-weight:700;">+₹8,000</span></div>'+
-        '</div>'+
-        '<div style="margin-top:.5rem;text-align:right;font-size:.75rem;font-weight:700;color:#1a7a45;">Max per day: +₹50,000</div>'+
-      '</div>'+
-
-      // Daily schedule
-      '<div style="margin-bottom:1rem;">'+
-        '<div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.6rem;">📅 Daily Schedule</div>'+
-        '<div style="display:flex;flex-direction:column;gap:.3rem;font-size:.75rem;">'+
-          '<div style="display:flex;gap:.5rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:55px;flex-shrink:0;">Login</span><span style="color:var(--text-muted);">Daily bonuses credited — login, quiz, breaks, end work</span></div>'+
-          '<div style="display:flex;gap:.5rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:55px;flex-shrink:0;">Morning</span><span style="color:var(--text-muted);">3 customers waiting — pitch and close deals</span></div>'+
-          '<div style="display:flex;gap:.5rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:55px;flex-shrink:0;">11 AM</span><span style="color:var(--text-muted);">⚡ Deal Rush — 60 seconds of bonus customers</span></div>'+
-          '<div style="display:flex;gap:.5rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:55px;flex-shrink:0;">1 PM</span><span style="color:var(--text-muted);">💼 Investor available every 3 days</span></div>'+
-          '<div style="display:flex;gap:.5rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);"><span style="color:var(--gold);font-weight:600;min-width:55px;flex-shrink:0;">3 PM</span><span style="color:var(--text-muted);">⚡ Second Deal Rush window</span></div>'+
-          '<div style="display:flex;gap:.5rem;padding:.3rem 0;"><span style="color:var(--gold);font-weight:600;min-width:55px;flex-shrink:0;">Anytime</span><span style="color:var(--text-muted);">Walk-ins, upgrades, projects, bank loans</span></div>'+
-        '</div>'+
-      '</div>'+
-
-      // Pro tips
-      '<div style="background:rgba(239,163,0,.06);border:1px solid rgba(239,163,0,.2);border-radius:var(--radius-sm);padding:.9rem 1rem;margin-bottom:1.2rem;">'+
-        '<div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#854F0B;margin-bottom:.5rem;">💡 Pro Tips</div>'+
-        '<div style="display:flex;flex-direction:column;gap:.3rem;font-size:.75rem;color:var(--text-primary);">'+
-          '<div>• Match product to customer type — Students want affordable AV, Corporate needs UTM</div>'+
-          '<div>• Upgrade server first — more customers/day = fastest early growth</div>'+
-          '<div>• Keep happiness above 70% — low morale kills your close rate</div>'+
-          '<div>• Never miss salary day — unpaid staff leave and happiness crashes</div>'+
-          '<div>• Launch projects early — daily income compounds fast</div>'+
-          '<div>• Perfect work day = ₹50,000 free money — login + quiz + breaks + end work!</div>'+
-        '</div>'+
-      '</div>'+
-
-      '<button onclick="this.closest(\'div[style*=fixed]\').remove?this.closest(\'div[style*=fixed]\').remove():document.body.removeChild(this.closest(\'div[style*=fixed]\'))" style="width:100%;padding:.65rem;background:var(--gold);color:#fff;border:none;border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Got it — Let\'s Play! 🏢</button>'+
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.6);z-index:9000;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;';
+  ov.onclick=function(e){if(e.target===ov)document.body.removeChild(ov);};
+  ov.innerHTML=
+    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:560px;width:100%;padding:1.5rem;" onclick="event.stopPropagation()">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">'+
+      '<h3 style="font-size:1.1rem;font-weight:600;color:var(--text-primary);">❓ How to Play K7 Empire</h3>'+
+      '<button onclick="document.body.removeChild(this.closest(\'div[style*=fixed]\'))" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text-muted);">✕</button>'+
+    '</div>'+
+    '<div style="font-size:.8rem;color:var(--text-primary);line-height:1.6;margin-bottom:1rem;">You are the <strong>CEO of K7 Computing</strong>. Grow from ₹5L to ₹5 Trillion using idle income, manual sales, smart hiring, and real work performance!</div>'+
+    '<div style="display:flex;flex-direction:column;gap:.5rem;font-size:.78rem;margin-bottom:1rem;">'+
+      '<div style="padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;border-left:3px solid var(--gold);">💰 <strong>Idle Income</strong> — Your teams earn ₹/minute automatically. Hire managers to make them fully automatic.</div>'+
+      '<div style="padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;border-left:3px solid var(--gold);">🎯 <strong>Manual Sales</strong> — Pitch customers, answer quiz questions, earn extra money on top of idle.</div>'+
+      '<div style="padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;border-left:3px solid var(--gold);">👷 <strong>Hire/Fire</strong> — Build your team. Fire underperformers, hire when revenue is strong.</div>'+
+      '<div style="padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;border-left:3px solid var(--gold);">⭐ <strong>Real Work Bonus</strong> — Login, quiz, breaks, assessment = real money in game daily.</div>'+
+      '<div style="padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;border-left:3px solid var(--gold);">✨ <strong>Prestige</strong> — Hit ₹1 Trillion → reset for permanent +25% income bonus. Infinite replayability!</div>'+
+    '</div>'+
+    '<button onclick="document.body.removeChild(this.closest(\'div[style*=fixed]\'))" style="width:100%;padding:.6rem;background:var(--gold);color:#fff;border:none;border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Got it — Let\'s Play! 🏢</button>'+
     '</div>';
-  document.body.appendChild(overlay);
+  document.body.appendChild(ov);
 }
 
 async function tyStartGame(){
-  var diff = (document.querySelector('input[name="ty-diff"]:checked')||{value:'medium'}).value;
-  var balances = {easy:1000000,medium:500000,hard:200000};
-  var cpd = {easy:5,medium:3,hard:2};
+  var diff=(document.querySelector('input[name="ty-diff"]:checked')||{value:'medium'}).value;
+  var bals={easy:1000000,medium:500000,hard:200000};
+  var cpd={easy:5,medium:3,hard:2};
   try{
     await sbInsert('tycoon_companies',{
-      user_id:currentUser.id, user_name:currentUser.name,
-      balance:balances[diff], total_revenue:0, total_debt:0,
-      difficulty:diff, happiness:80, customers_per_day:cpd[diff],
-      unlocks:'{}', team_staff:'{}', team_levels:'{}',
-      last_salary_date:'', reputation:70,
-      created_at:new Date().toISOString(), updated_at:new Date().toISOString()
+      user_id:currentUser.id,user_name:currentUser.name,
+      balance:bals[diff],total_revenue:0,total_debt:0,
+      difficulty:diff,happiness:80,customers_per_day:cpd[diff],
+      unlocks:'{}',team_staff:'{}',team_levels:'{}',managers:'{}',
+      last_salary_date:'',reputation:70,prestige_stars:0,
+      income_per_min:0,last_collected:new Date().toISOString(),
+      created_at:new Date().toISOString(),updated_at:new Date().toISOString()
     });
     await tyInit();
-  }catch(e){ alert('Could not start: '+e.message); }
+  }catch(e){alert('Could not start: '+e.message);}
 }
 
+// ── OFFLINE EARNINGS ──
+async function tyCheckOfflineEarnings(){
+  var c=_tyCompany;
+  var lastCollected=c.last_collected?new Date(c.last_collected):new Date();
+  var minsAway=Math.floor((new Date()-lastCollected)/60000);
+  var mgr=tyMgr(c);
+  var hasAnyManager=Object.keys(mgr).length>0;
+  if(minsAway<2||!hasAnyManager)return;
+  var cappedMins=Math.min(minsAway,480); // max 8 hours
+  var ipm=tyIncomePM(c);
+  // Only managers earn offline
+  var offlineEarned=Math.round(ipm*cappedMins*0.6); // 60% efficiency offline
+  if(offlineEarned<1000)return;
+  // Show popup
+  var hoursAway=Math.floor(cappedMins/60);
+  var minsRem=cappedMins%60;
+  var timeStr=hoursAway>0?hoursAway+'h '+(minsRem>0?minsRem+'m':''):minsRem+'m';
+  var newBal=(c.balance||0)+offlineEarned;
+  await sbUpdate('tycoon_companies','user_id',currentUser.id,{
+    balance:newBal,total_revenue:(c.total_revenue||0)+offlineEarned,
+    last_collected:new Date().toISOString(),updated_at:new Date().toISOString()
+  });
+  await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'offline_income',amount:offlineEarned,description:'Offline earnings while away '+timeStr});
+  _tyCompany.balance=newBal;_tyCompany.total_revenue=(c.total_revenue||0)+offlineEarned;
+  _tyCompany.last_collected=new Date().toISOString();
+  // Show collect popup
+  tyShowOfflinePopup(offlineEarned,timeStr);
+}
+
+function tyShowOfflinePopup(earned,timeStr){
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.7);z-index:9500;display:flex;align-items:center;justify-content:center;padding:1rem;';
+  ov.innerHTML=
+    '<div style="background:var(--navy-card);border:1px solid rgba(239,73,60,.3);border-radius:var(--radius);max-width:340px;width:100%;padding:1.8rem;text-align:center;" onclick="event.stopPropagation()">'+
+    '<div style="font-size:2.5rem;margin-bottom:.5rem;">💰</div>'+
+    '<div style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:.3rem;">While you were away</div>'+
+    '<div style="font-size:2rem;font-weight:700;color:#4ade80;font-family:\'Cormorant Garamond\',serif;margin-bottom:.25rem;">'+tyFmt(earned)+'</div>'+
+    '<div style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.2rem;">Your teams earned for <strong>'+timeStr+'</strong> while you were away!</div>'+
+    '<button onclick="tyCollectOffline(this)" style="width:100%;padding:.8rem;background:linear-gradient(135deg,#4ade80,#16a34a);color:#fff;border:none;border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;">Collect '+tyFmt(earned)+' 💰</button>'+
+    '</div>';
+  document.body.appendChild(ov);
+}
+
+function tyCollectOffline(btn){
+  // Money fly animation
+  tyFloatMoney('+'+tyFmt(_tyCompany.balance||0),false,true);
+  var ov=btn.closest('div[style*="position:fixed"]');
+  if(ov)document.body.removeChild(ov);
+  tyUpdateBalDisplay();
+}
+
+// ── DAILY BONUSES ──
 async function tyCreditDailyBonuses(){
-  var today = todayStr();
+  var today=todayStr();
   try{
-    var existing = await sbQuery('tycoon_transactions','user_id=eq.'+currentUser.id+'&type=eq.daily_bonus&created_at=gte.'+today+'T00:00:00&select=id');
-    if(existing&&existing.length) return;
-
-    var bonuses=[]; var total=0;
-
-    // 1. Login on time — attendance record exists for today
-    var att=await sbQuery('attendance','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,login_time');
-    if(att&&att.length){
-      bonuses.push('Login on time +₹5,000');
-      total+=5000;
+    var ex=await sbQuery('tycoon_transactions','user_id=eq.'+currentUser.id+'&type=eq.daily_bonus&created_at=gte.'+today+'T00:00:00&select=id');
+    if(ex&&ex.length)return;
+    var bonuses=[],total=0;
+    var att=await sbQuery('attendance','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,logout_time');
+    if(att&&att.length){bonuses.push('Login +₹5K');total+=5000;}
+    if(att&&att.length&&att.some(function(a){return a.logout_time;})){bonuses.push('End Work +₹3K');total+=3000;}
+    var brk=await sbQuery('breaks','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,over_limit');
+    if(brk&&brk.length){
+      var over=brk.filter(function(b){return b.over_limit;}).length;
+      if(over===0){bonuses.push('Breaks +₹5K');total+=5000;}
+      else if(brk.some(function(b){return !b.over_limit;})){bonuses.push('Some breaks +₹2K');total+=2000;}
     }
-
-    // 2. Break compliance — ALL breaks today within limit
-    var allBreaks=await sbQuery('breaks','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,over_limit');
-    if(allBreaks&&allBreaks.length){
-      var overCount=allBreaks.filter(function(b){return b.over_limit;}).length;
-      if(overCount===0){
-        // All breaks on time — full bonus
-        bonuses.push('All breaks on time +₹5,000');
-        total+=5000;
-      } else {
-        // At least one break within limit — partial bonus
-        var onTime=allBreaks.filter(function(b){return !b.over_limit;}).length;
-        if(onTime>0){
-          bonuses.push('Some breaks on time +₹2,000');
-          total+=2000;
-        }
-      }
+    var qz=await sbQuery('quiz_responses','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,is_correct');
+    if(qz&&qz.length){
+      bonuses.push('Quiz attempt +₹2K');total+=2000;
+      if(qz.some(function(r){return r.is_correct;})){bonuses.push('Quiz correct +₹10K');total+=10000;}
     }
-
-    // 3. End work on time — logout_time exists today (means they clicked End Work)
-    var attFull=await sbQuery('attendance','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&logout_time=not.is.null&select=id');
-    if(attFull&&attFull.length){
-      bonuses.push('Ended work properly +₹3,000');
-      total+=3000;
-    }
-
-    // 4. Quiz attempted today (any answer) → ₹2,000
-    var qzAny=await sbQuery('quiz_responses','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,is_correct');
-    if(qzAny&&qzAny.length){
-      bonuses.push('Quiz attempted +₹2,000');
-      total+=2000;
-      // Quiz correct answer → extra ₹10,000
-      var qzCorrect=qzAny.filter(function(r){return r.is_correct;});
-      if(qzCorrect.length){
-        bonuses.push('Quiz correct answer +₹10,000');
-        total+=10000;
-      }
-    }
-
-    // 5. Assessment score bonus — based on latest assessment score this month
-    var monthStart=today.slice(0,7)+'-01';
     try{
-      var assResp=await sbQuery('assessment_responses',
-        'user_id=eq.'+currentUser.id+'&date=gte.'+monthStart+'&order=submitted_at.desc&limit=1&select=score,max_score'
-      );
-      if(assResp&&assResp.length){
-        var score=assResp[0].score||0;
-        var maxScore=assResp[0].max_score||100;
-        var pct=Math.round(score/maxScore*100);
-        if(pct>=90){bonuses.push('Assessment 90%+ +₹25,000');total+=25000;}
-        else if(pct>=75){bonuses.push('Assessment 75%+ +₹15,000');total+=15000;}
-        else if(pct>=50){bonuses.push('Assessment 50%+ +₹8,000');total+=8000;}
-        else if(pct>0){bonuses.push('Assessment attempted +₹3,000');total+=3000;}
+      var ms=todayStr().slice(0,7)+'-01';
+      var ar=await sbQuery('assessment_responses','user_id=eq.'+currentUser.id+'&date=gte.'+ms+'&order=submitted_at.desc&limit=1&select=score,max_score');
+      if(ar&&ar.length){
+        var pct=Math.round((ar[0].score||0)/(ar[0].max_score||100)*100);
+        if(pct>=90){bonuses.push('Assessment 90%+ +₹25K');total+=25000;}
+        else if(pct>=75){bonuses.push('Assessment 75%+ +₹15K');total+=15000;}
+        else if(pct>=50){bonuses.push('Assessment 50%+ +₹8K');total+=8000;}
+        else if(pct>0){bonuses.push('Assessment attempt +₹3K');total+=3000;}
       }
     }catch(e2){}
-
     if(total>0){
       var nb=(_tyCompany.balance||0)+total;
-      await sbUpdate('tycoon_companies','user_id',currentUser.id,{
-        balance:nb,total_revenue:(_tyCompany.total_revenue||0)+total,
-        updated_at:new Date().toISOString()
-      });
-      await sbInsert('tycoon_transactions',{
-        user_id:currentUser.id,type:'daily_bonus',amount:total,
-        description:'Daily bonuses: '+bonuses.join(' | ')
-      });
-      _tyCompany.balance=nb;
-      await tyPostFeed(currentUser.name,'earned daily bonuses +'+tyFmtMoney(total)+' 💰');
+      await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:nb,total_revenue:(_tyCompany.total_revenue||0)+total,updated_at:new Date().toISOString()});
+      await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'daily_bonus',amount:total,description:bonuses.join(' | ')});
+      _tyCompany.balance=nb;_tyCompany.total_revenue=(_tyCompany.total_revenue||0)+total;
+      await tyPostFeed(currentUser.name,'earned daily bonuses +'+tyFmt(total)+' 💰');
     }
     await tyProcessMonthlySalary();
     await tyProcessProjects();
@@ -7501,127 +7445,238 @@ async function tyCreditDailyBonuses(){
 }
 
 async function tyProcessMonthlySalary(){
-  var c = _tyCompany;
-  var today = todayStr();
-  if(c.last_salary_date===today) return;
-  // Pay salary every 7 real days
-  var lastPaid = c.last_salary_date ? new Date(c.last_salary_date) : new Date(0);
-  var daysSince = Math.floor((new Date() - lastPaid) / 86400000);
-  if(daysSince < 7) return;
-  var salary = tyMonthlySalary(c);
-  if(salary===0) return;
-  var newBal = (c.balance||0) - salary;
-  var updates = {last_salary_date:today, updated_at:new Date().toISOString()};
-  if(newBal < 0){
-    // Can't pay — happiness drops, staff may leave
-    updates.happiness = Math.max(10,(c.happiness||80)-25);
-    updates.balance = newBal;
-    await sbUpdate('tycoon_companies','user_id',currentUser.id,updates);
-    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'salary',amount:-salary,description:'Monthly salary — COULD NOT PAY FULLY! Happiness -25%'});
+  var c=_tyCompany,today=todayStr();
+  if(c.last_salary_date===today)return;
+  var last=c.last_salary_date?new Date(c.last_salary_date):new Date(0);
+  var daysSince=Math.floor((new Date()-last)/86400000);
+  if(daysSince<7)return;
+  var salary=tySalary(c);
+  if(salary===0)return;
+  var newBal=(c.balance||0)-salary;
+  var updates={last_salary_date:today,updated_at:new Date().toISOString()};
+  if(newBal<0){
+    updates.happiness=Math.max(10,(c.happiness||80)-25);
+    updates.balance=newBal;
     await tyPostFeed(currentUser.name,'struggled to pay salaries — team unhappy 😬');
   } else {
-    updates.balance = newBal;
-    await sbUpdate('tycoon_companies','user_id',currentUser.id,updates);
-    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'salary',amount:-salary,description:'Monthly salaries paid ✓'});
+    updates.balance=newBal;
   }
-  _tyCompany = Object.assign(_tyCompany, updates);
+  await sbUpdate('tycoon_companies','user_id',currentUser.id,updates);
+  await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'salary',amount:-salary,description:'Monthly salaries'+(newBal<0?' — COULD NOT PAY FULLY':' ✓')});
+  _tyCompany=Object.assign(_tyCompany,updates);
 }
 
 async function tyProcessProjects(){
   try{
-    var today = todayStr();
-    var projects = await sbQuery('tycoon_projects','user_id=eq.'+currentUser.id+'&status=eq.active&select=*');
-    if(!projects||!projects.length) return;
-    var todayDate = new Date(today);
-    for(var i=0;i<projects.length;i++){
-      var p = projects[i];
-      var completeDate = new Date(p.completes_date);
-      if(todayDate >= completeDate){
-        // Project complete — earn daily income
-        var earn = p.daily_earn||0;
-        var newBal = (_tyCompany.balance||0)+earn;
-        await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,total_revenue:(_tyCompany.total_revenue||0)+earn});
-        await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'project_income',amount:earn,description:'Project income: '+p.project_name});
-        _tyCompany.balance = newBal;
-        await tyPostFeed(currentUser.name,'project "'+p.project_name+'" is generating '+tyFmtMoney(earn)+'/day 🚀');
+    var today=todayStr();
+    var projs=await sbQuery('tycoon_projects','user_id=eq.'+currentUser.id+'&status=eq.active&select=*');
+    if(!projs||!projs.length)return;
+    for(var i=0;i<projs.length;i++){
+      var p=projs[i];
+      if(new Date(today)>=new Date(p.completes_date)){
+        var earn=p.daily_earn||0;
+        var nb=(_tyCompany.balance||0)+earn;
+        await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:nb,total_revenue:(_tyCompany.total_revenue||0)+earn});
+        await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'project_income',amount:earn,description:'Project: '+p.project_name});
+        _tyCompany.balance=nb;
       }
     }
   }catch(e){}
 }
 
 async function tyLoadCustomers(){
-  var today = todayStr();
-  var c = _tyCompany;
+  var today=todayStr();
   try{
-    var existing = await sbQuery('tycoon_customers','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=*');
-    _tyCustomers = existing||[];
-    if(_tyCustomers.length) return;
+    var ex=await sbQuery('tycoon_customers','user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=*');
+    _tyCustomers=ex||[];
+    if(_tyCustomers.length)return;
   }catch(e){}
-  var stats = tyComputeStats(c);
-  var count = stats.cpd;
-  var pool = [];
+  var ul=tyUL(_tyCompany);
+  var count=(_tyCompany.customers_per_day||3)+(tyUpEff('server',ul.server||0)||0)+(tyUpEff('datacenter',ul.datacenter||0)||0);
+  count=Math.min(Math.round(count),20);
   for(var i=0;i<count;i++){
-    var ct = TY_CUST_TYPES[Math.floor(Math.random()*TY_CUST_TYPES.length)];
-    var name = TY_NAMES[Math.floor(Math.random()*TY_NAMES.length)]+' from '+TY_CITIES[Math.floor(Math.random()*TY_CITIES.length)];
+    var ct=TY_CUST_TYPES[Math.floor(Math.random()*TY_CUST_TYPES.length)];
+    var name=TY_NAMES[Math.floor(Math.random()*TY_NAMES.length)]+' from '+TY_CITIES[Math.floor(Math.random()*TY_CITIES.length)];
     try{
-      var r = await sbInsert('tycoon_customers',{user_id:currentUser.id,date:today,customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});
-      pool.push(r[0]||{id:Date.now()+i,user_id:currentUser.id,date:today,customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});
-    }catch(e){
-      pool.push({id:Date.now()+i,user_id:currentUser.id,date:today,customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});
-    }
+      var r=await sbInsert('tycoon_customers',{user_id:currentUser.id,date:today,customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});
+      _tyCustomers.push(r&&r[0]?r[0]:{id:Date.now()+i,user_id:currentUser.id,date:today,customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});
+    }catch(e){_tyCustomers.push({id:Date.now()+i,user_id:currentUser.id,date:today,customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});}
   }
-  _tyCustomers = pool;
 }
 
-async function tyRender(){
-  var wrap = document.getElementById('ty-page-content');
-  var c = _tyCompany;
-  if(!c){wrap.innerHTML='<div class="ty-loading">No company data.</div>';return;}
-  var ul = tyGetUpgradeLevels(c);
-  var ts = tyGetTeamStaff(c);
-  var stats = tyComputeStats(c);
-  var valuation = tyValuation(c);
-  var salary = tyMonthlySalary(c);
-  var diffLabel = {easy:'😊 Easy',medium:'💼 Medium',hard:'🔥 Kesavan Mode'}[c.difficulty||'medium'];
-  var eventIdx = parseInt(todayStr().replace(/-/g,'')) % TY_MARKET_EVENTS.length;
-  var todayEvent = TY_MARKET_EVENTS[eventIdx];
-  var happyColor = (c.happiness||80)>=70?'#4ade80':(c.happiness||80)>=40?'#f59e0b':'#ef4444';
-  var repColor = (c.reputation||70)>=70?'#4ade80':(c.reputation||70)>=40?'#f59e0b':'#ef4444';
+// ── IDLE ENGINE ──
+function tyStartIdleEngine(){
+  if(_tyIdleInterval)clearInterval(_tyIdleInterval);
+  if(_tyLiveIncomeInterval)clearInterval(_tyLiveIncomeInterval);
+  var c=_tyCompany;
+  var mgr=tyMgr(c);
+  var hasAllMgr=mgr['ceo_asst']||false;
+  // Accumulate collect amounts per team
+  TY_TEAMS.forEach(function(t){
+    if(!_tyCollectReady[t.id])_tyCollectReady[t.id]=0;
+  });
+  // Every 5 seconds — tick teams
+  _tyIdleInterval=setInterval(async function(){
+    if(!_tyCompany)return;
+    var c2=_tyCompany;
+    var mgr2=tyMgr(c2);
+    var ts=tyTS(c2),tl=tyTL(c2),ul=tyUL(c2),ps=c2.prestige_stars||0;
+    var prestigeMult=1+(ps*0.25);
+    var rndBonus=1+(tyUpEff('rnd',ul.rnd||0)/100);
+    var totalThisTick=0;
+    TY_TEAMS.forEach(function(t){
+      var staff=ts[t.id]||0;
+      if(staff===0)return;
+      var lvl=tl[t.id]||1;
+      var lvlMult=1+((lvl-1)*0.3);
+      var pm=t.base_pm*staff*lvlMult*prestigeMult*rndBonus;
+      var perTick=pm/12; // 5 second tick = 1/12 of a minute
+      var hasMgr=mgr2[t.id+'_mgr']||mgr2['ceo_asst']||false;
+      if(hasMgr){
+        // Auto collect
+        totalThisTick+=perTick;
+        _tyCollectReady[t.id]=(_tyCollectReady[t.id]||0)+perTick;
+      } else {
+        // Accumulate until manual collect
+        _tyCollectReady[t.id]=(_tyCollectReady[t.id]||0)+perTick;
+      }
+    });
+    // Auto-save managers' income to DB every 60 seconds
+    var now=new Date();
+    var lastSave=_tyCompany._lastAutoSave?new Date(_tyCompany._lastAutoSave):new Date(0);
+    if((now-lastSave)>60000){
+      var autoTotal=Math.round(totalThisTick*12); // roughly 1 min
+      if(autoTotal>0){
+        try{
+          var nb2=(_tyCompany.balance||0)+autoTotal;
+          await sbUpdate('tycoon_companies','user_id',currentUser.id,{
+            balance:nb2,total_revenue:(_tyCompany.total_revenue||0)+autoTotal,
+            last_collected:new Date().toISOString(),updated_at:new Date().toISOString()
+          });
+          _tyCompany.balance=nb2;_tyCompany.total_revenue=(_tyCompany.total_revenue||0)+autoTotal;
+          _tyCompany._lastAutoSave=now.toISOString();
+          tyUpdateBalDisplay();
+        }catch(e){}
+      }
+    }
+    // Update collect buttons glow
+    tyUpdateCollectButtons();
+  },5000);
+  // Live income display every second
+  _tyLiveIncomeInterval=setInterval(function(){
+    tyUpdateLiveTicker();
+  },1000);
+}
 
-  // Check deal rush timing
-  var now = new Date();
-  var h = now.getHours(), m = now.getMinutes();
-  var dealRushActive = (h===11&&m<1)||(h===15&&m<1);
+function tyUpdateCollectButtons(){
+  TY_TEAMS.forEach(function(t){
+    var amt=_tyCollectReady[t.id]||0;
+    var btn=document.getElementById('ty-collect-'+t.id);
+    if(btn){
+      if(amt>=100){
+        btn.textContent='Collect '+tyFmt(Math.round(amt));
+        btn.style.background='var(--gold)';
+        btn.style.color='#fff';
+        btn.style.animation='tyPulse 1s infinite';
+        btn.disabled=false;
+      } else {
+        btn.textContent='₹'+Math.round(amt)+' ...';
+        btn.style.background='var(--navy-hover)';
+        btn.style.color='var(--text-dim)';
+        btn.style.animation='none';
+        btn.disabled=true;
+      }
+    }
+  });
+  // Update collect all
+  var total=Object.values(_tyCollectReady).reduce(function(a,b){return a+b;},0);
+  var allBtn=document.getElementById('ty-collect-all');
+  if(allBtn){
+    if(total>=500){
+      allBtn.textContent='💰 Collect All — '+tyFmt(Math.round(total));
+      allBtn.style.background='linear-gradient(135deg,#4ade80,#16a34a)';
+      allBtn.disabled=false;
+    } else {
+      allBtn.textContent='💰 Collect All — '+tyFmt(Math.round(total));
+      allBtn.style.background='var(--navy-hover)';
+      allBtn.disabled=total<100;
+    }
+  }
+}
+
+function tyUpdateLiveTicker(){
+  var ipm=_tyCompany?tyIncomePM(_tyCompany):0;
+  var el=document.getElementById('ty-live-ipm');
+  if(el)el.textContent=tyFmt(ipm)+'/min';
+  var balEl=document.getElementById('ty-bal-display');
+  if(balEl)balEl.textContent=tyFmt(_tyCompany?_tyCompany.balance:0);
+}
+
+function tyUpdateBalDisplay(){
+  var el=document.getElementById('ty-bal-display');
+  if(el)el.textContent=tyFmt(_tyCompany?_tyCompany.balance:0);
+}
+
+async function tyCollectTeam(teamId){
+  var amt=Math.round(_tyCollectReady[teamId]||0);
+  if(amt<100)return;
+  _tyCollectReady[teamId]=0;
+  var nb=(_tyCompany.balance||0)+amt;
+  try{
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:nb,total_revenue:(_tyCompany.total_revenue||0)+amt,updated_at:new Date().toISOString()});
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'idle_income',amount:amt,description:'Collected from '+teamId+' team'});
+    _tyCompany.balance=nb;_tyCompany.total_revenue=(_tyCompany.total_revenue||0)+amt;
+    tyFloatMoney('+'+tyFmt(amt));
+    tyUpdateBalDisplay();
+    tyUpdateCollectButtons();
+  }catch(e){}
+}
+
+async function tyCollectAll(){
+  var total=Math.round(Object.values(_tyCollectReady).reduce(function(a,b){return a+b;},0));
+  if(total<100)return;
+  Object.keys(_tyCollectReady).forEach(function(k){_tyCollectReady[k]=0;});
+  var nb=(_tyCompany.balance||0)+total;
+  try{
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:nb,total_revenue:(_tyCompany.total_revenue||0)+total,last_collected:new Date().toISOString(),updated_at:new Date().toISOString()});
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'idle_income',amount:total,description:'Collect All — all teams'});
+    _tyCompany.balance=nb;_tyCompany.total_revenue=(_tyCompany.total_revenue||0)+total;
+    tyFloatMoney('+'+tyFmt(total),false,true);
+    tyUpdateBalDisplay();
+    tyUpdateCollectButtons();
+  }catch(e){}
+}
+
+// ── MAIN RENDER ──
+async function tyRender(){
+  var wrap=document.getElementById('ty-page-content');
+  var c=_tyCompany;
+  if(!c){wrap.innerHTML='<div class="ty-loading">No company data.</div>';return;}
+  var ul=tyUL(c),ts=tyTS(c),tl=tyTL(c),mgr=tyMgr(c);
+  var val=tyValuation(c);
+  var salary=tySalary(c);
+  var ipm=tyIncomePM(c);
+  var diffLabel={easy:'😊 Easy',medium:'💼 Medium',hard:'🔥 Kesavan Mode'}[c.difficulty||'medium'];
+  var eventIdx=parseInt(todayStr().replace(/-/g,''))%TY_EVENTS.length;
+  var todayEv=TY_EVENTS[eventIdx];
+  var happyColor=(c.happiness||80)>=70?'#4ade80':(c.happiness||80)>=40?'#f59e0b':'#ef4444';
+  var repColor=(c.reputation||70)>=70?'#4ade80':(c.reputation||70)>=40?'#f59e0b':'#ef4444';
+  var ps=c.prestige_stars||0;
 
   // Leaderboard
   var lbHtml='';
   try{
-    var lb=await sbQuery('tycoon_companies','select=user_name,balance,total_revenue,reputation,happiness&order=balance.desc&limit=5');
+    var lb=await sbQuery('tycoon_companies','select=user_name,balance,total_revenue,reputation,happiness,prestige_stars&order=balance.desc&limit=5');
     var medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
     lbHtml=(lb||[]).map(function(r,i){
       var isMe=r.user_name===currentUser.name;
-      var val=tyValuation(r);
-      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--navy-border);'+(i===(lb.length-1)?'border-bottom:none':'')+'">'+ 
-        '<span style="font-size:1rem;width:24px;">'+medals[i]+'</span>'+
-        '<div style="width:26px;height:26px;border-radius:50%;background:'+tyColor(r.user_name||'')+';display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;">'+tyIni(r.user_name||'')+'</div>'+
-        '<div style="flex:1;min-width:0;"><div style="font-size:.78rem;font-weight:600;color:var(--text-primary);'+(isMe?'color:var(--gold);':'')+'">'+esc(r.user_name||'')+(isMe?' (You)':'')+'</div>'+
-        '<div style="font-size:.65rem;color:var(--text-muted);">Val: '+tyFmtMoney(tyValuation(r))+'</div></div>'+
-        '<div style="font-size:.78rem;font-weight:700;color:#4ade80;">'+tyFmtMoney(r.balance||0)+'</div>'+
-      '</div>';
-    }).join('');
-  }catch(e){}
-
-  // Recent transactions
-  var txHtml='';
-  try{
-    var txs=await sbQuery('tycoon_transactions','user_id=eq.'+currentUser.id+'&order=created_at.desc&limit=6&select=amount,description,created_at');
-    txHtml=(txs||[]).map(function(t){
-      var isPlus=(t.amount||0)>=0;
-      var ts2=t.created_at?new Date(t.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'';
-      return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:0.5px solid var(--navy-border);font-size:.75rem;">'+
-        '<span style="font-weight:600;color:'+(isPlus?'#4ade80':'#ef4444')+';white-space:nowrap;">'+(isPlus?'+':'')+tyFmtMoney(Math.abs(t.amount||0))+'</span>'+
-        '<span style="flex:1;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(t.description||'')+'</span>'+
-        '<span style="color:var(--text-dim);font-size:.65rem;white-space:nowrap;">'+ts2+'</span>'+
+      var stars=r.prestige_stars||0;
+      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--navy-border);">'+
+        '<span style="font-size:.95rem;width:22px;">'+medals[i]+'</span>'+
+        '<div style="width:24px;height:24px;border-radius:50%;background:'+tyColor(r.user_name||'')+';display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff;">'+tyIni(r.user_name||'')+'</div>'+
+        '<div style="flex:1;min-width:0;"><div style="font-size:.78rem;font-weight:600;color:'+(isMe?'var(--gold)':'var(--text-primary)')+' ;">'+esc(r.user_name||'')+(isMe?' (You)':'')+(stars?' '+'⭐'.repeat(Math.min(stars,5)):'')+'</div>'+
+        '<div style="font-size:.62rem;color:var(--text-dim);">Val: '+tyFmt(tyValuation(r))+'</div></div>'+
+        '<div style="font-size:.78rem;font-weight:700;color:#4ade80;">'+tyFmt(r.balance||0)+'</div>'+
       '</div>';
     }).join('');
   }catch(e){}
@@ -7629,642 +7684,769 @@ async function tyRender(){
   // Feed
   var feedHtml='';
   try{
-    var feed=await sbQuery('tycoon_feed','order=created_at.desc&limit=12&select=user_name,event_text,created_at');
+    var feed=await sbQuery('tycoon_feed','order=created_at.desc&limit=10&select=user_name,event_text,created_at');
     feedHtml=(feed||[]).map(function(f){
       var t=f.created_at?new Date(f.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'';
-      return '<div style="padding:6px 0;border-bottom:0.5px solid var(--navy-border);font-size:.75rem;">'+
+      return '<div style="padding:5px 0;border-bottom:0.5px solid var(--navy-border);font-size:.75rem;">'+
         '<span style="font-weight:600;color:var(--gold);">'+esc(f.user_name||'')+'</span> '+
         '<span style="color:var(--text-primary);">'+esc(f.event_text||'')+'</span>'+
-        '<div style="font-size:.65rem;color:var(--text-dim);">'+t+'</div>'+
+        '<div style="font-size:.62rem;color:var(--text-dim);">'+t+'</div>'+
       '</div>';
-    }).join('');
-    if(!feedHtml) feedHtml='<div style="color:var(--text-dim);font-size:.78rem;padding:.5rem 0;">No activity yet. Start closing deals!</div>';
+    }).join('')||'<div style="color:var(--text-dim);font-size:.78rem;">No activity yet.</div>';
   }catch(e){}
 
-  // Customer cards
-  var custHtml = _tyCustomers.map(function(cu,idx){
-    return tyBuildCustomerCard(cu,idx,stats,ul);
-  }).join('');
+  // Txs
+  var txHtml='';
+  try{
+    var txs=await sbQuery('tycoon_transactions','user_id=eq.'+currentUser.id+'&order=created_at.desc&limit=5&select=amount,description,created_at');
+    txHtml=(txs||[]).map(function(t){
+      var isP=(t.amount||0)>=0;
+      var ts2=t.created_at?new Date(t.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'';
+      return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:0.5px solid var(--navy-border);font-size:.72rem;">'+
+        '<span style="font-weight:600;color:'+(isP?'#4ade80':'#ef4444')+';white-space:nowrap;">'+(isP?'+':'')+tyFmt(Math.abs(t.amount||0))+'</span>'+
+        '<span style="flex:1;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(t.description||'')+'</span>'+
+        '<span style="color:var(--text-dim);font-size:.62rem;">'+ts2+'</span>'+
+      '</div>';
+    }).join('')||'<div style="color:var(--text-dim);font-size:.78rem;">No transactions yet.</div>';
+  }catch(e){}
 
-  // Projects
-  var projHtml = await tyRenderProjects();
-
-  // Upgrades (first 6 for dashboard)
-  var upgHtml = TY_UPGRADES.slice(0,6).map(function(u){
-    var lvl = ul[u.id]||0;
-    var nextCost = tyUpgradeCost(u.id, lvl);
-    var canAfford = (c.balance||0)>=nextCost;
-    var eff = tyUpgradeEffect(u.id, lvl+1);
-    return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.75rem;">'+
-      '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">'+
-        '<span style="font-size:1.2rem;">'+u.icon+'</span>'+
-        '<div style="flex:1;"><div style="font-size:.78rem;font-weight:600;color:var(--text-primary);">'+u.name+'</div>'+
-        '<div style="font-size:.65rem;color:var(--text-muted);">Level '+lvl+' → '+eff+' '+u.effect_unit+'</div></div>'+
-        '<span style="font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--gold);">Lvl '+lvl+'</span>'+
-      '</div>'+
-      (lvl>=50
-        ?'<div style="font-size:.72rem;color:#4ade80;font-weight:600;">✓ Max Level!</div>'
-        :'<button style="width:100%;padding:.35rem;background:'+(canAfford?'var(--gold)':'var(--navy-hover)')+';color:'+(canAfford?'#fff':'var(--text-dim)')+';border:1px solid '+(canAfford?'transparent':'var(--navy-border)')+';border-radius:5px;font-size:.72rem;font-weight:600;cursor:'+(canAfford?'pointer':'not-allowed')+';" '+(canAfford?'':'disabled')+' onclick="tyUpgrade(\''+u.id+'\')">'+
-          'Upgrade → '+tyFmtMoney(nextCost)+'</button>'
-      )+
-    '</div>';
-  }).join('');
+  // Check prestige
+  var prestigeAvail=val>=1000000000000;
 
   wrap.innerHTML=
     // Header
     '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem;">'+
       '<div>'+
-        '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:1.5rem;font-weight:600;color:var(--text-primary);margin:0;">🏢 K7 Empire</h2>'+
-        '<p style="font-size:.72rem;color:var(--text-muted);margin:.1rem 0 0;"><em>Project Kesavan Sir</em> — A tribute to our CEO</p>'+
+        '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:1.5rem;font-weight:600;color:var(--text-primary);margin:0;">🏢 K7 Empire '+(ps?'⭐'.repeat(Math.min(ps,5)):'')+'</h2>'+
+        '<p style="font-size:.68rem;color:var(--text-dim);margin:.1rem 0 0;"><em>Project Kesavan Sir</em> — Concept & Design: Diwan Chowthry</p>'+
       '</div>'+
-      '<div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">'+
-        '<span style="font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--gold);">'+diffLabel+'</span>'+
-        '<button class="ts-btn-sec" style="font-size:.72rem;padding:.3rem .7rem;" onclick="tyShowHowToPlay()">❓ How to Play</button>'+
-        (isAdminUser()?'<button class="ts-btn-sec" style="font-size:.72rem;padding:.3rem .7rem;" onclick="tyAdminPanel()">⚙ Admin</button>':'')+
+      '<div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;">'+
+        '<span style="font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--gold);">'+diffLabel+'</span>'+
+        '<button class="ts-btn-sec" style="font-size:.7rem;padding:.25rem .6rem;" onclick="tyShowHowToPlay()">❓ Help</button>'+
+        (isAdminUser()?'<button class="ts-btn-sec" style="font-size:.7rem;padding:.25rem .6rem;" onclick="tyAdminPanel()">⚙ Admin</button>':'')+
+        (prestigeAvail?'<button style="font-size:.72rem;padding:3px 10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:20px;cursor:pointer;font-weight:700;" onclick="tyPrestige()">✨ PRESTIGE!</button>':'')+
       '</div>'+
     '</div>'+
-
-    // Deal Rush Banner
-    (dealRushActive?'<div style="background:linear-gradient(135deg,rgba(239,73,60,.15),rgba(239,73,60,.05));border:1px solid rgba(239,73,60,.4);border-radius:var(--radius-sm);padding:.75rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.85rem;font-weight:700;color:var(--accent-red);">⚡ DEAL RUSH — Limited Time!</div><div style="font-size:.75rem;color:var(--text-muted);">Special customers available now — close deals for 2x rewards!</div></div><div style="font-size:1.5rem;font-weight:700;color:var(--accent-red);" id="ty-rush-timer">60s</div></div>':'')+
 
     // Event banner
-    '<div style="background:'+(todayEvent.type==='good'?'rgba(46,197,111,.07)':todayEvent.type==='bad'?'rgba(239,73,60,.07)':'rgba(123,135,153,.07)')+';border:1px solid '+(todayEvent.type==='good'?'rgba(46,197,111,.2)':todayEvent.type==='bad'?'rgba(239,73,60,.2)':'rgba(123,135,153,.2)')+';border-radius:var(--radius-sm);padding:.6rem 1rem;font-size:.8rem;color:var(--text-primary);margin-bottom:.75rem;">'+
-      '<strong>📅 Today\'s Market:</strong> '+esc(todayEvent.text)+
+    '<div style="background:'+(todayEv.type==='good'?'rgba(46,197,111,.07)':todayEv.type==='bad'?'rgba(239,73,60,.07)':'rgba(123,135,153,.07)')+';border:1px solid '+(todayEv.type==='good'?'rgba(46,197,111,.2)':todayEv.type==='bad'?'rgba(239,73,60,.2)':'rgba(123,135,153,.2)')+';border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:.78rem;color:var(--text-primary);margin-bottom:.75rem;">'+
+      '<strong>📅 Today\'s Market:</strong> '+esc(todayEv.text)+
     '</div>'+
 
-    // Company card
-    '<div class="ty-company" style="margin-bottom:1rem;">'+
+    // Company card with idle income display
+    '<div class="ty-company" style="margin-bottom:.75rem;">'+
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">'+
         '<div>'+
-          '<div style="font-size:1rem;font-weight:700;color:#F1F5F9;">K7 Computing</div>'+
-          '<div style="font-size:.72rem;color:#94A3B8;margin-bottom:.4rem;">CEO: '+esc(currentUser.name)+' · '+diffLabel+'</div>'+
-          '<div style="font-size:1.6rem;font-weight:700;color:#4ade80;font-family:\'Cormorant Garamond\',serif;" id="ty-bal-display">'+tyFmtMoney(c.balance||0)+'</div>'+
-          '<div style="font-size:.72rem;color:#94A3B8;margin-top:.1rem;">Valuation: <strong style="color:#F1F5F9;">'+tyFmtMoney(valuation)+'</strong> · Revenue: '+tyFmtMoney(c.total_revenue||0)+'</div>'+
+          '<div style="font-size:.95rem;font-weight:700;color:#F1F5F9;">K7 Computing</div>'+
+          '<div style="font-size:.68rem;color:#94A3B8;">CEO: '+esc(currentUser.name)+'</div>'+
+          '<div style="font-size:1.6rem;font-weight:700;color:#4ade80;font-family:\'Cormorant Garamond\',serif;margin:.3rem 0 .1rem;" id="ty-bal-display">'+tyFmt(c.balance||0)+'</div>'+
+          '<div style="font-size:.68rem;color:#94A3B8;">Valuation: <strong style="color:#F1F5F9;">'+tyFmt(val)+'</strong></div>'+
+          (ps?'<div style="font-size:.68rem;color:#f59e0b;margin-top:.2rem;">'+ps+' Prestige Stars · +'+(ps*25)+'% income</div>':'')+
         '</div>'+
-        '<div style="text-align:right;min-width:120px;">'+
-          '<div style="font-size:.65rem;color:#94A3B8;margin-bottom:2px;">Happiness <span style="color:'+happyColor+';font-weight:700;">'+(c.happiness||80)+'%</span></div>'+
-          '<div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin-bottom:6px;"><div style="height:100%;width:'+(c.happiness||80)+'%;background:'+happyColor+';border-radius:2px;"></div></div>'+
-          '<div style="font-size:.65rem;color:#94A3B8;margin-bottom:2px;">Reputation <span style="color:'+repColor+';font-weight:700;">'+(c.reputation||70)+'%</span></div>'+
-          '<div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin-bottom:6px;"><div style="height:100%;width:'+(c.reputation||70)+'%;background:'+repColor+';border-radius:2px;"></div></div>'+
-          '<div style="font-size:.65rem;color:#94A3B8;">Salary/month: <span style="color:#ef4444;font-weight:600;">'+tyFmtMoney(salary)+'</span></div>'+
-          '<div style="font-size:.65rem;color:#94A3B8;margin-top:2px;">Customers/day: <span style="color:#F1F5F9;font-weight:600;">'+stats.cpd+'</span></div>'+
+        '<div style="text-align:right;">'+
+          '<div style="font-size:.62rem;color:#94A3B8;margin-bottom:2px;">Income rate</div>'+
+          '<div style="font-size:1.1rem;font-weight:700;color:#4ade80;" id="ty-live-ipm">'+tyFmt(ipm)+'/min</div>'+
+          '<div style="font-size:.62rem;color:#94A3B8;margin-top:.3rem;">Happy <span style="color:'+happyColor+'">'+(c.happiness||80)+'%</span> · Rep <span style="color:'+repColor+'">'+(c.reputation||70)+'%</span></div>'+
+          '<div style="font-size:.62rem;color:#ef4444;margin-top:.15rem;">Salary: '+tyFmt(salary)+'/mo</div>'+
         '</div>'+
+      '</div>'+
+      // Collect All button
+      '<div style="margin-top:.75rem;display:flex;gap:.6rem;flex-wrap:wrap;">'+
+        '<button id="ty-collect-all" onclick="tyCollectAll()" disabled style="flex:1;padding:.5rem;border:none;border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;">💰 Collect All</button>'+
+        '<button onclick="tySwitchTab(\'walkin\')" style="padding:.5rem 1rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.78rem;cursor:pointer;color:var(--text-primary);">+ Walk-in</button>'+
       '</div>'+
     '</div>'+
 
     // Tab bar
-    '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;border-bottom:1px solid var(--navy-border);padding-bottom:.6rem;">'+
-      ['dashboard','customers','upgrades','teams','projects','bank','leaderboard','feed'].map(function(t){
-        var labels={dashboard:'📊 Dashboard',customers:'👥 Customers',upgrades:'⬆ Upgrades',teams:'👷 Teams',projects:'🚀 Projects',bank:'🏦 Bank',leaderboard:'🏆 Scores',feed:'📡 Live Feed'};
-        return '<button class="qr-tab'+(t===_tyActiveTab?' active':'')+'" onclick="tySwitchTab(\''+t+'\')">'+labels[t]+'</button>';
+    '<div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.85rem;border-bottom:1px solid var(--navy-border);padding-bottom:.5rem;">'+
+      ['dashboard','teams','upgrades','customers','quiz','spend','projects','bank','leaderboard','feed'].map(function(t){
+        var labels={dashboard:'📊 Dashboard',teams:'👷 Teams',upgrades:'⬆ Upgrades',customers:'👥 Customers',quiz:'🎯 Quiz',spend:'💸 Spend',projects:'🚀 Projects',bank:'🏦 Bank',leaderboard:'🏆 Scores',feed:'📡 Feed'};
+        return '<button class="qr-tab'+(_tyActiveTab===t?' active':'')+'" onclick="tySwitchTab(\''+t+'\')">'+labels[t]+'</button>';
       }).join('')+
     '</div>'+
 
     // Tab panels
-    '<div id="ty-tab-dashboard" style="'+((_tyActiveTab==='dashboard')?'display:block':'display:none')+'">'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">'+
-        '<div>'+
-          '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.6rem;">Recent transactions</div>'+
-          (txHtml||'<div style="color:var(--text-dim);font-size:.78rem;">No transactions yet.</div>')+
-        '</div>'+
-        '<div>'+
-          '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.6rem;">Today\'s real work bonuses</div>'+
-          '<div style="font-size:.75rem;color:var(--text-muted);display:flex;flex-direction:column;gap:4px;">'+
-            '<div style="display:flex;justify-content:space-between;"><span>Login on time</span><span style="color:#4ade80;font-weight:600;">+₹5,000</span></div>'+
-            '<div style="display:flex;justify-content:space-between;"><span>All breaks on time</span><span style="color:#4ade80;font-weight:600;">+₹5,000</span></div>'+
-            '<div style="display:flex;justify-content:space-between;"><span>End work properly</span><span style="color:#4ade80;font-weight:600;">+₹3,000</span></div>'+
-            '<div style="display:flex;justify-content:space-between;"><span>Quiz attempted</span><span style="color:#4ade80;font-weight:600;">+₹2,000</span></div>'+
-            '<div style="display:flex;justify-content:space-between;"><span>Quiz correct answer</span><span style="color:#4ade80;font-weight:600;">+₹10,000</span></div>'+
-            '<div style="display:flex;justify-content:space-between;"><span>Assessment 90%+</span><span style="color:#4ade80;font-weight:600;">+₹25,000</span></div>'+
-            '<div style="border-top:0.5px solid var(--navy-border);padding-top:4px;display:flex;justify-content:space-between;font-weight:600;"><span>Max per day</span><span style="color:#4ade80;">+₹50,000</span></div>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-      // Crisis check
-      '<div id="ty-crisis-wrap" style="margin-top:1rem;"></div>'+
-      '<div id="ty-decision-wrap" style="margin-top:.75rem;"></div>'+
-    '</div>'+
-
-    '<div id="ty-tab-customers" style="'+((_tyActiveTab==='customers')?'display:block':'display:none')+'">'+
-      (custHtml||'<div style="color:var(--text-dim);font-size:.82rem;padding:1rem 0;">No customers today. Check back tomorrow!</div>')+
-      '<button style="width:100%;margin-top:.75rem;padding:.6rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.78rem;cursor:pointer;color:var(--text-muted);" onclick="tyFindWalkIn()">+ Find walk-in customer (₹2,000 prospecting fee)</button>'+
-    '</div>'+
-
-    '<div id="ty-tab-upgrades" style="'+((_tyActiveTab==='upgrades')?'display:block':'display:none')+'">'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">'+upgHtml+'</div>'+
-      '<div style="margin-top:.75rem;display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">'+
-        TY_UPGRADES.slice(6).map(function(u){
-          var lvl=ul[u.id]||0;
-          var nextCost=tyUpgradeCost(u.id,lvl);
-          var canAfford=(c.balance||0)>=nextCost;
-          var eff=tyUpgradeEffect(u.id,lvl+1);
-          return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.75rem;">'+
-            '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">'+
-              '<span style="font-size:1.2rem;">'+u.icon+'</span>'+
-              '<div style="flex:1;"><div style="font-size:.78rem;font-weight:600;color:var(--text-primary);">'+u.name+'</div>'+
-              '<div style="font-size:.65rem;color:var(--text-muted);">Lv '+lvl+' → '+eff+' '+u.effect_unit+'</div></div>'+
-              '<span style="font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--gold);">Lvl '+lvl+'</span>'+
-            '</div>'+
-            (lvl>=50?'<div style="font-size:.72rem;color:#4ade80;font-weight:600;">✓ Max Level!</div>':
-              '<button style="width:100%;padding:.35rem;background:'+(canAfford?'var(--gold)':'var(--navy-hover)')+';color:'+(canAfford?'#fff':'var(--text-dim)')+';border:1px solid '+(canAfford?'transparent':'var(--navy-border)')+';border-radius:5px;font-size:.72rem;font-weight:600;cursor:'+(canAfford?'pointer':'not-allowed')+';" '+(canAfford?'':'disabled')+' onclick="tyUpgrade(\''+u.id+'\')">Upgrade → '+tyFmtMoney(nextCost)+'</button>'
-            )+
-          '</div>';
-        }).join('')+
-      '</div>'+
-    '</div>'+
-
-    '<div id="ty-tab-teams" style="'+((_tyActiveTab==='teams')?'display:block':'display:none')+'">'+
-      '<div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.75rem;">Monthly salary: <strong style="color:#ef4444;">'+tyFmtMoney(salary)+'</strong></div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;">'+
-        TY_TEAMS.map(function(t){
-          var staff=ts[t.id]||0;
-          var tl=tyGetTeamLevels(c)[t.id]||1;
-          var maxStaff=tl*t.max_per_lvl;
-          var perf=Math.min(100,staff*20);
-          var lvlCost=tl*t.salary*10;
-          return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem;">'+
-            '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;">'+
-              '<span style="font-size:1.1rem;">'+t.icon+'</span>'+
-              '<div><div style="font-size:.78rem;font-weight:600;color:var(--text-primary);">'+t.name+'</div>'+
-              '<div style="font-size:.62rem;color:var(--text-muted);">₹'+t.salary.toLocaleString('en-IN')+'/head/mo</div></div>'+
-              '<span style="margin-left:auto;font-size:.62rem;font-weight:700;padding:1px 5px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--gold);">Lv'+tl+'</span>'+
-            '</div>'+
-            '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;">'+
-              '<button style="width:22px;height:22px;border-radius:4px;border:1px solid rgba(239,73,60,.3);background:rgba(239,73,60,.08);color:var(--accent-red);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;" onclick="tyFireStaff(\''+t.id+'\')">−</button>'+
-              '<span style="font-size:.9rem;font-weight:600;color:var(--text-primary);min-width:32px;text-align:center;">'+staff+'/'+maxStaff+'</span>'+
-              '<button style="width:22px;height:22px;border-radius:4px;border:1px solid rgba(46,197,111,.3);background:rgba(46,197,111,.08);color:#1a7a45;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;" onclick="tyHireStaff(\''+t.id+'\')">+</button>'+
-              '<span style="font-size:.65rem;color:var(--text-muted);flex:1;text-align:right;">'+t.effect+'</span>'+
-            '</div>'+
-            '<div style="height:3px;background:var(--navy-border);border-radius:2px;overflow:hidden;margin-bottom:.4rem;"><div style="height:100%;width:'+perf+'%;background:#185FA5;border-radius:2px;transition:width .3s;"></div></div>'+
-            (staff>=maxStaff?'<button style="width:100%;padding:.28rem;font-size:.65rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:4px;cursor:pointer;color:var(--gold);" onclick="tyUpgradeTeam(\''+t.id+'\')">Upgrade team → '+tyFmtMoney(lvlCost)+'</button>':'<div style="font-size:.62rem;color:var(--text-dim);">'+staff+' staff · perf '+perf+'%</div>')+
-          '</div>';
-        }).join('')+
-      '</div>'+
-    '</div>'+
-
-    '<div id="ty-tab-projects" style="'+((_tyActiveTab==='projects')?'display:block':'display:none')+'">'+
-      projHtml+
-    '</div>'+
-
-    '<div id="ty-tab-bank" style="'+((_tyActiveTab==='bank')?'display:block':'display:none')+'">'+
-      tyRenderBankTab(c)+
-    '</div>'+
-
+    tyRenderTabDashboard(c,txHtml)+
+    tyRenderTabTeams(c,ts,tl,mgr)+
+    tyRenderTabUpgrades(c,ul)+
+    tyRenderTabCustomers(c,ul)+
+    tyRenderTabQuiz()+
+    tyRenderTabSpend(c)+
+    tyRenderTabProjects(c)+
+    tyRenderTabBank(c)+
     '<div id="ty-tab-leaderboard" style="'+((_tyActiveTab==='leaderboard')?'display:block':'display:none')+'">'+
-      '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.75rem;">CEO Rankings — Full Company Stats</div>'+
+      '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.6rem;">CEO Rankings</div>'+
       (lbHtml||'<div style="color:var(--text-dim);font-size:.78rem;">No data yet.</div>')+
     '</div>'+
-
     '<div id="ty-tab-feed" style="'+((_tyActiveTab==='feed')?'display:block':'display:none')+'">'+
-      '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.75rem;">📡 Live Company Feed</div>'+
+      '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.6rem;">📡 Live Feed</div>'+
       feedHtml+
+    '</div>'+
+    // Watermark
+    '<div style="text-align:center;font-size:.6rem;color:var(--text-dim);margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--navy-border);">'+
+      'K7 Empire · Concept & Design: <strong>Diwan Chowthry</strong> · Project Kesavan Sir'+
     '</div>';
 
-  // Load crisis/decision for dashboard
-  if(_tyActiveTab==='dashboard') tyLoadCrisisDecision();
-  // Deal rush timer
-  if(dealRushActive) tyStartDealRushTimer();
+  tyUpdateCollectButtons();
+  if(_tyActiveTab==='quiz')tyLoadQuizQuestion();
 }
 
 function tySwitchTab(tab){
   _tyActiveTab=tab;
-  tyRender();
+  // Update tab buttons
+  document.querySelectorAll('.qr-tab').forEach(function(b){
+    var t=b.textContent;
+    b.classList.toggle('active',b.getAttribute('onclick')==='tySwitchTab(\''+tab+'\')');
+  });
+  // Show/hide panels
+  ['dashboard','teams','upgrades','customers','quiz','spend','projects','bank','leaderboard','feed','walkin'].forEach(function(t){
+    var el=document.getElementById('ty-tab-'+t);
+    if(el)el.style.display=t===tab?'block':'none';
+  });
+  if(tab==='quiz')tyLoadQuizQuestion();
 }
 
-function tyBuildCustomerCard(cu, idx, stats, ul){
-  var ct = TY_CUST_TYPES.find(function(t){return t.type===cu.customer_type;})||TY_CUST_TYPES[0];
-  var bg = ['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#F97316'][idx%6];
-  var ini = (cu.customer_name||'?').slice(0,2).toUpperCase();
+function tyRenderTabDashboard(c,txHtml){
+  var dh=parseInt(todayStr().replace(/-/g,''));
+  var crisisHtml='';
+  if(dh%7===0){
+    var cr=TY_CRISES[dh%TY_CRISES.length];
+    crisisHtml='<div style="background:rgba(239,73,60,.07);border:1px solid rgba(239,73,60,.2);border-radius:var(--radius-sm);padding:.9rem;margin-bottom:.75rem;">'+
+      '<div style="font-size:.82rem;font-weight:600;color:var(--accent-red);margin-bottom:.5rem;">⚠ Crisis: '+cr.text+'</div>'+
+      '<div style="display:flex;gap:.5rem;flex-wrap:wrap;">'+
+      cr.opts.map(function(o,i){return'<button style="padding:.35rem .8rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:.72rem;cursor:pointer;color:var(--text-primary);" onclick="tyResolveCrisis('+i+','+dh%TY_CRISES.length+')">'+o.label+'</button>';}).join('')+
+      '</div></div>';
+  }
+  var perf=TY_TEAMS.map(function(t){
+    var p=tyTeamPerf(c,t.id);
+    var ts2=tyTS(c);
+    var staff=ts2[t.id]||0;
+    if(staff===0)return'';
+    var pColor=p>=70?'#4ade80':p>=40?'#f59e0b':'#ef4444';
+    var pLabel=p>=70?'Excellent':p>=50?'Good':p>=30?'Needs work':'Critical';
+    return '<div style="display:flex;align-items:center;gap:.5rem;padding:.3rem 0;border-bottom:0.5px solid var(--navy-border);">'+
+      '<span style="font-size:.85rem;flex-shrink:0;">'+t.icon+'</span>'+
+      '<span style="font-size:.75rem;flex:1;color:var(--text-primary);">'+t.name+'</span>'+
+      '<div style="width:80px;height:4px;background:var(--navy-border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:'+p+'%;background:'+pColor+';border-radius:2px;"></div></div>'+
+      '<span style="font-size:.68rem;color:'+pColor+';min-width:55px;text-align:right;">'+p+'% '+pLabel+'</span>'+
+    '</div>';
+  }).filter(Boolean).join('');
+  return '<div id="ty-tab-dashboard" style="'+((_tyActiveTab==='dashboard')?'display:block':'display:none')+'">'+
+    crisisHtml+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">'+
+      '<div>'+
+        '<div style="font-size:.75rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">💳 Recent Transactions</div>'+
+        txHtml+
+      '</div>'+
+      '<div>'+
+        '<div style="font-size:.75rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">📊 Team Performance</div>'+
+        (perf||'<div style="font-size:.75rem;color:var(--text-dim);">Hire staff to see performance.</div>')+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
 
+function tyRenderTabTeams(c,ts,tl,mgr){
+  var totalCollectReady=Math.round(Object.values(_tyCollectReady).reduce(function(a,b){return a+b;},0));
+  var teamsHtml=TY_TEAMS.map(function(t){
+    var staff=ts[t.id]||0;
+    var lvl=tl[t.id]||1;
+    var maxStaff=lvl*t.max_per_lvl;
+    var pm=Math.round(t.base_pm*staff*(1+((lvl-1)*0.3))*(1+((c.prestige_stars||0)*0.25)));
+    var perf=staff>0?tyTeamPerf(c,t.id):0;
+    var perfColor=perf>=70?'#4ade80':perf>=40?'#f59e0b':'#ef4444';
+    var lvlUpCost=lvl*t.salary*10;
+    var fireSeverance=staff>0?t.salary:0;
+    var mgrObj=TY_MANAGERS.find(function(m){return m.team===t.id;});
+    var hasMgr=mgrObj&&(mgr[mgrObj.id]||mgr['ceo_asst'])||false;
+    var mgrName=hasMgr?((_tyManagerNames[t.id]||mgrObj.default_name)):'';
+    var collectAmt=Math.round(_tyCollectReady[t.id]||0);
+    return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem;">'+
+      '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">'+
+        '<span style="font-size:1.1rem;">'+t.icon+'</span>'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);">'+t.name+'</div>'+
+          '<div style="font-size:.62rem;color:var(--text-muted);">₹'+t.salary.toLocaleString('en-IN')+'/head/mo · '+tyFmt(pm)+'/min</div>'+
+        '</div>'+
+        '<span style="font-size:.62rem;font-weight:700;padding:1px 5px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--gold);">Lv'+lvl+'</span>'+
+        (hasMgr?'<span style="font-size:.6rem;padding:1px 5px;border-radius:20px;background:rgba(46,197,111,.1);color:#1a7a45;" title="Manager: '+mgrName+'">🤵 '+mgrName.split(' ')[0]+'</span>':'')+
+      '</div>'+
+      // Staff controls
+      '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;">'+
+        '<button style="width:22px;height:22px;border-radius:4px;border:1px solid rgba(239,73,60,.3);background:rgba(239,73,60,.08);color:var(--accent-red);cursor:pointer;font-size:12px;font-weight:700;" onclick="tyFireStaff(\''+t.id+'\','+fireSeverance+')">−</button>'+
+        '<span style="font-size:.88rem;font-weight:600;color:var(--text-primary);min-width:40px;text-align:center;">'+staff+' / '+maxStaff+'</span>'+
+        '<button style="width:22px;height:22px;border-radius:4px;border:1px solid rgba(46,197,111,.3);background:rgba(46,197,111,.08);color:#1a7a45;cursor:pointer;font-size:12px;font-weight:700;" onclick="tyHireStaff(\''+t.id+'\','+t.salary+')">+</button>'+
+        '<div style="flex:1;height:3px;background:var(--navy-border);border-radius:2px;overflow:hidden;margin:0 .25rem;"><div style="height:100%;width:'+(staff>0?perf:0)+'%;background:'+perfColor+';border-radius:2px;"></div></div>'+
+        '<span style="font-size:.62rem;color:'+perfColor+';">'+(staff>0?perf+'%':'')+'</span>'+
+      '</div>'+
+      // Collect + manage buttons
+      '<div style="display:flex;gap:.35rem;flex-wrap:wrap;">'+
+        '<button id="ty-collect-'+t.id+'" onclick="tyCollectTeam(\''+t.id+'\')" disabled style="flex:1;padding:.3rem .5rem;border:none;border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.68rem;font-weight:600;cursor:pointer;background:var(--navy-hover);color:var(--text-dim);transition:all .3s;">₹0 ...</button>'+
+        (!hasMgr&&mgrObj?'<button style="padding:.3rem .65rem;background:rgba(239,163,0,.1);border:1px solid rgba(239,163,0,.2);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.65rem;cursor:pointer;color:#854F0B;" onclick="tyHireManager(\''+mgrObj.id+'\','+mgrObj.cost+',\''+t.id+'\')">🤵 Hire Mgr '+tyFmt(mgrObj.cost)+'</button>':'')+
+        (staff>=maxStaff?'<button style="padding:.3rem .65rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.65rem;cursor:pointer;color:var(--gold);" onclick="tyUpgradeTeam(\''+t.id+'\','+lvlUpCost+','+lvl+')">⬆ Lv'+(lvl+1)+' '+tyFmt(lvlUpCost)+'</button>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  // CEO Assistant
+  var ceoAsst=TY_MANAGERS.find(function(m){return m.id==='ceo_asst';});
+  var hasCeoAsst=mgr['ceo_asst']||false;
+  var ceoAsstName=_tyManagerNames['all']||ceoAsst.default_name;
+
+  return '<div id="ty-tab-teams" style="'+((_tyActiveTab==='teams')?'display:block':'display:none')+'">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem;">'+
+      '<div style="font-size:.75rem;color:var(--text-muted);">Monthly salary: <strong style="color:#ef4444;">'+tyFmt(tySalary(c))+'</strong> · Income/min: <strong style="color:#4ade80;">'+tyFmt(tyIncomePM(c))+'</strong></div>'+
+      (!hasCeoAsst?'<button style="padding:.35rem .85rem;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#fff;border:none;border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;" onclick="tyHireManager(\'ceo_asst\','+ceoAsst.cost+',\'all\')">👔 Hire CEO Assistant — '+tyFmt(ceoAsst.cost)+' (All Auto)</button>':
+      '<div style="font-size:.72rem;padding:.35rem .85rem;background:rgba(46,197,111,.1);border-radius:6px;color:#1a7a45;">✓ CEO Assistant: '+ceoAsstName+' (All teams auto-earn)</div>')+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.65rem;">'+teamsHtml+'</div>'+
+    '<div style="margin-top:.75rem;background:rgba(239,73,60,.06);border:1px solid rgba(239,73,60,.12);border-radius:var(--radius-sm);padding:.75rem;">'+
+      '<div style="font-size:.72rem;font-weight:600;color:var(--accent-red);margin-bottom:.4rem;">⚠ Firing Guide</div>'+
+      '<div style="font-size:.72rem;color:var(--text-muted);">Firing costs 1 month severance. Firing high performers hurts reputation -5. Low performers (below 30%) can be fired without penalty. Mass layoffs (3+) cost 2x severance + happiness -25%.</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function tyRenderTabUpgrades(c,ul){
+  var html=TY_UPGRADES.map(function(u){
+    var lvl=ul[u.id]||0;
+    var nextCost=tyUpgradeCost(u.id,lvl);
+    var canAfford=(c.balance||0)>=nextCost;
+    var eff=tyUpEff(u.id,lvl+1);
+    return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.75rem;">'+
+      '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">'+
+        '<span style="font-size:1.2rem;">'+u.icon+'</span>'+
+        '<div style="flex:1;"><div style="font-size:.78rem;font-weight:600;color:var(--text-primary);">'+u.name+'</div>'+
+        '<div style="font-size:.62rem;color:var(--text-muted);">'+u.desc+'</div></div>'+
+        '<span style="font-size:.62rem;font-weight:700;padding:2px 6px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--gold);">Lv '+lvl+'</span>'+
+      '</div>'+
+      (lvl>=50?'<div style="font-size:.72rem;color:#4ade80;font-weight:600;text-align:center;">✓ Max Level 50!</div>':
+        '<button style="width:100%;padding:.35rem;background:'+(canAfford?'var(--gold)':'var(--navy-hover)')+';color:'+(canAfford?'#fff':'var(--text-dim)')+';border:1px solid '+(canAfford?'transparent':'var(--navy-border)')+';border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:600;cursor:'+(canAfford?'pointer':'not-allowed')+';" '+(canAfford?'':'disabled')+' onclick="tyUpgrade(\''+u.id+'\')">'+
+          'Lv '+(lvl+1)+' — '+tyFmt(nextCost)+'</button>'
+      )+
+    '</div>';
+  }).join('');
+  return '<div id="ty-tab-upgrades" style="'+((_tyActiveTab==='upgrades')?'display:block':'display:none')+'">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;">'+html+'</div>'+
+  '</div>';
+}
+
+function tyRenderTabCustomers(c,ul){
+  var priceMult=1+(tyUpEff('rnd',ul.rnd||0)/100);
+  var custHtml=_tyCustomers.map(function(cu,idx){return tyBuildCustCard(cu,idx,c,priceMult);}).join('');
+  return '<div id="ty-tab-customers" style="'+((_tyActiveTab==='customers')?'display:block':'display:none')+'">'+
+    custHtml+
+    '<button style="width:100%;margin-top:.6rem;padding:.55rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.78rem;cursor:pointer;color:var(--text-muted);" onclick="tyFindWalkIn()">+ Find walk-in customer (₹2,000 prospecting fee)</button>'+
+  '</div>';
+}
+
+function tyRenderTabQuiz(){
+  return '<div id="ty-tab-quiz" style="'+((_tyActiveTab==='quiz')?'display:block':'display:none')+'">'+
+    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.2rem;margin-bottom:.75rem;">'+
+      '<div style="font-size:.75rem;font-weight:600;color:var(--text-primary);margin-bottom:.35rem;">🎯 Manual Earn — Answer Questions</div>'+
+      '<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.75rem;">Answer unlimited questions to earn extra money. New question every time!</div>'+
+      '<div id="ty-quiz-content">'+
+        '<div style="text-align:center;color:var(--text-dim);font-size:.82rem;">Loading question...</div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function tyRenderTabSpend(c){
+  var html=TY_MANUAL_SPEND.map(function(s){
+    var canAfford=(c.balance||0)>=s.cost;
+    return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.75rem;">'+
+      '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">'+
+        '<span style="font-size:1.2rem;">'+s.icon+'</span>'+
+        '<div style="flex:1;"><div style="font-size:.78rem;font-weight:600;color:var(--text-primary);">'+s.name+'</div>'+
+        '<div style="font-size:.62rem;color:var(--text-muted);">'+s.effect+'</div></div>'+
+        '<span style="font-size:.62rem;font-weight:700;color:var(--gold);">'+tyFmt(s.cost)+'</span>'+
+      '</div>'+
+      '<button style="width:100%;padding:.35rem;background:'+(canAfford?'var(--gold)':'var(--navy-hover)')+';color:'+(canAfford?'#fff':'var(--text-dim)')+';border:1px solid '+(canAfford?'transparent':'var(--navy-border)')+';border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.72rem;cursor:'+(canAfford?'pointer':'not-allowed')+';" '+(canAfford?'':'disabled')+' onclick="tySpend(\''+s.id+'\','+s.cost+',\''+esc(s.name)+'\',\''+esc(s.effect)+'\')">'+
+        (canAfford?'Spend '+tyFmt(s.cost):'Need '+tyFmt(s.cost-((c.balance||0)))+' more')+
+      '</button>'+
+    '</div>';
+  }).join('');
+  return '<div id="ty-tab-spend" style="'+((_tyActiveTab==='spend')?'display:block':'display:none')+'">'+
+    '<div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.65rem;">Spend money on your team and marketing to boost performance and happiness.</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;">'+html+'</div>'+
+  '</div>';
+}
+
+async function tyRenderTabProjects(c){
+  var activeProjs=[];
+  try{activeProjs=await sbQuery('tycoon_projects','user_id=eq.'+currentUser.id+'&status=eq.active&select=*')||[];}catch(e){}
+  var activeIds=activeProjs.map(function(p){return p.project_id;});
+  var activeHtml=activeProjs.map(function(p){
+    var daysLeft=Math.max(0,Math.ceil((new Date(p.completes_date)-new Date())/86400000));
+    var pDef=TY_PROJECTS.find(function(x){return x.id===p.project_id;})||{days:7};
+    var pct=Math.min(100,Math.round((1-daysLeft/pDef.days)*100));
+    return '<div style="background:rgba(46,197,111,.04);border:1px solid rgba(46,197,111,.2);border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.5rem;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">'+
+        '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">🔄 '+esc(p.project_name)+'</div>'+
+        '<span style="font-size:.72rem;font-weight:600;color:#1a7a45;">'+daysLeft+' days left</span>'+
+      '</div>'+
+      '<div style="height:5px;background:var(--navy-border);border-radius:3px;overflow:hidden;margin-bottom:.35rem;"><div style="height:100%;width:'+pct+'%;background:#1a7a45;border-radius:3px;transition:width .4s;"></div></div>'+
+      '<div style="font-size:.68rem;color:var(--text-muted);">'+pct+'% complete · Earns '+tyFmt(p.daily_earn)+'/day on completion</div>'+
+    '</div>';
+  }).join('');
+  var availHtml=TY_PROJECTS.filter(function(p){return activeIds.indexOf(p.id)<0;}).map(function(p){
+    var canAfford=(c.balance||0)>=p.cost;
+    return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.5rem;">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.4rem;">'+
+        '<div><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">🚀 '+p.name+'</div>'+
+        '<div style="font-size:.68rem;color:var(--text-muted);">'+p.days+' days · Earns '+tyFmt(p.daily_earn)+'/day</div></div>'+
+        '<div style="font-size:.78rem;font-weight:700;color:var(--gold);white-space:nowrap;">'+tyFmt(p.cost)+'</div>'+
+      '</div>'+
+      '<button style="width:100%;padding:.38rem;background:'+(canAfford?'var(--gold)':'var(--navy-hover)')+';color:'+(canAfford?'#fff':'var(--text-dim)')+';border:1px solid '+(canAfford?'transparent':'var(--navy-border)')+';border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:600;cursor:'+(canAfford?'pointer':'not-allowed')+';" '+(canAfford?'':'disabled')+' onclick="tyStartProject(\''+p.id+'\')">'+
+        (canAfford?'Launch':'Need '+tyFmt(p.cost-((c.balance||0)))+' more')+
+      '</button>'+
+    '</div>';
+  }).join('');
+  return '<div id="ty-tab-projects" style="'+((_tyActiveTab==='projects')?'display:block':'display:none')+'">'+
+    (activeHtml?'<div style="font-size:.75rem;font-weight:600;margin-bottom:.5rem;color:var(--text-primary);">Active</div>'+activeHtml:'')+
+    '<div style="font-size:.75rem;font-weight:600;margin:'+(activeHtml?'.75rem':'0')+' 0 .5rem;color:var(--text-primary);">Available</div>'+
+    (availHtml||'<div style="color:var(--text-dim);font-size:.78rem;">All projects launched! 🎉</div>')+
+  '</div>';
+}
+
+function tyRenderTabBank(c){
+  var bankHtml=TY_BANKS.map(function(b){
+    return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.5rem;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem;">'+
+        '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">🏦 '+b.name+'</div>'+
+        '<span style="font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(76,118,168,.1);color:var(--accent-blue);">'+b.rate+'% p.a.</span>'+
+      '</div>'+
+      '<div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.4rem;">Max: '+tyFmt(b.max)+' · Monthly interest: '+b.rate+'%/yr</div>'+
+      '<div style="display:flex;gap:.5rem;">'+
+        '<input type="number" id="loan-'+b.name.replace(/\s+/g,'')+'" placeholder="Amount ₹" min="10000" max="'+b.max+'" style="flex:1;padding:.35rem .7rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.75rem;color:var(--text-primary);outline:none;"/>'+
+        '<button style="padding:.35rem .9rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;" onclick="tyTakeLoan(\''+b.name+'\','+b.rate+','+b.max+')">Borrow</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  return '<div id="ty-tab-bank" style="'+((_tyActiveTab==='bank')?'display:block':'display:none')+'">'+
+    '<div style="background:rgba(239,73,60,.05);border:1px solid rgba(239,73,60,.12);border-radius:var(--radius-sm);padding:.6rem .9rem;margin-bottom:.65rem;font-size:.75rem;color:var(--text-muted);">⚠ Loans accrue interest. Unpaid loans hurt reputation.</div>'+
+    bankHtml+
+  '</div>';
+}
+
+function tyBuildCustCard(cu,idx,c,priceMult){
+  var ct=TY_CUST_TYPES.find(function(t){return t.type===cu.customer_type;})||TY_CUST_TYPES[0];
+  var bg=['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#F97316'][idx%6];
+  var ini=(cu.customer_name||'?').slice(0,2).toUpperCase();
   if(cu.outcome!=='pending'){
-    return '<div style="background:var(--navy-hover);border:1px solid '+(cu.outcome==='sold'?'rgba(46,197,111,.3)':'rgba(239,73,60,.2)')+';border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.6rem;">'+
-      '<div style="display:flex;align-items:center;gap:.65rem;">'+
-        '<div style="width:30px;height:30px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;">'+ini+'</div>'+
-        '<div style="flex:1;"><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">'+esc(cu.customer_name)+'</div><div style="font-size:.7rem;color:var(--text-muted);">'+ct.label+'</div></div>'+
-        '<span style="font-size:.75rem;font-weight:600;padding:3px 10px;border-radius:20px;'+(cu.outcome==='sold'?'background:rgba(46,197,111,.12);color:#1a7a45':'background:rgba(239,73,60,.1);color:var(--accent-red)')+'">'+
-          (cu.outcome==='sold'?'✓ Sold '+tyFmtMoney(cu.revenue||0):'✗ Lost — penalty paid')+
+    return '<div style="background:var(--navy-hover);border:1px solid '+(cu.outcome==='sold'?'rgba(46,197,111,.3)':'rgba(239,73,60,.2)')+';border-radius:var(--radius-sm);padding:.75rem;margin-bottom:.5rem;">'+
+      '<div style="display:flex;align-items:center;gap:.6rem;">'+
+        '<div style="width:28px;height:28px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff;">'+ini+'</div>'+
+        '<div style="flex:1;font-size:.8rem;color:var(--text-primary);">'+esc(cu.customer_name)+'</div>'+
+        '<span style="font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:20px;'+(cu.outcome==='sold'?'background:rgba(46,197,111,.12);color:#1a7a45':'background:rgba(239,73,60,.1);color:var(--accent-red)')+'">'+
+          (cu.outcome==='sold'?'✓ '+tyFmt(cu.revenue||0):'✗ Lost')+
         '</span>'+
       '</div>'+
     '</div>';
   }
-
-  // Build pitch options
-  var prods = ct.needs.map(function(pid){ return TY_PRODUCTS.find(function(p){return p.id===pid;}); }).filter(Boolean);
-  var priceMult = stats.priceMult||1;
-  // Add adjacent product as upsell
-  if(prods.length<3){
-    var lastIdx = TY_PRODUCTS.findIndex(function(p){return p.id===prods[prods.length-1].id;});
-    if(TY_PRODUCTS[lastIdx+1]) prods.push(TY_PRODUCTS[lastIdx+1]);
-  }
-  var pitchBtns = prods.map(function(p){
-    var price = Math.round(p.price * priceMult);
-    return '<button style="width:100%;text-align:left;padding:.45rem .7rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.75rem;cursor:pointer;display:flex;justify-content:space-between;margin-bottom:3px;color:var(--text-primary);" onclick="tyPitch(\''+cu.id+'\',\''+p.id+'\','+price+',false)">'+
-      '<span>'+p.name+'</span><span style="font-size:.7rem;font-weight:600;color:#1a7a45;">₹'+price.toLocaleString('en-IN')+'</span>'+
-    '</button>';
+  var prods=ct.needs.map(function(pid){return TY_PRODUCTS.find(function(p){return p.id===pid;});}).filter(Boolean);
+  var idx2=TY_PRODUCTS.findIndex(function(p){return p.id===prods[prods.length-1].id;});
+  if(TY_PRODUCTS[idx2+1])prods.push(TY_PRODUCTS[idx2+1]);
+  var eventMult=TY_EVENTS[parseInt(todayStr().replace(/-/g,''))%TY_EVENTS.length].mult||1;
+  var pitchBtns=prods.map(function(p){
+    var price=Math.round(p.price*priceMult);
+    return '<button style="width:100%;text-align:left;padding:.4rem .65rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.72rem;cursor:pointer;display:flex;justify-content:space-between;margin-bottom:3px;color:var(--text-primary);" onclick="tyPitch(\''+cu.id+'\',\''+p.id+'\','+price+',false)">'+
+      '<span>'+p.name+'</span><span style="color:#1a7a45;font-weight:600;">₹'+price.toLocaleString('en-IN')+'</span></button>';
   }).join('');
-  var discP = prods[0];
-  var discPrice = Math.round(discP.price * priceMult * 0.8);
-  pitchBtns += '<button style="width:100%;text-align:left;padding:.45rem .7rem;background:rgba(239,73,60,.04);border:1px solid rgba(239,73,60,.2);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.75rem;cursor:pointer;display:flex;justify-content:space-between;color:var(--text-primary);" onclick="tyPitch(\''+cu.id+'\',\''+discP.id+'\','+discPrice+',true)">'+
-    '<span>'+discP.name+' <span style="color:var(--accent-red);font-size:.65rem;">-20% OFF</span></span><span style="font-size:.7rem;font-weight:600;color:#E65100;">₹'+discPrice.toLocaleString('en-IN')+'</span>'+
-  '</button>';
-
-  return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.6rem;" id="ty-cu-'+cu.id+'">'+
-    '<div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.5rem;">'+
-      '<div style="width:30px;height:30px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;">'+ini+'</div>'+
-      '<div style="flex:1;"><div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">'+esc(cu.customer_name)+'</div><div style="font-size:.7rem;color:var(--text-muted);">'+ct.label+'</div></div>'+
-      '<span style="font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:20px;background:rgba(239,163,0,.1);color:#854F0B;">Success ~'+Math.round(stats.baseRate*100)+'%</span>'+
+  var discPrice=Math.round(prods[0].price*priceMult*0.8);
+  pitchBtns+='<button style="width:100%;text-align:left;padding:.4rem .65rem;background:rgba(239,73,60,.04);border:1px solid rgba(239,73,60,.2);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.72rem;cursor:pointer;display:flex;justify-content:space-between;color:var(--text-primary);" onclick="tyPitch(\''+cu.id+'\',\''+prods[0].id+'\','+discPrice+',true)">'+
+    '<span>'+prods[0].name+' <span style="color:var(--accent-red);font-size:.65rem;">-20% OFF</span></span><span style="color:#E65100;font-weight:600;">₹'+discPrice.toLocaleString('en-IN')+'</span></button>';
+  var ul=tyUL(c);
+  var ts=tyTS(c);
+  var salesStaff=ts.sales||0;
+  var baseRate=0.35+Math.min(salesStaff*0.03,0.2)+(tyUpEff('marketing',ul.marketing||0)/100*0.4);
+  return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.5rem;" id="ty-cu-'+cu.id+'">'+
+    '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.45rem;">'+
+      '<div style="width:28px;height:28px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff;">'+ini+'</div>'+
+      '<div style="flex:1;"><div style="font-size:.8rem;font-weight:600;color:var(--text-primary);">'+esc(cu.customer_name)+'</div><div style="font-size:.68rem;color:var(--text-muted);">'+ct.label+'</div></div>'+
+      '<span style="font-size:.65rem;padding:2px 7px;border-radius:20px;background:rgba(239,163,0,.1);color:#854F0B;">~'+Math.round(Math.min(baseRate*100,75))+'% chance</span>'+
     '</div>'+
-    '<div style="font-size:.75rem;color:var(--text-muted);font-style:italic;margin-bottom:.5rem;">'+ct.quote+'</div>'+
+    '<div style="font-size:.72rem;color:var(--text-muted);font-style:italic;margin-bottom:.45rem;">'+ct.quote+'</div>'+
     pitchBtns+
   '</div>';
 }
 
-async function tyPitch(custId, productId, price, isDiscount){
-  var cu = _tyCustomers.find(function(c){return String(c.id)===String(custId);});
-  if(!cu||cu.outcome!=='pending') return;
-  var ct = TY_CUST_TYPES.find(function(t){return t.type===cu.customer_type;})||TY_CUST_TYPES[0];
-  var prod = TY_PRODUCTS.find(function(p){return p.id===productId;});
-  var c = _tyCompany;
-  var stats = tyComputeStats(c);
-  var ul = tyGetUpgradeLevels(c);
+// ── QUIZ ──
+function tyLoadQuizQuestion(){
+  var pool=TY_QUIZ_POOL;
+  var q=pool[Math.floor(Math.random()*pool.length)];
+  _tyCurrentQuestion=q;
+  var html='<div style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:.75rem;">'+esc(q.q)+'</div>'+
+    '<div style="display:flex;flex-direction:column;gap:.4rem;">'+
+    q.opts.map(function(opt,i){
+      return '<button style="text-align:left;padding:.55rem .75rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.8rem;cursor:pointer;color:var(--text-primary);transition:all .15s;" onclick="tyAnswerQuiz('+i+')" id="ty-q-opt-'+i+'">'+
+        '<span style="font-weight:600;color:var(--text-dim);margin-right:.5rem;">'+'ABCD'[i]+'.</span>'+esc(opt)+
+      '</button>';
+    }).join('')+
+    '</div>'+
+    '<div style="margin-top:.5rem;font-size:.72rem;color:var(--text-muted);">Reward for correct answer: <strong style="color:#4ade80;">'+tyFmt(q.reward)+'</strong></div>';
+  var el=document.getElementById('ty-quiz-content');
+  if(el)el.innerHTML=html;
+}
 
-  // Success rate calculation
-  var rate = stats.baseRate;
-  if(isDiscount) rate = Math.min(0.90, rate+0.20);
-  if(ct.needs.indexOf(productId)>-1) rate = Math.min(0.85, rate+0.15);
-  else rate = Math.max(0.05, rate-0.25); // Wrong product = hard penalty
-  // Daily event modifier
-  var eventIdx = parseInt(todayStr().replace(/-/g,'')) % TY_MARKET_EVENTS.length;
-  rate *= TY_MARKET_EVENTS[eventIdx].mult||1;
-  // Random variance — some days hot, some cold
-  rate *= (0.7 + Math.random()*0.6);
-  rate = Math.min(0.90, Math.max(0.05, rate));
+async function tyAnswerQuiz(idx){
+  if(!_tyCurrentQuestion)return;
+  var q=_tyCurrentQuestion;
+  var correct=idx===q.ans;
+  // Highlight answer
+  for(var i=0;i<q.opts.length;i++){
+    var btn=document.getElementById('ty-q-opt-'+i);
+    if(btn){
+      btn.disabled=true;
+      if(i===q.ans)btn.style.background='rgba(46,197,111,.15)',btn.style.borderColor='rgba(46,197,111,.4)',btn.style.color='#1a7a45';
+      else if(i===idx&&!correct)btn.style.background='rgba(239,73,60,.1)',btn.style.borderColor='rgba(239,73,60,.3)',btn.style.color='var(--accent-red)';
+    }
+  }
+  var el=document.getElementById('ty-quiz-content');
+  if(correct){
+    var nb=(_tyCompany.balance||0)+q.reward;
+    try{
+      await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:nb,total_revenue:(_tyCompany.total_revenue||0)+q.reward,updated_at:new Date().toISOString()});
+      await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'quiz_earn',amount:q.reward,description:'Quiz correct answer'});
+      _tyCompany.balance=nb;_tyCompany.total_revenue=(_tyCompany.total_revenue||0)+q.reward;
+      tyFloatMoney('+'+tyFmt(q.reward));
+      tyUpdateBalDisplay();
+    }catch(e){}
+    if(el){
+      var res=document.createElement('div');
+      res.style.cssText='margin-top:.75rem;padding:.6rem .85rem;background:rgba(46,197,111,.1);border:1px solid rgba(46,197,111,.25);border-radius:var(--radius-sm);font-size:.82rem;color:#1a7a45;font-weight:600;';
+      res.textContent='✓ Correct! +'+tyFmt(q.reward)+' earned!';
+      el.appendChild(res);
+    }
+  } else {
+    if(el){
+      var res2=document.createElement('div');
+      res2.style.cssText='margin-top:.75rem;padding:.6rem .85rem;background:rgba(239,73,60,.07);border:1px solid rgba(239,73,60,.2);border-radius:var(--radius-sm);font-size:.82rem;color:var(--accent-red);';
+      res2.textContent='✗ Wrong answer. The correct answer was: '+q.opts[q.ans];
+      el.appendChild(res2);
+    }
+  }
+  // Next question button
+  if(el){
+    var nbtn=document.createElement('button');
+    nbtn.style.cssText='margin-top:.65rem;width:100%;padding:.55rem;background:var(--gold);color:#fff;border:none;border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;';
+    nbtn.textContent='→ Next Question';
+    nbtn.onclick=tyLoadQuizQuestion;
+    el.appendChild(nbtn);
+  }
+}
 
-  var sold = Math.random() < rate;
-  var revenue = sold ? price : 0;
-  var outcome = sold ? 'sold' : 'lost';
-
-  // Failed deal costs money (bad review penalty)
-  var penalty = sold ? 0 : ct.penalty;
-  var newBal = (c.balance||0) + revenue - penalty;
-  var newRev = (c.total_revenue||0) + revenue;
-  var newRep = sold
-    ? Math.min(100, (c.reputation||70)+2)
-    : Math.max(0, (c.reputation||70)-5);
-
+// ── PITCH ──
+async function tyPitch(custId,productId,price,isDiscount){
+  var cu=_tyCustomers.find(function(c){return String(c.id)===String(custId);});
+  if(!cu||cu.outcome!=='pending')return;
+  var ct=TY_CUST_TYPES.find(function(t){return t.type===cu.customer_type;})||TY_CUST_TYPES[0];
+  var prod=TY_PRODUCTS.find(function(p){return p.id===productId;});
+  var c=_tyCompany;
+  var ul=tyUL(c);var ts=tyTS(c);
+  var salesStaff=ts.sales||0;
+  var baseRate=0.35+Math.min(salesStaff*0.03,0.2)+(tyUpEff('marketing',ul.marketing||0)/100*0.4);
+  if(isDiscount)baseRate=Math.min(0.88,baseRate+0.2);
+  if(ct.needs.indexOf(productId)>-1)baseRate=Math.min(0.85,baseRate+0.15);
+  else baseRate=Math.max(0.05,baseRate-0.25);
+  var eventMult=TY_EVENTS[parseInt(todayStr().replace(/-/g,''))%TY_EVENTS.length].mult||1;
+  baseRate*=eventMult*(0.7+Math.random()*0.6);
+  baseRate=Math.min(0.90,Math.max(0.05,baseRate));
+  var sold=Math.random()<baseRate;
+  var revenue=sold?Math.round(price*eventMult):0;
+  var penalty=sold?0:ct.pen;
+  var newBal=(c.balance||0)+revenue-penalty;
+  var newRev=(c.total_revenue||0)+revenue;
+  var newRep=sold?Math.min(100,(c.reputation||70)+2):Math.max(0,(c.reputation||70)-5);
   try{
-    await sbUpdate('tycoon_customers','id',custId,{product_sold:prod?prod.name:'',revenue:revenue,outcome:outcome});
-    cu.outcome=outcome; cu.revenue=revenue;
-    await sbUpdate('tycoon_companies','user_id',currentUser.id,{
-      balance:newBal, total_revenue:newRev, reputation:newRep, updated_at:new Date().toISOString()
-    });
-    _tyCompany.balance=newBal; _tyCompany.total_revenue=newRev; _tyCompany.reputation=newRep;
-
+    await sbUpdate('tycoon_customers','id',custId,{product_sold:prod?prod.name:'',revenue:revenue,outcome:sold?'sold':'lost'});
+    cu.outcome=sold?'sold':'lost';cu.revenue=revenue;
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,total_revenue:newRev,reputation:newRep,updated_at:new Date().toISOString()});
+    _tyCompany.balance=newBal;_tyCompany.total_revenue=newRev;_tyCompany.reputation=newRep;
     if(sold){
       await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'sale',amount:revenue,description:'Sold '+(prod?prod.name:productId)+' to '+(cu.customer_name||'').split(' from')[0]});
-      await tyPostFeed(currentUser.name,'closed a deal — sold '+(prod?prod.name:'product')+' for '+tyFmtMoney(revenue)+' 🎯');
-      tyFloatMoney('+'+tyFmtMoney(revenue));
+      await tyPostFeed(currentUser.name,'closed a deal — '+tyFmt(revenue)+' 🎯');
+      tyFloatMoney('+'+tyFmt(revenue));
     } else {
-      await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'penalty',amount:-penalty,description:'Lost deal — bad review penalty from '+(cu.customer_name||'').split(' from')[0]});
-      tyFloatMoney('−'+tyFmtMoney(penalty)+' penalty', true);
+      await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'penalty',amount:-penalty,description:'Lost deal — penalty from '+(cu.customer_name||'').split(' from')[0]});
+      tyFloatMoney('−'+tyFmt(penalty)+' penalty',true);
     }
-
-    // Refresh customer card
-    var stats2 = tyComputeStats(_tyCompany);
-    var ul2 = tyGetUpgradeLevels(_tyCompany);
-    var card = document.getElementById('ty-cu-'+custId);
-    if(card){
-      var idx = _tyCustomers.indexOf(cu);
-      card.outerHTML = tyBuildCustomerCard(cu, idx, stats2, ul2);
-    }
-    // Update balance display
-    var balEl = document.getElementById('ty-bal-display');
-    if(balEl) balEl.textContent = tyFmtMoney(_tyCompany.balance);
-  }catch(e){ alert('Error: '+e.message); }
+    var priceMult=1+(tyUpEff('rnd',tyUL(_tyCompany).rnd||0)/100);
+    var card=document.getElementById('ty-cu-'+custId);
+    if(card){var idx=_tyCustomers.indexOf(cu);card.outerHTML=tyBuildCustCard(cu,idx,_tyCompany,priceMult);}
+    tyUpdateBalDisplay();
+  }catch(e){alert('Error: '+e.message);}
 }
 
 async function tyFindWalkIn(){
-  var c = _tyCompany;
-  if((c.balance||0)<2000){ alert('Need ₹2,000 for prospecting fee!'); return; }
-  var today = todayStr();
-  var ct = TY_CUST_TYPES[Math.floor(Math.random()*TY_CUST_TYPES.length)];
-  var name = TY_NAMES[Math.floor(Math.random()*TY_NAMES.length)]+' from '+TY_CITIES[Math.floor(Math.random()*TY_CITIES.length)];
-  var newBal = (c.balance||0) - 2000;
+  if((_tyCompany.balance||0)<2000){alert('Need ₹2,000 for prospecting fee!');return;}
+  var ct=TY_CUST_TYPES[Math.floor(Math.random()*TY_CUST_TYPES.length)];
+  var name=TY_NAMES[Math.floor(Math.random()*TY_NAMES.length)]+' from '+TY_CITIES[Math.floor(Math.random()*TY_CITIES.length)];
+  var newBal=(_tyCompany.balance||0)-2000;
   try{
     await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal});
-    _tyCompany.balance = newBal;
-    var r = await sbInsert('tycoon_customers',{user_id:currentUser.id,date:today,customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});
-    _tyCustomers.push(r[0]||{id:Date.now(),customer_name:name,customer_type:ct.type,outcome:'pending'});
+    _tyCompany.balance=newBal;
+    var r=await sbInsert('tycoon_customers',{user_id:currentUser.id,date:todayStr(),customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});
+    _tyCustomers.push(r&&r[0]?r[0]:{id:Date.now(),user_id:currentUser.id,date:todayStr(),customer_name:name,customer_type:ct.type,product_sold:null,revenue:0,outcome:'pending'});
     await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'expense',amount:-2000,description:'Walk-in prospecting fee'});
-    _tyActiveTab = 'customers';
-    tyRender();
-  }catch(e){ alert('Error: '+e.message); }
+    _tyActiveTab='customers';tyRender();
+  }catch(e){alert('Error: '+e.message);}
 }
 
+// ── UPGRADES ──
 async function tyUpgrade(upgradeId){
-  var c = _tyCompany;
-  var ul = tyGetUpgradeLevels(c);
-  var lvl = ul[upgradeId]||0;
-  if(lvl>=50){ alert('Max level reached!'); return; }
-  var cost = tyUpgradeCost(upgradeId, lvl);
-  if((c.balance||0)<cost){ alert('Not enough balance! Need '+tyFmtMoney(cost)); return; }
-  var u = TY_UPGRADES.find(function(x){return x.id===upgradeId;});
-  if(!confirm('Upgrade '+u.name+' to Level '+(lvl+1)+' for '+tyFmtMoney(cost)+'?')) return;
-  ul[upgradeId] = lvl+1;
-  var newBal = (c.balance||0)-cost;
+  var c=_tyCompany;var ul=tyUL(c);
+  var lvl=ul[upgradeId]||0;
+  if(lvl>=50){alert('Maximum level 50 reached!');return;}
+  var cost=tyUpgradeCost(upgradeId,lvl);
+  if((c.balance||0)<cost){alert('Need '+tyFmt(cost));return;}
+  var u=TY_UPGRADES.find(function(x){return x.id===upgradeId;});
+  if(!confirm('Upgrade '+u.name+' to Level '+(lvl+1)+' for '+tyFmt(cost)+'?'))return;
+  ul[upgradeId]=lvl+1;
+  var newBal=(c.balance||0)-cost;
   try{
     await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,unlocks:JSON.stringify(ul),updated_at:new Date().toISOString()});
-    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'upgrade',amount:-cost,description:'Upgraded '+u.name+' to Level '+(lvl+1)});
-    _tyCompany.balance=newBal; _tyCompany.unlocks=JSON.stringify(ul);
-    await tyPostFeed(currentUser.name,'upgraded '+u.name+' to Level '+(lvl+1)+' 🖥');
-    tyFloatMoney('−'+tyFmtMoney(cost),true);
-    tyRender();
-  }catch(e){ alert('Upgrade failed: '+e.message); }
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'upgrade',amount:-cost,description:u.name+' → Lv '+(lvl+1)});
+    _tyCompany.balance=newBal;_tyCompany.unlocks=JSON.stringify(ul);
+    await tyPostFeed(currentUser.name,'upgraded '+u.name+' to Level '+(lvl+1)+' ⬆');
+    tyFloatMoney('−'+tyFmt(cost),true);tyRender();
+  }catch(e){alert('Error: '+e.message);}
 }
 
-async function tyHireStaff(teamId){
-  var c = _tyCompany;
-  var ts = tyGetTeamStaff(c);
-  var tl = tyGetTeamLevels(c);
-  var t = TY_TEAMS.find(function(x){return x.id===teamId;});
-  if(!t) return;
-  var staff = ts[teamId]||0;
-  var maxStaff = (tl[teamId]||1)*t.max_per_lvl;
-  if(staff>=maxStaff){ alert('Upgrade team level to hire more staff!'); return; }
-  if(!confirm('Hire 1 '+t.name+' staff for ₹'+t.salary.toLocaleString('en-IN')+'/month?')) return;
-  ts[teamId] = staff+1;
+// ── HIRE/FIRE ──
+async function tyHireStaff(teamId,salary){
+  var c=_tyCompany;var ts=tyTS(c);var tl=tyTL(c);
+  var t=TY_TEAMS.find(function(x){return x.id===teamId;});
+  if(!t)return;
+  var staff=ts[teamId]||0;
+  var maxStaff=(tl[teamId]||1)*t.max_per_lvl;
+  if(staff>=maxStaff){alert('Upgrade team level first to hire more!');return;}
+  if(!confirm('Hire 1 '+t.name+' staff?\nMonthly salary: ₹'+salary.toLocaleString('en-IN')+'\nFirst month paid upfront.'))return;
+  if((_tyCompany.balance||0)<salary){alert('Need '+tyFmt(salary)+' for first month salary.');return;}
+  ts[teamId]=staff+1;
+  var newBal=(_tyCompany.balance||0)-salary;
   try{
-    await sbUpdate('tycoon_companies','user_id',currentUser.id,{team_staff:JSON.stringify(ts),updated_at:new Date().toISOString()});
-    _tyCompany.team_staff = JSON.stringify(ts);
-    await tyPostFeed(currentUser.name,'hired a new '+t.name+' team member 👷');
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{team_staff:JSON.stringify(ts),balance:newBal,updated_at:new Date().toISOString()});
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'hire',amount:-salary,description:'Hired '+t.name+' staff (1st month)'});
+    _tyCompany.team_staff=JSON.stringify(ts);_tyCompany.balance=newBal;
+    await tyPostFeed(currentUser.name,'hired new '+t.name+' staff 👷');
     tyRender();
-  }catch(e){ alert('Error: '+e.message); }
+  }catch(e){alert('Error: '+e.message);}
 }
 
-async function tyFireStaff(teamId){
-  var c = _tyCompany;
-  var ts = tyGetTeamStaff(c);
-  var t = TY_TEAMS.find(function(x){return x.id===teamId;});
-  if(!t) return;
-  var staff = ts[teamId]||0;
-  if(staff<=0) return;
-  if(!confirm('Fire 1 '+t.name+' staff? Saves ₹'+t.salary.toLocaleString('en-IN')+'/month but may reduce performance.')) return;
-  ts[teamId] = staff-1;
-  var newHappy = Math.max(10,(c.happiness||80)-5);
+async function tyFireStaff(teamId,severance){
+  var c=_tyCompany;var ts=tyTS(c);
+  var t=TY_TEAMS.find(function(x){return x.id===teamId;});
+  if(!t)return;
+  var staff=ts[teamId]||0;
+  if(staff<=0)return;
+  var perf=tyTeamPerf(c,teamId);
+  var lowPerf=perf<30;
+  var repHit=lowPerf?0:-5;
+  var sevCost=lowPerf?0:severance;
+  if(!confirm('Fire 1 '+t.name+' staff?\n'+(lowPerf?'Poor performer — no penalty.':'Severance: ₹'+severance.toLocaleString('en-IN')+'\nReputation: '+repHit)))return;
+  ts[teamId]=staff-1;
+  var newBal=(_tyCompany.balance||0)-sevCost;
+  var newRep=Math.max(0,(_tyCompany.reputation||70)+repHit);
+  var newHappy=Math.max(0,(_tyCompany.happiness||80)-5);
   try{
-    await sbUpdate('tycoon_companies','user_id',currentUser.id,{team_staff:JSON.stringify(ts),happiness:newHappy,updated_at:new Date().toISOString()});
-    _tyCompany.team_staff=JSON.stringify(ts); _tyCompany.happiness=newHappy;
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{team_staff:JSON.stringify(ts),balance:newBal,reputation:newRep,happiness:newHappy,updated_at:new Date().toISOString()});
+    if(sevCost>0)await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'fire',amount:-sevCost,description:'Fired '+t.name+' staff (severance)'});
+    _tyCompany.team_staff=JSON.stringify(ts);_tyCompany.balance=newBal;_tyCompany.reputation=newRep;_tyCompany.happiness=newHappy;
     tyRender();
-  }catch(e){ alert('Error: '+e.message); }
+  }catch(e){alert('Error: '+e.message);}
 }
 
-async function tyUpgradeTeam(teamId){
-  var c = _tyCompany;
-  var tl = tyGetTeamLevels(c);
-  var t = TY_TEAMS.find(function(x){return x.id===teamId;});
-  if(!t) return;
-  var lvl = tl[teamId]||1;
-  var cost = lvl*t.salary*10;
-  if((c.balance||0)<cost){ alert('Need '+tyFmtMoney(cost)+' to upgrade team!'); return; }
-  if(!confirm('Upgrade '+t.name+' team to Level '+(lvl+1)+' for '+tyFmtMoney(cost)+'? Unlocks '+(lvl+1)*t.max_per_lvl+' max staff.')) return;
-  tl[teamId] = lvl+1;
-  var newBal = (c.balance||0)-cost;
+async function tyUpgradeTeam(teamId,cost,currentLvl){
+  if((_tyCompany.balance||0)<cost){alert('Need '+tyFmt(cost));return;}
+  var t=TY_TEAMS.find(function(x){return x.id===teamId;});
+  if(!t)return;
+  if(!confirm('Upgrade '+t.name+' team to Level '+(currentLvl+1)+'?\nCost: '+tyFmt(cost)+'\nUnlocks '+(currentLvl+1)*t.max_per_lvl+' max staff slots.'))return;
+  var tl=tyTL(_tyCompany);
+  tl[teamId]=currentLvl+1;
+  var newBal=(_tyCompany.balance||0)-cost;
   try{
-    await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,team_levels:JSON.stringify(tl),updated_at:new Date().toISOString()});
-    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'upgrade',amount:-cost,description:'Upgraded '+t.name+' team to Level '+(lvl+1)});
-    _tyCompany.balance=newBal; _tyCompany.team_levels=JSON.stringify(tl);
-    await tyPostFeed(currentUser.name,'upgraded '+t.name+' team to Level '+(lvl+1)+' 💼');
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{team_levels:JSON.stringify(tl),balance:newBal,updated_at:new Date().toISOString()});
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'upgrade',amount:-cost,description:t.name+' team → Lv '+(currentLvl+1)});
+    _tyCompany.team_levels=JSON.stringify(tl);_tyCompany.balance=newBal;
+    await tyPostFeed(currentUser.name,'upgraded '+t.name+' team to Lv '+(currentLvl+1)+' 💼');
     tyRender();
-  }catch(e){ alert('Error: '+e.message); }
+  }catch(e){alert('Error: '+e.message);}
 }
 
-async function tyRenderProjects(){
-  var c = _tyCompany;
-  var today = todayStr();
-  var activeProjs = [];
+async function tyHireManager(mgrId,cost,teamId){
+  if((_tyCompany.balance||0)<cost){alert('Need '+tyFmt(cost));return;}
+  var m=TY_MANAGERS.find(function(x){return x.id===mgrId;});
+  if(!confirm('Hire '+m.name+' for '+tyFmt(cost)+'?\n'+(teamId==='all'?'ALL teams will auto-earn without clicking!':m.team+' team will auto-earn without clicking!')))return;
+  var mgr=tyMgr(_tyCompany);
+  mgr[mgrId]=true;
+  var newBal=(_tyCompany.balance||0)-cost;
   try{
-    activeProjs = await sbQuery('tycoon_projects','user_id=eq.'+currentUser.id+'&status=eq.active&select=*')||[];
-  }catch(e){}
-
-  var activeIds = activeProjs.map(function(p){return p.project_id;});
-  var availHtml = TY_PROJECTS.filter(function(p){return activeIds.indexOf(p.id)<0;}).map(function(p){
-    var canAfford = (c.balance||0)>=p.cost;
-    var endDate = new Date();
-    endDate.setDate(endDate.getDate()+p.days);
-    return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.6rem;">'+
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.5rem;">'+
-        '<div>'+
-          '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">🚀 '+p.name+'</div>'+
-          '<div style="font-size:.72rem;color:var(--text-muted);">'+p.desc+' · '+p.days+' days · Earns '+tyFmtMoney(p.daily_earn)+'/day after</div>'+
-        '</div>'+
-        '<div style="font-size:.78rem;font-weight:700;color:var(--gold);white-space:nowrap;">'+tyFmtMoney(p.cost)+'</div>'+
-      '</div>'+
-      '<button style="width:100%;padding:.4rem;background:'+(canAfford?'var(--gold)':'var(--navy-hover)')+';color:'+(canAfford?'#fff':'var(--text-dim)')+';border:1px solid '+(canAfford?'transparent':'var(--navy-border)')+';border-radius:5px;font-size:.75rem;font-weight:600;cursor:'+(canAfford?'pointer':'not-allowed')+';" '+(canAfford?'':'disabled')+' onclick="tyStartProject(\''+p.id+'\')">'+
-        (canAfford ? 'Launch Project' : ('Need '+tyFmtMoney(p.cost-(_tyCompany.balance||0))+' more'))+
-      '</button>'+
-    '</div>';
-  }).join('');
-
-  var activeHtml = activeProjs.map(function(p){
-    var daysLeft = Math.max(0,Math.ceil((new Date(p.completes_date)-new Date())/86400000));
-    var totalDays = TY_PROJECTS.find(function(x){return x.id===p.project_id;});
-    totalDays = totalDays?totalDays.days:7;
-    var pct = Math.min(100,Math.round((1-daysLeft/totalDays)*100));
-    return '<div style="background:rgba(46,197,111,.04);border:1px solid rgba(46,197,111,.25);border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.6rem;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">'+
-        '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">🔄 '+esc(p.project_name)+'</div>'+
-        '<span style="font-size:.72rem;font-weight:600;color:#1a7a45;">'+daysLeft+' days left</span>'+
-      '</div>'+
-      '<div style="height:5px;background:var(--navy-border);border-radius:3px;overflow:hidden;margin-bottom:.4rem;"><div style="height:100%;width:'+pct+'%;background:#1a7a45;border-radius:3px;transition:width .4s;"></div></div>'+
-      '<div style="font-size:.7rem;color:var(--text-muted);">'+pct+'% complete · Earns '+tyFmtMoney(p.daily_earn)+'/day on completion</div>'+
-    '</div>';
-  }).join('');
-
-  return (activeHtml?'<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.6rem;">Active Projects</div>'+activeHtml:'')+
-    '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin:'+(activeHtml?'1rem':'0')+' 0 .6rem;">Available Projects</div>'+
-    (availHtml||'<div style="color:var(--text-dim);font-size:.78rem;">All projects launched! 🎉</div>');
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{managers:JSON.stringify(mgr),balance:newBal,updated_at:new Date().toISOString()});
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'manager',amount:-cost,description:'Hired manager: '+m.name});
+    _tyCompany.managers=JSON.stringify(mgr);_tyCompany.balance=newBal;
+    await tyPostFeed(currentUser.name,'hired '+m.name+' as manager 🤵');
+    tyFloatMoney('−'+tyFmt(cost),true);tyRender();
+  }catch(e){alert('Error: '+e.message);}
 }
 
+// ── SPEND ──
+async function tySpend(id,cost,name,effect){
+  if((_tyCompany.balance||0)<cost){alert('Need '+tyFmt(cost));return;}
+  if(!confirm('Spend '+tyFmt(cost)+' on '+name+'?\nEffect: '+effect))return;
+  var newBal=(_tyCompany.balance||0)-cost;
+  var updates={balance:newBal,updated_at:new Date().toISOString()};
+  // Apply effects
+  if(id==='party'||id==='pizza'||id==='team_outing'){
+    updates.happiness=Math.min(100,(_tyCompany.happiness||80)+(id==='team_outing'?25:id==='party'?20:10));
+  }
+  if(id==='csr'){updates.reputation=Math.min(100,(_tyCompany.reputation||70)+15);}
+  try{
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,updates);
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'spend',amount:-cost,description:name+': '+effect});
+    Object.assign(_tyCompany,updates);
+    await tyPostFeed(currentUser.name,'spent '+tyFmt(cost)+' on '+name+' '+['🎉','💰','🎯','📢','💻'][Math.floor(Math.random()*5)]);
+    tyFloatMoney('−'+tyFmt(cost),true);tyRender();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ── PROJECTS ──
 async function tyStartProject(projectId){
-  var c = _tyCompany;
-  var p = TY_PROJECTS.find(function(x){return x.id===projectId;});
-  if(!p) return;
-  if((c.balance||0)<p.cost){ alert('Not enough funds!'); return; }
-  if(!confirm('Launch "'+p.name+'" for '+tyFmtMoney(p.cost)+'? Takes '+p.days+' days, then earns '+tyFmtMoney(p.daily_earn)+'/day.')) return;
-  var startDate = todayStr();
-  var endDate = new Date(); endDate.setDate(endDate.getDate()+p.days);
-  var endStr = endDate.getFullYear()+'-'+String(endDate.getMonth()+1).padStart(2,'0')+'-'+String(endDate.getDate()).padStart(2,'0');
-  var newBal = (c.balance||0)-p.cost;
+  var c=_tyCompany;
+  var p=TY_PROJECTS.find(function(x){return x.id===projectId;});
+  if(!p)return;
+  if((c.balance||0)<p.cost){alert('Not enough funds!');return;}
+  if(!confirm('Launch "'+p.name+'"?\nCost: '+tyFmt(p.cost)+'\nTakes '+p.days+' days\nEarns '+tyFmt(p.daily_earn)+'/day after'))return;
+  var endDate=new Date();endDate.setDate(endDate.getDate()+p.days);
+  var endStr=endDate.getFullYear()+'-'+String(endDate.getMonth()+1).padStart(2,'0')+'-'+String(endDate.getDate()).padStart(2,'0');
+  var newBal=(c.balance||0)-p.cost;
   try{
-    await sbInsert('tycoon_projects',{user_id:currentUser.id,project_id:p.id,project_name:p.name,started_date:startDate,completes_date:endStr,cost:p.cost,daily_earn:p.daily_earn,status:'active'});
+    await sbInsert('tycoon_projects',{user_id:currentUser.id,project_id:p.id,project_name:p.name,started_date:todayStr(),completes_date:endStr,cost:p.cost,daily_earn:p.daily_earn,status:'active'});
     await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,updated_at:new Date().toISOString()});
     await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'project',amount:-p.cost,description:'Launched: '+p.name});
     _tyCompany.balance=newBal;
     await tyPostFeed(currentUser.name,'launched project "'+p.name+'" 🚀');
-    tyFloatMoney('−'+tyFmtMoney(p.cost),true);
-    tyRender();
-  }catch(e){ alert('Error: '+e.message); }
+    tyFloatMoney('−'+tyFmt(p.cost),true);tyRender();
+  }catch(e){alert('Error: '+e.message);}
 }
 
-function tyRenderBankTab(c){
-  var bankHtml = TY_BANKS.map(function(b){
-    var canBorrow = (c.balance||0)>=0;
-    return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem;margin-bottom:.6rem;">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">'+
-        '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">🏦 '+b.name+'</div>'+
-        '<span style="font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(76,118,168,.1);color:var(--accent-blue);">'+b.rate+'% p.a.</span>'+
-      '</div>'+
-      '<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.5rem;">Max loan: '+tyFmtMoney(b.max_loan)+' · Monthly interest: '+b.rate+'% per year</div>'+
-      '<div style="display:flex;gap:.5rem;align-items:center;">'+
-        '<input type="number" id="loan-'+b.name.replace(/\s/g,'')+'" placeholder="Amount" min="10000" max="'+b.max_loan+'" style="flex:1;padding:.4rem .7rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.75rem;color:var(--text-primary);outline:none;"/>'+
-        '<button style="padding:.4rem .9rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;" onclick="tyTakeLoan(\''+b.name+'\','+b.rate+','+b.max_loan+')">Borrow</button>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-
-  // Active loans
-  return '<div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.6rem;">Borrow from banks when cash is low</div>'+
-    '<div style="background:rgba(239,73,60,.06);border:1px solid rgba(239,73,60,.15);border-radius:var(--radius-sm);padding:.6rem .9rem;margin-bottom:.75rem;font-size:.75rem;color:var(--text-muted);">⚠ Loans accrue monthly interest. Unpaid loans hurt reputation.</div>'+
-    bankHtml+
-    '<div style="margin-top:1rem;"><div style="font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.6rem;">Active Loans</div><div id="ty-active-loans">Loading...</div></div>';
-}
-
-async function tyTakeLoan(bankName, rate, maxLoan){
-  var inputId = 'loan-'+bankName.replace(/\s/g,'');
-  var el = document.getElementById(inputId);
-  if(!el) return;
-  var amount = parseInt(el.value)||0;
-  if(amount<10000){ alert('Minimum loan is ₹10,000'); return; }
-  if(amount>maxLoan){ alert('Maximum loan from this bank is '+tyFmtMoney(maxLoan)); return; }
-  if(!confirm('Borrow '+tyFmtMoney(amount)+' from '+bankName+' at '+rate+'% per year?')) return;
-  var newBal = (_tyCompany.balance||0)+amount;
-  var interest = Math.round(amount*rate/100/12); // monthly interest
+// ── BANK ──
+async function tyTakeLoan(bankName,rate,maxLoan){
+  var inputId='loan-'+bankName.replace(/\s+/g,'');
+  var el=document.getElementById(inputId);
+  if(!el)return;
+  var amount=parseInt(el.value)||0;
+  if(amount<10000){alert('Minimum loan is ₹10,000');return;}
+  if(amount>maxLoan){alert('Max loan from this bank is '+tyFmt(maxLoan));return;}
+  if(!confirm('Borrow '+tyFmt(amount)+' from '+bankName+'?\nInterest: '+rate+'% per year'))return;
+  var newBal=(_tyCompany.balance||0)+amount;
   try{
     await sbInsert('tycoon_loans',{user_id:currentUser.id,bank_name:bankName,principal:amount,interest_rate:rate,amount_owed:amount,taken_date:todayStr(),status:'active'});
     await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,total_debt:(_tyCompany.total_debt||0)+amount,updated_at:new Date().toISOString()});
-    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'loan',amount:amount,description:'Loan from '+bankName+' @ '+rate+'% p.a. (monthly interest: '+tyFmtMoney(interest)+')'});
-    _tyCompany.balance=newBal; _tyCompany.total_debt=(_tyCompany.total_debt||0)+amount;
-    await tyPostFeed(currentUser.name,'took a loan of '+tyFmtMoney(amount)+' from '+bankName+' 🏦');
-    tyFloatMoney('+'+tyFmtMoney(amount));
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'loan',amount:amount,description:'Loan from '+bankName+' @ '+rate+'%'});
+    _tyCompany.balance=newBal;_tyCompany.total_debt=(_tyCompany.total_debt||0)+amount;
+    await tyPostFeed(currentUser.name,'took a loan of '+tyFmt(amount)+' from '+bankName+' 🏦');
+    tyFloatMoney('+'+tyFmt(amount));tyRender();
+  }catch(e){alert('Loan failed: '+e.message);}
+}
+
+// ── CRISIS ──
+async function tyResolveCrisis(optIdx,crisisIdx){
+  var cr=TY_CRISES[crisisIdx];var opt=cr.opts[optIdx];
+  var newBal=(_tyCompany.balance||0)-opt.cost;
+  var newRep=Math.min(100,Math.max(0,(_tyCompany.reputation||70)+opt.rep));
+  var newHappy=Math.min(100,Math.max(0,(_tyCompany.happiness||80)+opt.happy));
+  try{
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,reputation:newRep,happiness:newHappy,updated_at:new Date().toISOString()});
+    if(opt.cost>0)await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'crisis',amount:-opt.cost,description:'Crisis: '+opt.label});
+    _tyCompany.balance=newBal;_tyCompany.reputation=newRep;_tyCompany.happiness=newHappy;
+    await tyPostFeed(currentUser.name,'handled a company crisis 💪');
+    var cw=document.querySelector('[onclick^="tyResolveCrisis"]');
+    if(cw){var card=cw.closest('div[style*="rgba(239,73,60"]');if(card){card.innerHTML='<div style="font-size:.78rem;color:#1a7a45;font-weight:600;padding:.5rem;">✓ Crisis resolved: '+opt.label+'</div>';}}
+    tyUpdateBalDisplay();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ── PRESTIGE ──
+async function tyPrestige(){
+  if(!confirm('✨ PRESTIGE!\n\nYou have reached ₹1 Trillion valuation!\n\nPrestiging will:\n• Add 1 Prestige Star (permanent +25% income)\n• Reset balance to starting amount\n• Reset teams and upgrades\n• Keep prestige stars\n\nAre you ready for the next chapter?'))return;
+  var c=_tyCompany;
+  var diff=c.difficulty||'medium';
+  var startBal={easy:1000000,medium:500000,hard:200000}[diff];
+  var newStars=(c.prestige_stars||0)+1;
+  try{
+    await sbUpdate('tycoon_companies','user_id',currentUser.id,{
+      balance:startBal,total_revenue:0,total_debt:0,
+      unlocks:'{}',team_staff:'{}',team_levels:'{}',managers:'{}',
+      happiness:80,reputation:70,prestige_stars:newStars,
+      last_salary_date:'',income_per_min:0,
+      last_collected:new Date().toISOString(),updated_at:new Date().toISOString()
+    });
+    await fetch(SUPABASE_URL+'/rest/v1/tycoon_customers?user_id=eq.'+currentUser.id,{method:'DELETE',headers:sbHeaders()});
+    await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'prestige',amount:0,description:'✨ Prestige Star '+(newStars)+' earned! Permanent +'+(newStars*25)+'% income'});
+    _tyCompany.balance=startBal;_tyCompany.prestige_stars=newStars;
+    _tyCompany.unlocks='{}';_tyCompany.team_staff='{}';_tyCompany.team_levels='{}';_tyCompany.managers='{}';
+    await tyPostFeed(currentUser.name,'achieved PRESTIGE ⭐ Star '+newStars+'! Permanent +'+(newStars*25)+'% income 🏆');
+    // Show prestige popup
+    var ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    ov.innerHTML='<div style="background:linear-gradient(135deg,#1E293B,#0F172A);border:1px solid rgba(245,158,11,.4);border-radius:var(--radius);max-width:380px;width:90%;padding:2rem;text-align:center;">'+
+      '<div style="font-size:3rem;margin-bottom:.5rem;">'+('⭐'.repeat(newStars))+'</div>'+
+      '<h2 style="font-family:\'Cormorant Garamond\',serif;font-size:1.8rem;color:#f59e0b;margin-bottom:.5rem;">Prestige Star '+newStars+'!</h2>'+
+      '<div style="font-size:.85rem;color:#94A3B8;margin-bottom:1rem;">Your permanent income bonus is now <strong style="color:#4ade80;">+'+(newStars*25)+'%</strong></div>'+
+      '<div style="font-size:.78rem;color:#64748B;margin-bottom:1.2rem;">Concept & Design: Diwan Chowthry</div>'+
+      '<button onclick="document.body.removeChild(this.closest(\'div[style*=fixed]\'));tyRender();" style="width:100%;padding:.75rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:var(--radius-sm);font-family:\'DM Sans\',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;">🏢 Build Again!</button>'+
+    '</div>';
+    document.body.appendChild(ov);
+    _tyCustomers=[];
+    await tyLoadCustomers();
     tyRender();
-  }catch(e){ alert('Loan failed: '+e.message); }
+  }catch(e){alert('Prestige failed: '+e.message);}
 }
 
-function tyLoadCrisisDecision(){
-  // Show crisis 1 in 7 chance each day (based on date hash)
-  var dh = parseInt(todayStr().replace(/-/g,''));
-  var wrap = document.getElementById('ty-crisis-wrap');
-  var dwrap = document.getElementById('ty-decision-wrap');
-  if(!wrap) return;
-  if(dh % 7 === 0){
-    var crisis = TY_CRISES[dh % TY_CRISES.length];
-    wrap.innerHTML='<div style="background:rgba(239,73,60,.07);border:1px solid rgba(239,73,60,.2);border-radius:var(--radius-sm);padding:.9rem;margin-bottom:.75rem;">'+
-      '<div style="font-size:.82rem;font-weight:600;color:var(--accent-red);margin-bottom:.4rem;">⚠ Crisis: '+crisis.text+'</div>'+
-      '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem;">'+
-        crisis.opts.map(function(o,i){
-          return '<button style="padding:.4rem .85rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:.75rem;cursor:pointer;color:var(--text-primary);" onclick="tyResolveCrisis('+i+','+JSON.stringify(dh % TY_CRISES.length)+')">'+o.label+'</button>';
-        }).join('')+
-      '</div>'+
-    '</div>';
-  }
-  // Show decision card
-  if(dh % 3 === 0 && dwrap){
-    var dec = TY_NO_RIGHT_ANSWER[dh % TY_NO_RIGHT_ANSWER.length];
-    dwrap.innerHTML='<div style="background:rgba(76,118,168,.06);border:1px solid rgba(76,118,168,.2);border-radius:var(--radius-sm);padding:.9rem;">'+
-      '<div style="font-size:.78rem;font-weight:600;color:var(--accent-blue);margin-bottom:.5rem;">💼 Strategic Decision</div>'+
-      '<div style="font-size:.82rem;color:var(--text-primary);margin-bottom:.6rem;">'+dec.q+'</div>'+
-      '<div style="display:flex;gap:.5rem;flex-wrap:wrap;">'+
-        dec.opts.map(function(o,i){
-          return '<button style="padding:.4rem .85rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:.75rem;cursor:pointer;color:var(--text-primary);" onclick="tyMakeDecision('+i+','+JSON.stringify(dh % TY_NO_RIGHT_ANSWER.length)+')">'+o.label+'</button>';
-        }).join('')+
-      '</div>'+
-    '</div>';
-  }
-}
-
-async function tyResolveCrisis(optIdx, crisisIdx){
-  var crisis = TY_CRISES[crisisIdx];
-  var opt = crisis.opts[optIdx];
-  var c = _tyCompany;
-  var newBal = (c.balance||0)-opt.cost;
-  var newRep = Math.min(100,Math.max(0,(c.reputation||70)+opt.rep));
-  try{
-    await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,reputation:newRep,updated_at:new Date().toISOString()});
-    if(opt.cost>0) await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'crisis',amount:-opt.cost,description:'Crisis response: '+opt.label});
-    _tyCompany.balance=newBal; _tyCompany.reputation=newRep;
-    document.getElementById('ty-crisis-wrap').innerHTML='<div style="background:rgba(46,197,111,.07);border:1px solid rgba(46,197,111,.2);border-radius:var(--radius-sm);padding:.75rem;font-size:.78rem;color:#1a7a45;margin-bottom:.75rem;">✓ Crisis handled: '+opt.effect+'</div>';
-    await tyPostFeed(currentUser.name,'handled a company crisis: "'+crisis.text+'" 💪');
-  }catch(e){ alert('Error: '+e.message); }
-}
-
-async function tyMakeDecision(optIdx, decIdx){
-  var dec = TY_NO_RIGHT_ANSWER[decIdx];
-  var opt = dec.opts[optIdx];
-  var c = _tyCompany;
-  var newBal = (c.balance||0)+(opt.cash||0);
-  var newRep = Math.min(100,Math.max(0,(c.reputation||70)+(opt.rep||0)));
-  try{
-    await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:newBal,reputation:newRep,updated_at:new Date().toISOString()});
-    if(opt.cash) await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'decision',amount:opt.cash,description:'Decision: '+opt.label+' — '+opt.effect});
-    _tyCompany.balance=newBal; _tyCompany.reputation=newRep;
-    document.getElementById('ty-decision-wrap').innerHTML='<div style="background:rgba(76,118,168,.07);border:1px solid rgba(76,118,168,.2);border-radius:var(--radius-sm);padding:.75rem;font-size:.78rem;color:var(--accent-blue);">✓ Decision made: '+opt.effect+'</div>';
-  }catch(e){ alert('Error: '+e.message); }
-}
-
-function tyStartDealRushTimer(){
-  var el = document.getElementById('ty-rush-timer');
-  if(!el) return;
-  var secs = 60;
-  if(_tyDealRushTimer) clearInterval(_tyDealRushTimer);
-  _tyDealRushTimer = setInterval(function(){
-    secs--;
-    var el2 = document.getElementById('ty-rush-timer');
-    if(el2) el2.textContent = secs+'s';
-    if(secs<=0){ clearInterval(_tyDealRushTimer); tyRender(); }
-  },1000);
-}
-
-async function tyPostFeed(userName, text){
-  try{
-    await sbInsert('tycoon_feed',{user_id:currentUser.id,user_name:userName,event_text:text});
-  }catch(e){}
-}
-
-function tyStartFeedInterval(){
-  if(_tyFeedInterval) clearInterval(_tyFeedInterval);
-  _tyFeedInterval = setInterval(function(){
-    if(_tyActiveTab==='feed') tyRender();
-  }, 15000);
-}
-
-function tyFloatMoney(text, isRed){
+// ── FLOAT ANIMATION ──
+function tyFloatMoney(text,isRed,big){
   var el=document.createElement('div');
-  el.className='ty-float-money';
+  el.style.cssText='position:fixed;z-index:9999;pointer-events:none;font-weight:700;color:'+(isRed?'#ef4444':'#4ade80')+';font-size:'+(big?'1.4rem':'1rem')+';text-shadow:0 2px 8px rgba(0,0,0,.3);transition:all 1.2s ease;';
   el.textContent=text;
-  el.style.color=isRed?'#ef4444':'#4ade80';
-  el.style.left=(window.innerWidth/2-40)+'px';
-  el.style.top=(window.innerHeight/2)+'px';
+  el.style.left=(window.innerWidth/2-50)+'px';
+  el.style.top=(window.innerHeight/2-20)+'px';
   document.body.appendChild(el);
+  setTimeout(function(){el.style.top=(parseInt(el.style.top)-80)+'px';el.style.opacity='0';},50);
   setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},1300);
 }
 
+// ── FEED ──
+async function tyPostFeed(userName,text){
+  try{await sbInsert('tycoon_feed',{user_id:currentUser.id,user_name:userName,event_text:text});}catch(e){}
+}
+
+// ── ADMIN ──
 async function tyAdminPanel(){
-  var overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.5);z-index:9000;display:flex;align-items:center;justify-content:center;';
-  overlay.onclick=function(e){if(e.target===overlay)document.body.removeChild(overlay);};
-  overlay.innerHTML=
-    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.4rem;width:360px;max-height:80vh;overflow-y:auto;" onclick="event.stopPropagation()">'+
-      '<div style="font-size:.95rem;font-weight:600;color:var(--text-primary);margin-bottom:1rem;">⚙ K7 Empire Admin</div>'+
-      '<div style="display:flex;flex-direction:column;gap:.75rem;">'+
-        '<div><label style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);display:block;margin-bottom:.3rem;">Select Agent</label>'+
-        '<select id="ty-admin-agent" class="ts-input"></select></div>'+
-        '<div><label style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);display:block;margin-bottom:.3rem;">Donate Amount (₹)</label>'+
-        '<input type="number" id="ty-admin-amount" class="ts-input" value="100000" min="1000"/></div>'+
-        '<button class="ts-btn-primary" onclick="tyAdminDonate()">💰 Donate Money</button>'+
-        '<button class="ts-btn-sec" onclick="tyAdminReset()">🔄 Reset Agent Game</button>'+
-      '</div>'+
-    '</div>';
-  document.body.appendChild(overlay);
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.55);z-index:9000;display:flex;align-items:center;justify-content:center;';
+  ov.onclick=function(e){if(e.target===ov)document.body.removeChild(ov);};
+  ov.innerHTML='<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.4rem;width:380px;max-height:80vh;overflow-y:auto;" onclick="event.stopPropagation()">'+
+    '<div style="font-size:.95rem;font-weight:600;color:var(--text-primary);margin-bottom:1rem;">⚙ K7 Empire Admin</div>'+
+    '<div style="display:flex;flex-direction:column;gap:.75rem;">'+
+      '<div><label style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);display:block;margin-bottom:.3rem;">Select Agent</label>'+
+      '<select id="ty-admin-agent" class="ts-input"></select></div>'+
+      '<div><label style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);display:block;margin-bottom:.3rem;">Donate Amount (₹)</label>'+
+      '<input type="number" id="ty-admin-amount" class="ts-input" value="100000" min="1000"/></div>'+
+      '<button class="ts-btn-primary" onclick="tyAdminDonate()">💰 Donate Money</button>'+
+      '<hr style="border-color:var(--navy-border)"/>'+
+      '<div style="font-size:.72rem;font-weight:600;color:var(--text-dim);margin-bottom:.35rem;">Manager Names (set real K7 names)</div>'+
+      TY_TEAMS.map(function(t){
+        var cur=_tyManagerNames[t.id]||(TY_MANAGERS.find(function(m){return m.team===t.id;})||{default_name:''}).default_name;
+        return '<div style="display:flex;gap:.5rem;align-items:center;font-size:.78rem;"><span style="width:80px;color:var(--text-muted);">'+t.icon+' '+t.name.split(' ')[0]+'</span><input type="text" id="mgr-name-'+t.id+'" class="ts-input" value="'+esc(cur)+'" style="flex:1;padding:.3rem .6rem;font-size:.75rem;"/></div>';
+      }).join('')+
+      '<button class="ts-btn-sec" onclick="tyAdminSaveMgrNames()">Save Manager Names</button>'+
+      '<hr style="border-color:var(--navy-border)"/>'+
+      '<button class="ts-btn-sec" style="color:var(--accent-red);" onclick="tyAdminReset()">🔄 Reset Agent Game</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
   sbQuery('tycoon_companies','select=user_id,user_name&order=user_name.asc').then(function(rows){
     var sel=document.getElementById('ty-admin-agent');
     if(!sel||!rows)return;
@@ -8282,14 +8464,33 @@ async function tyAdminDonate(){
     var nb=(rows[0].balance||0)+amt;
     await sbUpdate('tycoon_companies','user_id',uid,{balance:nb,updated_at:new Date().toISOString()});
     await sbInsert('tycoon_transactions',{user_id:uid,type:'admin_donation',amount:amt,description:'Admin donation from '+currentUser.name});
-    alert('₹'+amt.toLocaleString('en-IN')+' donated successfully!');
+    alert(tyFmt(amt)+' donated!');
+  }catch(e){alert('Error: '+e.message);}
+}
+
+async function tyAdminSaveMgrNames(){
+  try{
+    for(var i=0;i<TY_TEAMS.length;i++){
+      var t=TY_TEAMS[i];
+      var el=document.getElementById('mgr-name-'+t.id);
+      if(el&&el.value.trim()){
+        _tyManagerNames[t.id]=el.value.trim();
+        try{
+          await sbInsert('tycoon_manager_names',{team_id:t.id,manager_name:el.value.trim()});
+        }catch(e){
+          await sbUpdate('tycoon_manager_names','team_id',t.id,{manager_name:el.value.trim()});
+        }
+      }
+    }
+    alert('Manager names saved!');
+    tyRender();
   }catch(e){alert('Error: '+e.message);}
 }
 
 async function tyAdminReset(){
   var uid=document.getElementById('ty-admin-agent').value;
   if(!uid){alert('Select an agent.');return;}
-  if(!confirm('Reset this agent\'s entire K7 Empire? Cannot be undone.'))return;
+  if(!confirm('Reset this agent\'s K7 Empire? Cannot be undone.'))return;
   try{
     await fetch(SUPABASE_URL+'/rest/v1/tycoon_companies?user_id=eq.'+uid,{method:'DELETE',headers:sbHeaders()});
     await fetch(SUPABASE_URL+'/rest/v1/tycoon_customers?user_id=eq.'+uid,{method:'DELETE',headers:sbHeaders()});
@@ -8301,6 +8502,7 @@ async function tyAdminReset(){
 }
 
 // Hook showPage for tycoon — handled in main wrapper above
+
 
 
 
