@@ -3085,19 +3085,44 @@ window.addEventListener('DOMContentLoaded',function(){
 function showPage(id,elem){
   if(id==='kb'){window.open('kbsection.html','_blank');return;}
   if(isAdminPage(id)&&!isAdminUser()){showPage('home',document.querySelector('.sidebar-item'));return;}
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-  document.getElementById('page-'+id).classList.add('active');
+
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(function(p){
+    p.classList.remove('active');
+    // Also reset any inline display:flex/block from messages page
+    if(p.id==='page-messages') p.style.display='none';
+  });
+
+  // Show target page
+  var pg = document.getElementById('page-'+id);
+  if(!pg) return;
+  pg.classList.add('active');
+  // Messages page needs display:flex (inline style overrides CSS)
+  if(id==='messages') pg.style.display='flex';
+
+  // Sidebar active state
   document.querySelectorAll('.sidebar-item').forEach(function(i){i.classList.remove('active');});
   if(elem){elem.classList.add('active');}else{
     var map={home:0,simulation:1,kb:2,quiz:3,assessment:4,roster:5,moments:6,changepass:7,'quiz-admin':8,'assessment-admin':9,reports:10,users:11,announcements:12};
     var items=document.querySelectorAll('.sidebar-item');
     if(items[map[id]])items[map[id]].classList.add('active');
   }
+
+  // Page-specific init
   if(id==='users'){loadUsersPage();loadGamingState();}
-  if(id==='changepass')resetChangePasswordForm();
+  if(id==='changepass') resetChangePasswordForm();
   if(id==='reports'){loadReportAgents();initReportDates();}
   if(id==='roster'){if(window.rosterCache)renderRosterPage(window.rosterCache,window._rosterTodayColGlobal||false);else loadRosterSummary();}
-  if(id==='moments')setTimeout(function(){_mLoadTab(_mActiveTab);},60);
+  if(id==='moments') setTimeout(function(){_mLoadTab(_mActiveTab);},60);
+  if(id==='quiz') loadAgentQuiz();
+  if(id==='announcements') loadAnnouncementsAdmin();
+  if(id==='assessment') loadAgentAssessment();
+  if(id==='quiz-admin') loadQuizBuilderList();
+  if(id==='assessment-admin') loadAssessmentBuilderList();
+  if(id==='people') pplLoad();
+  if(id==='timesheet') tsInit();
+  if(id==='tycoon') tyInit();
+  if(id==='messages') msgInit();
 }
 
 function isAdminUser(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='tl'||currentUser.role==='syslevel');}
@@ -4373,7 +4398,7 @@ async function xcPurgeRec(userId, name){
   } catch(e){ alert('Wipe failed: '+e.message); }
 }
 
-// lazy init
+// lazy init for sysconfig (god mode)
 var _xcReady = false;
 var _xcNavRef = showPage;
 showPage = function(id, elem){
@@ -4381,7 +4406,6 @@ showPage = function(id, elem){
   if(id==='sysconfig' && !_xcReady){
     _xcReady = true;
     xcInitSelectors();
-    // Set date defaults
     var today = todayStr();
     ['xc-f2','xc-f4'].forEach(function(eid){ var el=document.getElementById(eid); if(el&&!el.value) el.value=today; });
   }
@@ -5590,15 +5614,6 @@ async function submitAssessment(autoSubmit){
 }
 
 // ── Hook showPage to load quiz/assessment ──
-var _xcNavRefQA=window.showPage;
-window.showPage=function(id,el){
-  _xcNavRefQA(id,el);
-  if(id==='quiz')loadAgentQuiz();
-  if(id==='announcements')loadAnnouncementsAdmin();
-  if(id==='assessment')loadAgentAssessment();
-  if(id==='quiz-admin'){loadQuizBuilderList();}
-  if(id==='assessment-admin'){loadAssessmentBuilderList();}
-};
 
 
 // ===================================================
@@ -6636,11 +6651,6 @@ async function pplSaveProfile(){
 }
 
 // Hook showPage
-var _pplNavRef = showPage;
-showPage = function(id, elem){
-  _pplNavRef(id, elem);
-  if(id==='people') pplLoad();
-};
 
 document.addEventListener('click', function(e){
   var panel = document.getElementById('mob-more-panel');
@@ -6954,12 +6964,6 @@ function tsExportCSV(){
 }
 
 // Hook showPage to init timesheet on open
-var _tsNavRef=showPage;
-showPage=function(id,elem){
-  _tsNavRef(id,elem);
-  if(id==='timesheet') tsInit();
-  if(id==='tycoon') tyInit();
-};
 
 // ═══════════════════════════════════════════════
 //  K7 EMPIRE — "Be The CEO"
@@ -8823,16 +8827,6 @@ function playWelcomeAudio(name){
   }catch(e){}
 }
 
-// Hook showPage for messages
-var _msgNavRef=showPage;
-showPage=function(id,elem){
-  _msgNavRef(id,elem);
-  if(id==='messages'){
-    var pg=document.getElementById('page-messages');
-    if(pg) pg.style.display='flex';
-    msgInit();
-  }
-};
 
 // Hook into enterDashboard
 var _chatEnterRef=enterDashboard;
