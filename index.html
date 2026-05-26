@@ -1865,7 +1865,9 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   @keyframes tyFloat{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-40px);opacity:0}}
   .ty-float-money{position:fixed;font-size:1rem;font-weight:700;color:#4ade80;pointer-events:none;animation:tyFloat 1.2s ease forwards;z-index:9999;}
   /* ═══════════════════ MESSAGES FULL PAGE ═══════════════════ */
-  #page-messages{padding:0!important;}
+  #page-messages{padding:0!important;height:calc(100vh - 60px)!important;overflow:hidden!important;}
+  /* When messages page active, prevent main-content scrolling */
+  .main-content:has(#page-messages.active){overflow:hidden!important;padding:0!important;}
   .msg-left-panel{width:300px;min-width:280px;flex-shrink:0;border-right:1px solid var(--navy-border);display:flex;flex-direction:column;height:100%;background:var(--navy-card);}
   .msg-left-header{padding:.9rem 1rem;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
   .msg-icon-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--navy-border);background:var(--navy-hover);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);}
@@ -2082,20 +2084,11 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
 }
 
 
-/* ═══════════════════════════════════════════
-   CASE TRACKER — STYLES
-═══════════════════════════════════════════ */
-.ct-page-wrap { max-width:1120px; }
-.ct-page-title { font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:500;color:var(--text-primary); }
-.ct-page-sub   { font-size:.82rem;color:var(--text-muted);margin-top:.2rem; }
-
-/* Upload */
-.ct-upload-zone {
-  border:2px dashed var(--navy-border);border-radius:var(--radius);
-  padding:1.6rem 1.5rem;text-align:center;cursor:pointer;
-  transition:border-color .2s,background .2s;
-  background:var(--navy-card);position:relative;margin-bottom:1.2rem;
-}
+/* ═══════════════════════════ CASE TRACKER STYLES ═══════════════════════════ */
+.ct-page-wrap{max-width:1120px;}
+.ct-page-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:500;color:var(--text-primary);}
+.ct-page-sub{font-size:.82rem;color:var(--text-muted);margin-top:.2rem;}
+.ct-upload-zone{border:2px dashed var(--navy-border);border-radius:var(--radius);padding:1.6rem 1.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--navy-card);position:relative;margin-bottom:1.2rem;}
 .ct-upload-zone:hover,.ct-upload-zone.drag{border-color:var(--gold);background:rgba(239,73,60,.03);}
 .ct-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .ct-upload-icon{font-size:2rem;margin-bottom:.4rem;}
@@ -2104,59 +2097,32 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
 .ct-upload-ok{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:rgba(46,197,111,.07);border:1px solid rgba(46,197,111,.22);border-radius:var(--radius-sm);font-size:.82rem;color:#1a7a45;}
 .ct-upload-ok svg{width:16px;height:16px;stroke:#1a7a45;flex-shrink:0;}
 body.dark .ct-upload-zone{background:#1A2236;border-color:#2D3748;}
-
-/* Stats */
 .ct-stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.7rem;margin-bottom:1.3rem;}
-.ct-stat{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem 1rem;cursor:default;}
-.ct-stat.clickable{cursor:pointer;transition:border-color .15s;}
-.ct-stat.clickable:hover{border-color:var(--gold-dim);}
+.ct-stat{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem 1rem;}
 .ct-stat-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.3rem;}
 .ct-stat-val{font-size:1.55rem;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;}
-.ct-stat-val.red   {color:var(--accent-red);}
-.ct-stat-val.amber {color:#D97706;}
-.ct-stat-val.green {color:#1a7a45;}
-.ct-stat-val.blue  {color:var(--accent-blue);}
-.ct-stat-val.orange{color:#EA580C;}
-
-/* Dashboard home widget */
-.ct-dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;}
-.ct-dash-card{
-  background:var(--navy-card);border:1px solid var(--navy-border);
-  border-radius:var(--radius-sm);padding:.9rem 1rem;
-  cursor:pointer;transition:border-color .15s,transform .15s;
-  display:flex;align-items:center;gap:.75rem;
-}
+.ct-stat-val.red{color:var(--accent-red);}.ct-stat-val.amber{color:#D97706;}.ct-stat-val.green{color:#1a7a45;}.ct-stat-val.blue{color:var(--accent-blue);}.ct-stat-val.orange{color:#EA580C;}
+.ct-dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:.75rem;}
+.ct-dash-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.9rem 1rem;cursor:pointer;transition:border-color .15s,transform .15s;display:flex;align-items:center;gap:.75rem;}
 .ct-dash-card:hover{border-color:var(--gold-dim);transform:translateY(-1px);}
 .ct-dash-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .ct-dash-icon svg{width:18px;height:18px;fill:none;stroke-width:1.8;}
-.ct-dash-body{}
 .ct-dash-val{font-size:1.35rem;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;line-height:1;}
 .ct-dash-lbl{font-size:.68rem;color:var(--text-muted);margin-top:.2rem;text-transform:uppercase;letter-spacing:.06em;}
-
-/* Section headers */
 .ct-sec-head{display:flex;align-items:center;gap:.55rem;font-size:.82rem;font-weight:700;color:var(--text-primary);margin:1.3rem 0 .65rem;padding-bottom:.45rem;border-bottom:2px solid var(--navy-border);}
 .ct-sec-head svg{width:15px;height:15px;stroke:currentColor;flex-shrink:0;}
 .ct-sec-count{margin-left:auto;font-size:.7rem;font-weight:600;padding:.15rem .55rem;border-radius:20px;}
-.ct-sec-count.red  {background:rgba(239,73,60,.1);color:var(--accent-red);}
-.ct-sec-count.amber{background:rgba(217,119,6,.1);color:#D97706;}
-.ct-sec-count.ok   {background:rgba(46,197,111,.1);color:#1a7a45;}
-.ct-sec-count.orange{background:rgba(234,88,12,.1);color:#EA580C;}
-
-/* Leave panels */
+.ct-sec-count.red{background:rgba(239,73,60,.1);color:var(--accent-red);}.ct-sec-count.amber{background:rgba(217,119,6,.1);color:#D97706;}.ct-sec-count.ok{background:rgba(46,197,111,.1);color:#1a7a45;}.ct-sec-count.orange{background:rgba(234,88,12,.1);color:#EA580C;}
 .ct-leave-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.5rem;}
 @media(max-width:680px){.ct-leave-grid{grid-template-columns:1fr;}}
 .ct-leave-panel{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;}
 .ct-lp-hdr{padding:.65rem 1rem;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;gap:.5rem;}
 .ct-lp-title{font-size:.83rem;font-weight:600;color:var(--text-primary);}
 .ct-lp-badge{margin-left:auto;font-size:.7rem;font-weight:600;padding:.14rem .5rem;border-radius:20px;}
-.ct-lp-badge.red  {background:rgba(239,73,60,.12);color:var(--accent-red);}
-.ct-lp-badge.amber{background:rgba(217,119,6,.1);color:#D97706;}
-.ct-lp-badge.ok   {background:rgba(46,197,111,.1);color:#1a7a45;}
+.ct-lp-badge.red{background:rgba(239,73,60,.12);color:var(--accent-red);}.ct-lp-badge.amber{background:rgba(217,119,6,.1);color:#D97706;}.ct-lp-badge.ok{background:rgba(46,197,111,.1);color:#1a7a45;}
 .ct-lp-body{padding:.55rem .7rem;}
 .ct-all-clear{text-align:center;padding:1.1rem .75rem;color:var(--text-dim);font-size:.8rem;}
 .ct-ac-ico{font-size:1.3rem;margin-bottom:.3rem;}
-
-/* Agent cards */
 .ct-agent-card{background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);margin-bottom:.45rem;overflow:hidden;}
 .ct-agent-card:last-child{margin-bottom:0;}
 .ct-agent-row{display:flex;align-items:center;gap:.7rem;padding:.55rem .7rem;cursor:pointer;transition:background .1s;}
@@ -2166,22 +2132,13 @@ body.dark .ct-upload-zone{background:#1A2236;border-color:#2D3748;}
 .ct-ai-name{font-size:.83rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ct-ai-sub{font-size:.7rem;color:var(--text-muted);margin-top:.08rem;}
 .ct-agent-btns{display:flex;gap:.35rem;flex-shrink:0;}
-.ct-agent-btns a,.ct-agent-btns button{
-  padding:.26rem .6rem;border-radius:5px;font-size:.7rem;font-weight:600;
-  cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid;
-  transition:all .13s;white-space:nowrap;text-decoration:none;display:inline-block;
-}
+.ct-agent-btns a,.ct-agent-btns button{padding:.26rem .6rem;border-radius:5px;font-size:.7rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid;transition:all .13s;white-space:nowrap;text-decoration:none;display:inline-block;}
 .ct-remind-btn{background:rgba(76,118,168,.08);color:var(--accent-blue);border-color:rgba(76,118,168,.25);}
 .ct-remind-btn:hover{background:rgba(76,118,168,.18);}
 .ct-reassign-btn{background:rgba(139,92,246,.08);color:#7C3AED;border-color:rgba(139,92,246,.25);}
 .ct-reassign-btn:hover{background:rgba(139,92,246,.18);}
 .ct-pill{flex-shrink:0;font-size:.68rem;font-weight:700;padding:.16rem .5rem;border-radius:20px;}
-.ct-pill.danger{background:rgba(239,73,60,.12);color:var(--accent-red);border:1px solid rgba(239,73,60,.2);}
-.ct-pill.ok    {background:rgba(46,197,111,.1);color:#1a7a45;border:1px solid rgba(46,197,111,.2);}
-.ct-pill.amber {background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2);}
-.ct-pill.orange{background:rgba(234,88,12,.1);color:#EA580C;border:1px solid rgba(234,88,12,.2);}
-
-/* Expandable case list */
+.ct-pill.danger{background:rgba(239,73,60,.12);color:var(--accent-red);border:1px solid rgba(239,73,60,.2);}.ct-pill.ok{background:rgba(46,197,111,.1);color:#1a7a45;border:1px solid rgba(46,197,111,.2);}.ct-pill.amber{background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2);}.ct-pill.orange{background:rgba(234,88,12,.1);color:#EA580C;border:1px solid rgba(234,88,12,.2);}
 .ct-case-list{padding:.25rem .7rem .55rem;border-top:1px solid var(--navy-border);}
 .ct-case-mini{display:flex;align-items:center;gap:.45rem;font-size:.75rem;padding:.35rem .45rem;border-radius:5px;background:var(--navy-card);border:1px solid var(--navy-border);margin-bottom:.28rem;flex-wrap:wrap;}
 .ct-case-mini:last-child{margin-bottom:0;}
@@ -2189,15 +2146,11 @@ body.dark .ct-upload-zone{background:#1A2236;border-color:#2D3748;}
 .ct-ct{color:var(--text-primary);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ct-days{color:var(--accent-red);font-size:.69rem;font-weight:600;flex-shrink:0;}
 .ct-ca{margin-left:auto;flex-shrink:0;}
-
-/* Reassign inline */
 .ct-ri-row{display:flex;gap:.4rem;align-items:center;padding:.38rem .7rem .55rem;border-top:1px solid var(--navy-border);}
 .ct-ri-inp{flex:1;padding:.3rem .6rem;border-radius:5px;border:1px solid var(--navy-border);background:var(--navy-hover);color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.78rem;outline:none;}
 .ct-ri-inp:focus{border-color:var(--gold-dim);}
 .ct-ri-save{padding:.3rem .75rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-size:.73rem;font-weight:600;cursor:pointer;}
 body.dark .ct-ri-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
-
-/* Table */
 .ct-table-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.2rem;}
 .ct-table-hdr{padding:.75rem 1rem;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;flex-wrap:wrap;gap:.55rem;}
 .ct-table-title{font-size:.87rem;font-weight:600;color:var(--text-primary);flex-shrink:0;}
@@ -2214,40 +2167,26 @@ body.dark .ct-fi{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 .ct-tbl tr.row-stale{background:rgba(234,88,12,.03);}
 .ct-tbl tr.row-stale td:first-child{border-left:3px solid #EA580C;}
 .ct-tbl tr.row-unactioned td:first-child{border-left:3px solid var(--accent-red);}
-.ct-tbl tr.row-handled td{opacity:.55;}
-.ct-tbl tr.row-handled td:first-child{border-left:3px solid #1a7a45;}
-
-/* Badges */
+.ct-tbl tr.row-handled td{opacity:.5;}
+.ct-tbl tr.row-handled td:first-child{border-left:3px solid #1a7a45;opacity:1;}
 .ct-sb{display:inline-flex;align-items:center;gap:.26rem;padding:.16rem .52rem;border-radius:20px;font-size:.69rem;font-weight:600;white-space:nowrap;}
 .ct-sb-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
 .ct-sb.open{background:rgba(239,73,60,.1);color:var(--accent-red);border:1px solid rgba(239,73,60,.2);}
-.ct-sb.ipc {background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2);}
-.ct-sb.ips {background:rgba(76,118,168,.1);color:var(--accent-blue);border:1px solid rgba(76,118,168,.2);}
+.ct-sb.ipc{background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2);}
+.ct-sb.ips{background:rgba(76,118,168,.1);color:var(--accent-blue);border:1px solid rgba(76,118,168,.2);}
 .ct-sb.stale{background:rgba(234,88,12,.1);color:#EA580C;border:1px solid rgba(234,88,12,.2);}
 .ct-ab{display:inline-flex;align-items:center;gap:.26rem;padding:.16rem .55rem;border-radius:20px;font-size:.69rem;font-weight:600;white-space:nowrap;}
-.ct-ab.nopending  {background:rgba(46,197,111,.1);color:#1a7a45;border:1px solid rgba(46,197,111,.2);}
-.ct-ab.mailsent   {background:rgba(76,118,168,.1);color:var(--accent-blue);border:1px solid rgba(76,118,168,.2);}
-.ct-ab.assigned   {background:rgba(139,92,246,.1);color:#7C3AED;border:1px solid rgba(139,92,246,.2);}
+.ct-ab.nopending{background:rgba(46,197,111,.1);color:#1a7a45;border:1px solid rgba(46,197,111,.2);}
+.ct-ab.mailsent{background:rgba(76,118,168,.1);color:var(--accent-blue);border:1px solid rgba(76,118,168,.2);}
+.ct-ab.assigned{background:rgba(139,92,246,.1);color:#7C3AED;border:1px solid rgba(139,92,246,.2);}
 .ct-ab.pendingcust{background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2);}
-.ct-ab.handled    {background:rgba(46,197,111,.1);color:#1a7a45;border:1px solid rgba(46,197,111,.2);}
-.ct-ab.noaction   {background:rgba(239,73,60,.07);color:var(--accent-red);border:1px solid rgba(239,73,60,.14);}
-
-/* Owner cell */
+.ct-ab.handled{background:rgba(46,197,111,.1);color:#1a7a45;border:1px solid rgba(46,197,111,.2);}
+.ct-ab.noaction{background:rgba(239,73,60,.07);color:var(--accent-red);border:1px solid rgba(239,73,60,.14);}
 .ct-own{display:flex;align-items:center;gap:.42rem;}
 .ct-own-av{width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.49rem;font-weight:700;color:#fff;flex-shrink:0;}
 .ct-own-nm{font-size:.78rem;color:var(--text-muted);}
-
-/* Mark as Handled button */
-.ct-handle-btn{
-  padding:.26rem .65rem;border-radius:5px;font-size:.71rem;font-weight:600;
-  cursor:pointer;border:1px solid rgba(46,197,111,.3);
-  background:rgba(46,197,111,.08);color:#1a7a45;
-  font-family:'DM Sans',sans-serif;transition:all .13s;white-space:nowrap;
-}
-.ct-handle-btn:hover{background:rgba(46,197,111,.18);}
-.ct-handle-btn:disabled{opacity:.4;cursor:not-allowed;}
-
-/* Agent action buttons */
+.ct-handle-btn{padding:.26rem .65rem;border-radius:5px;font-size:.71rem;font-weight:600;cursor:pointer;border:1px solid rgba(46,197,111,.3);background:rgba(46,197,111,.08);color:#1a7a45;font-family:'DM Sans',sans-serif;transition:all .13s;white-space:nowrap;}
+.ct-handle-btn:hover{background:rgba(46,197,111,.2);}
 .ct-act-btns{display:flex;gap:.32rem;flex-wrap:wrap;}
 .ct-act-btn{padding:.26rem .62rem;border-radius:5px;font-size:.71rem;font-weight:600;cursor:pointer;border:1px solid var(--navy-border);background:var(--navy-hover);color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all .13s;white-space:nowrap;}
 .ct-act-btn:hover{background:var(--navy-card);color:var(--text-primary);}
@@ -2260,14 +2199,10 @@ body.dark .ct-fi{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 .ct-assign-inp:focus{border-color:var(--gold-dim);}
 .ct-assign-save{padding:.28rem .72rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-size:.71rem;font-weight:600;cursor:pointer;}
 body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
-
-/* Empty states */
 .ct-empty{text-align:center;padding:3rem 1.5rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);}
 .ct-empty-ico{font-size:2.5rem;margin-bottom:.6rem;}
 .ct-empty-ttl{font-size:.94rem;font-weight:600;color:var(--text-primary);margin-bottom:.32rem;}
 .ct-empty-sub{font-size:.79rem;color:var(--text-muted);line-height:1.65;max-width:300px;margin:0 auto;}
-
-/* Home banners */
 .ct-home-banner{background:rgba(239,73,60,.05);border:1px solid rgba(239,73,60,.22);border-radius:var(--radius);padding:.85rem 1.1rem;margin-bottom:1.2rem;display:none;}
 .ct-home-banner.show{display:block;}
 .ct-banner-ttl{font-size:.85rem;font-weight:700;color:var(--accent-red);margin-bottom:.22rem;}
@@ -2275,13 +2210,91 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 .ct-banner-list{display:flex;flex-direction:column;gap:.28rem;}
 .ct-banner-item{font-size:.76rem;padding:.3rem .62rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius-sm);}
 .ct-banner-item b{color:var(--accent-blue);font-family:monospace;}
-
-/* Stale warning on agent side */
 .ct-stale-warn{background:rgba(234,88,12,.05);border:1px solid rgba(234,88,12,.22);border-radius:var(--radius);padding:.85rem 1.1rem;margin-bottom:1rem;}
 .ct-stale-warn-ttl{font-size:.84rem;font-weight:700;color:#EA580C;margin-bottom:.2rem;}
 .ct-stale-warn-sub{font-size:.77rem;color:var(--text-muted);margin-bottom:.55rem;}
 
-</style>
+
+  /* ── TOPBAR BREAK DROPDOWN ── */
+  .tb-break-wrap {
+    position: relative;
+  }
+  .tb-break-btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .3rem .75rem; border-radius: 20px;
+    background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.18);
+    color: rgba(255,255,255,.85); font-family: 'DM Sans', sans-serif;
+    font-size: .7rem; font-weight: 700; letter-spacing: .04em;
+    cursor: pointer; transition: all .18s; white-space: nowrap;
+  }
+  .tb-break-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
+  .tb-break-btn.has-active {
+    background: rgba(239,73,60,.22); border-color: var(--gold);
+    color: var(--gold-light); animation: pulse 1.6s ease infinite;
+  }
+  .tb-break-arrow { font-size: .55rem; opacity: .7; transition: transform .15s; }
+  .tb-break-btn.open .tb-break-arrow { transform: rotate(180deg); }
+
+  .tb-break-menu {
+    position: absolute; top: calc(100% + 8px); right: 0;
+    background: rgba(14,20,50,.97); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 12px; padding: .5rem;
+    min-width: 210px; z-index: 6000;
+    box-shadow: 0 16px 48px rgba(0,0,0,.5);
+    backdrop-filter: blur(16px);
+    display: none;
+  }
+  .tb-break-menu.open { display: block; animation: fadeSlideDown .15s ease; }
+  @keyframes fadeSlideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+  .tb-bm-item {
+    display: flex; align-items: center; gap: .65rem;
+    padding: .55rem .75rem; border-radius: 8px;
+    cursor: pointer; transition: background .12s;
+    border: none; background: none; width: 100%;
+    font-family: 'DM Sans', sans-serif; text-align: left;
+  }
+  .tb-bm-item:hover { background: rgba(255,255,255,.08); }
+  .tb-bm-item.active { background: rgba(239,73,60,.18); }
+  .tb-bm-item.done { opacity: .45; cursor: not-allowed; }
+  .tb-bm-emoji { font-size: 1rem; flex-shrink: 0; }
+  .tb-bm-info { flex: 1; min-width: 0; }
+  .tb-bm-name { font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.9); }
+  .tb-bm-sub  { font-size: .67rem; color: rgba(255,255,255,.4); margin-top: .1rem; }
+  .tb-bm-timer { font-size: .72rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: var(--gold-light); min-width: 38px; text-align: right; flex-shrink: 0; }
+  .tb-bm-timer.warning { color: #ff6b5b; }
+  .tb-bm-limit { font-size: .67rem; color: rgba(255,255,255,.35); text-align: right; flex-shrink: 0; }
+  .tb-bm-done-badge { font-size: .64rem; color: #4ade80; flex-shrink: 0; }
+  .tb-bm-sep { height: 1px; background: rgba(255,255,255,.08); margin: .35rem .25rem; }
+
+  /* ── BREAK SUGGESTION POPUP ── */
+  .break-suggest-popup {
+    position: fixed; bottom: 1.4rem; right: 1.4rem;
+    background: rgba(14,20,50,.97); border: 1px solid rgba(255,255,255,.16);
+    border-radius: 14px; padding: 1rem 1.1rem;
+    max-width: 270px; z-index: 7000;
+    box-shadow: 0 16px 48px rgba(0,0,0,.45);
+    backdrop-filter: blur(16px);
+    display: none;
+  }
+  .break-suggest-popup.show { display: block; animation: fadeSlideUp .25s ease; }
+  @keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  .bsp-emoji { font-size: 1.4rem; margin-bottom: .4rem; }
+  .bsp-title { font-size: .85rem; font-weight: 700; color: #fff; margin-bottom: .2rem; }
+  .bsp-sub   { font-size: .74rem; color: rgba(255,255,255,.5); margin-bottom: .8rem; line-height: 1.5; }
+  .bsp-btns  { display: flex; gap: .5rem; }
+  .bsp-take  { flex: 1; padding: .38rem .5rem; background: var(--gold); color: #fff;
+    border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: .75rem; font-weight: 700; cursor: pointer; transition: background .15s; }
+  .bsp-take:hover { background: #d94438; }
+  .bsp-later { flex: 1; padding: .38rem .5rem; background: rgba(255,255,255,.09);
+    color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: .75rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+  .bsp-later:hover { background: rgba(255,255,255,.15); }
+
+  </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -2327,8 +2340,54 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
       <!-- Work Clock -->
       <div class="work-clock-wrap" id="work-clock-wrap">
         <span class="work-clock-time" id="work-clock-display">Not Started</span>
+
+        <!-- Break dropdown — shown only when working -->
+        <div class="tb-break-wrap" id="tb-break-wrap" style="display:none;">
+          <button class="tb-break-btn" id="tb-break-btn" onclick="tbBreakToggle(event)">
+            ☕ Break <span class="tb-break-arrow">▼</span>
+          </button>
+          <div class="tb-break-menu" id="tb-break-menu">
+            <button class="tb-bm-item" id="tbm-breakfast" onclick="tbBreakPick('breakfast')">
+              <span class="tb-bm-emoji">🍳</span>
+              <div class="tb-bm-info"><div class="tb-bm-name">Breakfast</div><div class="tb-bm-sub">20 min limit</div></div>
+              <span class="tb-bm-timer" id="tbmt-breakfast" style="display:none;">00:00</span>
+              <span class="tb-bm-limit" id="tbml-breakfast">20m</span>
+            </button>
+            <button class="tb-bm-item" id="tbm-lunch" onclick="tbBreakPick('lunch')">
+              <span class="tb-bm-emoji">🍽</span>
+              <div class="tb-bm-info"><div class="tb-bm-name">Lunch</div><div class="tb-bm-sub">45 min limit</div></div>
+              <span class="tb-bm-timer" id="tbmt-lunch" style="display:none;">00:00</span>
+              <span class="tb-bm-limit" id="tbml-lunch">45m</span>
+            </button>
+            <button class="tb-bm-item" id="tbm-beverage" onclick="tbBreakPick('beverage')">
+              <span class="tb-bm-emoji">☕</span>
+              <div class="tb-bm-info"><div class="tb-bm-name">Beverage</div><div class="tb-bm-sub">20 min limit</div></div>
+              <span class="tb-bm-timer" id="tbmt-beverage" style="display:none;">00:00</span>
+              <span class="tb-bm-limit" id="tbml-beverage">20m</span>
+            </button>
+            <div class="tb-bm-sep"></div>
+            <button class="tb-bm-item" id="tbm-shortbreak" onclick="tbBreakPick('shortbreak')">
+              <span class="tb-bm-emoji">🧠</span>
+              <div class="tb-bm-info"><div class="tb-bm-name">Short Break</div><div class="tb-bm-sub">10 min limit</div></div>
+              <span class="tb-bm-timer" id="tbmt-shortbreak" style="display:none;">00:00</span>
+              <span class="tb-bm-limit" id="tbml-shortbreak">10m</span>
+            </button>
+          </div>
+        </div>
+
         <button class="wclock-btn start" id="wclock-start-btn" onclick="workClockIn()">Start Work</button>
         <button class="wclock-btn end" id="wclock-end-btn" onclick="workClockOut()" style="display:none;">End Work</button>
+      </div>
+
+      <!-- Break suggestion popup -->
+      <div class="break-suggest-popup" id="break-suggest-popup">
+        <div class="bsp-emoji">⏰</div>
+        <div class="bsp-title">Time for a break?</div>
+        <div class="bsp-sub">You've been working for a while. A short break helps you stay sharp.</div>
+        <div class="bsp-btns">
+          <button class="bsp-take" onclick="tbSuggestTake()">☕ Take Break</button>
+          <button class="bsp-later" onclick="tbSuggestLater()">Later</button>
+        </div>
       </div>
       <!-- Dark mode toggle -->
       <button class="topbar-msg-btn" id="topbar-msg-btn" onclick="showPage('messages',document.getElementById('sidebar-messages'))" title="Messages" style="display:none;">
@@ -2518,9 +2577,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
       <div class="page active" id="page-home">
 
         <div id="announcement-banner"></div>
-        <!-- CT leave alert banner -->
         <div class="ct-home-banner" id="ct-home-banner"></div>
-        <!-- CT dashboard widget -->
         <div id="ct-dash-widget" style="display:none;margin-bottom:1.2rem;"></div>
 
         <div class="home-greeting">
@@ -3280,7 +3337,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
       <!-- ═══════════════════════════════
            MESSAGES FULL PAGE
       ═══════════════════════════════ -->
-      <div class="page" id="page-messages" style="padding:0;height:calc(100vh - 56px);display:none;flex-direction:row;overflow:hidden;">
+      <div class="page" id="page-messages" style="padding:0;height:calc(100vh - 60px);display:none;flex-direction:row;overflow:hidden;">
         <!-- Left panel: conversations -->
         <div class="msg-left-panel" id="msg-left-panel">
           <div class="msg-left-header">
@@ -3424,6 +3481,9 @@ function doLogout(){
   document.getElementById('dashboard-view').classList.remove('active');
   document.getElementById('login-view').classList.add('active');
   var bb=document.getElementById('break-bar');if(bb)bb.style.display='none';
+  var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';
+  tbStopSuggestTimer();
+  var bsp=document.getElementById('break-suggest-popup');if(bsp)bsp.classList.remove('show');
   var ab=document.getElementById('attendance-badge');if(ab)ab.style.display='none';
   document.getElementById('username').value='';
   document.getElementById('password').value='';
@@ -3482,6 +3542,18 @@ function showPage(id,elem){
   pg.classList.add('active');
   // Messages page needs display:flex (inline style overrides CSS)
   if(id==='messages') pg.style.display='flex';
+
+  // Messages needs main-content to not scroll — input row must stay pinned
+  var mc = document.querySelector('.main-content');
+  if(mc){
+    if(id==='messages'){
+      mc.style.overflow = 'hidden';
+      mc.style.padding  = '0';
+    } else {
+      mc.style.overflow = '';
+      mc.style.padding  = '';
+    }
+  }
 
   // Sidebar active state
   document.querySelectorAll('.sidebar-item').forEach(function(i){i.classList.remove('active');});
@@ -4193,9 +4265,14 @@ function showAttendanceBadge(loginTime){
   var timeEl = document.getElementById('attendance-login-time');
   if(badge){ badge.style.display='flex'; }
   if(timeEl){ timeEl.textContent = 'In since ' + fmtTime(loginTime); }
-  // Show break bar
+  // Show topbar break dropdown instead of bottom bar
+  var tbw = document.getElementById('tb-break-wrap');
+  if(tbw) tbw.style.display = 'block';
+  // Keep bottom bar hidden
   var bar = document.getElementById('break-bar');
-  if(bar) bar.style.display='flex';
+  if(bar) bar.style.display='none';
+  // Start break suggestion timer
+  tbStartSuggestTimer();
   // Start clock
   startLoginClock(loginTime);
   // Restore any active breaks (instead of resetting — handles refresh/new tab/new device)
@@ -9941,18 +10018,16 @@ function closeNearestOverlay(el){var ov=el.closest(".modal-overlay")||el.parentE
 
 
 // ═══════════════════════════════════════════════════════════════
-//  CASE TRACKER  v3
-//  - Mark as Handled: agent=own cases only, admin=any case
-//  - Handled cases disappear from lists, reduce No Follow-up
-//  - Dashboard home widget: 4 stat cards
-//  - Leave alert fires TODAY if agent off tomorrow
-//  - Stale = Modified On != today
+//  CASE TRACKER  v4
+//  Smart email matching: exact → first-name → word-by-word
+//  Mark as Handled: agent=own only, admin=any
+//  Dashboard widget, leave banner, stale follow-up logic
 // ═══════════════════════════════════════════════════════════════
 var CT = (function(){
 
   var _cases        = [];
-  var _actions      = {};   // case_number → supabase row
-  var _agentEmails  = {};   // name.lower → email
+  var _actions      = {};
+  var _emailMap     = {};   // various keys → email (built for fuzzy match)
   var _uploadDate   = null;
   var _showAssignFor   = null;
   var _showReassignFor = null;
@@ -9961,36 +10036,27 @@ var CT = (function(){
   var _searchQ      = '';
 
   var FLAG = ['open','in progress-customer','in progress-support'];
-  var SKIP = ['in progress-principle support'];
 
   function isFlagged(s){ return FLAG.indexOf((s||'').toLowerCase().trim())>-1; }
-  function isSkipped(s){ return SKIP.indexOf((s||'').toLowerCase().trim())>-1; }
-  function isHandled(cn){ var a=_actions[cn]; return a && a.action==='Handled'; }
+  function isHandled(cn){ var a=_actions[cn]; return !!(a && a.action==='Handled'); }
 
   function isStale(v){
     if(!v) return false;
-    var d = typeof v==='number' ? new Date(Math.round((v-25569)*86400*1000)) : new Date(v);
+    var d=typeof v==='number'?new Date(Math.round((v-25569)*86400*1000)):new Date(v);
     if(isNaN(d.getTime())) return false;
     var t=new Date();
     return d.getFullYear()!==t.getFullYear()||d.getMonth()!==t.getMonth()||d.getDate()!==t.getDate();
   }
-
   function daysSince(v){
     if(!v) return 0;
-    var d = typeof v==='number' ? new Date(Math.round((v-25569)*86400*1000)) : new Date(v);
+    var d=typeof v==='number'?new Date(Math.round((v-25569)*86400*1000)):new Date(v);
     if(isNaN(d.getTime())) return 0;
     return Math.max(0,Math.floor((Date.now()-d.getTime())/86400000));
   }
 
   function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-  function aColor(n){
-    var c=['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#84CC16','#14B8A6'];
-    var v=0; for(var i=0;i<(n||'').length;i++) v+=n.charCodeAt(i);
-    return c[v%c.length];
-  }
-  function aIni(n){ return (n||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase(); }
-
+  function aC(n){ var c=['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#84CC16','#14B8A6']; var v=0; for(var i=0;i<(n||'').length;i++) v+=n.charCodeAt(i); return c[v%c.length]; }
+  function aI(n){ return (n||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase(); }
   function fmtDate(v){
     if(!v) return '—';
     var d=typeof v==='number'?new Date(Math.round((v-25569)*86400*1000)):new Date(v);
@@ -9998,51 +10064,64 @@ var CT = (function(){
     var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return mo[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
   }
+  function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
+  function tomorrowStr(){ var d=new Date(); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
+  function nmMatch(a,b){ return (a||'').toLowerCase().trim()===(b||'').toLowerCase().trim(); }
 
-  function todayStr(){
-    var d=new Date();
-    return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
-  }
-  function tomorrowStr(){
-    var d=new Date(); d.setDate(d.getDate()+1);
-    return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+  // ── Smart email lookup ──
+  // Builds multiple keys per user so CRM names like "Abdul Rahim A"
+  // can match portal name "Abdul Rahim A", "Abdul Rahim", or just "Abdul"
+  async function loadEmails(){
+    try{
+      var rows=await sbQuery('users','select=id,name,email,role,timesheet_enabled&order=name.asc');
+      _emailMap={};
+      (rows||[]).forEach(function(r){
+        if(!r.name||!r.email) return;
+        var email=r.email.toLowerCase().trim();
+        var name=r.name.toLowerCase().trim();
+        var words=name.split(/\s+/).filter(Boolean);
+
+        // 1. Full name exact
+        _emailMap[name]=email;
+        // 2. Each individual word (first name, last name etc.)
+        words.forEach(function(w){ if(w.length>1&&!_emailMap[w]) _emailMap[w]=email; });
+        // 3. First two words combined
+        if(words.length>=2){ var two=words[0]+' '+words[1]; if(!_emailMap[two]) _emailMap[two]=email; }
+        // 4. All words except last (handles "Abdul Rahim A" → "Abdul Rahim")
+        if(words.length>=3){ var butlast=words.slice(0,-1).join(' '); if(!_emailMap[butlast]) _emailMap[butlast]=email; }
+      });
+      console.log('CT emails ready:',Object.keys(_emailMap).length,'keys for',rows.length,'users');
+    }catch(e){ console.warn('CT loadEmails:',e.message); }
   }
 
-  function nameMatch(a,b){ return (a||'').toLowerCase().trim()===(b||'').toLowerCase().trim(); }
-
-  // ── badges ──
-  function sBadge(s){
-    var sl=(s||'').toLowerCase().trim();
-    var cls=sl==='open'?'open':sl==='in progress-customer'?'ipc':'ips';
-    return '<span class="ct-sb '+cls+'"><span class="ct-sb-dot"></span>'+escH(s||'—')+'</span>';
+  // Smart lookup: try progressively shorter name fragments
+  function getEmail(crmName){
+    if(!crmName) return '';
+    var name=(crmName||'').toLowerCase().trim();
+    // 1. Exact
+    if(_emailMap[name]) return _emailMap[name];
+    // 2. Drop last word repeatedly
+    var words=name.split(/\s+/).filter(Boolean);
+    for(var i=words.length-1;i>=1;i--){
+      var fragment=words.slice(0,i).join(' ');
+      if(_emailMap[fragment]) return _emailMap[fragment];
+    }
+    // 3. Each word individually
+    for(var j=0;j<words.length;j++){
+      if(_emailMap[words[j]]) return _emailMap[words[j]];
+    }
+    return '';
   }
-  function aBadge(act){
-    if(!act) return '<span class="ct-ab noaction">No Action</span>';
-    if(act.action==='Handled') return '<span class="ct-ab handled">✅ Handled</span>';
-    var m={'No Pending':'nopending','Mail Sent':'mailsent','Assigned To':'assigned','Pending Customer':'pendingcust'};
-    var cls=m[act.action]||'noaction';
-    var lbl=act.action+(act.action==='Assigned To'&&act.assigned_to?' → '+act.assigned_to:'');
-    return '<span class="ct-ab '+cls+'">'+escH(lbl)+'</span>';
-  }
 
-  // ── xlsx parse ──
+  // ── xlsx ──
   function parseXlsx(file,cb){
     var r=new FileReader();
-    r.onload=function(e){
-      try{
-        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-        cb(null,XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}));
-      }catch(err){cb(err,null);}
-    };
+    r.onload=function(e){ try{ var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}); cb(null,XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''})); }catch(err){cb(err,null);} };
     r.readAsArrayBuffer(file);
   }
-  function normRow(r){
-    var o={};
-    Object.keys(r).forEach(function(k){ o[k.replace(/^\uFEFF/,'').trim()]=r[k]; });
-    return o;
-  }
+  function normRow(r){ var o={}; Object.keys(r).forEach(function(k){ o[k.replace(/^\uFEFF/,'').trim()]=r[k]; }); return o; }
 
-  // ── supabase ──
+  // ── Supabase ──
   async function loadActions(){
     if(!_uploadDate) return;
     try{
@@ -10052,34 +10131,20 @@ var CT = (function(){
     }catch(e){ console.warn('CT actions:',e.message); }
   }
 
-  async function loadEmails(){
-    try{
-      var rows=await sbQuery('users','select=name,email');
-      _agentEmails={};
-      (rows||[]).forEach(function(r){ if(r.name&&r.email) _agentEmails[r.name.toLowerCase().trim()]=r.email; });
-    }catch(e){ console.warn('CT emails:',e.message); }
-  }
-
-  function getEmail(name){ return _agentEmails[(name||'').toLowerCase().trim()]||''; }
-
   async function saveAction(cn,title,agent,actionType,assignedTo){
     var today=todayStr();
-    var payload={case_number:cn,case_title:title,agent_name:agent,
-      action:actionType,assigned_to:assignedTo||null,
-      actioned_by:currentUser?currentUser.name:agent,upload_date:today};
+    var payload={case_number:cn,case_title:title,agent_name:agent,action:actionType,
+      assigned_to:assignedTo||null,actioned_by:currentUser?currentUser.name:agent,upload_date:today};
     try{
-      await fetch(SUPABASE_URL+'/rest/v1/crm_case_actions?case_number=eq.'+encodeURIComponent(cn)+'&upload_date=eq.'+today,
-        {method:'DELETE',headers:sbHeaders()});
+      await fetch(SUPABASE_URL+'/rest/v1/crm_case_actions?case_number=eq.'+encodeURIComponent(cn)+'&upload_date=eq.'+today,{method:'DELETE',headers:sbHeaders()});
       await sbInsert('crm_case_actions',payload);
       _actions[cn]=payload;
       _showAssignFor=null;
-      renderCT();
-      updateHomeBanner();
-      updateDashWidget();
+      renderCT(); updateHomeBanner(); updateDashWidget();
     }catch(e){ alert('Could not save: '+e.message); }
   }
 
-  // ── roster ──
+  // ── Roster ──
   function agentsOffOn(dateStr){
     var off=[];
     try{
@@ -10087,75 +10152,68 @@ var CT = (function(){
       if(!rows||!rows.length) return off;
       var dateRow=rows.find(function(r){ return String(r[1]||'').trim().toUpperCase()==='DATE'; });
       if(!dateRow) return off;
-      var day=new Date(dateStr).getDate();
-      var colIdx=-1;
+      var day=new Date(dateStr).getDate(), colIdx=-1;
       dateRow.slice(2).forEach(function(cell,i){ if(Number(cell)===day) colIdx=i+2; });
       if(colIdx<0) return off;
       var NO=['L','CO','W','WO','OFF'];
       rows.filter(function(r){ return String(r[0]||'').trim()&&/^K\d+/i.test(String(r[0]||'')); })
-        .forEach(function(r){
-          var parts=String(r[colIdx]||'').toUpperCase().trim().split(/[^A-Z]+/).filter(Boolean);
-          if(parts.some(function(p){ return NO.indexOf(p)>-1; })) off.push(String(r[1]||'').trim());
-        });
+        .forEach(function(r){ var parts=String(r[colIdx]||'').toUpperCase().trim().split(/[^A-Z]+/).filter(Boolean); if(parts.some(function(p){ return NO.indexOf(p)>-1; })) off.push(String(r[1]||'').trim()); });
     }catch(e){}
     return off;
   }
 
-  // get cases for an agent (flagged, not skipped)
-  function agentCases(name){
-    return _cases.filter(function(c){ return nameMatch(c.Owner,name)&&isFlagged(c['Status Reason']); });
-  }
+  function agentCases(name){ return _cases.filter(function(c){ return nmMatch(c.Owner,name)&&isFlagged(c['Status Reason']); }); }
+  function activeCases(cases){ return cases.filter(function(c){ return !isHandled(c['Case Number']); }); }
+  function staleCases(cases){ return activeCases(cases).filter(function(c){ return isStale(c['Modified On']); }); }
 
-  // active = flagged + not handled
-  function activeCases(cases){
-    return cases.filter(function(c){ return !isHandled(c['Case Number']); });
-  }
-  // stale = flagged + not handled + modified not today
-  function staleCases(cases){
-    return activeCases(cases).filter(function(c){ return isStale(c['Modified On']); });
-  }
-
-  // ── can current user handle a case ──
-  function canHandle(caseOwner){
+  function canHandle(owner){
     if(!currentUser) return false;
     var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
-    if(isAdmin) return true;
-    return nameMatch(currentUser.name, caseOwner);
+    return isAdmin||nmMatch(currentUser.name,owner);
+  }
+
+  // ── Badges ──
+  function sBadge(s){ var sl=(s||'').toLowerCase().trim(); var cls=sl==='open'?'open':sl==='in progress-customer'?'ipc':'ips'; return '<span class="ct-sb '+cls+'"><span class="ct-sb-dot"></span>'+escH(s||'—')+'</span>'; }
+  function aBadge(act){
+    if(!act) return '<span class="ct-ab noaction">No Action</span>';
+    if(act.action==='Handled') return '<span class="ct-ab handled">✅ Handled</span>';
+    var m={'No Pending':'nopending','Mail Sent':'mailsent','Assigned To':'assigned','Pending Customer':'pendingcust'};
+    var lbl=act.action+(act.action==='Assigned To'&&act.assigned_to?' → '+act.assigned_to:'');
+    return '<span class="ct-ab '+(m[act.action]||'noaction')+'">'+escH(lbl)+'</span>';
   }
 
   // ── RENDER ──
   function renderCT(){
-    var root=document.getElementById('ct-root');
-    if(!root) return;
+    var root=document.getElementById('ct-root'); if(!root) return;
     var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
-    if(isAdmin) renderManager(root);
-    else renderAgent(root);
+    if(isAdmin) renderManager(root); else renderAgent(root);
   }
 
-  // ══════════════════════════
+  // ══════════════════════════════════════
   //  MANAGER VIEW
-  // ══════════════════════════
+  // ══════════════════════════════════════
   function renderManager(root){
-    var todayOff   =agentsOffOn(todayStr());
-    var tomorrowOff=agentsOffOn(tomorrowStr());
-    var allFlagged =_cases.filter(function(c){ return isFlagged(c['Status Reason']); });
-    var allActive  =activeCases(allFlagged);
-    var allStale   =staleCases(allFlagged);
+    var todayOff=agentsOffOn(todayStr()), tomorrowOff=agentsOffOn(tomorrowStr());
+    var allFlagged=_cases.filter(function(c){ return isFlagged(c['Status Reason']); });
+    var allActive=activeCases(allFlagged), allStale=staleCases(allFlagged);
     var handledToday=allFlagged.filter(function(c){ return isHandled(c['Case Number']); }).length;
-    var noAction   =allActive.filter(function(c){ return !_actions[c['Case Number']]; }).length;
+    var noAction=allActive.filter(function(c){ return !_actions[c['Case Number']]; }).length;
 
     var html='<div class="ct-page-wrap">';
-
-    // Header
     html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.1rem;">';
     html+='<div><h1 class="ct-page-title">Case Tracker</h1><p class="ct-page-sub">Leave coverage · Follow-up oversight · Pending actions</p></div>';
     if(_uploadDate) html+='<span style="font-size:.73rem;color:var(--text-dim);padding:.26rem .62rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:20px;">📅 '+escH(_uploadDate)+'</span>';
-    html+='</div>';
+    // Controls row
+    html+='<div style="display:flex;gap:.5rem;flex-wrap:wrap;">';
+    if(_cases.length) html+='<button onclick="CT.clearData()" style="font-size:.72rem;padding:.28rem .75rem;border-radius:20px;border:1px solid rgba(239,73,60,.3);background:rgba(239,73,60,.08);color:var(--accent-red);cursor:pointer;font-weight:600;">\u{1F5D1} Clear Data</button>';
+    if(localStorage.getItem("ct_dash_hidden")==="1") html+="<button onclick=\"CT.showDashWidget()\" style=\"font-size:.72rem;padding:.28rem .75rem;border-radius:20px;border:1px solid rgba(46,197,111,.3);background:rgba(46,197,111,.08);color:#1a7a45;cursor:pointer;font-weight:600;\">\u{1F4CA} Show Dashboard</button>";
+    html+="</div>";
+    html+="</div>";
 
     // Upload
     html+='<div class="ct-upload-zone" id="ct-drop" ondragover="CT.dragOver(event)" ondragleave="CT.dragLeave(event)" ondrop="CT.drop(event)">';
     if(_cases.length){
-      html+='<div class="ct-upload-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><div><strong>'+_cases.length+' cases loaded</strong>&nbsp;<span style="color:var(--text-dim);font-size:.73rem;">Drop a new file to refresh</span></div></div>';
+      html+='<div class="ct-upload-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><div><strong>'+_cases.length+' cases loaded</strong>&nbsp;<span style="color:var(--text-dim);font-size:.73rem;">Drop new file to refresh</span></div></div>';
     } else {
       html+='<div class="ct-upload-icon">📂</div><div class="ct-upload-label">Drop your Dynamics 365 export here</div><div class="ct-upload-sub">Click to browse · .xlsx only</div>';
     }
@@ -10168,73 +10226,57 @@ var CT = (function(){
 
     // Stats
     html+='<div class="ct-stats-row">';
-    html+=sCard('Total Cases',   _cases.length,    '');
-    html+=sCard('Active Cases',  allActive.length, 'amber');
-    html+=sCard('No Follow-up',  allStale.length,  'orange');
-    html+=sCard('Handled Today', handledToday,     'green');
-    html+=sCard('No Action Yet', noAction,         'red');
+    html+=sc('Total Cases',_cases.length,'');
+    html+=sc('Active Cases',allActive.length,'amber');
+    html+=sc('No Follow-up',allStale.length,'orange');
+    html+=sc('Handled Today',handledToday,'green');
+    html+=sc('No Action Yet',noAction,'red');
     html+='</div>';
 
-    // Leave panels
+    // Leave
     html+='<div class="ct-sec-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Leave Coverage</div>';
-    html+='<div class="ct-leave-grid">';
-    html+=leavePanel('On Leave Today',    todayOff,   'red');
-    html+=leavePanel('On Leave Tomorrow', tomorrowOff,'amber');
-    html+='</div>';
+    html+='<div class="ct-leave-grid">'+leavePanel('On Leave Today',todayOff,'red')+leavePanel('On Leave Tomorrow',tomorrowOff,'amber')+'</div>';
 
     // Overdue follow-ups
-    html+='<div class="ct-sec-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>';
-    html+='Overdue Follow-ups <span class="ct-sec-count '+(allStale.length>0?'orange':'ok')+'">'+allStale.length+' case'+(allStale.length!==1?'s':'')+'</span></div>';
-
+    html+='<div class="ct-sec-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Overdue Follow-ups <span class="ct-sec-count '+(allStale.length?'orange':'ok')+'">'+allStale.length+' case'+(allStale.length!==1?'s':'')+'</span></div>';
     if(!allStale.length){
-      html+='<div class="ct-table-card"><div class="ct-all-clear"><div class="ct-ac-ico">✅</div>All cases followed up today — great work!</div></div>';
+      html+='<div class="ct-table-card"><div class="ct-all-clear"><div class="ct-ac-ico">✅</div>All cases followed up today!</div></div>';
     } else {
       var byAgent={};
       allStale.forEach(function(c){ var o=c.Owner||'Unassigned'; if(!byAgent[o]) byAgent[o]=[]; byAgent[o].push(c); });
       html+='<div class="ct-table-card"><div style="padding:.5rem .7rem;">';
       Object.keys(byAgent).sort().forEach(function(agent){
-        var cases=byAgent[agent];
-        var key='ct-sf-'+agent.replace(/\W/g,'_');
+        var cases=byAgent[agent], key='ct-sf-'+agent.replace(/\W/g,'_');
         var email=getEmail(agent);
-        var bg=aColor(agent),ini=aIni(agent);
-        var isR=_showReassignFor===agent;
+        var bg=aC(agent), ini=aI(agent), isR=_showReassignFor===agent;
         var maxD=Math.max.apply(null,cases.map(function(c){ return daysSince(c['Modified On']); }));
-        var mailBody=encodeURIComponent('Hi '+agent+',\n\nPlease follow up on these cases:\n\n'+cases.map(function(c){ return '• '+c['Case Number']+' — '+c['Case Title']; }).join('\n')+'\n\nThank you.');
+        var mailBody=encodeURIComponent('Hi '+agent+',\n\nPlease follow up on these cases today:\n\n'+cases.map(function(c){ return '• '+c['Case Number']+' — '+c['Case Title']; }).join('\n')+'\n\nThank you.');
         var mailSubj=encodeURIComponent('Follow-up Reminder: '+cases.length+' Case'+(cases.length!==1?'s':''));
-        var mailto=email?'mailto:'+email+'?subject='+mailSubj+'&body='+mailBody:'#';
+        var mailto=email?'mailto:'+email+'?subject='+mailSubj+'&body='+mailBody:'';
 
         html+='<div class="ct-agent-card">';
         html+='<div class="ct-agent-row" onclick="CT.toggleEl(\''+escH(key)+'\')">';
         html+='<div class="ct-av" style="background:'+bg+';">'+ini+'</div>';
-        html+='<div class="ct-ai"><div class="ct-ai-name">'+escH(agent)+'</div>';
-        html+='<div class="ct-ai-sub">'+cases.length+' case'+(cases.length!==1?'s':'')+' · last touch '+maxD+'d ago</div></div>';
+        html+='<div class="ct-ai"><div class="ct-ai-name">'+escH(agent)+'</div><div class="ct-ai-sub">'+cases.length+' case'+(cases.length!==1?'s':'')+' · last touch '+maxD+'d ago</div></div>';
         html+='<div class="ct-agent-btns">';
-        html+='<a href="'+mailto+'" onclick="'+(!email?'alert(\'Email not found.\');return false;':'')+'" class="ct-remind-btn">📧 Remind</a>';
+        if(email){
+          html+='<a href="'+mailto+'" class="ct-remind-btn">📧 Remind</a>';
+        } else {
+          html+='<button class="ct-remind-btn" onclick="event.stopPropagation();alert(\'Email not found for \'+\''+escH(agent)+'\'+\'. Please check the name in portal users.\')">📧 Remind</button>';
+        }
         html+='<button class="ct-reassign-btn" onclick="event.stopPropagation();CT.toggleReassign(\''+escH(agent)+'\')">👤 Reassign</button>';
-        html+='</div>';
-        html+='<span class="ct-pill orange">'+cases.length+' stale</span>';
+        html+='</div><span class="ct-pill orange">'+cases.length+' stale</span>';
         html+='</div>';
 
         if(isR){
-          html+='<div class="ct-ri-row">';
-          html+='<input class="ct-ri-inp" id="ct-ri-'+escH(agent.replace(/\W/g,'_'))+'" placeholder="Reassign all to (name)…"/>';
-          html+='<button class="ct-ri-save" onclick="CT.confirmReassign(\''+escH(agent)+'\')">Confirm</button>';
-          html+='</div>';
+          html+='<div class="ct-ri-row"><input class="ct-ri-inp" id="ct-ri-'+escH(agent.replace(/\W/g,'_'))+'" placeholder="Reassign all stale cases to…"/><button class="ct-ri-save" onclick="CT.confirmReassign(\''+escH(agent)+'\')">Confirm</button></div>';
         }
 
         html+='<div id="'+escH(key)+'" class="ct-case-list" style="display:none;">';
         cases.forEach(function(c){
-          var days=daysSince(c['Modified On']);
-          var act=_actions[c['Case Number']];
-          html+='<div class="ct-case-mini">';
-          html+='<span class="ct-cn">'+escH(c['Case Number']||'—')+'</span>';
-          html+='<span class="ct-ct">'+escH((c['Case Title']||'').slice(0,50))+'</span>';
-          html+='<span class="ct-days">'+days+'d ago</span>';
-          html+='<span class="ct-ca">'+aBadge(act)+'</span>';
-          // Mark as Handled button in overdue list
-          if(!isHandled(c['Case Number'])){
-            html+='<button class="ct-handle-btn" onclick="CT.handle(\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(c.Owner||'')+'\')">✅ Mark as Handled</button>';
-          }
+          var days=daysSince(c['Modified On']), act=_actions[c['Case Number']];
+          html+='<div class="ct-case-mini"><span class="ct-cn">'+escH(c['Case Number']||'—')+'</span><span class="ct-ct">'+escH((c['Case Title']||'').slice(0,50))+'</span><span class="ct-days">'+days+'d ago</span><span class="ct-ca">'+aBadge(act)+'</span>';
+          if(!isHandled(c['Case Number'])) html+='<button class="ct-handle-btn" onclick="CT.handle(\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(c.Owner||'')+'\')">✅ Mark as Handled</button>';
           html+='</div>';
         });
         html+='</div></div>';
@@ -10242,344 +10284,232 @@ var CT = (function(){
       html+='</div></div>';
     }
 
-    // Full table
-    html+=managerTable(allFlagged);
-    html+='</div>';
+    html+=managerTable(allFlagged)+'</div>';
     root.innerHTML=html;
-
     updateAlertBadge(noAction+allStale.length);
-    if(_showReassignFor){
-      setTimeout(function(){
-        var inp=document.getElementById('ct-ri-'+_showReassignFor.replace(/\W/g,'_'));
-        if(inp) inp.focus();
-      },60);
-    }
+    if(_showReassignFor){ setTimeout(function(){ var i=document.getElementById('ct-ri-'+_showReassignFor.replace(/\W/g,'_')); if(i) i.focus(); },60); }
   }
 
-  function sCard(label,val,cls){
-    return '<div class="ct-stat"><div class="ct-stat-label">'+label+'</div><div class="ct-stat-val '+cls+'">'+val+'</div></div>';
-  }
+  function sc(label,val,cls){ return '<div class="ct-stat"><div class="ct-stat-label">'+label+'</div><div class="ct-stat-val '+cls+'">'+val+'</div></div>'; }
 
   function leavePanel(title,agentsOff,colorClass){
-    var html='<div class="ct-leave-panel">';
-    html+='<div class="ct-lp-hdr"><span class="ct-lp-title">'+escH(title)+'</span>';
-    if(!agentsOff.length){
-      html+='<span class="ct-lp-badge ok">All present</span></div>';
-      html+='<div class="ct-lp-body"><div class="ct-all-clear"><div class="ct-ac-ico">✅</div>No one on leave</div></div></div>';
-      return html;
-    }
-    html+='<span class="ct-lp-badge '+colorClass+'">'+agentsOff.length+' agent'+(agentsOff.length!==1?'s':'')+'</span></div>';
-    html+='<div class="ct-lp-body">';
+    var html='<div class="ct-leave-panel"><div class="ct-lp-hdr"><span class="ct-lp-title">'+escH(title)+'</span>';
+    if(!agentsOff.length){ html+='<span class="ct-lp-badge ok">All present</span></div><div class="ct-lp-body"><div class="ct-all-clear"><div class="ct-ac-ico">✅</div>No one on leave</div></div></div>'; return html; }
+    html+='<span class="ct-lp-badge '+colorClass+'">'+agentsOff.length+' agent'+(agentsOff.length!==1?'s':'')+'</span></div><div class="ct-lp-body">';
     agentsOff.forEach(function(agent){
-      var cases=agentCases(agent);
-      var active=activeCases(cases);
-      var bg=aColor(agent),ini=aIni(agent);
-      var badgeCls=active.length>0?'danger':'ok';
-      var badgeLbl=active.length===0?'Queue clear':active.length+' pending';
-      var key='ct-lv-'+agent.replace(/\W/g,'_');
-
-      html+='<div class="ct-agent-card">';
-      html+='<div class="ct-agent-row" onclick="CT.toggleEl(\''+escH(key)+'\')">';
+      var cases=agentCases(agent), active=activeCases(cases);
+      var bg=aC(agent), ini=aI(agent), key='ct-lv-'+agent.replace(/\W/g,'_');
+      var badgeCls=active.length>0?'danger':'ok', badgeLbl=active.length===0?'Queue clear':active.length+' pending';
+      html+='<div class="ct-agent-card"><div class="ct-agent-row" onclick="CT.toggleEl(\''+escH(key)+'\')">';
       html+='<div class="ct-av" style="background:'+bg+';">'+ini+'</div>';
-      html+='<div class="ct-ai"><div class="ct-ai-name">'+escH(agent)+'</div>';
-      html+='<div class="ct-ai-sub">'+cases.length+' case'+(cases.length!==1?'s':'')+' total</div></div>';
-      html+='<span class="ct-pill '+badgeCls+'">'+escH(badgeLbl)+'</span>';
-      html+='</div>';
-
+      html+='<div class="ct-ai"><div class="ct-ai-name">'+escH(agent)+'</div><div class="ct-ai-sub">'+cases.length+' case'+(cases.length!==1?'s':'')+' total</div></div>';
+      html+='<span class="ct-pill '+badgeCls+'">'+escH(badgeLbl)+'</span></div>';
       html+='<div id="'+escH(key)+'" class="ct-case-list" style="display:none;">';
-      if(!cases.length){
-        html+='<div style="font-size:.74rem;color:var(--text-dim);padding:.3rem 0;">No cases in queue ✅</div>';
-      } else {
-        cases.forEach(function(c){
-          var act=_actions[c['Case Number']];
-          html+='<div class="ct-case-mini">';
-          html+='<span class="ct-cn">'+escH(c['Case Number']||'—')+'</span>';
-          html+='<span class="ct-ct">'+escH((c['Case Title']||'').slice(0,48))+'</span>';
-          html+='<span class="ct-ca">'+aBadge(act)+'</span>';
-          if(!isHandled(c['Case Number'])){
-            html+='<button class="ct-handle-btn" onclick="CT.handle(\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(c.Owner||'')+'\')">✅ Mark as Handled</button>';
-          }
-          html+='</div>';
-        });
-      }
+      if(!cases.length){ html+='<div style="font-size:.74rem;color:var(--text-dim);padding:.3rem 0;">Queue empty ✅</div>'; }
+      else { cases.forEach(function(c){
+        html+='<div class="ct-case-mini"><span class="ct-cn">'+escH(c['Case Number']||'—')+'</span><span class="ct-ct">'+escH((c['Case Title']||'').slice(0,48))+'</span><span class="ct-ca">'+aBadge(_actions[c['Case Number']])+'</span>';
+        if(!isHandled(c['Case Number'])) html+='<button class="ct-handle-btn" onclick="CT.handle(\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(c.Owner||'')+'\')">✅ Mark as Handled</button>';
+        html+='</div>';
+      }); }
       html+='</div></div>';
     });
-    html+='</div></div>';
-    return html;
+    html+='</div></div>'; return html;
   }
 
   function managerTable(allFlagged){
-    var agentMap={};
-    allFlagged.forEach(function(c){ if(c.Owner) agentMap[c.Owner]=1; });
+    var agentMap={}; allFlagged.forEach(function(c){ if(c.Owner) agentMap[c.Owner]=1; });
     var agentList=Object.keys(agentMap).sort();
-
     var filtered=allFlagged.filter(function(c){
       var q=_searchQ.toLowerCase();
       var mQ=!q||(c['Case Number']||'').toLowerCase().includes(q)||(c['Case Title']||'').toLowerCase().includes(q)||(c.Owner||'').toLowerCase().includes(q)||(c.Customer||'').toLowerCase().includes(q);
-      var mA=!_filterAgent||nameMatch(c.Owner,_filterAgent);
-      var mAct=!_filterAction
-        ||(_filterAction==='handled'   ? isHandled(c['Case Number'])
-          :_filterAction==='stale'     ? isStale(c['Modified On'])&&!isHandled(c['Case Number'])
-          :_filterAction==='noaction'  ? !_actions[c['Case Number']]&&!isHandled(c['Case Number'])
-          :true);
+      var mA=!_filterAgent||nmMatch(c.Owner,_filterAgent);
+      var mAct=!_filterAction||(_filterAction==='handled'?isHandled(c['Case Number']):_filterAction==='stale'?isStale(c['Modified On'])&&!isHandled(c['Case Number']):_filterAction==='noaction'?!_actions[c['Case Number']]&&!isHandled(c['Case Number']):true);
       return mQ&&mA&&mAct;
     });
-
     var html='<div class="ct-sec-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M14 3v6h6"/></svg>All Flagged Cases</div>';
-    html+='<div class="ct-table-card">';
-    html+='<div class="ct-table-hdr">';
+    html+='<div class="ct-table-card"><div class="ct-table-hdr">';
     html+='<span class="ct-table-title">'+filtered.length+' cases</span>';
     html+='<input class="ct-fi" placeholder="🔍 Search…" oninput="CT.search(this.value)" value="'+escH(_searchQ)+'"/>';
-    html+='<select class="ct-fi" onchange="CT.filterAgent(this.value)">';
-    html+='<option value="">All Agents</option>';
+    html+='<select class="ct-fi" onchange="CT.filterAgent(this.value)"><option value="">All Agents</option>';
     agentList.forEach(function(a){ html+='<option value="'+escH(a)+'"'+(a===_filterAgent?' selected':'')+'>'+escH(a)+'</option>'; });
-    html+='</select>';
-    html+='<select class="ct-fi" onchange="CT.filterAction(this.value)">';
-    html+='<option value="">All</option>';
-    html+='<option value="stale"'+   (_filterAction==='stale'?   ' selected':'')+'>No Follow-up Today</option>';
+    html+='</select><select class="ct-fi" onchange="CT.filterAction(this.value)">';
+    html+='<option value="">All</option><option value="stale"'+(_filterAction==='stale'?' selected':'')+'>No Follow-up Today</option>';
     html+='<option value="noaction"'+(_filterAction==='noaction'?' selected':'')+'>No Action Yet</option>';
-    html+='<option value="handled"'+ (_filterAction==='handled'? ' selected':'')+'>Handled</option>';
-    html+='</select>';
-    html+='</div>';
-
-    if(!filtered.length){
-      html+='<div class="ct-all-clear"><div class="ct-ac-ico">🔍</div>No cases match filters</div></div>';
-      return html;
-    }
-
-    html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr>';
-    html+='<th>Case #</th><th>Title / Customer</th><th>Agent</th><th>Status</th><th>Modified</th><th>Follow-up</th><th>Action</th><th></th>';
-    html+='</tr></thead><tbody>';
-
+    html+='<option value="handled"'+(_filterAction==='handled'?' selected':'')+'>Handled</option></select></div>';
+    if(!filtered.length){ html+='<div class="ct-all-clear"><div class="ct-ac-ico">🔍</div>No cases match filters</div></div>'; return html; }
+    html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr><th>Case #</th><th>Title / Customer</th><th>Agent</th><th>Status</th><th>Modified</th><th>Follow-up</th><th>Action</th><th></th></tr></thead><tbody>';
     filtered.forEach(function(c){
-      var act=_actions[c['Case Number']];
-      var handled=isHandled(c['Case Number']);
-      var stale=!handled&&isStale(c['Modified On']);
-      var days=daysSince(c['Modified On']);
+      var act=_actions[c['Case Number']], handled=isHandled(c['Case Number']);
+      var stale=!handled&&isStale(c['Modified On']), days=daysSince(c['Modified On']);
       var rowCls=handled?'row-handled':stale?'row-stale':(!act?'row-unactioned':'');
-      var bg=aColor(c.Owner||''),ini=aIni(c.Owner||'');
-
+      var bg=aC(c.Owner||''), ini=aI(c.Owner||'');
       html+='<tr class="'+rowCls+'">';
       html+='<td><span style="font-family:monospace;font-size:.76rem;font-weight:600;color:var(--accent-blue);">'+escH(c['Case Number']||'—')+'</span></td>';
       html+='<td><div style="font-weight:500;color:var(--text-primary);max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escH(c['Case Title']||'—')+'</div>';
       if(c.Customer) html+='<div style="font-size:.7rem;color:var(--text-muted);">'+escH(c.Customer)+'</div>';
-      html+='</td>';
-      html+='<td><div class="ct-own"><div class="ct-own-av" style="background:'+bg+';">'+ini+'</div><span class="ct-own-nm">'+escH(c.Owner||'—')+'</span></div></td>';
+      html+='</td><td><div class="ct-own"><div class="ct-own-av" style="background:'+bg+';">'+ini+'</div><span class="ct-own-nm">'+escH(c.Owner||'—')+'</span></div></td>';
       html+='<td>'+sBadge(c['Status Reason'])+'</td>';
       html+='<td style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;">'+fmtDate(c['Modified On'])+'</td>';
-      html+='<td>'+(handled?'<span style="font-size:.72rem;color:#1a7a45;">✅ Handled</span>':stale?'<span class="ct-sb stale"><span class="ct-sb-dot"></span>'+days+'d ago</span>':'<span style="font-size:.71rem;color:#1a7a45;">✓ Today</span>')+'</td>';
+      html+='<td>'+(handled?'<span style="font-size:.71rem;color:#1a7a45;">✅</span>':stale?'<span class="ct-sb stale"><span class="ct-sb-dot"></span>'+days+'d ago</span>':'<span style="font-size:.71rem;color:#1a7a45;">✓ Today</span>')+'</td>';
       html+='<td>'+aBadge(act)+'</td>';
       html+='<td>'+(handled?'':'<button class="ct-handle-btn" onclick="CT.handle(\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(c.Owner||'')+'\')">✅ Handled</button>')+'</td>';
       html+='</tr>';
     });
-
-    html+='</tbody></table></div></div>';
-    return html;
+    html+='</tbody></table></div></div>'; return html;
   }
 
-  // ══════════════════════════
+  // ══════════════════════════════════════
   //  AGENT VIEW
-  // ══════════════════════════
+  // ══════════════════════════════════════
   function renderAgent(root){
     if(!currentUser) return;
-    var myName=currentUser.name;
-    var myCases=agentCases(myName);
-
-    var html='<div class="ct-page-wrap">';
-    html+='<div style="margin-bottom:1.1rem;"><h1 class="ct-page-title">My Cases</h1><p class="ct-page-sub">Your pending cases that need follow-up</p></div>';
-
+    var myName=currentUser.name, myCases=agentCases(myName);
+    var html='<div class="ct-page-wrap"><div style="margin-bottom:1.1rem;"><h1 class="ct-page-title">My Cases</h1><p class="ct-page-sub">Your pending cases that need follow-up</p></div>';
     if(!_cases.length){
       html+='<div class="ct-empty"><div class="ct-empty-ico">📬</div><div class="ct-empty-ttl">No data loaded yet</div><div class="ct-empty-sub">Your manager uploads the daily report. Your cases will appear here once it\'s done.</div></div></div>';
       root.innerHTML=html; return;
     }
-
     if(!myCases.length){
-      html+='<div class="ct-empty"><div class="ct-empty-ico">🎉</div><div class="ct-empty-ttl">You\'re all clear!</div><div class="ct-empty-sub">No pending cases assigned to you right now. Great work!</div></div></div>';
+      html+='<div class="ct-empty"><div class="ct-empty-ico">🎉</div><div class="ct-empty-ttl">You\'re all clear!</div><div class="ct-empty-sub">No pending cases assigned to you. Great work!</div></div></div>';
       root.innerHTML=html; return;
     }
-
-    var myActive =activeCases(myCases);
-    var myStale  =staleCases(myCases);
+    var myActive=activeCases(myCases), myStale=staleCases(myCases);
     var myHandled=myCases.filter(function(c){ return isHandled(c['Case Number']); });
     var myPending=myActive.filter(function(c){ return !_actions[c['Case Number']]; });
 
-    // Stats
     html+='<div class="ct-stats-row" style="grid-template-columns:repeat(4,1fr);max-width:520px;margin-bottom:1.1rem;">';
-    html+=sCard('Total',   myCases.length,    '');
-    html+=sCard('Active',  myActive.length,   'amber');
-    html+=sCard('No Follow-up', myStale.length,'orange');
-    html+=sCard('Handled', myHandled.length,  'green');
+    html+=sc('Total',myCases.length,''); html+=sc('Active',myActive.length,'amber');
+    html+=sc('No Follow-up',myStale.length,'orange'); html+=sc('Handled',myHandled.length,'green');
     html+='</div>';
 
-    // Stale warning
     if(myStale.length){
-      html+='<div class="ct-stale-warn">';
-      html+='<div class="ct-stale-warn-ttl">⏰ '+myStale.length+' case'+(myStale.length!==1?'s have':' has')+' no follow-up today</div>';
-      html+='<div class="ct-stale-warn-sub">These cases were last updated more than 1 day ago — please reach out to the customer.</div>';
+      html+='<div class="ct-stale-warn"><div class="ct-stale-warn-ttl">⏰ '+myStale.length+' case'+(myStale.length!==1?'s have':' has')+' no follow-up today</div>';
+      html+='<div class="ct-stale-warn-sub">Last updated more than 1 day ago — please reach out to the customer.</div>';
       html+='<div class="ct-banner-list">';
-      myStale.slice(0,5).forEach(function(c){
-        var days=daysSince(c['Modified On']);
-        html+='<div class="ct-banner-item"><b>'+escH(c['Case Number']||'')+'</b> '+escH((c['Case Title']||'').slice(0,45))+' <span style="color:var(--accent-red);font-size:.71rem;float:right;">'+days+'d ago</span></div>';
-      });
+      myStale.slice(0,5).forEach(function(c){ var d=daysSince(c['Modified On']); html+='<div class="ct-banner-item"><b>'+escH(c['Case Number']||'')+'</b> '+escH((c['Case Title']||'').slice(0,45))+' <span style="color:var(--accent-red);font-size:.71rem;float:right;">'+d+'d ago</span></div>'; });
       if(myStale.length>5) html+='<div class="ct-banner-item" style="color:var(--text-dim);">…and '+(myStale.length-5)+' more</div>';
       html+='</div></div>';
     }
 
-    // Pending table
     if(myPending.length){
-      html+='<div class="ct-table-card" style="margin-bottom:1rem;">';
-      html+='<div class="ct-table-hdr"><span class="ct-table-title">⚠️ Needs Your Action <span style="font-size:.73rem;font-weight:400;color:var(--text-muted);">('+myPending.length+')</span></span></div>';
-      html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr>';
-      html+='<th>Case #</th><th>Title / Customer</th><th>Status</th><th>Follow-up</th><th>Actions</th>';
-      html+='</tr></thead><tbody>';
+      html+='<div class="ct-table-card" style="margin-bottom:1rem;"><div class="ct-table-hdr"><span class="ct-table-title">⚠️ Needs Your Action <span style="font-size:.73rem;font-weight:400;color:var(--text-muted);">('+myPending.length+')</span></span></div>';
+      html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr><th>Case #</th><th>Title / Customer</th><th>Status</th><th>Follow-up</th><th>Actions</th></tr></thead><tbody>';
       myPending.forEach(function(c){
-        var cn=c['Case Number']||'';
-        var stale=isStale(c['Modified On']);
-        var days=daysSince(c['Modified On']);
-        var isAssigning=_showAssignFor===cn;
+        var cn=c['Case Number']||'', stale=isStale(c['Modified On']), days=daysSince(c['Modified On']), isAssigning=_showAssignFor===cn;
         html+='<tr class="'+(stale?'row-stale':'row-unactioned')+'">';
         html+='<td><span style="font-family:monospace;font-size:.76rem;font-weight:600;color:var(--accent-blue);">'+escH(cn)+'</span></td>';
         html+='<td><div style="font-weight:500;color:var(--text-primary);">'+escH((c['Case Title']||'').slice(0,48))+'</div>';
         if(c.Customer) html+='<div style="font-size:.7rem;color:var(--text-muted);">'+escH(c.Customer)+'</div>';
-        html+='</td>';
-        html+='<td>'+sBadge(c['Status Reason'])+'</td>';
+        html+='</td><td>'+sBadge(c['Status Reason'])+'</td>';
         html+='<td>'+(stale?'<span style="color:var(--accent-red);font-size:.74rem;font-weight:600;">'+days+'d ago</span>':'<span style="font-size:.71rem;color:#1a7a45;">✓ Today</span>')+'</td>';
-        html+='<td>';
-        html+='<div class="ct-act-btns">';
+        html+='<td><div class="ct-act-btns">';
         html+='<button class="ct-handle-btn" onclick="CT.handle(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\')">✅ Mark as Handled</button>';
         html+='<button class="ct-act-btn b" onclick="CT.act(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\',\'Mail Sent\',null)">📧 Mail Sent</button>';
         html+='<button class="ct-act-btn p" onclick="CT.showAssign(\''+escH(cn)+'\')">'+(isAssigning?'✕ Cancel':'👤 Assign To')+'</button>';
         html+='<button class="ct-act-btn a" onclick="CT.act(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\',\'Pending Customer\',null)">⏳ Pending Customer</button>';
         html+='</div>';
-        if(isAssigning){
-          html+='<div class="ct-assign-row">';
-          html+='<input class="ct-assign-inp" id="ct-ai-'+escH(cn)+'" placeholder="Assigned to (e.g. Diwan)"/>';
-          html+='<button class="ct-assign-save" onclick="CT.confirmAssign(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\')">Save</button>';
-          html+='</div>';
-        }
+        if(isAssigning){ html+='<div class="ct-assign-row"><input class="ct-assign-inp" id="ct-ai-'+escH(cn)+'" placeholder="Assigned to (e.g. Diwan)"/><button class="ct-assign-save" onclick="CT.confirmAssign(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\')">Save</button></div>'; }
         html+='</td></tr>';
       });
       html+='</tbody></table></div></div>';
     }
 
-    // Handled table
     if(myHandled.length){
-      html+='<div class="ct-table-card">';
-      html+='<div class="ct-table-hdr"><span class="ct-table-title">✅ Handled <span style="font-size:.73rem;font-weight:400;color:var(--text-muted);">('+myHandled.length+')</span></span></div>';
+      html+='<div class="ct-table-card"><div class="ct-table-hdr"><span class="ct-table-title">✅ Handled <span style="font-size:.73rem;font-weight:400;color:var(--text-muted);">('+myHandled.length+')</span></span></div>';
       html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr><th>Case #</th><th>Title</th><th>Status</th></tr></thead><tbody>';
       myHandled.forEach(function(c){
-        html+='<tr class="row-handled">';
-        html+='<td><span style="font-family:monospace;font-size:.76rem;color:var(--accent-blue);font-weight:600;">'+escH(c['Case Number']||'—')+'</span></td>';
-        html+='<td style="color:var(--text-muted);font-size:.79rem;">'+escH((c['Case Title']||'').slice(0,55))+'</td>';
-        html+='<td><span class="ct-ab handled">✅ Handled</span></td>';
-        html+='</tr>';
+        html+='<tr class="row-handled"><td><span style="font-family:monospace;font-size:.76rem;color:var(--accent-blue);font-weight:600;">'+escH(c['Case Number']||'—')+'</span></td>';
+        html+='<td style="color:var(--text-muted);font-size:.79rem;">'+escH((c['Case Title']||'').slice(0,55))+'</td><td><span class="ct-ab handled">✅ Handled</span></td></tr>';
       });
       html+='</tbody></table></div></div>';
     }
 
-    // Done — all clear state after all handled
-    if(myActive.length===0){
-      html+='<div class="ct-empty" style="margin-top:.5rem;"><div class="ct-empty-ico">🎉</div><div class="ct-empty-ttl">All cases handled!</div><div class="ct-empty-sub">Your queue is clean. Nothing pending right now.</div></div>';
+    if(myActive.length===0&&myCases.length>0){
+      html+='<div class="ct-empty" style="margin-top:.5rem;"><div class="ct-empty-ico">🎉</div><div class="ct-empty-ttl">All cases handled!</div><div class="ct-empty-sub">Your queue is completely clean.</div></div>';
     }
-
     html+='</div>';
     root.innerHTML=html;
-
-    if(_showAssignFor){
-      setTimeout(function(){ var i=document.getElementById('ct-ai-'+_showAssignFor); if(i) i.focus(); },60);
-    }
+    if(_showAssignFor){ setTimeout(function(){ var i=document.getElementById('ct-ai-'+_showAssignFor); if(i) i.focus(); },60); }
   }
 
-  // ── Dashboard home widget ──
+  // ── Dashboard widget ──
   function updateDashWidget(){
-    var widget=document.getElementById('ct-dash-widget');
-    if(!widget||!currentUser) return;
+    var w=document.getElementById('ct-dash-widget'); if(!w||!currentUser) return;
     var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
-
-    if(!_cases.length){ widget.style.display='none'; return; }
-    widget.style.display='block';
-
-    var tomorrowOff=agentsOffOn(tomorrowStr());
-
+    if(!_cases.length){ w.style.display='none'; return; }
+    w.style.display='block';
+    var tOff=agentsOffOn(tomorrowStr());
     if(isAdmin){
-      var allFlagged=_cases.filter(function(c){ return isFlagged(c['Status Reason']); });
-      var allActive =activeCases(allFlagged);
-      var allStale  =staleCases(allFlagged);
-      var handled   =allFlagged.filter(function(c){ return isHandled(c['Case Number']); }).length;
-      // agents on leave tomorrow with active cases
-      var leaveWithCases=tomorrowOff.filter(function(a){ return activeCases(agentCases(a)).length>0; }).length;
+      var af=_cases.filter(function(c){ return isFlagged(c['Status Reason']); });
+      var aa=activeCases(af), as=staleCases(af);
+      var hand=af.filter(function(c){ return isHandled(c['Case Number']); }).length;
+      var lwc=tOff.filter(function(a){ return activeCases(agentCases(a)).length>0; }).length;
+      // Check if user has hidden the widget
+    var ctHidden = localStorage.getItem('ct_dash_hidden') === '1';
+    if(ctHidden){ w.style.display='none'; return; }
 
-      widget.innerHTML='<div style="margin-bottom:.6rem;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">📋 Case Tracker</div>'+
+    w.innerHTML=
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;">'+
+        '<span style="font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">\u{1F4CB} Case Tracker</span>'+
+        '<button onclick="CT.hideDashWidget()" style="font-size:.68rem;color:var(--text-dim);background:none;border:none;cursor:pointer;padding:.1rem .3rem;" title="Hide">\u2715 Hide</button>'+
+      '</div>'+
         '<div class="ct-dash-grid">'+
-        dashCard('📂','Active Cases',  allActive.length, 'rgba(217,119,6,.12)',  '#D97706')+
-        dashCard('⏰','No Follow-up', allStale.length,  'rgba(234,88,12,.12)',  '#EA580C')+
-        dashCard('✅','Handled Today', handled,          'rgba(46,197,111,.12)', '#1a7a45')+
-        dashCard('📅','On Leave w/ Cases', leaveWithCases,'rgba(76,118,168,.12)','var(--accent-blue)')+
+        dc('Active Cases',aa.length,'rgba(217,119,6,.12)','#D97706')+
+        dc('No Follow-up',as.length,'rgba(234,88,12,.12)','#EA580C')+
+        dc('Handled Today',hand,'rgba(46,197,111,.12)','#1a7a45')+
+        dc('On Leave w/ Cases',lwc,'rgba(76,118,168,.12)','var(--accent-blue)')+
         '</div>';
     } else {
-      var myName=currentUser.name;
-      var myCases=agentCases(myName);
-      var myActive=activeCases(myCases);
-      var myStale =staleCases(myCases);
-      var myHandled=myCases.filter(function(c){ return isHandled(c['Case Number']); }).length;
-      var offTomorrow=tomorrowOff.some(function(n){ return nameMatch(n,myName); });
-
-      widget.innerHTML='<div style="margin-bottom:.6rem;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">📋 My Cases</div>'+
+      var mn=currentUser.name, mc=agentCases(mn);
+      var ma=activeCases(mc), ms=staleCases(mc);
+      var mh=mc.filter(function(c){ return isHandled(c['Case Number']); }).length;
+      var offTmr=tOff.some(function(n){ return nmMatch(n,mn); });
+      w.innerHTML=
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;">'+
+          '<span style="font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">\u{1F4CB} My Cases</span>'+
+          '<button onclick="CT.hideDashWidget()" style="font-size:.68rem;color:var(--text-dim);background:none;border:none;cursor:pointer;padding:.1rem .3rem;" title="Hide">\u2715 Hide</button>'+
+        '</div>'+
         '<div class="ct-dash-grid">'+
-        dashCard('📂','My Active',     myActive.length,  'rgba(217,119,6,.12)',  '#D97706')+
-        dashCard('⏰','No Follow-up', myStale.length,   'rgba(234,88,12,.12)',  '#EA580C')+
-        dashCard('✅','Handled',       myHandled,        'rgba(46,197,111,.12)', '#1a7a45')+
-        dashCard('📅', offTomorrow?'On Leave Tomorrow':'Leave Tomorrow','', 'rgba(76,118,168,.12)','var(--accent-blue)', offTomorrow?'Yes':'No')+
+        dc('My Active',ma.length,'rgba(217,119,6,.12)','#D97706')+
+        dc('No Follow-up',ms.length,'rgba(234,88,12,.12)','#EA580C')+
+        dc('Handled',mh,'rgba(46,197,111,.12)','#1a7a45')+
+        dc('Leave Tomorrow',offTmr?1:0,'rgba(76,118,168,.12)','var(--accent-blue)',offTmr?'Yes':'No')+
         '</div>';
     }
   }
 
-  function dashCard(icon,label,val,bg,color,override){
-    var display = override!==undefined ? override : String(val);
-    return '<div class="ct-dash-card" onclick="showPage(\'casetracker\',document.getElementById(\'sidebar-casetracker\'))" title="Go to Case Tracker">'+
+  function dc(label,val,bg,color,override){
+    var display=override!==undefined?override:String(val);
+    return '<div class="ct-dash-card" onclick="showPage(\'casetracker\',document.getElementById(\'sidebar-casetracker\'))" title="Open Case Tracker">'+
       '<div class="ct-dash-icon" style="background:'+bg+';">'+
         '<svg viewBox="0 0 24 24" stroke="'+color+'"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg>'+
       '</div>'+
-      '<div class="ct-dash-body">'+
-        '<div class="ct-dash-val" style="color:'+color+';">'+escH(display)+'</div>'+
-        '<div class="ct-dash-lbl">'+escH(label)+'</div>'+
-      '</div>'+
+      '<div><div class="ct-dash-val" style="color:'+color+';">'+escH(display)+'</div><div class="ct-dash-lbl">'+escH(label)+'</div></div>'+
     '</div>';
   }
 
-  // ── Home page leave banner (fires today if off tomorrow) ──
+  // ── Home banner (fires today if off tomorrow) ──
   function updateHomeBanner(){
-    var banner=document.getElementById('ct-home-banner');
-    if(!banner||!currentUser) return;
+    var banner=document.getElementById('ct-home-banner'); if(!banner||!currentUser) return;
     var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
     if(isAdmin){ banner.classList.remove('show'); return; }
-
     var myName=currentUser.name;
-    var tomorrowOff=agentsOffOn(tomorrowStr());
-    var offTomorrow=tomorrowOff.some(function(n){ return nameMatch(n,myName); });
-    if(!offTomorrow||!_cases.length){ banner.classList.remove('show'); return; }
-
+    var tOff=agentsOffOn(tomorrowStr());
+    var offTmr=tOff.some(function(n){ return nmMatch(n,myName); });
+    if(!offTmr||!_cases.length){ banner.classList.remove('show'); return; }
     var myActive=activeCases(agentCases(myName));
     if(!myActive.length){ banner.classList.remove('show'); return; }
-
     banner.classList.add('show');
     var html='<div class="ct-banner-ttl">⚠️ You are on leave tomorrow — '+myActive.length+' case'+(myActive.length!==1?'s':'')+' still need action today!</div>';
-    html+='<div class="ct-banner-sub">Please action or handover the following cases before you leave.</div>';
+    html+='<div class="ct-banner-sub">Please action or handover the cases below before you leave.</div>';
     html+='<div class="ct-banner-list">';
-    myActive.slice(0,5).forEach(function(c){
-      html+='<div class="ct-banner-item"><b>'+escH(c['Case Number']||'')+'</b> '+escH((c['Case Title']||'').slice(0,45))+'</div>';
-    });
+    myActive.slice(0,5).forEach(function(c){ html+='<div class="ct-banner-item"><b>'+escH(c['Case Number']||'')+'</b> '+escH((c['Case Title']||'').slice(0,45))+'</div>'; });
     if(myActive.length>5) html+='<div class="ct-banner-item" style="color:var(--text-dim);">…and '+(myActive.length-5)+' more</div>';
-    html+='</div>';
-    html+='<div style="margin-top:.65rem;"><button class="xc-btn" style="font-size:.76rem;padding:.36rem .9rem;" onclick="showPage(\'casetracker\',document.getElementById(\'sidebar-casetracker\'))">Go to Case Tracker →</button></div>';
+    html+='</div><div style="margin-top:.65rem;"><button class="xc-btn" style="font-size:.76rem;padding:.36rem .9rem;" onclick="showPage(\'casetracker\',document.getElementById(\'sidebar-casetracker\'))">Go to Case Tracker →</button></div>';
     banner.innerHTML=html;
   }
 
-  function updateAlertBadge(n){
-    var b=document.getElementById('ct-alert-badge');
-    if(!b) return;
-    if(n>0){ b.style.display='inline-block'; b.textContent=n; } else { b.style.display='none'; }
-  }
+  function updateAlertBadge(n){ var b=document.getElementById('ct-alert-badge'); if(!b) return; if(n>0){ b.style.display='inline-block'; b.textContent=n; } else { b.style.display='none'; } }
 
   // ── Public API ──
   return {
@@ -10588,17 +10518,15 @@ var CT = (function(){
       if(c&&d){ try{ _cases=JSON.parse(c); _uploadDate=d; }catch(e){} }
       loadEmails();
       loadActions().then(function(){
-        updateHomeBanner();
-        updateDashWidget();
+        updateHomeBanner(); updateDashWidget();
         if(_cases.length){
           var fl=_cases.filter(function(c){ return isFlagged(c['Status Reason']); });
-          var stale=staleCases(fl).length;
-          var noAct=activeCases(fl).filter(function(c){ return !_actions[c['Case Number']]; }).length;
-          updateAlertBadge(noAct+stale);
+          var st=staleCases(fl).length, na=activeCases(fl).filter(function(c){ return !_actions[c['Case Number']]; }).length;
+          updateAlertBadge(na+st);
         }
       });
     },
-    render: function(){ loadActions().then(renderCT); },
+    render: function(){ Promise.all([loadEmails(),loadActions()]).then(renderCT); },
     fileSelect: function(file){
       if(!file) return;
       parseXlsx(file,function(err,rows){
@@ -10619,43 +10547,56 @@ var CT = (function(){
       var val=inp?inp.value.trim():'';
       if(!val){ alert('Please type a name.'); return; }
       var cases=agentCases(agent).filter(function(c){ return isStale(c['Modified On'])&&!isHandled(c['Case Number']); });
-      Promise.all(cases.map(function(c){ return saveAction(c['Case Number'],c['Case Title'],agent,'Assigned To',val); }))
-        .then(function(){ _showReassignFor=null; renderCT(); });
+      Promise.all(cases.map(function(c){ return saveAction(c['Case Number'],c['Case Title'],agent,'Assigned To',val); })).then(function(){ _showReassignFor=null; renderCT(); });
     },
     handle: function(cn,title,owner){
       if(!canHandle(owner)){ alert('You can only mark your own cases as handled.'); return; }
       saveAction(cn,title,owner,'Handled',null);
     },
-    search:       function(v){ _searchQ=v;      renderCT(); },
-    filterAgent:  function(v){ _filterAgent=v;  renderCT(); },
-    filterAction: function(v){ _filterAction=v; renderCT(); },
+    search:      function(v){ _searchQ=v;      renderCT(); },
+    filterAgent: function(v){ _filterAgent=v;  renderCT(); },
+    filterAction:function(v){ _filterAction=v; renderCT(); },
     showAssign: function(cn){ _showAssignFor=(_showAssignFor===cn)?null:cn; renderCT(); },
     confirmAssign: function(cn,title,agent){
-      var inp=document.getElementById('ct-ai-'+cn);
-      var val=inp?inp.value.trim():'';
+      var inp=document.getElementById('ct-ai-'+cn); var val=inp?inp.value.trim():'';
       if(!val){ alert('Please type a name.'); return; }
-      _showAssignFor=null;
-      saveAction(cn,title,agent,'Assigned To',val);
+      _showAssignFor=null; saveAction(cn,title,agent,'Assigned To',val);
     },
-    act: function(cn,title,agent,type,assigned){ saveAction(cn,title,agent,type,assigned); }
+    act: function(cn,title,agent,type,assigned){ saveAction(cn,title,agent,type,assigned); },
+
+    hideDashWidget: function(){
+      localStorage.setItem('ct_dash_hidden','1');
+      var w=document.getElementById('ct-dash-widget');
+      if(w) w.style.display='none';
+    },
+
+    showDashWidget: function(){
+      localStorage.removeItem('ct_dash_hidden');
+      updateDashWidget();
+    },
+
+    clearData: function(){
+      if(!confirm('Clear today\'s uploaded case data? This cannot be undone.')) return;
+      _cases=[]; _actions={}; _uploadDate=null;
+      sessionStorage.removeItem('ct_cases');
+      sessionStorage.removeItem('ct_date');
+      var w=document.getElementById('ct-dash-widget');
+      if(w) w.style.display='none';
+      var badge=document.getElementById('ct-alert-badge');
+      if(badge) badge.style.display='none';
+      renderCT();
+    }
   };
 })();
 
-// Hook showPage
-(function(){
-  var _o=showPage;
-  showPage=function(id,elem){ _o(id,elem); if(id==='casetracker') CT.render(); };
-})();
-
-window.addEventListener('DOMContentLoaded',function(){
-  setTimeout(function(){ CT.init(); },1200);
-});
+(function(){ var _o=showPage; showPage=function(id,elem){ _o(id,elem); if(id==='casetracker') CT.render(); }; })();
+window.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ CT.init(); },1200); });
 
 </script>
 
 
   <!-- BREAK TRACKER BAR -->
-  <div class="break-bar" id="break-bar" style="display:none;">
+  <div class="break-bar" id="break-bar" style="display:none !important;visibility:hidden;pointer-events:none;" aria-hidden="true">
     <div class="break-bar-left">
       <span class="break-bar-label">Breaks</span>
       <div class="break-btn-group">
@@ -10802,3 +10743,187 @@ window.addEventListener('DOMContentLoaded',function(){
 
 </body>
 </html>
+<script>
+// ═══════════════════════════════════════════════════════
+//  TOPBAR BREAK DROPDOWN + SMART SUGGESTION POPUP
+// ═══════════════════════════════════════════════════════
+
+var _tbMenuOpen        = false;
+var _tbSuggestTimer    = null;
+var _tbSuggestInterval = null;
+var _tbSuggestSnooze   = 0;   // timestamp until which suggestion is snoozed
+var TB_SUGGEST_AFTER   = 2.5 * 3600 * 1000; // 2.5 hours in ms
+var TB_SNOOZE_DURATION = 60 * 60 * 1000;    // 1 hour snooze
+
+var TB_BREAKS = {
+  breakfast: { emoji:'🍳', label:'Breakfast', limit:20 },
+  lunch:     { emoji:'🍽', label:'Lunch',     limit:45 },
+  beverage:  { emoji:'☕', label:'Beverage',  limit:20 },
+  shortbreak:{ emoji:'🧠', label:'Short Break',limit:10 }
+};
+
+// Toggle dropdown open/close
+function tbBreakToggle(e){
+  e.stopPropagation();
+  _tbMenuOpen = !_tbMenuOpen;
+  var btn  = document.getElementById('tb-break-btn');
+  var menu = document.getElementById('tb-break-menu');
+  if(!btn || !menu) return;
+  if(_tbMenuOpen){
+    btn.classList.add('open');
+    menu.classList.add('open');
+    tbRefreshMenu();
+  } else {
+    btn.classList.remove('open');
+    menu.classList.remove('open');
+  }
+}
+
+// Close dropdown when clicking elsewhere
+document.addEventListener('click', function(e){
+  if(_tbMenuOpen){
+    var wrap = document.getElementById('tb-break-wrap');
+    if(wrap && !wrap.contains(e.target)){
+      _tbMenuOpen = false;
+      var btn  = document.getElementById('tb-break-btn');
+      var menu = document.getElementById('tb-break-menu');
+      if(btn)  btn.classList.remove('open');
+      if(menu) menu.classList.remove('open');
+    }
+  }
+});
+
+// Pick a break from dropdown — delegates to existing toggleBreak()
+function tbBreakPick(type){
+  // Close menu
+  _tbMenuOpen = false;
+  var btn  = document.getElementById('tb-break-btn');
+  var menu = document.getElementById('tb-break-menu');
+  if(btn)  btn.classList.remove('open');
+  if(menu) menu.classList.remove('open');
+
+  // Dismiss suggestion popup if showing
+  var popup = document.getElementById('break-suggest-popup');
+  if(popup) popup.classList.remove('show');
+
+  // Use existing break function
+  if(typeof toggleBreak === 'function') toggleBreak(type);
+}
+
+// Refresh the dropdown UI to reflect current break state
+function tbRefreshMenu(){
+  var types = ['breakfast','lunch','beverage','shortbreak'];
+  var hasActive = false;
+
+  types.forEach(function(type){
+    var item      = document.getElementById('tbm-'+type);
+    var timerEl   = document.getElementById('tbmt-'+type);
+    var limitEl   = document.getElementById('tbml-'+type);
+    if(!item || !timerEl || !limitEl) return;
+
+    var state = (typeof _breakState !== 'undefined') ? _breakState[type] : null;
+
+    // Reset classes
+    item.classList.remove('active','done');
+
+    if(state && state.active){
+      hasActive = true;
+      item.classList.add('active');
+      var elapsed = Math.floor((Date.now() - new Date(state.start).getTime()) / 1000);
+      var limit   = TB_BREAKS[type].limit * 60;
+      var over    = elapsed > limit;
+      timerEl.textContent = fmtSec ? fmtSec(elapsed) : formatSec(elapsed);
+      timerEl.style.display = 'inline';
+      timerEl.className = 'tb-bm-timer' + (over ? ' warning' : '');
+      limitEl.style.display = 'none';
+      item.querySelector('.tb-bm-name').textContent = 'End ' + TB_BREAKS[type].label;
+    } else if(state && state.done){
+      item.classList.add('done');
+      timerEl.style.display  = 'none';
+      limitEl.style.display  = 'inline';
+      limitEl.textContent    = '✓ Done';
+      limitEl.style.color    = '#4ade80';
+      item.querySelector('.tb-bm-name').textContent = TB_BREAKS[type].label;
+    } else {
+      timerEl.style.display  = 'none';
+      limitEl.style.display  = 'inline';
+      limitEl.textContent    = TB_BREAKS[type].limit + 'm';
+      limitEl.style.color    = '';
+      item.querySelector('.tb-bm-name').textContent = TB_BREAKS[type].label;
+    }
+  });
+
+  // Pulse the topbar button if a break is active
+  var mainBtn = document.getElementById('tb-break-btn');
+  if(mainBtn){
+    if(hasActive) mainBtn.classList.add('has-active');
+    else           mainBtn.classList.remove('has-active');
+  }
+}
+
+// Poll every second to keep dropdown timers live when open
+setInterval(function(){
+  if(_tbMenuOpen) tbRefreshMenu();
+  // Also keep topbar button pulsing if active
+  tbRefreshMenu();
+}, 1000);
+
+// Helper: format seconds (fallback if fmtSec not defined)
+function formatSec(s){
+  var m = Math.floor(s/60), sec = s%60;
+  return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
+}
+
+// ── Smart Break Suggestion ──
+function tbStartSuggestTimer(){
+  tbStopSuggestTimer();
+  if(!_wclockInTime) return;
+  _tbSuggestInterval = setInterval(function(){
+    if(!_wclockInTime) return;
+    var elapsed = Date.now() - new Date(_wclockInTime).getTime();
+    if(elapsed < TB_SUGGEST_AFTER) return;
+
+    // Don't show if snoozed
+    if(Date.now() < _tbSuggestSnooze) return;
+
+    // Don't show if a break is currently active
+    var anyActive = false;
+    if(typeof _breakState !== 'undefined'){
+      Object.keys(_breakState).forEach(function(t){ if(_breakState[t] && _breakState[t].active) anyActive=true; });
+    }
+    if(anyActive) return;
+
+    // Don't show if popup already visible
+    var popup = document.getElementById('break-suggest-popup');
+    if(!popup || popup.classList.contains('show')) return;
+
+    // Show it
+    var h = Math.floor(elapsed/3600000), m = Math.floor((elapsed%3600000)/60000);
+    var timeStr = h > 0 ? h+'h '+m+'m' : m+'m';
+    var sub = popup.querySelector('.bsp-sub');
+    if(sub) sub.textContent = "You've been working for "+timeStr+". A short break helps you stay sharp!";
+    popup.classList.add('show');
+  }, 30000); // check every 30 seconds
+}
+
+function tbStopSuggestTimer(){
+  if(_tbSuggestInterval){ clearInterval(_tbSuggestInterval); _tbSuggestInterval=null; }
+}
+
+function tbSuggestTake(){
+  var popup = document.getElementById('break-suggest-popup');
+  if(popup) popup.classList.remove('show');
+  // Open the break dropdown
+  var wrap = document.getElementById('tb-break-wrap');
+  if(wrap){
+    _tbMenuOpen = false; // force open
+    tbBreakToggle({ stopPropagation: function(){} });
+  }
+}
+
+function tbSuggestLater(){
+  var popup = document.getElementById('break-suggest-popup');
+  if(popup) popup.classList.remove('show');
+  _tbSuggestSnooze = Date.now() + TB_SNOOZE_DURATION; // snooze 1 hour
+}
+</script>
