@@ -2081,7 +2081,240 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .ty-office-floor{grid-template-columns:repeat(2,1fr);gap:.5rem;}
 }
 
+
+/* ═══════════════════════════════════════════
+   CASE TRACKER — STYLES
+═══════════════════════════════════════════ */
+.ct-page-wrap { max-width:1120px; }
+.ct-page-title { font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:500;color:var(--text-primary); }
+.ct-page-sub   { font-size:.82rem;color:var(--text-muted);margin-top:.2rem; }
+
+/* Upload */
+.ct-upload-zone {
+  border:2px dashed var(--navy-border);border-radius:var(--radius);
+  padding:1.8rem 1.5rem;text-align:center;cursor:pointer;
+  transition:border-color .2s,background .2s;
+  background:var(--navy-card);position:relative;
+}
+.ct-upload-zone:hover,.ct-upload-zone.drag { border-color:var(--gold);background:rgba(239,73,60,.03); }
+.ct-upload-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%; }
+.ct-upload-icon  { font-size:2rem;margin-bottom:.4rem; }
+.ct-upload-label { font-size:.875rem;font-weight:600;color:var(--text-primary);margin-bottom:.2rem; }
+.ct-upload-sub   { font-size:.75rem;color:var(--text-muted); }
+.ct-upload-ok {
+  display:flex;align-items:center;gap:.75rem;
+  padding:.8rem 1rem;background:rgba(46,197,111,.07);
+  border:1px solid rgba(46,197,111,.22);border-radius:var(--radius-sm);
+  font-size:.82rem;color:#1a7a45;
+}
+.ct-upload-ok svg { width:16px;height:16px;stroke:#1a7a45;flex-shrink:0; }
+body.dark .ct-upload-zone { background:#1A2236;border-color:#2D3748; }
+body.dark .ct-upload-zone:hover { background:#1F2937; }
+
+/* Stats row */
+.ct-stats-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.7rem;margin-bottom:1.3rem; }
+.ct-stat { background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.85rem 1rem; }
+.ct-stat-label { font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.3rem; }
+.ct-stat-val   { font-size:1.55rem;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums; }
+.ct-stat-val.red   { color:var(--accent-red); }
+.ct-stat-val.amber { color:#D97706; }
+.ct-stat-val.green { color:#1a7a45; }
+.ct-stat-val.blue  { color:var(--accent-blue); }
+.ct-stat-val.orange{ color:#EA580C; }
+
+/* Section headers */
+.ct-section-head {
+  display:flex;align-items:center;gap:.6rem;
+  font-size:.82rem;font-weight:700;color:var(--text-primary);
+  margin:1.4rem 0 .7rem;padding-bottom:.5rem;
+  border-bottom:2px solid var(--navy-border);
+}
+.ct-section-head svg { width:16px;height:16px;stroke:currentColor;flex-shrink:0; }
+.ct-section-count {
+  margin-left:auto;font-size:.72rem;font-weight:600;padding:.18rem .6rem;
+  border-radius:20px;
+}
+.ct-section-count.red   { background:rgba(239,73,60,.1);color:var(--accent-red); }
+.ct-section-count.amber { background:rgba(217,119,6,.1);color:#D97706; }
+.ct-section-count.ok    { background:rgba(46,197,111,.1);color:#1a7a45; }
+
+/* Leave panels */
+.ct-leave-grid { display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.5rem; }
+@media(max-width:680px){ .ct-leave-grid { grid-template-columns:1fr; } }
+.ct-leave-panel { background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden; }
+.ct-leave-panel-hdr {
+  padding:.7rem 1rem;border-bottom:1px solid var(--navy-border);
+  display:flex;align-items:center;gap:.5rem;
+}
+.ct-leave-panel-title { font-size:.84rem;font-weight:600;color:var(--text-primary); }
+.ct-leave-panel-badge { margin-left:auto;font-size:.7rem;font-weight:600;padding:.15rem .55rem;border-radius:20px; }
+.ct-leave-panel-badge.red   { background:rgba(239,73,60,.12);color:var(--accent-red); }
+.ct-leave-panel-badge.amber { background:rgba(217,119,6,.1);color:#D97706; }
+.ct-leave-panel-badge.ok    { background:rgba(46,197,111,.1);color:#1a7a45; }
+.ct-leave-body { padding:.6rem .75rem; }
+
+/* Agent cards */
+.ct-agent-card {
+  background:var(--navy-hover);border:1px solid var(--navy-border);
+  border-radius:var(--radius-sm);margin-bottom:.5rem;overflow:hidden;
+}
+.ct-agent-card:last-child { margin-bottom:0; }
+.ct-agent-row {
+  display:flex;align-items:center;gap:.75rem;
+  padding:.6rem .75rem;cursor:pointer;transition:background .12s;
+}
+.ct-agent-row:hover { background:rgba(239,73,60,.04); }
+.ct-agent-av {
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.58rem;font-weight:700;color:#fff;
+}
+.ct-agent-info { flex:1;min-width:0; }
+.ct-agent-name { font-size:.84rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.ct-agent-sub  { font-size:.7rem;color:var(--text-muted);margin-top:.1rem; }
+.ct-agent-actions { display:flex;gap:.4rem;flex-shrink:0; }
+.ct-agent-actions button {
+  padding:.28rem .65rem;border-radius:5px;font-size:.72rem;font-weight:600;
+  cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid;
+  transition:all .15s;white-space:nowrap;
+}
+.ct-remind-btn { background:rgba(76,118,168,.08);color:var(--accent-blue);border-color:rgba(76,118,168,.25); }
+.ct-remind-btn:hover { background:rgba(76,118,168,.18); }
+.ct-reassign-btn { background:rgba(139,92,246,.08);color:#7C3AED;border-color:rgba(139,92,246,.25); }
+.ct-reassign-btn:hover { background:rgba(139,92,246,.18); }
+.ct-badge-pill {
+  flex-shrink:0;font-size:.7rem;font-weight:700;
+  padding:.18rem .55rem;border-radius:20px;
+}
+.ct-badge-pill.danger { background:rgba(239,73,60,.12);color:var(--accent-red);border:1px solid rgba(239,73,60,.2); }
+.ct-badge-pill.ok     { background:rgba(46,197,111,.1);color:#1a7a45;border:1px solid rgba(46,197,111,.2); }
+.ct-badge-pill.amber  { background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2); }
+.ct-badge-pill.orange { background:rgba(234,88,12,.1);color:#EA580C;border:1px solid rgba(234,88,12,.2); }
+
+/* Expand cases under agent */
+.ct-case-list { padding:.25rem .75rem .6rem; border-top:1px solid var(--navy-border); }
+.ct-case-mini {
+  display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+  font-size:.76rem;padding:.38rem .5rem;border-radius:5px;
+  background:var(--navy-card);border:1px solid var(--navy-border);
+  margin-bottom:.3rem;
+}
+.ct-case-mini:last-child { margin-bottom:0; }
+.ct-case-num { color:var(--accent-blue);font-family:monospace;font-weight:600;flex-shrink:0; }
+.ct-case-ttl { color:var(--text-primary);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.ct-case-days { color:var(--accent-red);font-size:.7rem;font-weight:600;flex-shrink:0; }
+.ct-case-act  { margin-left:auto;flex-shrink:0; }
+
+/* Reassign inline input */
+.ct-reassign-row { display:flex;gap:.4rem;align-items:center;padding:.4rem .75rem .6rem;border-top:1px solid var(--navy-border); }
+.ct-reassign-inp {
+  flex:1;padding:.32rem .65rem;border-radius:5px;
+  border:1px solid var(--navy-border);background:var(--navy-hover);
+  color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.78rem;outline:none;
+}
+.ct-reassign-inp:focus { border-color:var(--gold-dim); }
+.ct-reassign-save { padding:.32rem .8rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer; }
+body.dark .ct-reassign-inp { background:#1F2937;border-color:#2D3748;color:#F1F5F9; }
+
+/* Main cases table */
+.ct-table-card { background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.2rem; }
+.ct-table-hdr  { padding:.8rem 1rem;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;flex-wrap:wrap;gap:.6rem; }
+.ct-table-title { font-size:.88rem;font-weight:600;color:var(--text-primary);flex-shrink:0; }
+.ct-fi {
+  padding:.4rem .8rem;background:var(--navy-hover);
+  border:1px solid var(--navy-border);border-radius:var(--radius-sm);
+  color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.8rem;outline:none;
+}
+.ct-fi:focus { border-color:var(--gold-dim); }
+body.dark .ct-fi { background:#1F2937;border-color:#2D3748;color:#F1F5F9; }
+.ct-tbl-wrap { overflow-x:auto; }
+.ct-tbl { width:100%;border-collapse:collapse;font-size:.81rem; }
+.ct-tbl thead tr { background:var(--navy-hover);border-bottom:2px solid var(--navy-border); }
+.ct-tbl th { padding:.58rem 1rem;text-align:left;font-size:.67rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);font-weight:600;white-space:nowrap; }
+.ct-tbl tbody tr { border-bottom:1px solid var(--navy-border);transition:background .1s; }
+.ct-tbl tbody tr:hover { background:var(--navy-hover); }
+.ct-tbl td { padding:.62rem 1rem;vertical-align:middle; }
+/* unactioned = no portal action taken */
+.ct-tbl tr.row-unactioned td:first-child { border-left:3px solid var(--accent-red); }
+/* stale = no CRM follow-up today */
+.ct-tbl tr.row-stale { background:rgba(234,88,12,.03); }
+.ct-tbl tr.row-stale td:first-child { border-left:3px solid #EA580C; }
+
+/* Status / action badges */
+.ct-sb { display:inline-flex;align-items:center;gap:.28rem;padding:.18rem .55rem;border-radius:20px;font-size:.7rem;font-weight:600;white-space:nowrap; }
+.ct-sb-dot { width:5px;height:5px;border-radius:50%;background:currentColor; }
+.ct-sb.open  { background:rgba(239,73,60,.1);color:var(--accent-red);border:1px solid rgba(239,73,60,.2); }
+.ct-sb.ipc   { background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2); }
+.ct-sb.ips   { background:rgba(76,118,168,.1);color:var(--accent-blue);border:1px solid rgba(76,118,168,.2); }
+.ct-sb.stale { background:rgba(234,88,12,.1);color:#EA580C;border:1px solid rgba(234,88,12,.2); }
+.ct-ab { display:inline-flex;align-items:center;gap:.28rem;padding:.18rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600;white-space:nowrap; }
+.ct-ab.nopending  { background:rgba(46,197,111,.1);color:#1a7a45;border:1px solid rgba(46,197,111,.2); }
+.ct-ab.mailsent   { background:rgba(76,118,168,.1);color:var(--accent-blue);border:1px solid rgba(76,118,168,.2); }
+.ct-ab.assigned   { background:rgba(139,92,246,.1);color:#7C3AED;border:1px solid rgba(139,92,246,.2); }
+.ct-ab.pendingcust{ background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2); }
+.ct-ab.noaction   { background:rgba(239,73,60,.08);color:var(--accent-red);border:1px solid rgba(239,73,60,.15); }
+
+/* Owner cell */
+.ct-own { display:flex;align-items:center;gap:.45rem; }
+.ct-own-av { width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;color:#fff;flex-shrink:0; }
+.ct-own-nm { font-size:.79rem;color:var(--text-muted); }
+
+/* Agent action buttons */
+.ct-act-btns { display:flex;gap:.35rem;flex-wrap:wrap; }
+.ct-act-btn {
+  padding:.28rem .65rem;border-radius:5px;font-size:.72rem;font-weight:600;
+  cursor:pointer;border:1px solid var(--navy-border);
+  background:var(--navy-hover);color:var(--text-muted);
+  font-family:'DM Sans',sans-serif;transition:all .14s;white-space:nowrap;
+}
+.ct-act-btn:hover { background:var(--navy-card);color:var(--text-primary); }
+.ct-act-btn.g:hover { background:rgba(46,197,111,.1);border-color:rgba(46,197,111,.3);color:#1a7a45; }
+.ct-act-btn.b:hover { background:rgba(76,118,168,.1);border-color:rgba(76,118,168,.3);color:var(--accent-blue); }
+.ct-act-btn.p:hover { background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.3);color:#7C3AED; }
+.ct-act-btn.a:hover { background:rgba(217,119,6,.08);border-color:rgba(217,119,6,.3);color:#D97706; }
+.ct-assign-row { display:flex;gap:.35rem;margin-top:.4rem;align-items:center; }
+.ct-assign-inp {
+  flex:1;padding:.3rem .6rem;border-radius:5px;
+  border:1px solid var(--navy-border);background:var(--navy-hover);
+  color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.78rem;outline:none;
+}
+.ct-assign-inp:focus { border-color:var(--gold-dim); }
+.ct-assign-save { padding:.3rem .75rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-size:.73rem;font-weight:600;cursor:pointer; }
+body.dark .ct-assign-inp { background:#1F2937;border-color:#2D3748;color:#F1F5F9; }
+
+/* Empty / all-clear states */
+.ct-empty {
+  text-align:center;padding:3rem 1.5rem;
+  background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);
+}
+.ct-empty-ico  { font-size:2.6rem;margin-bottom:.6rem; }
+.ct-empty-ttl  { font-size:.95rem;font-weight:600;color:var(--text-primary);margin-bottom:.35rem; }
+.ct-empty-sub  { font-size:.8rem;color:var(--text-muted);line-height:1.65;max-width:300px;margin:0 auto; }
+.ct-all-clear  { text-align:center;padding:1.2rem .75rem;color:var(--text-dim);font-size:.8rem; }
+.ct-all-clear-ico { font-size:1.4rem;margin-bottom:.3rem; }
+
+/* Home page warning banner */
+.ct-home-banner {
+  background:rgba(239,73,60,.05);border:1px solid rgba(239,73,60,.22);
+  border-radius:var(--radius);padding:.9rem 1.1rem;margin-bottom:1.3rem;display:none;
+}
+.ct-home-banner.show { display:block; }
+.ct-banner-ttl  { font-size:.86rem;font-weight:700;color:var(--accent-red);margin-bottom:.25rem; }
+.ct-banner-sub  { font-size:.78rem;color:var(--text-muted);margin-bottom:.65rem; }
+.ct-banner-list { display:flex;flex-direction:column;gap:.3rem; }
+.ct-banner-item { font-size:.77rem;padding:.32rem .65rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius-sm); }
+.ct-banner-item b { color:var(--accent-blue);font-family:monospace; }
+
+/* Stale follow-up warning on agent side */
+.ct-stale-banner {
+  background:rgba(234,88,12,.05);border:1px solid rgba(234,88,12,.22);
+  border-radius:var(--radius);padding:.9rem 1.1rem;margin-bottom:1.1rem;
+}
+.ct-stale-banner-ttl { font-size:.85rem;font-weight:700;color:#EA580C;margin-bottom:.2rem; }
+.ct-stale-banner-sub { font-size:.78rem;color:var(--text-muted);margin-bottom:.6rem; }
+
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -2252,6 +2485,16 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
         Reports
       </div>
 
+      <div class="sidebar-item" id="sidebar-casetracker" onclick="showPage('casetracker', this)">
+        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        Case Tracker
+        <span class="sidebar-badge" id="ct-alert-badge" style="display:none;background:#EF493C;color:#fff;">!</span>
+      </div>
+
       <div class="sidebar-section">Account</div>
 
       <div class="sidebar-item" onclick="showPage('changepass', this)">
@@ -2308,6 +2551,7 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
       <div class="page active" id="page-home">
 
         <div id="announcement-banner"></div>
+        <div class="ct-home-banner" id="ct-home-banner"></div>
 
         <div class="home-greeting">
           <div class="date-pill" id="date-display"></div>
@@ -2702,6 +2946,11 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
       </div>
 
       <!-- â”€â”€ ADMIN: USER MANAGEMENT â”€â”€ -->
+      <!-- ── CASE TRACKER PAGE ── -->
+      <div class="page" id="page-casetracker">
+        <div id="ct-root"></div>
+      </div>
+
       <!-- ── CHANGE PASSWORD PAGE ── -->
       <div class="page" id="page-changepass">
         <div class="cp-wrap">
@@ -9719,6 +9968,684 @@ document.addEventListener('keydown',function(e){
 function msgOpenConvEl(el){var id=el.getAttribute("data-cid"),type=el.getAttribute("data-ctype");msgOpenConv(id,type);}
 
 function closeNearestOverlay(el){var ov=el.closest(".modal-overlay")||el.parentElement;while(ov&&ov!==document.body){if(ov.style&&ov.style.position==="fixed"){document.body.removeChild(ov);return;}ov=ov.parentElement;}}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  CASE TRACKER MODULE  v2
+//  Follow-up logic: Modified On != today → flagged as stale
+//  Manager: upload, leave panels, overdue panel, full table
+//  Agent: own pending + stale follow-up warning + action buttons
+//  Emails fetched from Supabase users table (email column)
+// ═══════════════════════════════════════════════════════════════
+
+var CT = (function(){
+
+  var _cases      = [];   // all rows from xlsx
+  var _actions    = {};   // case_number → supabase action row
+  var _agentEmails= {};   // name (lower) → email
+  var _uploadDate = null;
+  var _showAssignFor  = null;  // case_number for inline assign (agent view)
+  var _showReassignFor= null;  // agentKey for manager reassign
+  var _filterAgent= '';
+  var _filterAction='';
+  var _searchQ    = '';
+
+  // statuses that need action (agent responsible)
+  var FLAG = ['open','in progress-customer','in progress-support'];
+  // statuses to completely skip
+  var SKIP = ['in progress-principle support'];
+
+  function isFlagged(s){ return FLAG.indexOf((s||'').toLowerCase().trim()) > -1; }
+  function isSkipped(s){ return SKIP.indexOf((s||'').toLowerCase().trim()) > -1; }
+
+  // is Modified On not today?
+  function isStale(modVal){
+    if(!modVal) return false;
+    var d;
+    if(typeof modVal === 'number'){
+      d = new Date(Math.round((modVal - 25569)*86400*1000));
+    } else { d = new Date(modVal); }
+    if(isNaN(d.getTime())) return false;
+    var today = new Date();
+    return d.getFullYear()!==today.getFullYear() ||
+           d.getMonth()   !==today.getMonth()    ||
+           d.getDate()    !==today.getDate();
+  }
+
+  function daysSince(modVal){
+    if(!modVal) return 0;
+    var d;
+    if(typeof modVal === 'number'){
+      d = new Date(Math.round((modVal - 25569)*86400*1000));
+    } else { d = new Date(modVal); }
+    if(isNaN(d.getTime())) return 0;
+    return Math.floor((Date.now() - d.getTime()) / 86400000);
+  }
+
+  function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function agentColor(n){
+    var c=['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#84CC16','#14B8A6'];
+    var v=0; for(var i=0;i<(n||'').length;i++) v+=n.charCodeAt(i);
+    return c[v%c.length];
+  }
+  function agentIni(n){ return (n||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase(); }
+
+  function fmtDate(v){
+    if(!v) return '—';
+    var d = typeof v==='number' ? new Date(Math.round((v-25569)*86400*1000)) : new Date(v);
+    if(isNaN(d.getTime())) return String(v);
+    var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return mo[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+  }
+
+  function todayStr(){
+    var d=new Date();
+    return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+  }
+  function tomorrowStr(){
+    var d=new Date(); d.setDate(d.getDate()+1);
+    return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+  }
+
+  function nameMatch(a,b){ return (a||'').toLowerCase().trim()===(b||'').toLowerCase().trim(); }
+
+  // ── Status badge ──
+  function sBadge(s){
+    var sl=(s||'').toLowerCase().trim();
+    var cls=sl==='open'?'open':sl==='in progress-customer'?'ipc':'ips';
+    return '<span class="ct-sb '+cls+'"><span class="ct-sb-dot"></span>'+escH(s||'—')+'</span>';
+  }
+  // ── Action badge ──
+  function aBadge(act){
+    if(!act) return '<span class="ct-ab noaction">No Action</span>';
+    var map={'No Pending':'nopending','Mail Sent':'mailsent','Assigned To':'assigned','Pending Customer':'pendingcust'};
+    var cls=map[act.action]||'noaction';
+    var lbl=act.action+(act.action==='Assigned To'&&act.assigned_to?' → '+act.assigned_to:'');
+    return '<span class="ct-ab '+cls+'">'+escH(lbl)+'</span>';
+  }
+
+  // ── Parse xlsx ──
+  function parseXlsx(file, cb){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+        cb(null,rows);
+      }catch(err){cb(err,null);}
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function normRow(r){
+    var o={};
+    Object.keys(r).forEach(function(k){ o[k.replace(/^\uFEFF/,'').trim()]=r[k]; });
+    return o;
+  }
+
+  // ── Supabase helpers ──
+  async function loadActions(){
+    if(!_uploadDate) return;
+    try{
+      var rows=await sbQuery('crm_case_actions','upload_date=eq.'+_uploadDate+'&select=*');
+      _actions={};
+      (rows||[]).forEach(function(r){ _actions[r.case_number]=r; });
+    }catch(e){ console.warn('CT loadActions:',e.message); }
+  }
+
+  async function loadAgentEmails(){
+    try{
+      var rows=await sbQuery('users','select=name,email');
+      _agentEmails={};
+      (rows||[]).forEach(function(r){
+        if(r.name&&r.email) _agentEmails[r.name.toLowerCase().trim()]=r.email;
+      });
+    }catch(e){ console.warn('CT emails:',e.message); }
+  }
+
+  function getEmail(name){
+    return _agentEmails[(name||'').toLowerCase().trim()]||'';
+  }
+
+  async function saveAction(cn,title,agent,actionType,assignedTo){
+    var today=todayStr();
+    var payload={case_number:cn,case_title:title,agent_name:agent,
+      action:actionType,assigned_to:assignedTo||null,
+      actioned_by:currentUser?currentUser.name:agent,upload_date:today};
+    try{
+      await fetch(SUPABASE_URL+'/rest/v1/crm_case_actions?case_number=eq.'+encodeURIComponent(cn)+'&upload_date=eq.'+today,
+        {method:'DELETE',headers:sbHeaders()});
+      await sbInsert('crm_case_actions',payload);
+      _actions[cn]=payload;
+      _showAssignFor=null;
+      renderCT();
+      updateHomeBanner();
+    }catch(e){ alert('Could not save: '+e.message); }
+  }
+
+  // ── Roster helpers ──
+  function agentsOffOn(dateStr){
+    var off=[];
+    try{
+      var rows=window._rosterAllRows||window._rosterRenderedRows;
+      if(!rows||!rows.length) return off;
+      var dateRow=rows.find(function(r){ return String(r[1]||'').trim().toUpperCase()==='DATE'; });
+      if(!dateRow) return off;
+      var d=new Date(dateStr), day=d.getDate();
+      var colIdx=-1;
+      dateRow.slice(2).forEach(function(cell,i){ if(Number(cell)===day) colIdx=i+2; });
+      if(colIdx<0) return off;
+      var NO=['L','CO','W','WO','OFF'];
+      rows.filter(function(r){ return String(r[0]||'').trim()&&/^K\d+/i.test(String(r[0]||'')); })
+        .forEach(function(r){
+          var parts=String(r[colIdx]||'').toUpperCase().trim().split(/[^A-Z]+/).filter(Boolean);
+          if(parts.some(function(p){ return NO.indexOf(p)>-1; })) off.push(String(r[1]||'').trim());
+        });
+    }catch(e){}
+    return off;
+  }
+
+  function agentCases(name){ return _cases.filter(function(c){ return nameMatch(c.Owner,name)&&isFlagged(c['Status Reason']); }); }
+  function staleCases(cases){ return cases.filter(function(c){ return isStale(c['Modified On']); }); }
+
+  // ── RENDER ROOT ──
+  function renderCT(){
+    var root=document.getElementById('ct-root');
+    if(!root) return;
+    var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
+    if(isAdmin) renderManager(root);
+    else renderAgent(root);
+  }
+
+  // ════════════════════════════════
+  //  MANAGER VIEW
+  // ════════════════════════════════
+  function renderManager(root){
+    var todayOff   =agentsOffOn(todayStr());
+    var tomorrowOff=agentsOffOn(tomorrowStr());
+
+    var flaggedAll =_cases.filter(function(c){ return isFlagged(c['Status Reason']); });
+    var staleAll   =flaggedAll.filter(function(c){ return isStale(c['Modified On']); });
+    var actioned   =flaggedAll.filter(function(c){ return !!_actions[c['Case Number']]; }).length;
+    var noAction   =Math.max(0,flaggedAll.length-actioned);
+
+    var html='<div class="ct-page-wrap">';
+
+    // Header + upload
+    html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.2rem;">';
+    html+='<div><h1 class="ct-page-title">Case Tracker</h1><p class="ct-page-sub">Leave coverage · Follow-up oversight · Pending actions</p></div>';
+    if(_uploadDate) html+='<span style="font-size:.74rem;color:var(--text-dim);padding:.28rem .65rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:20px;">📅 '+escH(_uploadDate)+'</span>';
+    html+='</div>';
+
+    // Upload zone
+    html+='<div class="ct-upload-zone" id="ct-drop" ondragover="CT.dragOver(event)" ondragleave="CT.dragLeave(event)" ondrop="CT.drop(event)">';
+    if(_cases.length){
+      html+='<div class="ct-upload-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+      html+='<div><strong>'+_cases.length+' cases loaded</strong> &nbsp;<span style="color:var(--text-dim);font-size:.74rem;">Drop a new file to refresh</span></div></div>';
+    } else {
+      html+='<div class="ct-upload-icon">📂</div>';
+      html+='<div class="ct-upload-label">Drop your Dynamics 365 export here</div>';
+      html+='<div class="ct-upload-sub">Click to browse · .xlsx files only</div>';
+    }
+    html+='<input type="file" accept=".xlsx" onchange="CT.fileSelect(this.files[0])"/></div>';
+
+    if(!_cases.length){
+      html+='<div class="ct-empty" style="margin-top:1rem;">';
+      html+='<div class="ct-empty-ico">📋</div>';
+      html+='<div class="ct-empty-ttl">No data uploaded yet</div>';
+      html+='<div class="ct-empty-sub">Export the Aging Cases report from Dynamics 365 (.xlsx) and drop it above to get started.</div>';
+      html+='</div></div>';
+      root.innerHTML=html; return;
+    }
+
+    // Stats
+    html+='<div class="ct-stats-row" style="margin-top:1rem;">';
+    html+=statCard('Total Cases',    _cases.length,       '');
+    html+=statCard('Needs Action',   flaggedAll.length,   'amber');
+    html+=statCard('No Follow-up',   staleAll.length,     'orange');
+    html+=statCard('Actioned Today', actioned,            'green');
+    html+=statCard('No Portal Action',noAction,           'red');
+    html+='</div>';
+
+    // Leave panels
+    html+='<div class="ct-section-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Leave Coverage</div>';
+    html+='<div class="ct-leave-grid">';
+    html+=leavePanel('On Leave Today',    todayOff,   'red');
+    html+=leavePanel('On Leave Tomorrow', tomorrowOff,'amber');
+    html+='</div>';
+
+    // Overdue follow-ups panel
+    html+='<div class="ct-section-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>';
+    html+='Overdue Follow-ups <span class="ct-section-count '+(staleAll.length>0?'red':'ok')+'">'+staleAll.length+' case'+(staleAll.length!==1?'s':'')+'</span></div>';
+
+    if(!staleAll.length){
+      html+='<div class="ct-table-card"><div class="ct-all-clear"><div class="ct-all-clear-ico">✅</div>All cases have been followed up today — great work!</div></div>';
+    } else {
+      // Group stale by agent
+      var byAgent={};
+      staleAll.forEach(function(c){
+        var o=c.Owner||'Unassigned';
+        if(!byAgent[o]) byAgent[o]=[];
+        byAgent[o].push(c);
+      });
+      html+='<div class="ct-table-card"><div style="padding:.5rem .75rem;">';
+      Object.keys(byAgent).sort().forEach(function(agent){
+        var cases=byAgent[agent];
+        var key='ct-stale-'+agent.replace(/\s/g,'_');
+        var email=getEmail(agent);
+        var bg=agentColor(agent), ini=agentIni(agent);
+        var isReassigning=_showReassignFor===agent;
+        var maxDays=Math.max.apply(null,cases.map(function(c){ return daysSince(c['Modified On']); }));
+
+        html+='<div class="ct-agent-card">';
+        html+='<div class="ct-agent-row" onclick="CT.toggleStale(\''+escH(key)+'\')">';
+        html+='<div class="ct-agent-av" style="background:'+bg+';">'+ini+'</div>';
+        html+='<div class="ct-agent-info">';
+        html+='<div class="ct-agent-name">'+escH(agent)+'</div>';
+        html+='<div class="ct-agent-sub">'+cases.length+' case'+(cases.length!==1?'s'||'':'')+' · last touch '+maxDays+'d ago</div>';
+        html+='</div>';
+        html+='<div class="ct-agent-actions">';
+        // Remind button
+        var mailBody=encodeURIComponent(
+          'Hi '+agent+',\n\nThis is a reminder to follow up on the below pending cases:\n\n'+
+          cases.map(function(c){ return '• '+c['Case Number']+' — '+c['Case Title']; }).join('\n')+
+          '\n\nPlease update the status today.\n\nThank you.'
+        );
+        var mailSubj=encodeURIComponent('Follow-up Reminder: '+cases.length+' Pending Case'+(cases.length!==1?'s':''));
+        var mailto=email?'mailto:'+email+'?subject='+mailSubj+'&body='+mailBody:'#';
+        html+='<a href="'+mailto+'" onclick="'+(!email?'alert(\'Email not found for this agent.\');return false;':'')+'" class="ct-remind-btn" style="padding:.28rem .65rem;border-radius:5px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;border:1px solid;text-decoration:none;display:inline-block;">📧 Remind</a>';
+        html+='<button class="ct-reassign-btn" onclick="event.stopPropagation();CT.toggleReassign(\''+escH(agent)+'\')">👤 Reassign</button>';
+        html+='</div>';
+        html+='<span class="ct-badge-pill orange">'+cases.length+' stale</span>';
+        html+='</div>';
+
+        // Reassign input
+        if(isReassigning){
+          html+='<div class="ct-reassign-row">';
+          html+='<input class="ct-reassign-inp" id="ct-ri-'+escH(agent.replace(/\s/g,'_'))+'" placeholder="Reassign all to (name)…"/>';
+          html+='<button class="ct-reassign-save" onclick="CT.confirmReassign(\''+escH(agent)+'\')">Confirm</button>';
+          html+='</div>';
+        }
+
+        // Case list
+        html+='<div id="'+escH(key)+'" class="ct-case-list" style="display:none;">';
+        cases.forEach(function(c){
+          var days=daysSince(c['Modified On']);
+          var act=_actions[c['Case Number']];
+          html+='<div class="ct-case-mini">';
+          html+='<span class="ct-case-num">'+escH(c['Case Number']||'—')+'</span>';
+          html+='<span class="ct-case-ttl">'+escH((c['Case Title']||'').slice(0,55))+'</span>';
+          html+='<span class="ct-case-days">'+days+'d ago</span>';
+          html+='<span class="ct-case-act">'+aBadge(act)+'</span>';
+          html+='</div>';
+        });
+        html+='</div>';
+        html+='</div>';
+      });
+      html+='</div></div>';
+    }
+
+    // Full cases table
+    html+=managerTable(flaggedAll);
+    html+='</div>';
+    root.innerHTML=html;
+    updateAlertBadge(noAction+staleAll.length);
+
+    // Focus reassign input if open
+    if(_showReassignFor){
+      setTimeout(function(){
+        var inp=document.getElementById('ct-ri-'+_showReassignFor.replace(/\s/g,'_'));
+        if(inp) inp.focus();
+      },60);
+    }
+  }
+
+  function statCard(label,val,cls){
+    return '<div class="ct-stat"><div class="ct-stat-label">'+label+'</div><div class="ct-stat-val '+cls+'">'+val+'</div></div>';
+  }
+
+  function leavePanel(title, agentsOff, colorClass){
+    var html='<div class="ct-leave-panel">';
+    html+='<div class="ct-leave-panel-hdr">';
+    html+='<span class="ct-leave-panel-title">'+escH(title)+'</span>';
+    if(!agentsOff.length){
+      html+='<span class="ct-leave-panel-badge ok">All present</span></div>';
+      html+='<div class="ct-leave-body"><div class="ct-all-clear"><div class="ct-all-clear-ico">✅</div>No one on leave</div></div></div>';
+      return html;
+    }
+    html+='<span class="ct-leave-panel-badge '+colorClass+'">'+agentsOff.length+' agent'+(agentsOff.length!==1?'s':'')+'</span></div>';
+    html+='<div class="ct-leave-body">';
+    agentsOff.forEach(function(agent){
+      var cases=agentCases(agent);
+      var done=cases.filter(function(c){ return !!_actions[c['Case Number']]; }).length;
+      var pending=cases.length-done;
+      var bg=agentColor(agent), ini=agentIni(agent);
+      var badgeCls=pending>0?'danger':cases.length===0?'ok':'ok';
+      var badgeLbl=cases.length===0?'No cases':pending===0?'All actioned':pending+' pending';
+      var key='ct-lv-'+agent.replace(/\s/g,'_');
+
+      html+='<div class="ct-agent-card">';
+      html+='<div class="ct-agent-row" onclick="CT.toggleStale(\''+escH(key)+'\')">';
+      html+='<div class="ct-agent-av" style="background:'+bg+';">'+ini+'</div>';
+      html+='<div class="ct-agent-info"><div class="ct-agent-name">'+escH(agent)+'</div>';
+      html+='<div class="ct-agent-sub">'+cases.length+' case'+(cases.length!==1?'s':'')+' in queue</div></div>';
+      html+='<span class="ct-badge-pill '+badgeCls+'">'+escH(badgeLbl)+'</span>';
+      html+='</div>';
+
+      html+='<div id="'+escH(key)+'" class="ct-case-list" style="display:none;">';
+      if(!cases.length){
+        html+='<div style="font-size:.75rem;color:var(--text-dim);padding:.3rem 0;">Queue is empty ✅</div>';
+      } else {
+        cases.forEach(function(c){
+          html+='<div class="ct-case-mini">';
+          html+='<span class="ct-case-num">'+escH(c['Case Number']||'—')+'</span>';
+          html+='<span class="ct-case-ttl">'+escH((c['Case Title']||'').slice(0,50))+'</span>';
+          html+='<span class="ct-case-act">'+aBadge(_actions[c['Case Number']])+'</span>';
+          html+='</div>';
+        });
+      }
+      html+='</div></div>';
+    });
+    html+='</div></div>';
+    return html;
+  }
+
+  function managerTable(flaggedAll){
+    var agentMap={};
+    flaggedAll.forEach(function(c){ if(c.Owner) agentMap[c.Owner]=1; });
+    var agentList=Object.keys(agentMap).sort();
+
+    var filtered=flaggedAll.filter(function(c){
+      var q=_searchQ.toLowerCase();
+      var mQ=!q||(c['Case Number']||'').toLowerCase().includes(q)||(c['Case Title']||'').toLowerCase().includes(q)||(c.Owner||'').toLowerCase().includes(q)||(c.Customer||'').toLowerCase().includes(q);
+      var mA=!_filterAgent||nameMatch(c.Owner,_filterAgent);
+      var mAct=!_filterAction||(_filterAction==='actioned'?!!_actions[c['Case Number']]:_filterAction==='noaction'?!_actions[c['Case Number']]:_filterAction==='stale'?isStale(c['Modified On']):true);
+      return mQ&&mA&&mAct;
+    });
+
+    var html='<div class="ct-section-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M14 3v6h6M8 17v-4M12 17v-7M16 17v-2"/></svg>All Flagged Cases</div>';
+    html+='<div class="ct-table-card">';
+    html+='<div class="ct-table-hdr">';
+    html+='<span class="ct-table-title">'+filtered.length+' cases</span>';
+    html+='<input class="ct-fi" placeholder="🔍 Search…" oninput="CT.search(this.value)" value="'+escH(_searchQ)+'"/>';
+    html+='<select class="ct-fi" onchange="CT.filterAgent(this.value)">';
+    html+='<option value="">All Agents</option>';
+    agentList.forEach(function(a){ html+='<option value="'+escH(a)+'"'+(a===_filterAgent?' selected':'')+'>'+escH(a)+'</option>'; });
+    html+='</select>';
+    html+='<select class="ct-fi" onchange="CT.filterAction(this.value)">';
+    html+='<option value="">All</option>';
+    html+='<option value="stale"'+(_filterAction==='stale'?' selected':'')+'>No Follow-up Today</option>';
+    html+='<option value="noaction"'+(_filterAction==='noaction'?' selected':'')+'>No Portal Action</option>';
+    html+='<option value="actioned"'+(_filterAction==='actioned'?' selected':'')+'>Actioned</option>';
+    html+='</select>';
+    html+='</div>';
+
+    if(!filtered.length){
+      html+='<div class="ct-all-clear"><div class="ct-all-clear-ico">🔍</div>No cases match filters</div></div>';
+      return html;
+    }
+
+    html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr>';
+    html+='<th>Case #</th><th>Title / Customer</th><th>Agent</th><th>Status</th><th>Modified</th><th>Follow-up</th><th>Portal Action</th>';
+    html+='</tr></thead><tbody>';
+
+    filtered.forEach(function(c){
+      var act=_actions[c['Case Number']];
+      var stale=isStale(c['Modified On']);
+      var days=daysSince(c['Modified On']);
+      var rowCls=stale?'row-stale':(!act?'row-unactioned':'');
+      var bg=agentColor(c.Owner||''), ini=agentIni(c.Owner||'');
+
+      html+='<tr class="'+rowCls+'">';
+      html+='<td><span style="font-family:monospace;font-size:.77rem;font-weight:600;color:var(--accent-blue);">'+escH(c['Case Number']||'—')+'</span></td>';
+      html+='<td><div style="font-weight:500;color:var(--text-primary);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escH(c['Case Title']||'—')+'</div>';
+      if(c.Customer) html+='<div style="font-size:.71rem;color:var(--text-muted);">'+escH(c.Customer)+'</div>';
+      html+='</td>';
+      html+='<td><div class="ct-own"><div class="ct-own-av" style="background:'+bg+';">'+ini+'</div><span class="ct-own-nm">'+escH(c.Owner||'—')+'</span></div></td>';
+      html+='<td>'+sBadge(c['Status Reason'])+'</td>';
+      html+='<td style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;">'+fmtDate(c['Modified On'])+'</td>';
+      html+='<td>'+(stale?'<span class="ct-sb stale"><span class="ct-sb-dot"></span>'+days+'d ago</span>':'<span style="font-size:.72rem;color:#1a7a45;">✓ Today</span>')+'</td>';
+      html+='<td>'+aBadge(act)+'</td>';
+      html+='</tr>';
+    });
+
+    html+='</tbody></table></div></div>';
+    return html;
+  }
+
+  // ════════════════════════════════
+  //  AGENT VIEW
+  // ════════════════════════════════
+  function renderAgent(root){
+    if(!currentUser) return;
+    var myName=currentUser.name;
+    var myCases=agentCases(myName);
+
+    var html='<div class="ct-page-wrap">';
+    html+='<div style="margin-bottom:1.2rem;"><h1 class="ct-page-title">My Cases</h1><p class="ct-page-sub">Cases in your queue that need follow-up</p></div>';
+
+    if(!_cases.length){
+      html+='<div class="ct-empty"><div class="ct-empty-ico">📬</div>';
+      html+='<div class="ct-empty-ttl">No data loaded yet</div>';
+      html+='<div class="ct-empty-sub">Your manager uploads the daily case report. Your pending cases will appear here once it\'s uploaded.</div>';
+      html+='</div></div>';
+      root.innerHTML=html; return;
+    }
+
+    if(!myCases.length){
+      html+='<div class="ct-empty"><div class="ct-empty-ico">🎉</div>';
+      html+='<div class="ct-empty-ttl">You\'re all clear!</div>';
+      html+='<div class="ct-empty-sub">No pending cases assigned to you right now. Keep up the great work!</div>';
+      html+='</div></div>';
+      root.innerHTML=html; return;
+    }
+
+    var myStale  =staleCases(myCases);
+    var pending  =myCases.filter(function(c){ return !_actions[c['Case Number']]; });
+    var done     =myCases.filter(function(c){ return  !!_actions[c['Case Number']]; });
+
+    // Stats
+    html+='<div class="ct-stats-row" style="grid-template-columns:repeat(4,1fr);max-width:500px;margin-bottom:1.1rem;">';
+    html+=statCard('Total',  myCases.length,  '');
+    html+=statCard('Pending',pending.length,  'red');
+    html+=statCard('No Follow-up',myStale.length,'orange');
+    html+=statCard('Actioned',done.length,    'green');
+    html+='</div>';
+
+    // Stale follow-up warning
+    if(myStale.length){
+      html+='<div class="ct-stale-banner">';
+      html+='<div class="ct-stale-banner-ttl">⏰ '+myStale.length+' case'+(myStale.length!==1?'s have':' has')+' not been followed up today</div>';
+      html+='<div class="ct-stale-banner-sub">These cases were last updated more than 1 day ago. Please reach out to the customer or update the status.</div>';
+      html+='<div class="ct-banner-list">';
+      myStale.slice(0,5).forEach(function(c){
+        var days=daysSince(c['Modified On']);
+        html+='<div class="ct-banner-item"><b>'+escH(c['Case Number']||'')+'</b> '+escH((c['Case Title']||'').slice(0,50))+' <span style="color:var(--accent-red);font-size:.72rem;float:right;">'+days+'d ago</span></div>';
+      });
+      if(myStale.length>5) html+='<div class="ct-banner-item" style="color:var(--text-dim);">…and '+(myStale.length-5)+' more</div>';
+      html+='</div></div>';
+    }
+
+    // Pending action table
+    if(pending.length){
+      html+='<div class="ct-table-card" style="margin-bottom:1rem;">';
+      html+='<div class="ct-table-hdr"><span class="ct-table-title">⚠️ Needs Your Action <span style="font-size:.74rem;font-weight:400;color:var(--text-muted);">('+pending.length+')</span></span></div>';
+      html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr>';
+      html+='<th>Case #</th><th>Title / Customer</th><th>Status</th><th>Follow-up</th><th>Action</th>';
+      html+='</tr></thead><tbody>';
+      pending.forEach(function(c){
+        var cn=c['Case Number']||'';
+        var stale=isStale(c['Modified On']);
+        var days=daysSince(c['Modified On']);
+        var isAssigning=_showAssignFor===cn;
+        html+='<tr class="'+(stale?'row-stale':'row-unactioned')+'">';
+        html+='<td><span style="font-family:monospace;font-size:.77rem;font-weight:600;color:var(--accent-blue);">'+escH(cn)+'</span></td>';
+        html+='<td><div style="font-weight:500;color:var(--text-primary);">'+escH((c['Case Title']||'').slice(0,50))+'</div>';
+        if(c.Customer) html+='<div style="font-size:.71rem;color:var(--text-muted);">'+escH(c.Customer)+'</div>';
+        html+='</td>';
+        html+='<td>'+sBadge(c['Status Reason'])+'</td>';
+        html+='<td>'+(stale?'<span style="color:var(--accent-red);font-size:.75rem;font-weight:600;">'+days+'d ago</span>':'<span style="font-size:.72rem;color:#1a7a45;">✓ Today</span>')+'</td>';
+        html+='<td>';
+        html+='<div class="ct-act-btns">';
+        html+='<button class="ct-act-btn g" onclick="CT.act(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\',\'No Pending\',null)">✅ No Pending</button>';
+        html+='<button class="ct-act-btn b" onclick="CT.act(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\',\'Mail Sent\',null)">📧 Mail Sent</button>';
+        html+='<button class="ct-act-btn p" onclick="CT.showAssign(\''+escH(cn)+'\')">'+(isAssigning?'✕ Cancel':'👤 Assign To')+'</button>';
+        html+='<button class="ct-act-btn a" onclick="CT.act(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\',\'Pending Customer\',null)">⏳ Pending Customer</button>';
+        html+='</div>';
+        if(isAssigning){
+          html+='<div class="ct-assign-row">';
+          html+='<input class="ct-assign-inp" id="ct-ai-'+escH(cn)+'" placeholder="Assigned to (e.g. Diwan)"/>';
+          html+='<button class="ct-assign-save" onclick="CT.confirmAssign(\''+escH(cn)+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(myName)+'\')">Save</button>';
+          html+='</div>';
+        }
+        html+='</td></tr>';
+      });
+      html+='</tbody></table></div></div>';
+    }
+
+    // Done table
+    if(done.length){
+      html+='<div class="ct-table-card">';
+      html+='<div class="ct-table-hdr"><span class="ct-table-title">✅ Actioned Today <span style="font-size:.74rem;font-weight:400;color:var(--text-muted);">('+done.length+')</span></span></div>';
+      html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr><th>Case #</th><th>Title</th><th>Action</th></tr></thead><tbody>';
+      done.forEach(function(c){
+        html+='<tr><td><span style="font-family:monospace;font-size:.77rem;color:var(--accent-blue);font-weight:600;">'+escH(c['Case Number']||'—')+'</span></td>';
+        html+='<td style="color:var(--text-muted);font-size:.8rem;">'+escH((c['Case Title']||'').slice(0,55))+'</td>';
+        html+='<td>'+aBadge(_actions[c['Case Number']])+'</td></tr>';
+      });
+      html+='</tbody></table></div></div>';
+    }
+
+    html+='</div>';
+    root.innerHTML=html;
+
+    if(_showAssignFor){
+      setTimeout(function(){
+        var inp=document.getElementById('ct-ai-'+_showAssignFor);
+        if(inp) inp.focus();
+      },60);
+    }
+  }
+
+  // ── Home page banner ──
+  function updateHomeBanner(){
+    var banner=document.getElementById('ct-home-banner');
+    if(!banner||!currentUser) return;
+    var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
+    if(isAdmin){ banner.classList.remove('show'); return; }
+    var myName=currentUser.name;
+    var tOff=agentsOffOn(tomorrowStr());
+    var offTomorrow=tOff.some(function(n){ return nameMatch(n,myName); });
+    if(!offTomorrow||!_cases.length){ banner.classList.remove('show'); return; }
+    var myCases=agentCases(myName);
+    var pending=myCases.filter(function(c){ return !_actions[c['Case Number']]; });
+    var stale=staleCases(myCases);
+    var total=pending.length+stale.filter(function(c){ return !_actions[c['Case Number']]; }).length;
+    if(!total){ banner.classList.remove('show'); return; }
+    banner.classList.add('show');
+    var html='<div class="ct-banner-ttl">⚠️ You are on leave tomorrow — '+total+' case'+(total!==1?'s':'')+' need action before you go!</div>';
+    html+='<div class="ct-banner-sub">Please follow up or handover the cases below today.</div>';
+    html+='<div class="ct-banner-list">';
+    pending.slice(0,4).forEach(function(c){
+      html+='<div class="ct-banner-item"><b>'+escH(c['Case Number']||'')+'</b> '+escH((c['Case Title']||'').slice(0,45))+'</div>';
+    });
+    if(pending.length>4) html+='<div class="ct-banner-item" style="color:var(--text-dim);">…and '+(pending.length-4)+' more</div>';
+    html+='</div>';
+    html+='<div style="margin-top:.7rem;"><button class="xc-btn" style="font-size:.77rem;padding:.38rem .9rem;" onclick="showPage(\'casetracker\',document.getElementById(\'sidebar-casetracker\'))">Go to Case Tracker →</button></div>';
+    banner.innerHTML=html;
+  }
+
+  function updateAlertBadge(n){
+    var b=document.getElementById('ct-alert-badge');
+    if(!b) return;
+    if(n>0){ b.style.display='inline-block'; b.textContent=n; } else { b.style.display='none'; }
+  }
+
+  // ── Public ──
+  return {
+    init: function(){
+      var c=sessionStorage.getItem('ct_cases'), d=sessionStorage.getItem('ct_date');
+      if(c&&d){ try{ _cases=JSON.parse(c); _uploadDate=d; }catch(e){} }
+      loadAgentEmails();
+      loadActions().then(function(){
+        updateHomeBanner();
+        if(_cases.length){
+          var fl=_cases.filter(function(c){ return isFlagged(c['Status Reason']); });
+          var st=fl.filter(function(c){ return isStale(c['Modified On']); }).length;
+          var na=Math.max(0,fl.length-Object.keys(_actions).length);
+          updateAlertBadge(na+st);
+        }
+      });
+    },
+    render: function(){ loadActions().then(renderCT); },
+    fileSelect: function(file){
+      if(!file) return;
+      parseXlsx(file, function(err,rows){
+        if(err){ alert('Could not read file: '+err.message); return; }
+        _cases=rows.map(normRow);
+        _uploadDate=todayStr();
+        sessionStorage.setItem('ct_cases', JSON.stringify(_cases));
+        sessionStorage.setItem('ct_date', _uploadDate);
+        loadActions().then(function(){ renderCT(); updateHomeBanner(); });
+      });
+    },
+    dragOver:  function(e){ e.preventDefault(); var z=document.getElementById('ct-drop'); if(z) z.classList.add('drag'); },
+    dragLeave: function(e){ var z=document.getElementById('ct-drop'); if(z) z.classList.remove('drag'); },
+    drop: function(e){
+      e.preventDefault();
+      var z=document.getElementById('ct-drop'); if(z) z.classList.remove('drag');
+      var f=e.dataTransfer.files[0]; if(f) CT.fileSelect(f);
+    },
+    toggleStale: function(id){
+      var el=document.getElementById(id); if(!el) return;
+      el.style.display=el.style.display==='none'?'block':'none';
+    },
+    toggleReassign: function(agent){
+      _showReassignFor=(_showReassignFor===agent)?null:agent;
+      renderCT();
+    },
+    confirmReassign: function(agent){
+      var inp=document.getElementById('ct-ri-'+agent.replace(/\s/g,'_'));
+      var val=inp?inp.value.trim():'';
+      if(!val){ alert('Please type a name to reassign to.'); return; }
+      var cases=agentCases(agent).filter(function(c){ return isStale(c['Modified On']); });
+      var promises=cases.map(function(c){
+        return saveAction(c['Case Number'],c['Case Title'],agent,'Assigned To',val);
+      });
+      Promise.all(promises).then(function(){ _showReassignFor=null; renderCT(); });
+    },
+    search:       function(v){ _searchQ=v;       renderCT(); },
+    filterAgent:  function(v){ _filterAgent=v;   renderCT(); },
+    filterAction: function(v){ _filterAction=v;  renderCT(); },
+    showAssign: function(cn){
+      _showAssignFor=(_showAssignFor===cn)?null:cn;
+      renderCT();
+    },
+    confirmAssign: function(cn,title,agent){
+      var inp=document.getElementById('ct-ai-'+cn);
+      var val=inp?inp.value.trim():'';
+      if(!val){ alert('Please type a name.'); return; }
+      _showAssignFor=null;
+      saveAction(cn,title,agent,'Assigned To',val);
+    },
+    act: function(cn,title,agent,type,assigned){ saveAction(cn,title,agent,type,assigned); }
+  };
+})();
+
+// Hook showPage
+(function(){
+  var _orig=showPage;
+  showPage=function(id,elem){
+    _orig(id,elem);
+    if(id==='casetracker') CT.render();
+  };
+})();
+
+window.addEventListener('DOMContentLoaded',function(){
+  setTimeout(function(){ CT.init(); },1200);
+});
+
 </script>
 
 
