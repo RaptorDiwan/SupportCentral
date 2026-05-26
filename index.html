@@ -1923,6 +1923,164 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   @keyframes tyGlow{0%,100%{border-color:rgba(74,222,128,.3)}50%{border-color:rgba(74,222,128,.8);box-shadow:0 0 12px rgba(74,222,128,.3)}}
   .ty-collect-ready{animation:tyGlow 1.5s infinite!important;}
   .ty-float-money{position:fixed;font-size:1.1rem;font-weight:700;color:#4ade80;pointer-events:none;animation:tyFloat 1.2s ease forwards;z-index:9999;}
+
+/* K7 EMPIRE VISUAL */
+/* ═══════════════════════════════════════════════
+   K7 EMPIRE — VISUAL OFFICE GAME UI
+   Concept & Design: Diwan Chowthry
+═══════════════════════════════════════════════ */
+
+/* Game wrapper */
+.ty-game-wrap{display:flex;flex-direction:column;height:calc(100vh - 120px);min-height:600px;background:var(--navy);border-radius:var(--radius);overflow:hidden;position:relative;}
+
+/* Top HUD bar */
+.ty-hud{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1rem;background:rgba(7,13,45,.95);border-bottom:1px solid rgba(239,73,60,.2);flex-shrink:0;flex-wrap:wrap;gap:.4rem;z-index:10;}
+.ty-hud-bal{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:#4ade80;line-height:1;}
+.ty-hud-ipm{font-size:.72rem;color:#4ade80;opacity:.8;}
+.ty-hud-stats{display:flex;gap:.75rem;align-items:center;}
+.ty-hud-stat{text-align:center;}
+.ty-hud-stat-val{font-size:.85rem;font-weight:600;color:#F1F5F9;line-height:1;}
+.ty-hud-stat-lbl{font-size:.58rem;color:#64748B;text-transform:uppercase;letter-spacing:.06em;}
+.ty-hud-btns{display:flex;gap:.4rem;align-items:center;}
+.ty-collect-all-btn{padding:.35rem .9rem;background:linear-gradient(135deg,#4ade80,#16a34a);color:#fff;border:none;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:0 0 0 0 rgba(74,222,128,.4);}
+.ty-collect-all-btn.ready{animation:tyCollectPulse 1.5s infinite;}
+.ty-collect-all-btn:disabled{background:var(--navy-card);color:var(--text-dim);box-shadow:none;animation:none;}
+@keyframes tyCollectPulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)}50%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}
+
+/* Bottom action bar */
+.ty-action-bar{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:rgba(7,13,45,.95);border-top:1px solid rgba(255,255,255,.05);flex-shrink:0;overflow-x:auto;z-index:10;}
+.ty-action-btn{padding:.35rem .8rem;border:1px solid var(--navy-border);background:var(--navy-card);color:var(--text-muted);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:.72rem;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+.ty-action-btn:hover{border-color:var(--gold-dim);color:var(--text-primary);}
+.ty-action-btn.active{background:rgba(239,73,60,.15);border-color:var(--gold);color:var(--gold);}
+
+/* Office viewport */
+.ty-office-viewport{flex:1;overflow:auto;position:relative;padding:1rem;}
+
+/* Office floor grid */
+.ty-office-floor{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;max-width:900px;margin:0 auto;}
+
+/* Room card */
+.ty-room{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:.85rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;min-height:140px;display:flex;flex-direction:column;}
+.ty-room:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2);}
+.ty-room.locked{opacity:.45;cursor:not-allowed;filter:grayscale(.7);}
+.ty-room.collecting{border-color:#4ade80!important;box-shadow:0 0 0 0 rgba(74,222,128,.5);animation:tyRoomGlow 1.2s infinite;}
+@keyframes tyRoomGlow{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)}50%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}
+
+/* Room theme colors */
+.ty-room-sales{border-top:3px solid #3B82F6;}
+.ty-room-dev{border-top:3px solid #8B5CF6;}
+.ty-room-marketing{border-top:3px solid #EC4899;}
+.ty-room-support{border-top:3px solid #10B981;}
+.ty-room-lab{border-top:3px solid #F59E0B;}
+.ty-room-accounts{border-top:3px solid #06B6D4;}
+.ty-room-it{border-top:3px solid #6366F1;}
+.ty-room-admin{border-top:3px solid #84CC16;}
+
+/* Room header */
+.ty-room-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;}
+.ty-room-icon{font-size:1.3rem;flex-shrink:0;}
+.ty-room-title{font-size:.8rem;font-weight:600;color:var(--text-primary);flex:1;}
+.ty-room-lvl{font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:20px;background:rgba(239,73,60,.12);color:var(--gold);}
+
+/* Staff animation area */
+.ty-staff-area{flex:1;display:flex;flex-wrap:wrap;align-items:flex-end;gap:3px;padding:.3rem 0;min-height:40px;}
+.ty-staffer{width:14px;height:18px;position:relative;display:flex;flex-direction:column;align-items:center;}
+.ty-staffer-head{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.ty-staffer-body{width:8px;flex:1;border-radius:2px;opacity:.8;}
+.ty-staffer.working .ty-staffer-head{animation:tyStafferBob 1.5s ease-in-out infinite;}
+.ty-staffer.working:nth-child(2) .ty-staffer-head{animation-delay:.3s;}
+.ty-staffer.working:nth-child(3) .ty-staffer-head{animation-delay:.6s;}
+.ty-staffer.working:nth-child(4) .ty-staffer-head{animation-delay:.2s;}
+.ty-staffer.working:nth-child(5) .ty-staffer-head{animation-delay:.5s;}
+@keyframes tyStafferBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.ty-staffer.idle .ty-staffer-head{animation:none;opacity:.5;}
+.ty-empty-slot{width:14px;height:18px;border:1px dashed rgba(255,255,255,.1);border-radius:3px;opacity:.3;}
+
+/* Manager badge */
+.ty-mgr-badge{font-size:.6rem;padding:1px 5px;border-radius:20px;background:rgba(239,163,0,.15);color:#f59e0b;border:1px solid rgba(239,163,0,.3);white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;}
+
+/* Room footer */
+.ty-room-footer{display:flex;align-items:center;justify-content:space-between;margin-top:.4rem;}
+.ty-room-ipm{font-size:.65rem;color:#4ade80;font-weight:600;}
+.ty-collect-btn{padding:2px 8px;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:20px;font-size:.62rem;color:var(--text-dim);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.ty-collect-btn.ready{background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.4);color:#4ade80;font-weight:700;}
+
+/* Room activity animation - bubbles */
+.ty-room-activity{position:absolute;bottom:8px;right:8px;display:flex;gap:2px;}
+.ty-activity-dot{width:5px;height:5px;border-radius:50%;background:#4ade80;animation:tyActivityBlink 1.5s infinite;}
+.ty-activity-dot:nth-child(2){animation-delay:.3s;}
+.ty-activity-dot:nth-child(3){animation-delay:.6s;}
+@keyframes tyActivityBlink{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+
+/* Locked overlay */
+.ty-lock-overlay{position:absolute;inset:0;background:rgba(7,13,45,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;gap:.3rem;}
+.ty-lock-icon{font-size:1.5rem;}
+.ty-lock-cost{font-size:.68rem;font-weight:600;color:var(--gold);}
+
+/* Side panel (slides in when room clicked) */
+.ty-side-panel{position:absolute;right:0;top:0;bottom:0;width:300px;background:var(--navy-card);border-left:1px solid var(--navy-border);z-index:20;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;overflow:hidden;}
+.ty-side-panel.open{transform:translateX(0);}
+.ty-side-header{padding:.85rem 1rem;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
+.ty-side-icon{font-size:1.4rem;}
+.ty-side-title{font-size:.9rem;font-weight:600;color:var(--text-primary);flex:1;}
+.ty-side-close{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:.2rem;}
+.ty-side-body{flex:1;overflow-y:auto;padding:.85rem 1rem;}
+.ty-side-section{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin:.75rem 0 .4rem;}
+.ty-side-section:first-child{margin-top:0;}
+
+/* Staff controls in panel */
+.ty-staff-controls{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;}
+.ty-staff-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--navy-border);background:var(--navy-hover);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.ty-staff-btn.hire{color:#4ade80;border-color:rgba(74,222,128,.3);}
+.ty-staff-btn.hire:hover{background:rgba(74,222,128,.1);}
+.ty-staff-btn.fire{color:#ef4444;border-color:rgba(239,68,68,.3);}
+.ty-staff-btn.fire:hover{background:rgba(239,68,68,.1);}
+.ty-staff-count{font-size:.95rem;font-weight:600;color:var(--text-primary);min-width:50px;text-align:center;}
+
+/* Perf bar */
+.ty-perf-wrap{margin-bottom:.6rem;}
+.ty-perf-label{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted);margin-bottom:.2rem;}
+.ty-perf-bar{height:5px;background:var(--navy-border);border-radius:3px;overflow:hidden;}
+.ty-perf-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+
+/* Panel button */
+.ty-panel-btn{width:100%;padding:.45rem .75rem;border-radius:6px;border:1px solid var(--navy-border);background:var(--navy-hover);font-family:'DM Sans',sans-serif;font-size:.75rem;cursor:pointer;color:var(--text-primary);text-align:left;transition:all .15s;margin-bottom:.35rem;display:flex;align-items:center;justify-content:space-between;}
+.ty-panel-btn:hover{border-color:var(--gold-dim);}
+.ty-panel-btn.primary{background:var(--gold);color:#fff;border-color:transparent;}
+.ty-panel-btn.primary:hover{background:var(--gold-light);}
+.ty-panel-btn.danger{color:#ef4444;border-color:rgba(239,68,68,.2);}
+.ty-panel-btn.amber{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#f59e0b;}
+.ty-panel-btn:disabled{opacity:.35;cursor:not-allowed;}
+.ty-panel-btn-price{font-size:.7rem;font-weight:600;color:inherit;opacity:.8;}
+
+/* Floating coin animation */
+@keyframes tyCoinFly{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-80px) scale(.5);opacity:0}}
+.ty-coin{position:fixed;font-size:.9rem;font-weight:700;pointer-events:none;z-index:9999;animation:tyCoinFly .9s ease forwards;}
+@keyframes tyLevelUp{0%{transform:scale(1)}30%{transform:scale(1.15)}60%{transform:scale(.95)}100%{transform:scale(1)}}
+.ty-levelup{animation:tyLevelUp .4s ease;}
+
+/* Event banner */
+.ty-event-banner{margin:.75rem;padding:.5rem .9rem;border-radius:8px;font-size:.75rem;display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.ty-event-banner.good{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);color:#4ade80;}
+.ty-event-banner.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444;}
+.ty-event-banner.neutral{background:rgba(100,116,139,.08);border:1px solid rgba(100,116,139,.2);color:var(--text-muted);}
+
+/* Offline popup */
+.ty-offline-popup{position:absolute;inset:0;background:rgba(7,13,45,.85);display:flex;align-items:center;justify-content:center;z-index:30;border-radius:var(--radius);}
+
+/* Walkthrough overlay */
+.ty-walkthrough{position:absolute;inset:0;background:rgba(7,13,45,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:40;border-radius:var(--radius);padding:2rem;text-align:center;}
+
+/* Responsive */
+@media(max-width:768px){
+  .ty-office-floor{grid-template-columns:repeat(2,1fr);}
+  .ty-side-panel{width:100%;border-left:none;border-top:1px solid var(--navy-border);}
+  .ty-game-wrap{height:auto;min-height:auto;}
+}
+@media(max-width:480px){
+  .ty-office-floor{grid-template-columns:repeat(2,1fr);gap:.5rem;}
+}
+
 </style>
 </head>
 <body>
@@ -8500,6 +8658,512 @@ async function tyAdminReset(){
     alert('Game reset successfully.');
   }catch(e){alert('Error: '+e.message);}
 }
+
+// ═══════════════════════════════════════
+//  K7 EMPIRE — VISUAL OFFICE RENDERER
+//  Concept & Design: Diwan Chowthry
+// ═══════════════════════════════════════
+
+var _tySelectedRoom = null;
+var _tyPanelOpen = false;
+
+// Team color schemes
+var TY_ROOM_COLORS = {
+  sales:    {head:'#93C5FD',body:'#3B82F6',bg:'rgba(59,130,246,.08)'},
+  dev:      {head:'#C4B5FD',body:'#8B5CF6',bg:'rgba(139,92,246,.08)'},
+  marketing:{head:'#FBCFE8',body:'#EC4899',bg:'rgba(236,72,153,.08)'},
+  support:  {head:'#6EE7B7',body:'#10B981',bg:'rgba(16,185,129,.08)'},
+  lab:      {head:'#FDE68A',body:'#F59E0B',bg:'rgba(245,158,11,.08)'},
+  accounts: {head:'#A5F3FC',body:'#06B6D4',bg:'rgba(6,182,212,.08)'},
+  it:       {head:'#A5B4FC',body:'#6366F1',bg:'rgba(99,102,241,.08)'},
+  admin:    {head:'#BEF264',body:'#84CC16',bg:'rgba(132,204,22,.08)'},
+};
+
+// ── MAIN VISUAL RENDER ──
+async function tyRender(){
+  var wrap = document.getElementById('ty-page-content');
+  var c = _tyCompany;
+  if(!c){wrap.innerHTML='<div class="ty-loading">No company found.</div>';return;}
+
+  var ul=tyUL(c), ts=tyTS(c), tl=tyTL(c), mgr=tyMgr(c);
+  var ipm=tyIncomePM(c);
+  var sal=tySalary(c);
+  var val=tyValuation(c);
+  var ps=c.prestige_stars||0;
+  var prestigeAvail=val>=1000000000000;
+  var diffLabel={easy:'Easy',medium:'Medium',hard:'🔥 Kesavan'}[c.difficulty||'medium'];
+
+  // Daily event
+  var evIdx=parseInt(todayStr().replace(/-/g,''))%TY_EVENTS.length;
+  var ev=TY_EVENTS[evIdx];
+
+  // Leaderboard
+  var lbSnippet='';
+  try{
+    var lb=await sbQuery('tycoon_companies','select=user_name,balance,prestige_stars&order=balance.desc&limit=3');
+    var medals=['🥇','🥈','🥉'];
+    lbSnippet=(lb||[]).map(function(r,i){
+      var isMe=r.user_name===currentUser.name;
+      return '<div style="display:flex;align-items:center;gap:5px;font-size:.68rem;'+(isMe?'color:var(--gold)':'color:var(--text-muted)')+'">'+
+        medals[i]+' '+esc(r.user_name||'')+(isMe?' ✓':'')+(r.prestige_stars?' ⭐':'')+'<span style="margin-left:auto;font-weight:600;">'+tyFmt(r.balance||0)+'</span></div>';
+    }).join('');
+  }catch(e){}
+
+  // Build the full game HTML
+  wrap.innerHTML =
+    '<div class="ty-game-wrap" id="ty-game-wrap">'+
+
+    // ── TOP HUD ──
+    '<div class="ty-hud">'+
+      '<div>'+
+        '<div class="ty-hud-bal" id="ty-bal-display">'+tyFmt(c.balance||0)+'</div>'+
+        '<div class="ty-hud-ipm" id="ty-live-ipm">'+tyFmt(ipm)+'/min</div>'+
+      '</div>'+
+      '<div class="ty-hud-stats">'+
+        '<div class="ty-hud-stat"><div class="ty-hud-stat-val" style="color:'+(c.happiness>=70?'#4ade80':'#f59e0b')+'">'+(c.happiness||80)+'%</div><div class="ty-hud-stat-lbl">Happy</div></div>'+
+        '<div class="ty-hud-stat"><div class="ty-hud-stat-val" style="color:'+(c.reputation>=70?'#4ade80':'#f59e0b')+'">'+(c.reputation||70)+'%</div><div class="ty-hud-stat-lbl">Rep</div></div>'+
+        '<div class="ty-hud-stat"><div class="ty-hud-stat-val">'+tyFmt(ipm)+'</div><div class="ty-hud-stat-lbl">/min</div></div>'+
+        (ps?'<div class="ty-hud-stat"><div class="ty-hud-stat-val" style="color:#f59e0b;">'+ps+'⭐</div><div class="ty-hud-stat-lbl">Prestige</div></div>':'')+
+      '</div>'+
+      '<div class="ty-hud-btns">'+
+        (prestigeAvail?'<button style="padding:.3rem .7rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:20px;font-size:.7rem;font-weight:700;cursor:pointer;" onclick="tyPrestige()">✨Prestige!</button>':'')+
+        '<button class="ty-collect-all-btn" id="ty-collect-all" onclick="tyCollectAll()" disabled>💰 Collect All</button>'+
+        '<button style="padding:.3rem .6rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:20px;font-size:.68rem;cursor:pointer;color:var(--text-muted);" onclick="tyShowHowToPlay()">❓</button>'+
+        (isAdminUser()?'<button style="padding:.3rem .6rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:20px;font-size:.68rem;cursor:pointer;color:var(--text-muted);" onclick="tyAdminPanel()">⚙</button>':'')+
+      '</div>'+
+    '</div>'+
+
+    // ── EVENT BANNER ──
+    '<div class="ty-event-banner '+ev.type+'" style="margin:.5rem .75rem .25rem;">'+
+      '<span>📅</span><span>'+esc(ev.text)+'</span>'+
+    '</div>'+
+
+    // ── OFFICE FLOOR ──
+    '<div class="ty-office-viewport">'+
+      '<div class="ty-office-floor" id="ty-office-floor">'+
+        tyBuildRooms(c,ts,tl,mgr,ul)+
+      '</div>'+
+
+      // Leaderboard mini
+      '<div style="max-width:900px;margin:.75rem auto 0;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:10px;padding:.65rem .9rem;">'+
+        '<div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:.4rem;">🏆 CEO Rankings</div>'+
+        (lbSnippet||'<div style="font-size:.68rem;color:var(--text-dim);">No data yet</div>')+
+      '</div>'+
+
+      // Bottom actions row
+      '<div style="max-width:900px;margin:.75rem auto;display:flex;gap:.5rem;flex-wrap:wrap;">'+
+        '<button class="ty-action-btn" onclick="tyOpenQuizModal()">🎯 Quick Earn</button>'+
+        '<button class="ty-action-btn" onclick="tyOpenSpendModal()">💸 Spend Money</button>'+
+        '<button class="ty-action-btn" onclick="tyFindWalkIn()">👤 Walk-in ₹2K</button>'+
+        '<button class="ty-action-btn" onclick="tyOpenProjectModal()">🚀 Projects</button>'+
+        '<button class="ty-action-btn" onclick="tyOpenBankModal()">🏦 Bank Loan</button>'+
+        '<button class="ty-action-btn" onclick="tyOpenCustomersModal()">👥 Customers ('+((_tyCustomers||[]).filter(function(c){return c.outcome==='pending';}).length)+')</button>'+
+      '</div>'+
+
+      // Watermark
+      '<div style="text-align:center;font-size:.58rem;color:var(--text-dim);padding:.5rem;opacity:.5;">K7 Empire · Concept & Design: Diwan Chowthry · Project Kesavan Sir</div>'+
+    '</div>'+
+
+    // ── SIDE PANEL (hidden, slides in) ──
+    '<div class="ty-side-panel" id="ty-side-panel">'+
+      '<div class="ty-side-header">'+
+        '<span class="ty-side-icon" id="ty-side-icon">🏢</span>'+
+        '<span class="ty-side-title" id="ty-side-title">Room</span>'+
+        '<button class="ty-side-close" onclick="tyClosePanel()">✕</button>'+
+      '</div>'+
+      '<div class="ty-side-body" id="ty-side-body"></div>'+
+    '</div>'+
+
+    '</div>'; // end ty-game-wrap
+
+  tyUpdateCollectButtons();
+}
+
+// ── BUILD ALL ROOM CARDS ──
+function tyBuildRooms(c,ts,tl,mgr,ul){
+  return TY_TEAMS.map(function(t){
+    var staff=ts[t.id]||0;
+    var lvl=tl[t.id]||1;
+    var maxStaff=lvl*t.max_per_lvl;
+    var pm=staff>0?Math.round(t.base_pm*staff*(1+((lvl-1)*0.3))*(1+((c.prestige_stars||0)*0.25))):0;
+    var mgrObj=TY_MANAGERS.find(function(m){return m.team===t.id;});
+    var hasMgr=mgrObj&&(mgr[mgrObj.id]||mgr['ceo_asst']);
+    var mgrName=hasMgr?(_tyManagerNames[t.id]||(mgrObj.default_name||'').split(' ')[0]):'';
+    var perf=staff>0?tyTeamPerf(c,t.id):0;
+    var colors=TY_ROOM_COLORS[t.id]||{head:'#94A3B8',body:'#64748B',bg:'rgba(100,116,139,.08)'};
+    var collectAmt=Math.round(_tyCollectReady[t.id]||0);
+    var isReady=collectAmt>=100;
+    var isLocked=staff===0&&lvl===1;
+
+    // Staff figures
+    var staffFigs='';
+    for(var i=0;i<Math.min(maxStaff,8);i++){
+      if(i<staff){
+        staffFigs+='<div class="ty-staffer working">'+
+          '<div class="ty-staffer-head" style="background:'+colors.head+';"></div>'+
+          '<div class="ty-staffer-body" style="background:'+colors.body+';"></div>'+
+        '</div>';
+      } else {
+        staffFigs+='<div class="ty-empty-slot"></div>';
+      }
+    }
+    if(maxStaff>8) staffFigs+='<span style="font-size:.6rem;color:var(--text-dim);">+more</span>';
+
+    return '<div class="ty-room ty-room-'+t.id+(isReady?' collecting':'')+(isLocked?' locked':'')+'" '+
+      'onclick="tyOpenRoomPanel(\''+t.id+'\')" '+
+      'style="background:'+colors.bg+';" '+
+      'id="ty-room-'+t.id+'">'+
+
+      // Room header
+      '<div class="ty-room-head">'+
+        '<div class="ty-room-icon">'+t.icon+'</div>'+
+        '<div class="ty-room-title">'+t.name+'</div>'+
+        '<div class="ty-room-lvl">Lv'+lvl+'</div>'+
+      '</div>'+
+
+      // Staff area with animations
+      '<div class="ty-staff-area" style="background:rgba(0,0,0,.15);border-radius:6px;padding:.3rem .4rem;margin-bottom:.4rem;min-height:36px;">'+
+        staffFigs+
+      '</div>'+
+
+      // Manager badge
+      (hasMgr?'<div style="margin-bottom:.3rem;"><span class="ty-mgr-badge">🤵 '+mgrName+'</span></div>':'')+
+
+      // Room footer
+      '<div class="ty-room-footer">'+
+        '<div class="ty-room-ipm">'+(staff>0?tyFmt(pm)+'/min':'No staff')+'</div>'+
+        '<button class="ty-collect-btn'+(isReady?' ready':'')+'" id="ty-collect-'+t.id+'" '+
+          (isReady?'':'disabled')+
+          ' onclick="event.stopPropagation();tyCollectTeam(\''+t.id+'\')" >'+
+          (isReady?'+'+tyFmt(collectAmt):'---')+
+        '</button>'+
+      '</div>'+
+
+      // Activity dots when earning
+      (staff>0?'<div class="ty-room-activity"><div class="ty-activity-dot"></div><div class="ty-activity-dot"></div><div class="ty-activity-dot"></div></div>':'')+
+
+    '</div>';
+  }).join('');
+}
+
+// ── OPEN ROOM PANEL ──
+function tyOpenRoomPanel(teamId){
+  var c=_tyCompany;
+  if(!c)return;
+  var t=TY_TEAMS.find(function(x){return x.id===teamId;});
+  if(!t)return;
+  _tySelectedRoom=teamId;
+  var ts=tyTS(c),tl=tyTL(c),mgr=tyMgr(c);
+  var staff=ts[teamId]||0;
+  var lvl=tl[teamId]||1;
+  var maxStaff=lvl*t.max_per_lvl;
+  var perf=staff>0?tyTeamPerf(c,teamId):0;
+  var perfColor=perf>=70?'#4ade80':perf>=40?'#f59e0b':'#ef4444';
+  var mgrObj=TY_MANAGERS.find(function(m){return m.team===t.id;});
+  var hasMgr=mgrObj&&(mgr[mgrObj.id]||mgr['ceo_asst']);
+  var mgrName=hasMgr?(_tyManagerNames[teamId]||mgrObj.default_name):'';
+  var lvlCost=lvl*t.salary*10;
+  var colors=TY_ROOM_COLORS[teamId]||{head:'#94A3B8',body:'#64748B'};
+  var pm=staff>0?Math.round(t.base_pm*staff*(1+((lvl-1)*0.3))*(1+((c.prestige_stars||0)*0.25))):0;
+
+  document.getElementById('ty-side-icon').textContent=t.icon;
+  document.getElementById('ty-side-title').textContent=t.name;
+
+  var body=
+    // Stats
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem;">'+
+      '<div style="background:var(--navy-hover);border-radius:6px;padding:.5rem .65rem;">'+
+        '<div style="font-size:.6rem;color:var(--text-dim);">Staff</div>'+
+        '<div style="font-size:1.1rem;font-weight:600;color:var(--text-primary);">'+staff+' / '+maxStaff+'</div>'+
+      '</div>'+
+      '<div style="background:var(--navy-hover);border-radius:6px;padding:.5rem .65rem;">'+
+        '<div style="font-size:.6rem;color:var(--text-dim);">Income</div>'+
+        '<div style="font-size:1rem;font-weight:600;color:#4ade80;">'+(staff>0?tyFmt(pm)+'/min':'None')+'</div>'+
+      '</div>'+
+      '<div style="background:var(--navy-hover);border-radius:6px;padding:.5rem .65rem;">'+
+        '<div style="font-size:.6rem;color:var(--text-dim);">Team Level</div>'+
+        '<div style="font-size:1.1rem;font-weight:600;color:var(--gold);">'+lvl+'</div>'+
+      '</div>'+
+      '<div style="background:var(--navy-hover);border-radius:6px;padding:.5rem .65rem;">'+
+        '<div style="font-size:.6rem;color:var(--text-dim);">Salary/mo</div>'+
+        '<div style="font-size:.9rem;font-weight:600;color:#ef4444;">'+tyFmt(staff*t.salary)+'</div>'+
+      '</div>'+
+    '</div>'+
+
+    // Performance
+    (staff>0?
+      '<div class="ty-side-section">Performance</div>'+
+      '<div class="ty-perf-wrap">'+
+        '<div class="ty-perf-label"><span>'+(perf>=70?'Excellent':perf>=50?'Good':perf>=30?'Needs work':'Critical')+'</span><span style="color:'+perfColor+'">'+perf+'%</span></div>'+
+        '<div class="ty-perf-bar"><div class="ty-perf-fill" style="width:'+perf+'%;background:'+perfColor+';"></div></div>'+
+      '</div>':'')+ 
+
+    // Hire/Fire
+    '<div class="ty-side-section">Staff</div>'+
+    '<div class="ty-staff-controls">'+
+      '<button class="ty-staff-btn fire" onclick="tyFireStaff(\''+teamId+'\','+t.salary+')" '+(staff<=0?'disabled':'')+'>−</button>'+
+      '<span class="ty-staff-count">'+staff+' staff</span>'+
+      '<button class="ty-staff-btn hire" onclick="tyHireStaff(\''+teamId+'\','+t.salary+')" '+(staff>=maxStaff?'disabled':'')+'>+</button>'+
+    '</div>'+
+    '<div style="font-size:.68rem;color:var(--text-muted);margin-bottom:.5rem;">₹'+t.salary.toLocaleString('en-IN')+'/head/month · 1st month paid upfront</div>'+
+
+    // Upgrade team level
+    (staff>=maxStaff?
+      '<button class="ty-panel-btn amber" onclick="tyUpgradeTeam(\''+teamId+'\','+lvlCost+','+lvl+')" '+((c.balance||0)<lvlCost?'disabled':'')+'>'+
+        '⬆ Upgrade team Lv'+(lvl+1)+' — unlock '+(lvl+1)*t.max_per_lvl+' staff'+
+        '<span class="ty-panel-btn-price">'+tyFmt(lvlCost)+'</span>'+
+      '</button>':'')+
+
+    // Manager
+    '<div class="ty-side-section">Manager</div>'+
+    (hasMgr?
+      '<div style="display:flex;align-items:center;gap:.5rem;padding:.45rem .65rem;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:6px;font-size:.75rem;color:#4ade80;">✓ '+mgrName+' managing — auto-earns!</div>':
+      (mgrObj?
+        '<button class="ty-panel-btn" onclick="tyHireManager(\''+mgrObj.id+'\','+mgrObj.cost+',\''+teamId+'\')" '+((c.balance||0)<mgrObj.cost?'disabled':'')+'>'+
+          '🤵 Hire Manager (auto-earn)<span class="ty-panel-btn-price">'+tyFmt(mgrObj.cost)+'</span></button>':'')+
+      '<div style="font-size:.68rem;color:var(--text-muted);">Without manager: collect manually every minute</div>'
+    )+
+
+    // CEO Assistant
+    '<div class="ty-side-section">CEO Assistant</div>'+
+    (mgr['ceo_asst']?
+      '<div style="font-size:.72rem;color:#4ade80;">✓ CEO Assistant hired — ALL teams auto-earn</div>':
+      '<button class="ty-panel-btn primary" onclick="tyHireManager(\'ceo_asst\',500000,\'all\')" '+((c.balance||0)<500000?'disabled':'')+'>'+
+        '👔 Hire CEO Assistant — ALL teams auto<span class="ty-panel-btn-price">₹5L</span></button>'
+    )+
+
+    '<div style="height:.5rem;"></div>';
+
+  document.getElementById('ty-side-body').innerHTML=body;
+  var panel=document.getElementById('ty-side-panel');
+  panel.classList.add('open');
+  _tyPanelOpen=true;
+}
+
+function tyClosePanel(){
+  var panel=document.getElementById('ty-side-panel');
+  if(panel)panel.classList.remove('open');
+  _tyPanelOpen=false;
+  _tySelectedRoom=null;
+}
+
+// ── UPDATE ROOM VISUALS (called from idle engine) ──
+function tyUpdateRoomVisuals(){
+  TY_TEAMS.forEach(function(t){
+    var room=document.getElementById('ty-room-'+t.id);
+    if(!room)return;
+    var collectAmt=Math.round(_tyCollectReady[t.id]||0);
+    var isReady=collectAmt>=100;
+    room.classList.toggle('collecting',isReady);
+    var collectBtn=document.getElementById('ty-collect-'+t.id);
+    if(collectBtn){
+      collectBtn.textContent=isReady?'+'+tyFmt(collectAmt):'---';
+      collectBtn.classList.toggle('ready',isReady);
+      collectBtn.disabled=!isReady;
+    }
+  });
+  tyUpdateCollectButtons();
+}
+
+// ── MODALS for actions (quiz, spend, projects, bank, customers) ──
+function tyOpenQuizModal(){
+  var ov=tyCreateModal('🎯 Quick Earn — Answer Questions','ty-quiz-modal-body');
+  tyRenderQuizInModal(ov);
+}
+
+function tyRenderQuizInModal(ov){
+  var q=TY_QUIZ_POOL[Math.floor(Math.random()*TY_QUIZ_POOL.length)];
+  _tyCurrentQuestion=q;
+  var body=document.getElementById('ty-quiz-modal-body');
+  if(!body)return;
+  body.innerHTML=
+    '<div style="font-size:.82rem;color:var(--text-muted);margin-bottom:.75rem;">Answer correctly to earn money. Unlimited questions!</div>'+
+    '<div style="font-size:.9rem;font-weight:600;color:var(--text-primary);margin-bottom:.75rem;line-height:1.5;">'+esc(q.q)+'</div>'+
+    '<div style="display:flex;flex-direction:column;gap:.4rem;" id="ty-q-opts">'+
+    q.opts.map(function(opt,i){
+      return '<button id="ty-q-opt-'+i+'" onclick="tyAnswerQuizModal('+i+',this.closest(\'.ty-modal-ov\'))" style="text-align:left;padding:.55rem .8rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:.8rem;cursor:pointer;color:var(--text-primary);transition:all .15s;"><strong style="color:var(--text-dim);margin-right:.4rem;">'+'ABCD'[i]+'.</strong>'+esc(opt)+'</button>';
+    }).join('')+
+    '</div>'+
+    '<div style="margin-top:.6rem;font-size:.72rem;color:var(--text-muted);">Reward: <strong style="color:#4ade80;">'+tyFmt(q.reward)+'</strong></div>';
+}
+
+async function tyAnswerQuizModal(idx,ov){
+  var q=_tyCurrentQuestion;
+  if(!q)return;
+  var correct=idx===q.ans;
+  for(var i=0;i<q.opts.length;i++){
+    var btn=document.getElementById('ty-q-opt-'+i);
+    if(btn){
+      btn.disabled=true;
+      if(i===q.ans)btn.style.cssText+=';background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.4);color:#4ade80;';
+      else if(i===idx&&!correct)btn.style.cssText+=';background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#ef4444;';
+    }
+  }
+  var body=document.getElementById('ty-quiz-modal-body');
+  if(correct){
+    var nb=(_tyCompany.balance||0)+q.reward;
+    try{
+      await sbUpdate('tycoon_companies','user_id',currentUser.id,{balance:nb,total_revenue:(_tyCompany.total_revenue||0)+q.reward,updated_at:new Date().toISOString()});
+      await sbInsert('tycoon_transactions',{user_id:currentUser.id,type:'quiz_earn',amount:q.reward,description:'Quiz correct answer'});
+      _tyCompany.balance=nb;_tyCompany.total_revenue=(_tyCompany.total_revenue||0)+q.reward;
+      tyFloatMoney('+'+tyFmt(q.reward));tyUpdateBalDisplay();
+    }catch(e){}
+    if(body){
+      var res=document.createElement('div');
+      res.style.cssText='margin-top:.65rem;padding:.55rem .8rem;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);border-radius:6px;font-size:.8rem;color:#4ade80;font-weight:600;';
+      res.textContent='✓ Correct! +'+tyFmt(q.reward)+' earned!';
+      body.appendChild(res);
+    }
+  } else {
+    if(body){
+      var res2=document.createElement('div');
+      res2.style.cssText='margin-top:.65rem;padding:.55rem .8rem;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:6px;font-size:.8rem;color:#ef4444;';
+      res2.textContent='✗ Wrong. Correct: '+q.opts[q.ans];
+      body.appendChild(res2);
+    }
+  }
+  if(body){
+    var nbtn=document.createElement('button');
+    nbtn.style.cssText='margin-top:.6rem;width:100%;padding:.5rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;';
+    nbtn.textContent='→ Next Question';
+    nbtn.onclick=function(){tyRenderQuizInModal(ov);};
+    body.appendChild(nbtn);
+  }
+}
+
+function tyOpenSpendModal(){
+  var ov=tyCreateModal('💸 Spend Money','ty-spend-modal-body');
+  var body=document.getElementById('ty-spend-modal-body');
+  if(!body)return;
+  var c=_tyCompany;
+  body.innerHTML=TY_MANUAL_SPEND.map(function(s){
+    var can=(c.balance||0)>=s.cost;
+    return '<div style="display:flex;align-items:center;gap:.65rem;padding:.6rem;background:var(--navy-hover);border-radius:8px;margin-bottom:.4rem;">'+
+      '<span style="font-size:1.3rem;">'+s.icon+'</span>'+
+      '<div style="flex:1;"><div style="font-size:.8rem;font-weight:600;color:var(--text-primary);">'+s.name+'</div>'+
+      '<div style="font-size:.68rem;color:var(--text-muted);">'+s.effect+'</div></div>'+
+      '<button style="padding:.3rem .7rem;background:'+(can?'var(--gold)':'var(--navy-card)')+';color:'+(can?'#fff':'var(--text-dim)')+';border:1px solid '+(can?'transparent':'var(--navy-border)')+';border-radius:6px;font-size:.72rem;font-weight:600;cursor:'+(can?'pointer':'not-allowed')+';" '+(can?'':'disabled')+' onclick="tySpend(\''+s.id+'\','+s.cost+',\''+esc(s.name)+'\',\''+esc(s.effect)+'\')">'+tyFmt(s.cost)+'</button>'+
+    '</div>';
+  }).join('');
+}
+
+async function tyOpenProjectModal(){
+  var ov=tyCreateModal('🚀 Projects','ty-proj-modal-body');
+  var body=document.getElementById('ty-proj-modal-body');
+  if(!body)return;
+  var c=_tyCompany;
+  var activeProjs=[];
+  try{activeProjs=await sbQuery('tycoon_projects','user_id=eq.'+currentUser.id+'&status=eq.active&select=*')||[];}catch(e){}
+  var activeIds=activeProjs.map(function(p){return p.project_id;});
+  var activeHtml=activeProjs.map(function(p){
+    var daysLeft=Math.max(0,Math.ceil((new Date(p.completes_date)-new Date())/86400000));
+    var pDef=TY_PROJECTS.find(function(x){return x.id===p.project_id;})||{days:7};
+    var pct=Math.min(100,Math.round((1-daysLeft/pDef.days)*100));
+    return '<div style="padding:.6rem;background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.2);border-radius:8px;margin-bottom:.4rem;">'+
+      '<div style="display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;color:var(--text-primary);margin-bottom:.3rem;"><span>🔄 '+esc(p.project_name)+'</span><span style="color:#4ade80;">'+daysLeft+'d left</span></div>'+
+      '<div style="height:4px;background:var(--navy-border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:#4ade80;border-radius:2px;"></div></div>'+
+      '<div style="font-size:.65rem;color:var(--text-muted);margin-top:.2rem;">Earns '+tyFmt(p.daily_earn)+'/day</div>'+
+    '</div>';
+  }).join('');
+  var availHtml=TY_PROJECTS.filter(function(p){return activeIds.indexOf(p.id)<0;}).map(function(p){
+    var can=(c.balance||0)>=p.cost;
+    return '<div style="display:flex;align-items:center;gap:.6rem;padding:.6rem;background:var(--navy-hover);border-radius:8px;margin-bottom:.4rem;">'+
+      '<div style="flex:1;"><div style="font-size:.8rem;font-weight:600;color:var(--text-primary);">🚀 '+p.name+'</div>'+
+      '<div style="font-size:.65rem;color:var(--text-muted);">'+p.days+'d · '+tyFmt(p.daily_earn)+'/day</div></div>'+
+      '<button style="padding:.3rem .7rem;background:'+(can?'var(--gold)':'var(--navy-card)')+';color:'+(can?'#fff':'var(--text-dim)')+';border:1px solid '+(can?'transparent':'var(--navy-border)')+';border-radius:6px;font-size:.72rem;font-weight:600;cursor:'+(can?'pointer':'not-allowed')+';" '+(can?'':'disabled')+' onclick="tyStartProject(\''+p.id+'\')">'+tyFmt(p.cost)+'</button>'+
+    '</div>';
+  }).join('');
+  body.innerHTML=(activeHtml?'<div style="font-size:.72rem;font-weight:600;color:var(--text-dim);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.08em;">Active</div>'+activeHtml:'')+
+    '<div style="font-size:.72rem;font-weight:600;color:var(--text-dim);margin:'+(activeHtml?'.6rem':'0')+' 0 .4rem;text-transform:uppercase;letter-spacing:.08em;">Available</div>'+
+    (availHtml||'<div style="color:var(--text-dim);font-size:.78rem;">All launched! 🎉</div>');
+}
+
+function tyOpenBankModal(){
+  var ov=tyCreateModal('🏦 Bank Loans','ty-bank-modal-body');
+  var body=document.getElementById('ty-bank-modal-body');
+  if(!body)return;
+  body.innerHTML='<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.65rem;">⚠ Loans accrue interest. Unpaid loans hurt reputation.</div>'+
+    TY_BANKS.map(function(b){
+      return '<div style="padding:.6rem;background:var(--navy-hover);border-radius:8px;margin-bottom:.4rem;">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem;">'+
+          '<div style="font-size:.8rem;font-weight:600;color:var(--text-primary);">🏦 '+b.name+'</div>'+
+          '<span style="font-size:.68rem;padding:2px 7px;border-radius:20px;background:rgba(76,118,168,.1);color:var(--accent-blue);">'+b.rate+'% p.a.</span>'+
+        '</div>'+
+        '<div style="font-size:.68rem;color:var(--text-muted);margin-bottom:.35rem;">Max: '+tyFmt(b.max)+'</div>'+
+        '<div style="display:flex;gap:.4rem;">'+
+          '<input type="number" id="loan-'+b.name.replace(/\s+/g,'')+'" placeholder="₹ Amount" style="flex:1;padding:.35rem .6rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:5px;font-size:.75rem;color:var(--text-primary);outline:none;"/>'+
+          '<button style="padding:.35rem .8rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-size:.75rem;font-weight:600;cursor:pointer;" onclick="tyTakeLoan(\''+b.name+'\','+b.rate+','+b.max+')">Borrow</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+}
+
+function tyOpenCustomersModal(){
+  var ov=tyCreateModal('👥 Today\'s Customers','ty-cust-modal-body');
+  var body=document.getElementById('ty-cust-modal-body');
+  if(!body)return;
+  var c=_tyCompany;
+  var ul=tyUL(c);
+  var priceMult=1+(tyUpEff('rnd',ul.rnd||0)/100);
+  body.innerHTML=(_tyCustomers||[]).map(function(cu,idx){return tyBuildCustCard(cu,idx,c,priceMult);}).join('')+
+    '<button style="width:100%;margin-top:.5rem;padding:.5rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:6px;font-size:.78rem;cursor:pointer;color:var(--text-muted);" onclick="tyFindWalkIn()">+ Walk-in (₹2,000 fee)</button>';
+}
+
+// ── MODAL HELPER ──
+function tyCreateModal(title,bodyId){
+  var existing=document.querySelector('.ty-modal-ov');
+  if(existing)document.body.removeChild(existing);
+  var ov=document.createElement('div');
+  ov.className='ty-modal-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.6);z-index:9000;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;';
+  ov.onclick=function(e){if(e.target===ov)document.body.removeChild(ov);};
+  ov.innerHTML='<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:480px;width:100%;max-height:80vh;overflow-y:auto;" onclick="event.stopPropagation()">'+
+    '<div style="padding:.85rem 1rem;border-bottom:1px solid var(--navy-border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--navy-card);z-index:1;">'+
+      '<div style="font-size:.9rem;font-weight:600;color:var(--text-primary);">'+title+'</div>'+
+      '<button onclick="document.body.removeChild(this.closest(\'.ty-modal-ov\'))" style="background:none;border:none;cursor:pointer;font-size:1rem;color:var(--text-muted);">✕</button>'+
+    '</div>'+
+    '<div id="'+bodyId+'" style="padding:.85rem 1rem;"></div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  return ov;
+}
+
+// ── UPDATE COLLECT ALL BUTTON ──
+function tyUpdateCollectButtons(){
+  var total=Object.values(_tyCollectReady).reduce(function(a,b){return a+b;},0);
+  var allBtn=document.getElementById('ty-collect-all');
+  if(!allBtn)return;
+  if(total>=500){
+    allBtn.textContent='💰 Collect All +'+tyFmt(Math.round(total));
+    allBtn.classList.add('ready');
+    allBtn.disabled=false;
+  } else {
+    allBtn.textContent='💰 Collect All';
+    allBtn.classList.remove('ready');
+    allBtn.disabled=true;
+  }
+  // Update individual rooms
+  tyUpdateRoomVisuals();
+}
+
+// ── OVERRIDE idle engine display update to use visual ──
+function tyUpdateLiveTicker(){
+  var ipm=_tyCompany?tyIncomePM(_tyCompany):0;
+  var el=document.getElementById('ty-live-ipm');
+  if(el)el.textContent=tyFmt(ipm)+'/min';
+  tyUpdateBalDisplay();
+  tyUpdateRoomVisuals();
+}
+
+function tyUpdateBalDisplay(){
+  var el=document.getElementById('ty-bal-display');
+  if(el){
+    el.textContent=tyFmt(_tyCompany?_tyCompany.balance:0);
+    el.classList.add('ty-levelup');
+    setTimeout(function(){if(el)el.classList.remove('ty-levelup');},400);
+  }
+}
+
 
 // Hook showPage for tycoon — handled in main wrapper above
 
