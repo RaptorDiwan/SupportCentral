@@ -10162,7 +10162,28 @@ var CT = (function(){
     return off;
   }
 
-  function agentCases(name){ return _cases.filter(function(c){ return nmMatch(c.Owner,name)&&isFlagged(c['Status Reason']); }); }
+  // Fuzzy name match for roster → CRM name differences
+  // e.g. roster "Abdul Rahim" matches CRM "Abdul Rahim A"
+  function nmFuzzy(rosterName, crmName){
+    if(!rosterName || !crmName) return false;
+    var a = (rosterName||'').toLowerCase().trim();
+    var b = (crmName||'').toLowerCase().trim();
+    // 1. Exact
+    if(a === b) return true;
+    // 2. One starts with the other (roster "Abdul Rahim" vs crm "Abdul Rahim A")
+    if(b.startsWith(a+' ') || a.startsWith(b+' ')) return true;
+    // 3. All words of shorter name appear at start of longer name
+    var wa = a.split(/\s+/), wb = b.split(/\s+/);
+    var shorter = wa.length <= wb.length ? wa : wb;
+    var longer  = wa.length <= wb.length ? wb : wa;
+    return shorter.every(function(w,i){ return longer[i] === w; });
+  }
+
+  function agentCases(name){
+    return _cases.filter(function(c){
+      return nmFuzzy(name, c.Owner) && isFlagged(c['Status Reason']);
+    });
+  }
   function activeCases(cases){ return cases.filter(function(c){ return !isHandled(c['Case Number']); }); }
   function staleCases(cases){ return activeCases(cases).filter(function(c){ return isStale(c['Modified On']); }); }
 
