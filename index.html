@@ -10271,8 +10271,12 @@ var CT = (function(){
         var email=getEmail(agent);
         var bg=aC(agent), ini=aI(agent), isR=_showReassignFor===agent;
         var maxD=Math.max.apply(null,cases.map(function(c){ return daysSince(c['Modified On']); }));
-        var mailBody=encodeURIComponent('Hi '+agent+',\n\nPlease follow up on these cases today:\n\n'+cases.map(function(c){ return '• '+c['Case Number']+' — '+c['Case Title']; }).join('\n')+'\n\nThank you.');
-        var mailSubj=encodeURIComponent('Follow-up Reminder: '+cases.length+' Case'+(cases.length!==1?'s':''));
+        var _firstName=agent.split(' ')[0];
+        var _sender=currentUser?currentUser.name.split(' ')[0]:'Diwan';
+        var _ticketList=cases.map(function(c){ return '• '+c['Case Number']+' – '+c['Case Title']; }).join('\n');
+        var _body='Hi '+_firstName+',\n\nPlease ensure all the below cases are followed up today.\n\n'+_ticketList+'\n\nKindly update the case status once actioned.\n\n-- '+_sender;
+        var mailBody=encodeURIComponent(_body);
+        var mailSubj=encodeURIComponent('Follow-up Reminder – Pending Cases ('+cases.length+')');
         var mailto=email?'mailto:'+email+'?subject='+mailSubj+'&body='+mailBody:'';
 
         html+='<div class="ct-agent-card">';
