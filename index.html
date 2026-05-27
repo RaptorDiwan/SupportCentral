@@ -1174,7 +1174,7 @@
   .main-content { padding-bottom: 4rem; }
 
   /* ── QUIZ & ASSESSMENT ── */
-  .qa-page { display:flex; flex-direction:column; gap:1.5rem; padding-bottom:5rem; }
+  .qa-page { display:flex; flex-direction:column; gap:1.5rem; padding-bottom:5rem; margin:0 auto; width:100%; }
   .qa-title { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:600; color:var(--text-primary); }
   .qa-sub { color:var(--text-muted); font-size:.875rem; margin-top:.2rem; }
 
@@ -1326,6 +1326,22 @@
 
   /* ── ROSTER REDESIGN ── */
   .roster-page { display:flex; flex-direction:column; gap:1.2rem; }
+
+  /* Roster month switcher */
+  .roster-month-tabs { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.75rem; }
+  .roster-month-btn {
+    padding:.32rem .8rem; border-radius:20px; font-size:.75rem; font-weight:600;
+    cursor:pointer; border:1px solid var(--navy-border);
+    background:var(--navy-card); color:var(--text-muted);
+    font-family:'DM Sans',sans-serif; transition:all .15s;
+  }
+  .roster-month-btn:hover { border-color:var(--gold-dim); color:var(--text-primary); }
+  .roster-month-btn.active {
+    background:rgba(239,73,60,.1); border-color:rgba(239,73,60,.3);
+    color:var(--gold-light); font-weight:700;
+  }
+  .roster-month-loading { font-size:.78rem; color:var(--text-muted); padding:.35rem .75rem; }
+
   .roster-controls { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
   .roster-search { flex:1; min-width:180px; padding:.55rem 1rem; background:var(--navy-card); border:1px solid var(--navy-border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:.875rem; color:var(--text-primary); outline:none; transition:border-color .2s; }
   .roster-search:focus { border-color:var(--gold-dim); }
@@ -2801,6 +2817,9 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
       <!-- ── ROSTER PAGE ── -->
       <div class="page" id="page-roster">
         <div class="roster-page">
+          <div class="roster-month-tabs" id="roster-month-tabs">
+            <!-- Month tabs injected by JS -->
+          </div>
           <div class="roster-controls">
             <input type="text" class="roster-search" id="roster-search" placeholder="&#128269; Search agent..." oninput="filterRoster(this.value)"/>
             <div class="roster-week-nav">
@@ -10039,38 +10058,7 @@ async function msgCreateGroup(btn){
   }catch(e){msg.textContent='Error: '+e.message;msg.style.display='block';btn.disabled=false;btn.textContent='Create Group';}
 }
 
-// ── Audio welcome ──
-function playWelcomeAudio(name){
-  try{
-    // Chime sound
-    var ctx=new(window.AudioContext||window.webkitAudioContext)();
-    var notes=[523,659,784,1047];
-    notes.forEach(function(freq,i){
-      var osc=ctx.createOscillator();
-      var gain=ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value=freq;
-      osc.type='sine';
-      gain.gain.setValueAtTime(0,ctx.currentTime+i*0.15);
-      gain.gain.linearRampToValueAtTime(0.18,ctx.currentTime+i*0.15+0.05);
-      gain.gain.linearRampToValueAtTime(0,ctx.currentTime+i*0.15+0.35);
-      osc.start(ctx.currentTime+i*0.15);
-      osc.stop(ctx.currentTime+i*0.15+0.4);
-    });
-    // Voice welcome after chime
-    setTimeout(function(){
-      if('speechSynthesis' in window){
-        var firstName=(name||'').split(' ')[0];
-        var msgs=['Welcome back, '+firstName+'! Have a great day.',
-                  'Good to see you, '+firstName+'! Lets have a productive day.',
-                  'Hello '+firstName+'! K7 Empire awaits you.'];
-        var msg=new SpeechSynthesisUtterance(msgs[Math.floor(Math.random()*msgs.length)]);
-        msg.rate=0.95; msg.pitch=1.05; msg.volume=0.8;
-        window.speechSynthesis.speak(msg);
-      }
-    },700);
-  }catch(e){}
-}
+// ── Audio welcome handled by playLoginAnnouncement in main script ──
 
 
 // Hook into enterDashboard
@@ -10078,10 +10066,6 @@ var _chatEnterRef=enterDashboard;
 enterDashboard=function(){
   _chatEnterRef();
   setTimeout(chatInit,1200);
-  // Play welcome audio
-  setTimeout(function(){
-    if(currentUser&&!_isSysLevel()) playWelcomeAudio(currentUser.name);
-  },800);
 };
 
 // Escape key — always goes back to list, never closes to last conv
@@ -11183,6 +11167,451 @@ CT.render = function(){
 window.addEventListener('DOMContentLoaded', function(){
   setTimeout(ctLoadAgentList, 2000);
 });
+
+</script>
+<script>
+// ══════════════════════════════════════════════════════════════
+//  ADDITIONS V2:
+//  1. Roster multi-month switcher
+//  2. Case Tracker — CRM vs Helpdesk toggle
+//  3. Vision Helpdesk API integration
+//  4. Roster URL admin panel per-month
+// ══════════════════════════════════════════════════════════════
+
+// ── ROSTER MONTH CONFIG ──
+var ROSTER_MONTHS = {
+  'Jan': { label:'Jan 2026', gid:'305209856'  },
+  'Feb': { label:'Feb 2026', gid:'952874924'  },
+  'Mar': { label:'Mar 2026', gid:'576729577'  },
+  'Apr': { label:'Apr 2026', gid:'1780653272' },
+  'May': { label:'May 2026', gid:'574438143'  },
+  'Jun': { label:'Jun 2026', gid:'914934387'  }
+};
+
+var _rosterBaseUrl = '2PACX-1vTGmLIzXLioRQFdy7h19uyav3E_LTEmmrde08fAwrCdPNfdV3sBR9EtV6AO8LjJocAz22Y_LDu4GQjM';
+var _rosterActiveMonth = null;
+
+function getRosterMonthUrl(gid){
+  var base = 'https://docs.google.com/spreadsheets/d/e/'+_rosterBaseUrl+'/pub?gid='+gid+'&single=true&output=csv';
+  return base;
+}
+
+function initRosterMonthTabs(){
+  var container = document.getElementById('roster-month-tabs');
+  if(!container) return;
+
+  // Load custom URLs from Supabase settings if available
+  loadRosterMonthSettings().then(function(){
+    var today = new Date();
+    var monthKeys = ['Jan','Feb','Mar','Apr','May','Jun'];
+    var currentMonthKey = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][today.getMonth()];
+
+    var html = '<span style="font-size:.72rem;color:var(--text-muted);margin-right:.3rem;align-self:center;">Month:</span>';
+    monthKeys.forEach(function(key){
+      var isActive = key === currentMonthKey || (!currentMonthKey && key === 'Jun');
+      html += '<button class="roster-month-btn'+(isActive?' active':'')+'" '+
+        'onclick="switchRosterMonth(\''+key+'\')" id="rmb-'+key+'">'+
+        ROSTER_MONTHS[key].label+'</button>';
+    });
+    container.innerHTML = html;
+
+    // Load current month
+    var activeKey = monthKeys.indexOf(currentMonthKey) > -1 ? currentMonthKey : 'Jun';
+    _rosterActiveMonth = activeKey;
+    switchRosterMonth(activeKey, true);
+  });
+}
+
+async function loadRosterMonthSettings(){
+  try{
+    // Load any custom per-month URLs saved in settings
+    var rows = await sbQuery('settings','key=like.roster_url_%&select=key,value');
+    if(rows && rows.length){
+      rows.forEach(function(r){
+        var key = r.key.replace('roster_url_','').charAt(0).toUpperCase()+r.key.replace('roster_url_','').slice(1);
+        if(ROSTER_MONTHS[key] && r.value){
+          ROSTER_MONTHS[key].customUrl = r.value;
+        }
+      });
+    }
+  }catch(e){ console.warn('loadRosterMonthSettings:', e.message); }
+}
+
+function switchRosterMonth(key, silent){
+  _rosterActiveMonth = key;
+  // Update active button
+  ['Jan','Feb','Mar','Apr','May','Jun'].forEach(function(k){
+    var btn = document.getElementById('rmb-'+k);
+    if(btn) btn.classList.toggle('active', k === key);
+  });
+
+  var month = ROSTER_MONTHS[key];
+  if(!month) return;
+  var url = month.customUrl || getRosterMonthUrl(month.gid);
+  window._rosterCsvUrl = url;
+
+  if(!silent){
+    // Force reload of roster with new URL
+    if(typeof loadRosterData === 'function') loadRosterData();
+  }
+}
+
+// Hook into roster page show
+(function(){
+  var _origShow = showPage;
+  showPage = function(id, elem){
+    _origShow(id, elem);
+    if(id === 'roster'){
+      setTimeout(initRosterMonthTabs, 100);
+    }
+  };
+})();
+
+// ══════════════════════════════════════════
+//  CASE TRACKER — CRM vs HELPDESK TOGGLE
+// ══════════════════════════════════════════
+
+var _ctSource = 'crm'; // 'crm' or 'helpdesk'
+
+// VH config
+var VH_URL     = 'https://support.k7computing.com';
+var VH_API_KEY = 'MFp5ZW9hbkZ5YWFoVXFXZ202aXN4YWVWVTluT3A4elEwbG5LbWFLbXlwYz0';
+
+// VH state
+var _vhTickets  = [];
+var _vhActions  = {};
+var _vhLoading  = false;
+var _vhLoaded   = false;
+var _vhFilterAgent  = '';
+var _vhFilterStatus = '';
+var _vhSearchQ      = '';
+
+// VH status flags
+var VH_OPEN_STATUSES = ['open','pending','in progress','waiting','on hold'];
+function vhIsFlagged(s){ return VH_OPEN_STATUSES.indexOf((s||'').toLowerCase().trim()) > -1; }
+
+function vhIsStale(dateStr){
+  if(!dateStr) return false;
+  var d = new Date(dateStr);
+  if(isNaN(d.getTime())) return false;
+  var t = new Date();
+  return d.getFullYear()!==t.getFullYear()||d.getMonth()!==t.getMonth()||d.getDate()!==t.getDate();
+}
+
+// Inject toggle CSS
+(function(){
+  var s = document.createElement('style');
+  s.textContent = `
+  .ct-source-toggle {
+    display:inline-flex; background:var(--navy-hover);
+    border:1px solid var(--navy-border); border-radius:25px;
+    padding:.2rem; gap:.2rem; margin-bottom:1.1rem;
+  }
+  .ct-source-btn {
+    padding:.35rem 1.1rem; border-radius:20px; font-size:.78rem; font-weight:600;
+    cursor:pointer; border:none; background:none; color:var(--text-muted);
+    font-family:'DM Sans',sans-serif; transition:all .18s;
+  }
+  .ct-source-btn.active {
+    background:var(--navy-card); color:var(--text-primary);
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  .ct-source-btn.crm-btn.active  { color:var(--accent-blue); }
+  .ct-source-btn.vh-btn.active   { color:#10B981; }
+  .vh-stat-val.green { color:#10B981; }
+  .vh-empty { text-align:center;padding:3rem 1.5rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius); }
+  .vh-empty-ico { font-size:2.5rem;margin-bottom:.6rem; }
+  .vh-empty-ttl { font-size:.94rem;font-weight:600;color:var(--text-primary);margin-bottom:.32rem; }
+  .vh-empty-sub { font-size:.79rem;color:var(--text-muted);line-height:1.65;max-width:300px;margin:0 auto; }
+  .vh-badge { display:inline-flex;align-items:center;gap:.26rem;padding:.16rem .52rem;border-radius:20px;font-size:.69rem;font-weight:600;white-space:nowrap; }
+  .vh-badge.open    { background:rgba(239,73,60,.1);color:var(--accent-red);border:1px solid rgba(239,73,60,.2); }
+  .vh-badge.pending { background:rgba(217,119,6,.1);color:#D97706;border:1px solid rgba(217,119,6,.2); }
+  .vh-badge.stale   { background:rgba(234,88,12,.1);color:#EA580C;border:1px solid rgba(234,88,12,.2); }
+  `;
+  document.head.appendChild(s);
+})();
+
+// Override CT render to inject toggle
+var _origCTRenderFn = CT.render.bind(CT);
+CT.render = function(){
+  // Load emails and actions, then render with toggle
+  var root = document.getElementById('ct-root');
+  if(!root) return;
+
+  // Inject toggle at top
+  var toggleHtml = '<div class="ct-source-toggle">'+
+    '<button class="ct-source-btn crm-btn'+(_ctSource==='crm'?' active':'')+'" onclick="CT.switchSource(\'crm\')">📊 CRM Cases</button>'+
+    '<button class="ct-source-btn vh-btn'+(_ctSource==='helpdesk'?' active':'')+'" onclick="CT.switchSource(\'helpdesk\')">🎫 Helpdesk Tickets</button>'+
+  '</div>';
+
+  if(_ctSource === 'crm'){
+    _origCTRenderFn();
+    // Prepend toggle
+    setTimeout(function(){
+      var r = document.getElementById('ct-root');
+      if(r) r.innerHTML = toggleHtml + r.innerHTML;
+    }, 50);
+  } else {
+    renderVH(root, toggleHtml);
+  }
+};
+
+CT.switchSource = function(src){
+  _ctSource = src;
+  CT.render();
+};
+
+// ── VH API fetch ──
+async function fetchVHTickets(){
+  _vhLoading = true;
+  try{
+    // Vision Helpdesk Get Tickets API
+    // GET /api/tickets.json?apikey=KEY&status=open
+    var url = VH_URL + '/api/tickets.json?apikey=' + encodeURIComponent(VH_API_KEY) +
+      '&status=open&count=200&sortby=lastactivity&sortorder=asc';
+
+    var res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if(!res.ok) throw new Error('VH API error: '+res.status+' '+res.statusText);
+    var data = await res.json();
+    _vhTickets = data.tickets || data || [];
+    _vhLoaded = true;
+  }catch(e){
+    console.warn('VH fetch error:', e.message);
+    throw e;
+  } finally {
+    _vhLoading = false;
+  }
+}
+
+// ── VH Render ──
+function renderVH(root, toggleHtml){
+  var isAdmin = typeof isAdminUser==='function' ? isAdminUser() : false;
+
+  var html = toggleHtml + '<div class="ct-page-wrap">';
+  html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.1rem;">';
+  html += '<div><h1 class="ct-page-title">Helpdesk Tickets</h1><p class="ct-page-sub">Live from Vision Helpdesk · support.k7computing.com</p></div>';
+  html += '<button class="xc-btn-sec" style="font-size:.78rem;" onclick="CT.refreshVH()">⟳ Refresh</button>';
+  html += '</div>';
+
+  if(_vhLoading){
+    html += '<div class="ct-loading" style="display:flex;align-items:center;gap:.75rem;padding:2.5rem 1rem;color:var(--text-muted);font-size:.875rem;">'+
+      '<div class="ct-spinner"></div>Loading tickets from Vision Helpdesk…</div>';
+    root.innerHTML = html + '</div>';
+    return;
+  }
+
+  if(!_vhLoaded){
+    html += '<div class="vh-empty"><div class="vh-empty-ico">🎫</div>'+
+      '<div class="vh-empty-ttl">Connect to Vision Helpdesk</div>'+
+      '<div class="vh-empty-sub">Click Refresh to load live tickets from Vision Helpdesk.</div>'+
+      '<div style="margin-top:1rem;"><button class="ct-ms-btn" style="background:var(--gold);color:#fff;border:none;padding:.6rem 1.4rem;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;" onclick="CT.refreshVH()">🎫 Load Tickets</button></div>'+
+      '</div>';
+    root.innerHTML = html + '</div>';
+    return;
+  }
+
+  var flagged = _vhTickets.filter(function(t){ return vhIsFlagged(t.status||t.tstatus); });
+  var stale   = flagged.filter(function(t){ return vhIsStale(t.lastactivity||t.updated_at||t.date_updated); });
+  var total   = flagged.length;
+
+  // Stats
+  html += '<div class="ct-stats-row">';
+  html += '<div class="ct-stat"><div class="ct-stat-label">Total Open</div><div class="ct-stat-val">'+_vhTickets.length+'</div></div>';
+  html += '<div class="ct-stat"><div class="ct-stat-label">Needs Action</div><div class="ct-stat-val amber">'+total+'</div></div>';
+  html += '<div class="ct-stat"><div class="ct-stat-label">No Follow-up</div><div class="ct-stat-val orange">'+stale.length+'</div></div>';
+  html += '<div class="ct-stat"><div class="ct-stat-label">Last Refresh</div><div class="ct-stat-val" style="font-size:.9rem;color:var(--text-muted);">'+new Date().toLocaleTimeString()+'</div></div>';
+  html += '</div>';
+
+  if(!flagged.length){
+    html += '<div class="vh-empty"><div class="vh-empty-ico">✅</div>'+
+      '<div class="vh-empty-ttl">All clear!</div>'+
+      '<div class="vh-empty-sub">No open tickets in Vision Helpdesk right now.</div></div>';
+    root.innerHTML = html + '</div>';
+    return;
+  }
+
+  // Filters
+  var agents = {};
+  flagged.forEach(function(t){ var a=t.staff_name||t.assigned_to||''; if(a) agents[a]=1; });
+  var agentList = Object.keys(agents).sort();
+
+  html += '<div class="ct-table-card">';
+  html += '<div class="ct-table-hdr">';
+  html += '<span class="ct-table-title">'+flagged.length+' tickets</span>';
+  html += '<input class="ct-fi" placeholder="🔍 Search…" oninput="CT.vhSearch(this.value)" value="'+escHTML(_vhSearchQ)+'"/>';
+  html += '<select class="ct-fi" onchange="CT.vhFilterAgent(this.value)">';
+  html += '<option value="">All Agents</option>';
+  agentList.forEach(function(a){ html += '<option value="'+escHTML(a)+'"'+(_vhFilterAgent===a?' selected':'')+'>'+escHTML(a)+'</option>'; });
+  html += '</select>';
+  html += '<select class="ct-fi" onchange="CT.vhFilterStatus(this.value)">';
+  html += '<option value="">All Status</option>';
+  html += '<option value="stale"'+(_vhFilterStatus==='stale'?' selected':'')+'>No Follow-up Today</option>';
+  html += '</select>';
+  html += '</div>';
+
+  // Filter
+  var filtered = flagged.filter(function(t){
+    var q = _vhSearchQ.toLowerCase();
+    var mQ = !q || (t.ticket_id||'').toLowerCase().includes(q) ||
+      (t.subject||t.title||'').toLowerCase().includes(q) ||
+      (t.staff_name||'').toLowerCase().includes(q) ||
+      (t.full_name||t.client_name||'').toLowerCase().includes(q);
+    var mA = !_vhFilterAgent || (t.staff_name||'')=== _vhFilterAgent;
+    var mS = !_vhFilterStatus || (_vhFilterStatus==='stale' && vhIsStale(t.lastactivity||t.updated_at||t.date_updated));
+    return mQ && mA && mS;
+  });
+
+  if(!filtered.length){
+    html += '<div class="ct-all-clear"><div class="ct-ac-ico">🔍</div>No tickets match filters</div></div>';
+    root.innerHTML = html + '</div>';
+    return;
+  }
+
+  html += '<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr>';
+  html += '<th>Ticket #</th><th>Subject</th><th>Agent</th><th>Status</th><th>Client</th><th>Last Activity</th><th>Follow-up</th>';
+  html += '</tr></thead><tbody>';
+
+  filtered.forEach(function(t){
+    var tid    = t.ticket_id || t.id || '—';
+    var subj   = t.subject || t.title || '—';
+    var agent  = t.staff_name || t.assigned_to || 'Unassigned';
+    var status = t.status || t.tstatus || '—';
+    var client = t.full_name || t.client_name || t.email || '—';
+    var lastAct= t.lastactivity || t.updated_at || t.date_updated || '';
+    var staleRow = vhIsStale(lastAct);
+    var days   = lastAct ? Math.floor((Date.now()-new Date(lastAct).getTime())/86400000) : 0;
+    var bg = CT._aC ? CT._aC(agent) : '#3B82F6';
+    var ini = (agent||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+    var rowCls = staleRow ? 'row-stale' : '';
+
+    html += '<tr class="'+rowCls+'">';
+    html += '<td><span style="font-family:monospace;font-size:.76rem;font-weight:600;color:#10B981;">'+escHTML(tid)+'</span></td>';
+    html += '<td><div style="font-weight:500;color:var(--text-primary);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHTML(subj)+'</div>';
+    html += '<div style="font-size:.7rem;color:var(--text-muted);">'+escHTML(client)+'</div></td>';
+    html += '<td><div class="ct-own"><div class="ct-own-av" style="background:'+bg+';">'+ini+'</div><span class="ct-own-nm">'+escHTML(agent)+'</span></div></td>';
+    html += '<td><span class="vh-badge '+(status.toLowerCase()==='open'?'open':'pending')+'">'+escHTML(status)+'</span></td>';
+    html += '<td style="font-size:.74rem;color:var(--text-muted);">'+escHTML(client)+'</td>';
+    html += '<td style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;">'+(lastAct?new Date(lastAct).toLocaleDateString():'—')+'</td>';
+    html += '<td>'+(staleRow?'<span class="vh-badge stale">'+days+'d ago</span>':'<span style="font-size:.71rem;color:#1a7a45;">✓ Today</span>')+'</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div></div>';
+  root.innerHTML = html + '</div>';
+}
+
+// VH public API extensions
+CT.refreshVH = function(){
+  var root = document.getElementById('ct-root');
+  if(!root) return;
+  var isAdmin = typeof isAdminUser==='function' ? isAdminUser() : false;
+  var toggleHtml = '<div class="ct-source-toggle">'+
+    '<button class="ct-source-btn crm-btn" onclick="CT.switchSource(\'crm\')">📊 CRM Cases</button>'+
+    '<button class="ct-source-btn vh-btn active" onclick="CT.switchSource(\'helpdesk\')">🎫 Helpdesk Tickets</button>'+
+  '</div>';
+  _vhLoading = true;
+  renderVH(root, toggleHtml); // show loading spinner
+  fetchVHTickets()
+    .then(function(){ renderVH(root, toggleHtml); })
+    .catch(function(e){
+      root.innerHTML = toggleHtml + '<div class="vh-empty"><div class="vh-empty-ico">❌</div>'+
+        '<div class="vh-empty-ttl">Could not connect to Vision Helpdesk</div>'+
+        '<div class="vh-empty-sub">'+escHTML(e.message)+'<br><br>This may be a CORS restriction. Vision Helpdesk API may need to whitelist your portal domain.</div>'+
+        '</div>';
+    });
+};
+
+CT.vhSearch       = function(v){ _vhSearchQ=v;       CT.render(); };
+CT.vhFilterAgent  = function(v){ _vhFilterAgent=v;   CT.render(); };
+CT.vhFilterStatus = function(v){ _vhFilterStatus=v;  CT.render(); };
+
+// ══════════════════════════════════════════
+//  ROSTER MONTH ADMIN SETTINGS PANEL
+// ══════════════════════════════════════════
+
+// Add roster month URL management to the existing Update Roster URL dialog
+var _origOpenRosterUrl = window.openRosterUrlDialog || null;
+
+function openRosterUrlDialogEnhanced(){
+  // Build multi-month settings UI
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(7,13,45,.6);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var monthNames = {'Jan':'January','Feb':'February','Mar':'March','Apr':'April','May':'May','Jun':'June',
+    'Jul':'July','Aug':'August','Sep':'September','Oct':'October','Nov':'November','Dec':'December'};
+
+  var rows = months.map(function(m){
+    var cfg = ROSTER_MONTHS[m];
+    var val = cfg ? (cfg.customUrl || (cfg.gid ? getRosterMonthUrl(cfg.gid) : '')) : '';
+    return '<div style="margin-bottom:.75rem;">'+
+      '<label style="font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.3rem;">'+monthNames[m]+' 2026</label>'+
+      '<input id="rmu-'+m+'" class="xc-input" style="font-size:.75rem;" placeholder="Paste published CSV URL for '+monthNames[m]+'..." value="'+escHTML(val)+'"/>'+
+    '</div>';
+  }).join('');
+
+  overlay.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:540px;width:100%;max-height:85vh;overflow-y:auto;padding:1.5rem;">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">'+
+      '<h3 style="font-size:1rem;font-weight:600;color:var(--text-primary);">📅 Roster URLs by Month</h3>'+
+      '<button onclick="document.body.removeChild(this.closest(\'div[style*=position\\:fixed]\'))" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text-muted);">✕</button>'+
+    '</div>'+
+    '<p style="font-size:.78rem;color:var(--text-muted);margin-bottom:1.1rem;">Paste the Google Sheets published CSV URL for each month. Leave blank if not available yet. Get URL: Google Sheets → File → Share → Publish to web → select tab → CSV → Copy link.</p>'+
+    rows+
+    '<div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem;">'+
+      '<button onclick="document.body.removeChild(this.closest(\'div[style*=position\\:fixed]\'))" class="xc-btn-sec">Cancel</button>'+
+      '<button onclick="saveRosterMonthUrls(this)" class="xc-btn">💾 Save All</button>'+
+    '</div>'+
+    '<div id="rmu-status" style="font-size:.78rem;margin-top:.75rem;"></div>'+
+  '</div>';
+
+  document.body.appendChild(overlay);
+}
+
+async function saveRosterMonthUrls(btn){
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var status = document.getElementById('rmu-status');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  var saved = 0;
+  for(var i=0; i<months.length; i++){
+    var m = months[i];
+    var inp = document.getElementById('rmu-'+m);
+    if(!inp) continue;
+    var val = inp.value.trim();
+    var key = 'roster_url_'+m.toLowerCase();
+    try{
+      // Try update first, then insert
+      try{ await sbUpdate('settings','key',key,{value:val}); }
+      catch(e){ await sbInsert('settings',{key:key,value:val}); }
+      if(ROSTER_MONTHS[m]) ROSTER_MONTHS[m].customUrl = val || null;
+      saved++;
+    }catch(e){ console.warn('Save error for '+m+':', e.message); }
+  }
+
+  btn.disabled = false; btn.textContent = '💾 Save All';
+  if(status) status.innerHTML = '<span style="color:#1a7a45;">✅ Saved '+saved+' month URLs</span>';
+  // Refresh roster tabs
+  initRosterMonthTabs();
+}
+
+// Override the existing Roster URL button to open enhanced dialog
+window.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    // Find the Update Roster URL button and override it
+    var rosterBtns = document.querySelectorAll('button');
+    rosterBtns.forEach(function(btn){
+      if(btn.textContent.includes('Update Roster URL') || btn.textContent.includes('Roster URL')){
+        btn.onclick = function(){ openRosterUrlDialogEnhanced(); };
+      }
+    });
+  }, 2000);
+});
+
+function escHTML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 </script>
 </body>
