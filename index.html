@@ -3484,17 +3484,19 @@ async function doLogin(){
 }
 
 function doLogout(){
-  // Check if agent has unhandled reassigned cases before logout
-  if(typeof CT !== 'undefined' && currentUser){
-    var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
-    if(!isAdmin){
-      var pending=CT.getPendingReassigned();
-      if(pending > 0){
-        var go=confirm('⚠️ You have '+pending+' reassigned case'+(pending!==1?'s':'')+' that still need action.\n\nThese cases were assigned to you and are not yet handled.\n\nYou can still log out — but please action them when you return.');
-        if(!go) return; // let them cancel logout
+  // Check if agent has unhandled reassigned cases — wrapped in try/catch so it NEVER blocks logout
+  try {
+    if(typeof CT !== 'undefined' && currentUser){
+      var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
+      if(!isAdmin){
+        var pending=CT.getPendingReassigned ? CT.getPendingReassigned() : 0;
+        if(pending > 0){
+          var go=confirm('⚠️ You have '+pending+' reassigned case'+(pending!==1?'s':'')+' that still need action.\n\nYou can still log out — please action them when you return.');
+          if(!go) return;
+        }
       }
     }
-  }
+  } catch(e){ console.warn('Logout check skipped:', e.message); }
   // NOTE: recordLogout intentionally NOT called here.
   // End Work is a separate action — logging out of the portal should not auto-close the work session.
   if(_loginClockInterval)clearInterval(_loginClockInterval);
@@ -3544,47 +3546,58 @@ function enterDashboard(){
 
 function playLoginAnnouncement(firstName){
   try {
-    // Play a soft chime first using AudioContext
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Play the airplane PA sound first
+    var audio = new Audio('Airplane_Sound.mp3');
+    audio.volume = 0.7;
 
-    // Ding-dong chime — two tones like airplane PA
-    function playTone(freq, startTime, duration, vol){
-      var osc  = ctx.createOscillator();
-      var gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, startTime);
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(vol||0.3, startTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    }
+    // Once audio ends, say "Welcome, [Name]" in calm voice
+    audio.addEventListener('ended', function(){
+      speakWelcome(firstName);
+    });
 
-    var t = ctx.currentTime + 0.1;
-    playTone(880, t,       0.6, 0.25);  // high ding
-    playTone(659, t+0.65,  0.8, 0.2);   // low dong
+    // If audio fails to load, still speak
+    audio.addEventListener('error', function(){
+      speakWelcome(firstName);
+    });
 
-    // After chime, speak the welcome message
-    setTimeout(function(){
-      if(!window.speechSynthesis) return;
-      var msg = new SpeechSynthesisUtterance('Welcome, ' + firstName);
-      msg.rate   = 0.88;
-      msg.pitch  = 1.0;
-      msg.volume = 0.85;
-      // Try to pick a calm female voice (cabin crew style)
+    audio.play().catch(function(){
+      // Autoplay blocked — speak directly
+      speakWelcome(firstName);
+    });
+
+  } catch(e){
+    console.log('Audio not available:', e.message);
+    speakWelcome(firstName);
+  }
+}
+
+function speakWelcome(firstName){
+  try {
+    if(!window.speechSynthesis) return;
+    var msg = new SpeechSynthesisUtterance('Welcome, ' + firstName);
+    msg.rate   = 0.82;   // slow, calm
+    msg.pitch  = 1.05;   // slightly warm
+    msg.volume = 0.9;
+
+    // Pick best calm female voice available
+    function doSpeak(){
       var voices = window.speechSynthesis.getVoices();
       var preferred = voices.find(function(v){
-        return /female|samantha|karen|victoria|moira|fiona|tessa/i.test(v.name);
+        return /samantha|karen|victoria|moira|fiona|tessa|zira|hazel/i.test(v.name);
       }) || voices.find(function(v){
-        return v.lang.startsWith('en') && !v.name.toLowerCase().includes('male');
+        return v.lang && v.lang.startsWith('en') && !/male/i.test(v.name);
       }) || voices[0];
       if(preferred) msg.voice = preferred;
       window.speechSynthesis.speak(msg);
-    }, 1500); // speak after chime finishes
+    }
 
-  } catch(e){ console.log('Audio not available:', e.message); }
+    // Voices may not be loaded yet
+    if(window.speechSynthesis.getVoices().length > 0){
+      doSpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = doSpeak;
+    }
+  } catch(e){ console.log('Speech not available:', e.message); }
 }
 
 window.addEventListener('DOMContentLoaded',function(){
