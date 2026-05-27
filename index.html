@@ -3599,13 +3599,15 @@ function updateAdminVisibility(){
     tsItem.style.display=canSeeTs?'flex':'none';
   }
   // K7 Empire: check gaming_enabled setting
+  // Default to HIDDEN — only show if explicitly enabled in settings
   sbQuery('settings','key=eq.gaming_enabled&select=value').then(function(rows){
-    var enabled=!rows||!rows.length||rows[0].value!=='false';
+    var enabled = rows && rows.length && rows[0].value === 'true';
     var empItem=document.getElementById('sidebar-empire');
     if(empItem) empItem.style.display=enabled?'flex':'none';
   }).catch(function(){
+    // On error — keep hidden, don't default to showing
     var empItem=document.getElementById('sidebar-empire');
-    if(empItem) empItem.style.display='flex';
+    if(empItem) empItem.style.display='none';
   });
 }
 function openSimulation(){window.open('simulation.html','_blank');}
@@ -3696,7 +3698,7 @@ async function toggleGamingFeature(enabled){
 async function loadGamingState(){
   try{
     var rows=await sbQuery('settings','key=eq.gaming_enabled&select=value');
-    var enabled=!rows||!rows.length||rows[0].value!=='false';
+    var enabled = rows && rows.length && rows[0].value === 'true';
     var tog=document.getElementById('gaming-toggle');
     var label=document.getElementById('gaming-status-label');
     if(tog) tog.checked=enabled;
