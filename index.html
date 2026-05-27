@@ -10409,9 +10409,9 @@ var CT = (function(){
 
         if(isR){
           var riId='ct-ri-'+escH(agent.replace(/\W/g,'_'));
-          html+='<div class="ct-ri-row" id="ct-add-wrap-'+escH(agent.replace(/\W/g,'_'))+'">'+
-            '<input class="ct-agent-dd-inp" id="'+riId+'" placeholder="Type agent name to reassign all stale cases..." autocomplete="off" '+
-              'oninput="ctAgentDropdown(\''+escH(agent.replace(/\W/g,'_'))+'\')" />'+
+          html+='<div class="ct-ri-row" id="ct-add-wrap-'+riId+'">'+
+            '<input class="ct-agent-dd-inp" id="'+riId+'" placeholder="Type agent name..." autocomplete="off" '+
+              'oninput="ctAgentDropdown(\''+riId+'\')" />'+
             '<button class="ct-ri-save" onclick="CT.confirmReassignFromInput(\''+escH(agent)+'\',\''+riId+'\')">Reassign All</button>'+
           '</div>';
         }
@@ -10468,9 +10468,9 @@ var CT = (function(){
           html+='<button class="ct-reassign-btn" style="font-size:.68rem;padding:.2rem .5rem;" onclick="event.stopPropagation();CT.showAssign(\''+escH(cn)+'\')">👤 '+(isReassigningThis?'Cancel':'Reassign')+'</button>';
           html+='</div>';
           if(isReassigningThis){
-            html+='<div style="display:flex;gap:.35rem;width:100%;" id="ct-add-wrap-'+escH(cn.replace(/[^a-zA-Z0-9]/g,'_'))+'">'+
+            html+='<div style="display:flex;gap:.35rem;width:100%;" id="ct-add-wrap-'+lriId+'">'+
               '<input class="ct-agent-dd-inp" id="'+lriId+'" placeholder="Type agent name..." autocomplete="off" '+
-                'oninput="ctAgentDropdown(\''+escH(cn.replace(/[^a-zA-Z0-9]/g,'_'))+'\')"/>'+
+                'oninput="ctAgentDropdown(\''+lriId+'\')"/>'+
               '<button class="ct-ri-save" onclick="CT.confirmReassignCase(\''+escH(cn)+'\',\''+escH(cTitle)+'\',\''+escH(ow)+'\',\''+lriId+'\')">Assign</button>'+
             '</div>';
           }
@@ -10741,9 +10741,17 @@ var CT = (function(){
     toggleEl: function(id){ var el=document.getElementById(id); if(el) el.style.display=el.style.display==='none'?'block':'none'; },
     toggleReassign: function(a){ _showReassignFor=(_showReassignFor===a)?null:a; renderCT(); },
     confirmReassign: function(agent){
-      var inp=document.getElementById('ct-ri-'+agent.replace(/\W/g,'_'));
+      // Legacy — now handled by confirmReassignFromInput
+      // Try to find any active reassign input for this agent
+      var key=agent.replace(/\W/g,'_');
+      var inp=document.getElementById('ct-ri-'+key);
+      if(!inp){
+        // Try to find by searching all ct-ri- prefixed inputs
+        var allInps=document.querySelectorAll('[id^="ct-ri-"]');
+        if(allInps.length) inp=allInps[0];
+      }
       var val=inp?inp.value.trim():'';
-      if(!val){ alert('Please type a name.'); return; }
+      if(!val){ alert('Please type an agent name in the input field.'); return; }
       var cases=agentCases(agent).filter(function(c){ return isStale(c['Modified On'])&&!isHandled(c['Case Number']); });
       Promise.all(cases.map(function(c){ return saveAction(c['Case Number'],c['Case Title'],agent,'Assigned To',val); })).then(function(){ _showReassignFor=null; renderCT(); });
     },
@@ -10785,6 +10793,15 @@ var CT = (function(){
         + '?subject=' + subject
         + '&body='    + body;
       window.open(url, '_blank');
+    },
+
+    clearStaleActions: function(){
+      // Run this from browser console if wrong actions are showing: CT.clearStaleActions()
+      if(!_uploadDate) return;
+      fetch(SUPABASE_URL+'/rest/v1/crm_case_actions?upload_date=eq.'+_uploadDate,
+        {method:'DELETE',headers:sbHeaders()})
+        .then(function(){ _actions={}; renderCT(); alert('Cleared. Reload page to refresh.'); })
+        .catch(function(e){ alert('Error: '+e.message); });
     },
 
     hideDashWidget: function(){
@@ -11026,10 +11043,17 @@ async function ctLoadAgentList(){
 
 // ── Render agent autocomplete ──
 function ctAgentDropdown(inputId, onSelect){
-  var wrap=document.getElementById('ct-add-wrap-'+inputId);
-  if(!wrap) return;
+  // First try wrapper by full inputId, then strip prefix
+  var wrap=document.getElementById('ct-add-wrap-'+inputId) || document.getElementById(inputId);
+  if(!wrap) wrap = document.getElementById('ct-add-wrap-'+inputId.replace(/^ct-[a-z]+-/,''));
   var inp=document.getElementById(inputId);
   if(!inp) return;
+  if(!wrap) wrap=inp.parentElement;
+  // Ensure agent list is loaded
+  if(!_ctAgentList.length){
+    ctLoadAgentList().then(function(){ ctAgentDropdown(inputId, onSelect); });
+    return;
+  }
 
   var q=(inp.value||'').toLowerCase().trim();
   // Remove existing list
