@@ -3483,6 +3483,17 @@ async function doLogin(){
 }
 
 function doLogout(){
+  // Check if agent has unhandled reassigned cases before logout
+  if(typeof CT !== 'undefined' && currentUser){
+    var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
+    if(!isAdmin){
+      var pending=CT.getPendingReassigned();
+      if(pending > 0){
+        var go=confirm('⚠️ You have '+pending+' reassigned case'+(pending!==1?'s':'')+' that still need action.\n\nThese cases were assigned to you and are not yet handled.\n\nYou can still log out — but please action them when you return.');
+        if(!go) return; // let them cancel logout
+      }
+    }
+  }
   // NOTE: recordLogout intentionally NOT called here.
   // End Work is a separate action — logging out of the portal should not auto-close the work session.
   if(_loginClockInterval)clearInterval(_loginClockInterval);
@@ -10397,7 +10408,12 @@ var CT = (function(){
         html+='</div>';
 
         if(isR){
-          html+='<div class="ct-ri-row"><input class="ct-ri-inp" id="ct-ri-'+escH(agent.replace(/\W/g,'_'))+'" placeholder="Reassign all stale cases to…"/><button class="ct-ri-save" onclick="CT.confirmReassign(\''+escH(agent)+'\')">Confirm</button></div>';
+          var riId='ct-ri-'+escH(agent.replace(/\W/g,'_'));
+          html+='<div class="ct-ri-row" id="ct-add-wrap-'+escH(agent.replace(/\W/g,'_'))+'">'+
+            '<input class="ct-agent-dd-inp" id="'+riId+'" placeholder="Type agent name to reassign all stale cases..." autocomplete="off" '+
+              'oninput="ctAgentDropdown(\''+escH(agent.replace(/\W/g,'_'))+'\')" />'+
+            '<button class="ct-ri-save" onclick="CT.confirmReassignFromInput(\''+escH(agent)+'\',\''+riId+'\')">Reassign All</button>'+
+          '</div>';
         }
 
         html+='<div id="'+escH(key)+'" class="ct-case-list" style="display:none;">';
@@ -10435,8 +10451,30 @@ var CT = (function(){
       html+='<div id="'+escH(key)+'" class="ct-case-list" style="display:none;">';
       if(!cases.length){ html+='<div style="font-size:.74rem;color:var(--text-dim);padding:.3rem 0;">Queue empty ✅</div>'; }
       else { cases.forEach(function(c){
-        html+='<div class="ct-case-mini"><span class="ct-cn">'+escH(c['Case Number']||'—')+'</span><span class="ct-ct">'+escH((c['Case Title']||'').slice(0,48))+'</span><span class="ct-ca">'+aBadge(_actions[c['Case Number']])+'</span>';
-        if(!isHandled(c['Case Number'])) html+='<button class="ct-handle-btn" onclick="CT.handle(\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(c.Owner||'')+'\')">✅ Mark as Handled</button>';
+        var cn=c['Case Number']||'', cTitle=c['Case Title']||'', ow=c.Owner||'';
+        var cEmail=getEmail(ow);
+        var lriId='ct-lri-'+escH(cn.replace(/[^a-zA-Z0-9]/g,'_'));
+        var isReassigningThis=_showAssignFor===cn;
+        html+='<div class="ct-case-mini" style="flex-direction:column;align-items:flex-start;gap:.35rem;">';
+        html+='<div style="display:flex;align-items:center;gap:.4rem;width:100%;">';
+        html+='<span class="ct-cn">'+escH(cn)+'</span>';
+        html+='<span class="ct-ct">'+escH(cTitle.slice(0,45))+'</span>';
+        html+='<span class="ct-ca" style="margin-left:auto;">'+aBadge(_actions[cn])+'</span>';
+        html+='</div>';
+        if(!isHandled(cn)){
+          html+='<div style="display:flex;gap:.3rem;flex-wrap:wrap;">';
+          html+='<button class="ct-handle-btn" style="font-size:.68rem;padding:.2rem .5rem;" onclick="CT.handle(\''+escH(cn)+'\',\''+escH(cTitle)+'\',\''+escH(ow)+'\')">✅ Handled</button>';
+          html+='<button class="ct-remind-btn" style="font-size:.68rem;padding:.2rem .5rem;" onclick="CT.remindLeaveCase(\''+escH(cEmail)+'\',\''+escH(ow)+'\',\''+escH(cn)+'\',\''+escH(cTitle)+'\')">📧 Mail</button>';
+          html+='<button class="ct-reassign-btn" style="font-size:.68rem;padding:.2rem .5rem;" onclick="event.stopPropagation();CT.showAssign(\''+escH(cn)+'\')">👤 '+(isReassigningThis?'Cancel':'Reassign')+'</button>';
+          html+='</div>';
+          if(isReassigningThis){
+            html+='<div style="display:flex;gap:.35rem;width:100%;" id="ct-add-wrap-'+escH(cn.replace(/[^a-zA-Z0-9]/g,'_'))+'">'+
+              '<input class="ct-agent-dd-inp" id="'+lriId+'" placeholder="Type agent name..." autocomplete="off" '+
+                'oninput="ctAgentDropdown(\''+escH(cn.replace(/[^a-zA-Z0-9]/g,'_'))+'\')"/>'+
+              '<button class="ct-ri-save" onclick="CT.confirmReassignCase(\''+escH(cn)+'\',\''+escH(cTitle)+'\',\''+escH(ow)+'\',\''+lriId+'\')">Assign</button>'+
+            '</div>';
+          }
+        }
         html+='</div>';
       }); }
       html+='</div></div>';
@@ -10483,7 +10521,13 @@ var CT = (function(){
       html+='<td style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;">'+fmtDate(c['Modified On'])+'</td>';
       html+='<td>'+(handled?'<span style="font-size:.71rem;color:#1a7a45;">✅</span>':stale?'<span class="ct-sb stale"><span class="ct-sb-dot"></span>'+days+'d ago</span>':'<span style="font-size:.71rem;color:#1a7a45;">✓ Today</span>')+'</td>';
       html+='<td>'+aBadge(act)+'</td>';
-      html+='<td>'+(handled?'':'<button class="ct-handle-btn" onclick="CT.handle(\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(c.Owner||'')+'\')">✅ Handled</button>')+'</td>';
+      var rowEmail=getEmail(c.Owner||'');
+      html+='<td style="white-space:nowrap;">';
+      if(!handled){
+        html+='<button class="ct-handle-btn" style="margin-right:.3rem;" onclick="CT.handle(\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\',\''+escH(c.Owner||'')+'\')">✅ Handled</button>';
+        html+='<button class="ct-remind-btn" style="font-size:.68rem;padding:.22rem .5rem;" onclick="CT.remindRow(\''+escH(rowEmail)+'\',\''+escH(c.Owner||'')+'\',\''+escH(c['Case Number']||'')+'\',\''+escH(c['Case Title']||'')+'\')">📧 Remind</button>';
+      }
+      html+='</td>';
       html+='</tr>';
     });
     html+='</tbody></table></div></div>'; return html;
@@ -10567,25 +10611,24 @@ var CT = (function(){
   function updateDashWidget(){
     var w=document.getElementById('ct-dash-widget'); if(!w||!currentUser) return;
     var isAdmin=typeof isAdminUser==='function'?isAdminUser():false;
+    // Check if user has hidden the widget
+    var ctHidden=localStorage.getItem('ct_dash_hidden')==='1';
+    if(ctHidden){ w.style.display='none'; return; }
     if(!_cases.length){ w.style.display='none'; return; }
     w.style.display='block';
     var tOff=agentsOffOn(tomorrowStr());
     if(isAdmin){
-      var af=_cases.filter(function(c){ return isFlagged(c['Status Reason']); });
+      var af=_cases.filter(function(c){ return isFlagged(c['Status Reason']); }); // fix: use af not allFlagged
       var aa=activeCases(af), as=staleCases(af);
       var hand=af.filter(function(c){ return isHandled(c['Case Number']); }).length;
       var lwc=tOff.filter(function(a){ return activeCases(agentCases(a)).length>0; }).length;
-      // Check if user has hidden the widget
-    var ctHidden = localStorage.getItem('ct_dash_hidden') === '1';
-    if(ctHidden){ w.style.display='none'; return; }
-
-    // Vertical breakdown for dashboard
-    var consFlagged = allFlagged.filter(function(c){ return getVertical(c).toLowerCase()==='consumer'; });
-    var entFlagged  = allFlagged.filter(function(c){ return getVertical(c).toLowerCase()==='enterprise'; });
-    var consActive  = activeCases(consFlagged).length;
-    var entActive   = activeCases(entFlagged).length;
-    var consStale   = staleCases(consFlagged).length;
-    var entStale    = staleCases(entFlagged).length;
+      // Vertical breakdown — use af (properly scoped)
+      var consFlagged=af.filter(function(c){ return getVertical(c).toLowerCase()==='consumer'; });
+      var entFlagged =af.filter(function(c){ return getVertical(c).toLowerCase()==='enterprise'; });
+      var consActive =activeCases(consFlagged).length;
+      var entActive  =activeCases(entFlagged).length;
+      var consStale  =staleCases(consFlagged).length;
+      var entStale   =staleCases(entFlagged).length;
 
     w.innerHTML=
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;">'+
@@ -10715,8 +10758,24 @@ var CT = (function(){
     showAssign: function(cn){ _showAssignFor=(_showAssignFor===cn)?null:cn; renderCT(); },
     confirmAssign: function(cn,title,agent){
       var inp=document.getElementById('ct-ai-'+cn); var val=inp?inp.value.trim():'';
-      if(!val){ alert('Please type a name.'); return; }
+      if(!val){ alert('Please select an agent.'); return; }
       _showAssignFor=null; saveAction(cn,title,agent,'Assigned To',val);
+    },
+
+    confirmReassignFromInput: function(agent, inputId){
+      var inp=document.getElementById(inputId); var val=inp?inp.value.trim():'';
+      if(!val){ alert('Please select or type an agent name.'); return; }
+      // Reassign ALL stale cases for this agent
+      var cases=agentCases(agent).filter(function(c){ return isStale(c['Modified On'])&&!isHandled(c['Case Number']); });
+      Promise.all(cases.map(function(c){ return saveAction(c['Case Number'],c['Case Title'],agent,'Assigned To',val); }))
+        .then(function(){ _showReassignFor=null; renderCT(); });
+    },
+
+    confirmReassignCase: function(cn,title,owner,inputId){
+      var inp=document.getElementById(inputId); var val=inp?inp.value.trim():'';
+      if(!val){ alert('Please select an agent name.'); return; }
+      _showAssignFor=null;
+      saveAction(cn,title,owner,'Assigned To',val);
     },
     act: function(cn,title,agent,type,assigned){ saveAction(cn,title,agent,type,assigned); },
 
@@ -10905,6 +10964,189 @@ window.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ CT
   </div>
 </div>
 
+<script>
+
+// ══════════════════════════════════════════════════════════
+//  CT ADDITIONS:
+//  - Agent autocomplete dropdown (from Supabase users)
+//  - Per-row Remind in All Flagged Cases table
+//  - Leave panel per-case Reassign + Mail
+//  - getPendingReassigned for logout check
+// ══════════════════════════════════════════════════════════
+
+// ── Agent autocomplete CSS ──
+(function(){
+  var s=document.createElement('style');
+  s.textContent=`
+  .ct-agent-dd-wrap { position:relative; flex:1; }
+  .ct-agent-dd-inp {
+    width:100%; padding:.32rem .65rem; border-radius:6px;
+    border:1px solid var(--navy-border); background:var(--navy-hover);
+    color:var(--text-primary); font-family:'DM Sans',sans-serif;
+    font-size:.8rem; outline:none; box-sizing:border-box;
+  }
+  .ct-agent-dd-inp:focus { border-color:var(--gold-dim); }
+  body.dark .ct-agent-dd-inp { background:#1F2937; border-color:#2D3748; color:#F1F5F9; }
+  .ct-agent-dd-list {
+    position:absolute; top:calc(100% + 4px); left:0; right:0;
+    background:#0E1432; border:1px solid rgba(255,255,255,.15);
+    border-radius:8px; z-index:9999; max-height:200px; overflow-y:auto;
+    box-shadow:0 8px 32px rgba(0,0,0,.45);
+  }
+  body:not(.dark) .ct-agent-dd-list { background:#fff; border:1px solid var(--navy-border); box-shadow:0 8px 24px rgba(0,0,0,.12); }
+  .ct-agent-dd-item {
+    display:flex; align-items:center; gap:.55rem;
+    padding:.5rem .75rem; cursor:pointer; transition:background .1s;
+    font-size:.82rem; color:var(--text-primary);
+  }
+  .ct-agent-dd-item:hover { background:rgba(239,73,60,.08); }
+  .ct-agent-dd-av {
+    width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:.52rem; font-weight:700; color:#fff; flex-shrink:0;
+  }
+  .ct-agent-dd-name { font-weight:600; }
+  .ct-agent-dd-role { font-size:.7rem; color:var(--text-muted); margin-left:auto; }
+  .ct-agent-dd-empty { padding:.6rem .75rem; font-size:.78rem; color:var(--text-dim); text-align:center; }
+  `;
+  document.head.appendChild(s);
+})();
+
+// ── Agent list cache from Supabase ──
+var _ctAgentList = []; // [{name, email, role}]
+
+async function ctLoadAgentList(){
+  if(_ctAgentList.length) return _ctAgentList;
+  try{
+    var rows=await sbQuery('users','select=name,email,role&order=name.asc');
+    _ctAgentList=(rows||[]).filter(function(r){ return r.name && r.role!=='syslevel'; });
+  }catch(e){ console.warn('ctLoadAgentList:', e.message); }
+  return _ctAgentList;
+}
+
+// ── Render agent autocomplete ──
+function ctAgentDropdown(inputId, onSelect){
+  var wrap=document.getElementById('ct-add-wrap-'+inputId);
+  if(!wrap) return;
+  var inp=document.getElementById(inputId);
+  if(!inp) return;
+
+  var q=(inp.value||'').toLowerCase().trim();
+  // Remove existing list
+  var old=wrap.querySelector('.ct-agent-dd-list');
+  if(old) old.remove();
+  if(!q){ return; }
+
+  var matches=_ctAgentList.filter(function(a){
+    return a.name.toLowerCase().includes(q);
+  }).slice(0,8);
+
+  var list=document.createElement('div');
+  list.className='ct-agent-dd-list';
+
+  if(!matches.length){
+    list.innerHTML='<div class="ct-agent-dd-empty">No agents found</div>';
+  } else {
+    matches.forEach(function(a){
+      var item=document.createElement('div');
+      item.className='ct-agent-dd-item';
+      var bg=CT._aC ? CT._aC(a.name) : '#3B82F6';
+      var ini=(a.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+      item.innerHTML='<div class="ct-agent-dd-av" style="background:'+bg+'">'+ini+'</div>'+
+        '<span class="ct-agent-dd-name">'+escHTML(a.name)+'</span>'+
+        '<span class="ct-agent-dd-role">'+escHTML(a.role||'')+'</span>';
+      item.onclick=function(e){
+        e.stopPropagation();
+        inp.value=a.name;
+        list.remove();
+        if(onSelect) onSelect(a.name);
+      };
+      list.appendChild(item);
+    });
+  }
+  wrap.appendChild(list);
+
+  // Close on outside click
+  setTimeout(function(){
+    document.addEventListener('click', function close(e){
+      if(!wrap.contains(e.target)){ list.remove(); document.removeEventListener('click',close); }
+    });
+  },10);
+}
+
+function escHTML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Build the agent dropdown HTML wrapper
+function ctAgentInputHTML(inputId, placeholder, onConfirmFn, confirmLabel){
+  return '<div class="ct-agent-dd-wrap" id="ct-add-wrap-'+inputId+'">'+
+    '<input class="ct-agent-dd-inp" id="'+inputId+'" placeholder="'+placeholder+'" autocomplete="off" '+
+      'oninput="ctAgentDropdown(\''+inputId+'\')"/>'+
+  '</div>'+
+  '<button class="ct-ri-save" onclick="'+onConfirmFn+'">'+confirmLabel+'</button>';
+}
+
+// ── CT expose color fn ──
+CT._aC = function(n){
+  var c=['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#84CC16','#14B8A6'];
+  var v=0; for(var i=0;i<(n||'').length;i++) v+=n.charCodeAt(i);
+  return c[v%c.length];
+};
+
+// ── Extend CT public API ──
+CT.getPendingReassigned = function(){
+  if(!currentUser||!_ctAgentList) return 0;
+  // count cases reassigned to current user that are not handled
+  return Object.values(_actions).filter(function(a){
+    return a.action==='Assigned To' &&
+      a.assigned_to && a.assigned_to.toLowerCase().trim()===currentUser.name.toLowerCase().trim() &&
+      !isHandledAction(a);
+  }).length;
+};
+
+function isHandledAction(a){ return a && a.action==='Handled'; }
+
+// ── Confirm reassign from any context ──
+CT.confirmReassignCase = function(cn, title, originalOwner, inputId){
+  var inp=document.getElementById(inputId);
+  var val=inp?inp.value.trim():'';
+  if(!val){ alert('Please select or type an agent name.'); return; }
+  CT.act(cn, title, originalOwner, 'Assigned To', val);
+};
+
+// ── Per-row remind in All Flagged Cases table ──
+CT.remindRow = function(email, agentName, caseNum, caseTitle){
+  if(!email){ alert('No email found for '+agentName+'. Check Manage Users.'); return; }
+  var firstName=agentName.split(' ')[0];
+  var sender=currentUser?currentUser.name.split(' ')[0]:'Manager';
+  var body=encodeURIComponent(
+    'Hi '+firstName+',\n\nPlease ensure the below case is followed up today.\n\n'+
+    '• '+caseNum+' - '+caseTitle+'\n\n'+
+    'Kindly update the case status once actioned.\n\n-- '+sender
+  );
+  var subj=encodeURIComponent('Follow-up Reminder - Case '+caseNum);
+  window.open('mailto:'+email+'?subject='+subj+'&body='+body,'_blank');
+};
+
+// ── Send remind for a specific case from leave panel ──
+CT.remindLeaveCase = function(email, agentName, caseNum, caseTitle){
+  CT.remindRow(email, agentName, caseNum, caseTitle);
+};
+
+// ── Init: load agent list on CT render ──
+var _origCTRender = CT.render;
+CT.render = function(){
+  ctLoadAgentList(); // preload agent list
+  Promise.all([CT._loadEmailsP ? CT._loadEmailsP() : Promise.resolve(),
+               CT._loadActionsP ? CT._loadActionsP() : Promise.resolve()])
+    .then(function(){ _origCTRender(); });
+};
+
+// Load agent list on page load too
+window.addEventListener('DOMContentLoaded', function(){
+  setTimeout(ctLoadAgentList, 2000);
+});
+
+</script>
 </body>
 </html>
 <script>
