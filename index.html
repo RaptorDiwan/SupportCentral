@@ -2213,6 +2213,15 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 .ct-stale-warn{background:rgba(234,88,12,.05);border:1px solid rgba(234,88,12,.22);border-radius:var(--radius);padding:.85rem 1.1rem;margin-bottom:1rem;}
 .ct-stale-warn-ttl{font-size:.84rem;font-weight:700;color:#EA580C;margin-bottom:.2rem;}
 .ct-stale-warn-sub{font-size:.77rem;color:var(--text-muted);margin-bottom:.55rem;}
+  .ct-vbadge{display:inline-block;padding:.12rem .45rem;border-radius:4px;font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+  .ct-vbadge.consumer{background:rgba(76,118,168,.12);color:var(--accent-blue);border:1px solid rgba(76,118,168,.2);}
+  .ct-vbadge.enterprise{background:rgba(139,92,246,.12);color:#7C3AED;border:1px solid rgba(139,92,246,.2);}
+  .ct-vert-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.55rem;}
+  .ct-vert-card{background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.6rem .75rem;}
+  .ct-vert-card-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.25rem;}
+  .ct-vert-card-label.consumer{color:var(--accent-blue);}
+  .ct-vert-card-label.enterprise{color:#7C3AED;}
+  .ct-vert-card-val{font-size:1.2rem;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;}
 
 
   /* ── TOPBAR BREAK DROPDOWN ── */
@@ -2270,15 +2279,15 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
   /* ── BREAK SUGGESTION POPUP ── */
   .break-suggest-popup {
-    position: fixed; bottom: 1.4rem; right: 1.4rem;
-    background: rgba(14,20,50,.97); border: 1px solid rgba(255,255,255,.16);
-    border-radius: 14px; padding: 1rem 1.1rem;
-    max-width: 270px; z-index: 7000;
-    box-shadow: 0 16px 48px rgba(0,0,0,.45);
-    backdrop-filter: blur(16px);
+    position: fixed; bottom: 1.8rem; right: 1.8rem;
+    background: #0E1432; border: 1px solid rgba(255,255,255,.2);
+    border-radius: 16px; padding: 1.2rem 1.3rem;
+    width: 290px; z-index: 99999;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
+    backdrop-filter: blur(20px);
     display: none;
   }
-  .break-suggest-popup.show { display: block; animation: fadeSlideUp .25s ease; }
+  .break-suggest-popup.show { display: block !important; animation: fadeSlideUp .3s cubic-bezier(.34,1.56,.64,1); }
   @keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   .bsp-emoji { font-size: 1.4rem; margin-bottom: .4rem; }
   .bsp-title { font-size: .85rem; font-weight: 700; color: #fff; margin-bottom: .2rem; }
@@ -3517,6 +3526,53 @@ function enterDashboard(){
   setTimeout(loadAnnouncements,600);
   setTimeout(checkWorkClockOnLoad,500);
   setTimeout(xcSyncCfg, 800);
+  // Cabin announcement audio on login
+  setTimeout(function(){ playLoginAnnouncement(currentUser.name.split(' ')[0]); }, 1200);
+}
+
+function playLoginAnnouncement(firstName){
+  try {
+    // Play a soft chime first using AudioContext
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Ding-dong chime — two tones like airplane PA
+    function playTone(freq, startTime, duration, vol){
+      var osc  = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(vol||0.3, startTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    var t = ctx.currentTime + 0.1;
+    playTone(880, t,       0.6, 0.25);  // high ding
+    playTone(659, t+0.65,  0.8, 0.2);   // low dong
+
+    // After chime, speak the welcome message
+    setTimeout(function(){
+      if(!window.speechSynthesis) return;
+      var msg = new SpeechSynthesisUtterance('Welcome, ' + firstName);
+      msg.rate   = 0.88;
+      msg.pitch  = 1.0;
+      msg.volume = 0.85;
+      // Try to pick a calm female voice (cabin crew style)
+      var voices = window.speechSynthesis.getVoices();
+      var preferred = voices.find(function(v){
+        return /female|samantha|karen|victoria|moira|fiona|tessa/i.test(v.name);
+      }) || voices.find(function(v){
+        return v.lang.startsWith('en') && !v.name.toLowerCase().includes('male');
+      }) || voices[0];
+      if(preferred) msg.voice = preferred;
+      window.speechSynthesis.speak(msg);
+    }, 1500); // speak after chime finishes
+
+  } catch(e){ console.log('Audio not available:', e.message); }
 }
 
 window.addEventListener('DOMContentLoaded',function(){
@@ -10033,13 +10089,31 @@ var CT = (function(){
   var _uploadDate   = null;
   var _showAssignFor   = null;
   var _showReassignFor = null;
-  var _filterAgent  = '';
-  var _filterAction = '';
-  var _searchQ      = '';
+  var _filterAgent    = '';
+  var _filterAction   = '';
+  var _filterVertical = '';   // '' | 'Consumer' | 'Enterprise'
+  var _searchQ        = '';
 
   var FLAG = ['open','in progress-customer','in progress-support'];
 
   function isFlagged(s){ return FLAG.indexOf((s||'').toLowerCase().trim())>-1; }
+
+  // Vertical type helpers
+  function getVertical(c){ return (c['Vertical Type']||'').trim(); }
+  function vBadge(c){
+    var v=getVertical(c);
+    if(!v) return '';
+    var cls=v.toLowerCase()==='consumer'?'consumer':'enterprise';
+    return '<span class="ct-vbadge '+cls+'">'+escH(v)+'</span>';
+  }
+  function matchVertical(c){ return !_filterVertical || getVertical(c).toLowerCase()===_filterVertical.toLowerCase(); }
+
+  // Reassign helpers — check if case was reassigned to current user
+  function isReassignedToMe(cn){
+    if(!currentUser) return false;
+    var a=_actions[cn];
+    return a && a.action==='Assigned To' && nmMatch(a.assigned_to, currentUser.name);
+  }
   function isHandled(cn){ var a=_actions[cn]; return !!(a && a.action==='Handled'); }
 
   function isStale(v){
@@ -10135,8 +10209,17 @@ var CT = (function(){
 
   async function saveAction(cn,title,agent,actionType,assignedTo){
     var today=todayStr();
-    var payload={case_number:cn,case_title:title,agent_name:agent,action:actionType,
-      assigned_to:assignedTo||null,actioned_by:currentUser?currentUser.name:agent,upload_date:today};
+    var payload={
+      case_number:  cn,
+      case_title:   title,
+      agent_name:   agent,
+      action:       actionType,
+      assigned_to:  assignedTo||null,
+      original_owner: actionType==='Assigned To' ? agent : null,
+      reassigned_to:  actionType==='Assigned To' ? (assignedTo||null) : null,
+      actioned_by:  currentUser?currentUser.name:agent,
+      upload_date:  today
+    };
     try{
       await fetch(SUPABASE_URL+'/rest/v1/crm_case_actions?case_number=eq.'+encodeURIComponent(cn)+'&upload_date=eq.'+today,{method:'DELETE',headers:sbHeaders()});
       await sbInsert('crm_case_actions',payload);
@@ -10183,7 +10266,25 @@ var CT = (function(){
 
   function agentCases(name){
     return _cases.filter(function(c){
-      return nmFuzzy(name, c.Owner) && isFlagged(c['Status Reason']);
+      if(!isFlagged(c['Status Reason'])) return false;
+      // Original owner
+      if(nmFuzzy(name, c.Owner)) return true;
+      // Reassigned to this agent
+      var a=_actions[c['Case Number']];
+      if(a && a.action==='Assigned To' && nmMatch(a.assigned_to, name)) return true;
+      return false;
+    });
+  }
+
+  // Cases originally owned by agent (not reassigned away)
+  function ownCases(name){
+    return _cases.filter(function(c){
+      if(!isFlagged(c['Status Reason'])) return false;
+      if(!nmFuzzy(name, c.Owner)) return false;
+      // Exclude if reassigned to someone else
+      var a=_actions[c['Case Number']];
+      if(a && a.action==='Assigned To' && a.assigned_to && !nmMatch(a.assigned_to, name)) return false;
+      return true;
     });
   }
   function activeCases(cases){ return cases.filter(function(c){ return !isHandled(c['Case Number']); }); }
@@ -10351,7 +10452,8 @@ var CT = (function(){
       var mQ=!q||(c['Case Number']||'').toLowerCase().includes(q)||(c['Case Title']||'').toLowerCase().includes(q)||(c.Owner||'').toLowerCase().includes(q)||(c.Customer||'').toLowerCase().includes(q);
       var mA=!_filterAgent||nmMatch(c.Owner,_filterAgent);
       var mAct=!_filterAction||(_filterAction==='handled'?isHandled(c['Case Number']):_filterAction==='stale'?isStale(c['Modified On'])&&!isHandled(c['Case Number']):_filterAction==='noaction'?!_actions[c['Case Number']]&&!isHandled(c['Case Number']):true);
-      return mQ&&mA&&mAct;
+      var mV=matchVertical(c);
+      return mQ&&mA&&mAct&&mV;
     });
     var html='<div class="ct-sec-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z"/><path d="M14 3v6h6"/></svg>All Flagged Cases</div>';
     html+='<div class="ct-table-card"><div class="ct-table-hdr">';
@@ -10362,9 +10464,10 @@ var CT = (function(){
     html+='</select><select class="ct-fi" onchange="CT.filterAction(this.value)">';
     html+='<option value="">All</option><option value="stale"'+(_filterAction==='stale'?' selected':'')+'>No Follow-up Today</option>';
     html+='<option value="noaction"'+(_filterAction==='noaction'?' selected':'')+'>No Action Yet</option>';
-    html+='<option value="handled"'+(_filterAction==='handled'?' selected':'')+'>Handled</option></select></div>';
+    html+='<option value="handled"'+(_filterAction==='handled'?' selected':'')+'>Handled</option></select>';
+    html+='<select class="ct-fi" onchange="CT.filterVertical(this.value)"><option value="">All Verticals</option><option value="Consumer"'+(_filterVertical==='Consumer'?' selected':'')+'>📱 Consumer</option><option value="Enterprise"'+(_filterVertical==='Enterprise'?' selected':'')+'>🏢 Enterprise</option></select></div>';
     if(!filtered.length){ html+='<div class="ct-all-clear"><div class="ct-ac-ico">🔍</div>No cases match filters</div></div>'; return html; }
-    html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr><th>Case #</th><th>Title / Customer</th><th>Agent</th><th>Status</th><th>Modified</th><th>Follow-up</th><th>Action</th><th></th></tr></thead><tbody>';
+    html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr><th>Case #</th><th>Title / Customer</th><th>Agent</th><th>Status</th><th>Vertical</th><th>Modified</th><th>Follow-up</th><th>Action</th><th></th></tr></thead><tbody>';
     filtered.forEach(function(c){
       var act=_actions[c['Case Number']], handled=isHandled(c['Case Number']);
       var stale=!handled&&isStale(c['Modified On']), days=daysSince(c['Modified On']);
@@ -10376,6 +10479,7 @@ var CT = (function(){
       if(c.Customer) html+='<div style="font-size:.7rem;color:var(--text-muted);">'+escH(c.Customer)+'</div>';
       html+='</td><td><div class="ct-own"><div class="ct-own-av" style="background:'+bg+';">'+ini+'</div><span class="ct-own-nm">'+escH(c.Owner||'—')+'</span></div></td>';
       html+='<td>'+sBadge(c['Status Reason'])+'</td>';
+      html+='<td>'+vBadge(c)+'</td>';
       html+='<td style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;">'+fmtDate(c['Modified On'])+'</td>';
       html+='<td>'+(handled?'<span style="font-size:.71rem;color:#1a7a45;">✅</span>':stale?'<span class="ct-sb stale"><span class="ct-sb-dot"></span>'+days+'d ago</span>':'<span style="font-size:.71rem;color:#1a7a45;">✓ Today</span>')+'</td>';
       html+='<td>'+aBadge(act)+'</td>';
@@ -10475,10 +10579,34 @@ var CT = (function(){
     var ctHidden = localStorage.getItem('ct_dash_hidden') === '1';
     if(ctHidden){ w.style.display='none'; return; }
 
+    // Vertical breakdown for dashboard
+    var consFlagged = allFlagged.filter(function(c){ return getVertical(c).toLowerCase()==='consumer'; });
+    var entFlagged  = allFlagged.filter(function(c){ return getVertical(c).toLowerCase()==='enterprise'; });
+    var consActive  = activeCases(consFlagged).length;
+    var entActive   = activeCases(entFlagged).length;
+    var consStale   = staleCases(consFlagged).length;
+    var entStale    = staleCases(entFlagged).length;
+
     w.innerHTML=
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;">'+
         '<span style="font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">\u{1F4CB} Case Tracker</span>'+
         '<button onclick="CT.hideDashWidget()" style="font-size:.68rem;color:var(--text-dim);background:none;border:none;cursor:pointer;padding:.1rem .3rem;" title="Hide">\u2715 Hide</button>'+
+      '</div>'+
+      '<div class="ct-vert-grid">'+
+        '<div class="ct-vert-card">'+
+          '<div class="ct-vert-card-label consumer">📱 Consumer</div>'+
+          '<div style="display:flex;gap:.75rem;margin-top:.2rem;">'+
+            '<div><div class="ct-dash-val" style="font-size:1.1rem;color:#D97706;">'+consActive+'</div><div class="ct-dash-lbl">Active</div></div>'+
+            '<div><div class="ct-dash-val" style="font-size:1.1rem;color:#EA580C;">'+consStale+'</div><div class="ct-dash-lbl">Stale</div></div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="ct-vert-card">'+
+          '<div class="ct-vert-card-label enterprise">🏢 Enterprise</div>'+
+          '<div style="display:flex;gap:.75rem;margin-top:.2rem;">'+
+            '<div><div class="ct-dash-val" style="font-size:1.1rem;color:#D97706;">'+entActive+'</div><div class="ct-dash-lbl">Active</div></div>'+
+            '<div><div class="ct-dash-val" style="font-size:1.1rem;color:#EA580C;">'+entStale+'</div><div class="ct-dash-lbl">Stale</div></div>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
         '<div class="ct-dash-grid">'+
         dc('Active Cases',aa.length,'rgba(217,119,6,.12)','#D97706')+
@@ -10580,9 +10708,10 @@ var CT = (function(){
       if(!canHandle(owner)){ alert('You can only mark your own cases as handled.'); return; }
       saveAction(cn,title,owner,'Handled',null);
     },
-    search:      function(v){ _searchQ=v;      renderCT(); },
-    filterAgent: function(v){ _filterAgent=v;  renderCT(); },
-    filterAction:function(v){ _filterAction=v; renderCT(); },
+    search:        function(v){ _searchQ=v;        renderCT(); },
+    filterAgent:   function(v){ _filterAgent=v;   renderCT(); },
+    filterAction:  function(v){ _filterAction=v;  renderCT(); },
+    filterVertical:function(v){ _filterVertical=v; renderCT(); },
     showAssign: function(cn){ _showAssignFor=(_showAssignFor===cn)?null:cn; renderCT(); },
     confirmAssign: function(cn,title,agent){
       var inp=document.getElementById('ct-ai-'+cn); var val=inp?inp.value.trim():'';
