@@ -10273,10 +10273,10 @@ var CT = (function(){
         var maxD=Math.max.apply(null,cases.map(function(c){ return daysSince(c['Modified On']); }));
         var _firstName=agent.split(' ')[0];
         var _sender=currentUser?currentUser.name.split(' ')[0]:'Diwan';
-        var _ticketList=cases.map(function(c){ return '• '+c['Case Number']+' – '+c['Case Title']; }).join('\n');
+        var _ticketList=cases.map(function(c){ return '• '+c['Case Number']+' - '+c['Case Title']; }).join('\n');
         var _body='Hi '+_firstName+',\n\nPlease ensure all the below cases are followed up today.\n\n'+_ticketList+'\n\nKindly update the case status once actioned.\n\n-- '+_sender;
         var mailBody=encodeURIComponent(_body);
-        var mailSubj=encodeURIComponent('Follow-up Reminder – Pending Cases ('+cases.length+')');
+        var mailSubj=encodeURIComponent('Follow-up Reminder - Pending Cases ('+cases.length+')');
         var mailto=email?'mailto:'+email+'?subject='+mailSubj+'&body='+mailBody:'';
 
         html+='<div class="ct-agent-card">';
@@ -10285,9 +10285,9 @@ var CT = (function(){
         html+='<div class="ct-ai"><div class="ct-ai-name">'+escH(agent)+'</div><div class="ct-ai-sub">'+cases.length+' case'+(cases.length!==1?'s':'')+' · last touch '+maxD+'d ago</div></div>';
         html+='<div class="ct-agent-btns">';
         if(email){
-          html+='<a href="'+mailto+'" class="ct-remind-btn">📧 Remind</a>';
+          html+='<button class="ct-remind-btn" onclick="event.stopPropagation();CT.sendRemind(\''+escH(email)+'\',\''+encodeURIComponent(_body)+'\',\''+encodeURIComponent('Follow-up Reminder - Pending Cases ('+cases.length+')')+'\')">📧 Remind</button>';
         } else {
-          html+='<button class="ct-remind-btn" onclick="event.stopPropagation();alert(\'Email not found for \'+\''+escH(agent)+'\'+\'. Please check the name in portal users.\')">📧 Remind</button>';
+          html+='<button class="ct-remind-btn" onclick="event.stopPropagation();alert(\'No email found for '+escH(_firstName)+'. Check Manage Users.\')">📧 Remind</button>';
         }
         html+='<button class="ct-reassign-btn" onclick="event.stopPropagation();CT.toggleReassign(\''+escH(agent)+'\')">👤 Reassign</button>';
         html+='</div><span class="ct-pill orange">'+cases.length+' stale</span>';
@@ -10588,6 +10588,14 @@ var CT = (function(){
       _showAssignFor=null; saveAction(cn,title,agent,'Assigned To',val);
     },
     act: function(cn,title,agent,type,assigned){ saveAction(cn,title,agent,type,assigned); },
+
+    sendRemind: function(email, body, subject){
+      // Build mailto and open — most reliable cross-browser way
+      var url = 'mailto:' + email
+        + '?subject=' + subject
+        + '&body='    + body;
+      window.open(url, '_blank');
+    },
 
     hideDashWidget: function(){
       localStorage.setItem('ct_dash_hidden','1');
