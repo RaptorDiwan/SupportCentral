@@ -7088,7 +7088,15 @@ function pplPreviewUrl(url){
   var wrap = document.getElementById('ppl-photo-preview-wrap');
   if(!wrap) return;
   if(url && url.trim()){
-    wrap.innerHTML = '<div class="ppl-photo-preview"><img src="'+url.trim()+'" onerror="this.parentElement.innerHTML='<div class=ppl-photo-preview style=font-size:.7rem;color:var(--text-dim);>Invalid URL</div>'"/></div>';
+    var d = document.createElement('div');
+    d.className = 'ppl-photo-preview';
+    var img = document.createElement('img');
+    img.src = url.trim();
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+    img.onerror = function(){ wrap.innerHTML='<div class="ppl-photo-preview" style="font-size:.7rem;color:var(--text-dim);">Invalid URL</div>'; };
+    d.appendChild(img);
+    wrap.innerHTML = '';
+    wrap.appendChild(d);
   } else {
     wrap.innerHTML = '<div class="ppl-photo-preview" style="font-size:.7rem;color:var(--text-dim);">No photo</div>';
   }
