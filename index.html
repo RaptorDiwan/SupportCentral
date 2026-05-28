@@ -2175,6 +2175,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
     .msg-right-panel.mobile-open { display: flex; position: absolute; inset: 0; z-index: 10; }
   }
 
+    .topbar-msg-btn{display:none !important;}
   </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -7534,7 +7535,7 @@ function chatInit(){
   if(!currentUser||_isSysLevel())return;
   document.getElementById('chat-wrap').style.display='block';
   var tbBtn=document.getElementById('topbar-msg-btn');
-  if(tbBtn) tbBtn.style.display='flex';
+  if(tbBtn) tbBtn.style.display='none'; // kept hidden — using floating bubble instead
   var sbBadge=document.getElementById('sidebar-msg-badge');
   msgLoadConversations();
   chatStartPolling();
