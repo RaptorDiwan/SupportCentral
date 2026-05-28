@@ -3836,40 +3836,12 @@ function updateRosterBanner(s){
   var p=[formatNames(s.absent,'No agents')+(s.absent.length?' are on leave (L/CO/W)':' are marked absent')];
   if(s.wfh.length)p.push('WFH: '+formatNames(s.wfh,''));
   if(s.halfDay.length)p.push('Half-day: '+formatNames(s.halfDay,''));
-
-  // Also compute tomorrow's absent agents from roster rows
-  var tomorrowNames = [];
-  try{
-    var rows = window._rosterAllRows || window.rosterCache;
-    if(rows && rows.length){
-      var dateRow = rows.find(function(r){ return String(r[1]).trim().toUpperCase()==='DATE'; });
-      if(dateRow){
-        var tmr = new Date(); tmr.setDate(tmr.getDate()+1);
-        var tmrDay = tmr.getDate();
-        var colIdx = -1;
-        dateRow.slice(2).forEach(function(cell,i){ if(Number(cell)===tmrDay) colIdx=i+2; });
-        if(colIdx > -1){
-          rows.forEach(function(row){
-            var ei=String(row[0]||'').trim(), n=String(row[1]||'').trim();
-            if(!ei||!n||!/^K\d+/i.test(ei)) return;
-            var parts=statusParts(row[colIdx]);
-            if(parts.some(function(x){ return NOT_PRESENT_CODES.has(x); })) tomorrowNames.push(n);
-          });
-        }
-      }
-    }
-  }catch(e){}
-
-  if(tomorrowNames.length){
-    p.push('Tomorrow off: '+formatNames(tomorrowNames,''));
-  }
-
   var titleEl=document.getElementById('absence-title');
   var detailEl=document.getElementById('absence-detail');
   var bar=document.getElementById('absent-names-bar');
   if(titleEl)titleEl.textContent=s.absent.length+' '+l;
-  if(detailEl)detailEl.textContent=p.join(' · ');
-  if(bar)bar.style.display=s.absent.length||s.wfh.length||s.halfDay.length||tomorrowNames.length?'flex':'none';
+  if(detailEl)detailEl.textContent=p.join('. ');
+  if(bar)bar.style.display=s.absent.length||s.wfh.length||s.halfDay.length?'flex':'none';
   updateAbsentStat(s.absent.length);
 }
 // ── Week navigation state ──
