@@ -3546,6 +3546,8 @@ function updateAdminVisibility(){
   if(tsItem){
     var canSeeTs=isAdminUser()||(currentUser&&currentUser.timesheetEnabled);
     tsItem.style.display=canSeeTs?'flex':'none';
+  }
+}
 function openSimulation(){window.open('simulation.html','_blank');}
 function setGreetingAndDate(){
   var now=new Date(),h=now.getHours();
@@ -9407,7 +9409,7 @@ function aboutOpenReport(){
   overlay.innerHTML =
     '<div class="about-modal">'+
       '<div class="about-modal-title">🛠 Report an Issue</div>'+
-      '<div class="about-modal-sub">Describe the issue and we'll look into it. Your report goes directly to the development team.</div>'+
+      '<div class="about-modal-sub">Describe the issue and we\'ll look into it. Your report goes directly to the development team.</div>'+
       '<label>Issue Type</label>'+
       '<select id="about-issue-type">'+
         '<option value="">Select type...</option>'+
@@ -9422,7 +9424,7 @@ function aboutOpenReport(){
       '<label>Description</label>'+
       '<textarea id="about-issue-desc" placeholder="Describe the issue in detail..."></textarea>'+
       '<div class="about-modal-btns">'+
-        '<button class="xc-btn-sec" onclick="document.body.removeChild(this.closest('.about-modal-overlay'))">Cancel</button>'+
+        '<button class="xc-btn-sec" onclick="document.body.removeChild(this.closest(\".about-modal-overlay\"))">Cancel</button>'+
         '<button class="xc-btn" onclick="aboutSubmitReport()">📧 Send Report</button>'+
       '</div>'+
     '</div>';
