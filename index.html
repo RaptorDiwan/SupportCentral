@@ -1677,13 +1677,13 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .ppl-loading{color:var(--text-dim);font-size:.875rem;padding:2rem;text-align:center;}
 
   /* Card grid */
-  .ppl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;}
-  .ppl-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.25rem 1rem;text-align:center;cursor:pointer;transition:box-shadow .18s,border-color .18s;position:relative;}
+  .ppl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.25rem;}
+  .ppl-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.75rem 1.25rem 1.25rem;text-align:center;cursor:pointer;transition:box-shadow .18s,border-color .18s;position:relative;}
   .ppl-card:hover{border-color:var(--gold-dim);box-shadow:0 4px 20px rgba(174,123,76,.1);}
-  .ppl-card-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto .75rem;overflow:hidden;flex-shrink:0;}
+  .ppl-card-avatar{width:90px;height:90px;border-radius:50%;margin:0 auto 1rem;overflow:hidden;flex-shrink:0;}
   .ppl-card-avatar img{width:100%;height:100%;object-fit:cover;}
-  .ppl-card-initials{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;margin:0 auto .75rem;}
-  .ppl-card-name{font-weight:600;font-size:.92rem;color:var(--text-primary);margin-bottom:.2rem;}
+  .ppl-card-initials{width:90px;height:90px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;margin:0 auto .75rem;}
+  .ppl-card-name{font-weight:700;font-size:1rem;color:var(--text-primary);margin-bottom:.3rem;}
   .ppl-card-role{font-size:.72rem;color:var(--text-muted);margin-bottom:.5rem;}
   .ppl-card-badges{display:flex;gap:.3rem;justify-content:center;flex-wrap:wrap;margin-bottom:.5rem;}
   .ppl-card-badge{font-size:.62rem;padding:2px 7px;border-radius:20px;background:var(--navy-hover);color:var(--text-muted);border:1px solid var(--navy-border);}
@@ -1995,15 +1995,21 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
   /* ── BREAK SUGGESTION POPUP ── */
   .break-suggest-popup {
-    position: fixed; bottom: 1.8rem; right: 1.8rem;
-    background: #0E1432; border: 1px solid rgba(255,255,255,.2);
-    border-radius: 16px; padding: 1.2rem 1.3rem;
-    width: 290px; z-index: 99999;
-    box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
-    backdrop-filter: blur(20px);
-    display: none;
+    position: fixed; inset: 0; z-index: 99999;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(7,13,45,.55); backdrop-filter: blur(6px);
   }
-  .break-suggest-popup.show { display: block !important; animation: fadeSlideUp .3s cubic-bezier(.34,1.56,.64,1); }
+  .break-suggest-popup.show { display: flex !important; animation: bspFadeIn .25s ease; }
+  @keyframes bspFadeIn { from { opacity:0; } to { opacity:1; } }
+  .bsp-card {
+    background: #0E1432; border: 1px solid rgba(255,255,255,.18);
+    border-radius: 20px; padding: 2rem 2.2rem;
+    width: 340px; max-width: 90vw;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    animation: bspSlideUp .3s cubic-bezier(.34,1.56,.64,1);
+    text-align: center;
+  }
+  @keyframes bspSlideUp { from { opacity:0; transform:translateY(24px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
   @keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   .bsp-emoji { font-size: 1.4rem; margin-bottom: .4rem; }
   .bsp-title { font-size: .85rem; font-weight: 700; color: #fff; margin-bottom: .2rem; }
@@ -2176,6 +2182,39 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
   }
 
     .topbar-msg-btn{display:none !important;}
+  
+  /* People photo lightbox */
+  .ppl-lightbox {
+    position:fixed;inset:0;z-index:10000;
+    background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;
+    cursor:zoom-out;
+  }
+  .ppl-lightbox img {
+    max-width:85vw;max-height:85vh;
+    border-radius:16px;box-shadow:0 32px 80px rgba(0,0,0,.5);
+    animation:lbZoom .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .ppl-lightbox-initials {
+    width:220px;height:220px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:4rem;font-weight:700;color:#fff;
+    animation:lbZoom .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .ppl-lightbox-close {
+    position:absolute;top:1.2rem;right:1.4rem;
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+    border-radius:50%;width:38px;height:38px;cursor:pointer;
+    color:#fff;font-size:1.1rem;display:flex;align-items:center;justify-content:center;
+  }
+  .ppl-lightbox-name {
+    position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
+    color:#fff;font-size:1rem;font-weight:600;
+    background:rgba(0,0,0,.5);padding:.4rem 1.2rem;border-radius:20px;
+    white-space:nowrap;
+  }
+  @keyframes lbZoom { from{opacity:0;transform:scale(.7);} to{opacity:1;transform:scale(1);} }
+
   </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -2261,14 +2300,16 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         <button class="wclock-btn end" id="wclock-end-btn" onclick="workClockOut()" style="display:none;">End Work</button>
       </div>
 
-      <!-- Break suggestion popup -->
-      <div class="break-suggest-popup" id="break-suggest-popup">
-        <div class="bsp-emoji">⏰</div>
-        <div class="bsp-title">Time for a break?</div>
-        <div class="bsp-sub">You've been working for a while. A short break helps you stay sharp.</div>
-        <div class="bsp-btns">
-          <button class="bsp-take" onclick="tbSuggestTake()">☕ Take Break</button>
-          <button class="bsp-later" onclick="tbSuggestLater()">Later</button>
+      <!-- Break suggestion popup — centre modal -->
+      <div class="break-suggest-popup" id="break-suggest-popup" onclick="if(event.target===this)tbSuggestLater()">
+        <div class="bsp-card">
+          <div class="bsp-emoji">⏰</div>
+          <div class="bsp-title">Time for a break?</div>
+          <div class="bsp-sub">You've been working for a while. A short break helps you stay sharp!</div>
+          <div class="bsp-btns">
+            <button class="bsp-take" onclick="tbSuggestTake()">☕ Take Break</button>
+            <button class="bsp-later" onclick="tbSuggestLater()">Later</button>
+          </div>
         </div>
       </div>
       <!-- Dark mode toggle -->
@@ -6872,8 +6913,8 @@ function pplRender(people){
     var imgSrc = p.photo_url || cloudUrl;
 
     var avatar = imgSrc
-      ? '<div class="ppl-card-avatar"><img src="'+imgSrc+'" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div class=ppl-card-initials style=width:64px;height:64px;background:'+bg+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;>'+ini+'</div>\'"/></div>'
-      : '<div class="ppl-card-initials" style="background:'+bg+';">'+ini+'</div>';
+      ? '<div class="ppl-card-avatar" onclick="event.stopPropagation();pplOpenLightbox(\''+imgSrc+'\',\''+p.name+'\',\''+ini+'\',\''+bg+'\')" style="cursor:zoom-in;" title="Click to enlarge"><img src="'+imgSrc+'" onerror="this.style.display=\'none\';this.parentElement.style.cursor=\'default\'"/></div>'
+      : '<div class="ppl-card-initials" onclick="event.stopPropagation();pplOpenLightbox(\'\',\''+p.name+'\',\''+ini+'\',\''+bg+'\')" style="cursor:zoom-in;background:'+bg+';"'+'>'+ini+'</div>';
 
     var statusHtml = '';
     if(p.user_id && attMap[p.user_id]){
@@ -9647,6 +9688,61 @@ function aboutSubmitReport(){
   // Close modal
   var overlay = document.querySelector('.about-modal-overlay');
   if(overlay) document.body.removeChild(overlay);
+}
+
+</script>
+<script>
+
+function pplOpenLightbox(imgSrc, name, initials, bg){
+  var existing = document.getElementById('ppl-lightbox');
+  if(existing) document.body.removeChild(existing);
+
+  var lb = document.createElement('div');
+  lb.className = 'ppl-lightbox';
+  lb.id = 'ppl-lightbox';
+  lb.onclick = function(e){ if(e.target===lb||e.target.className==='ppl-lightbox') pplCloseLightbox(); };
+
+  var content = '';
+  if(imgSrc){
+    var img = document.createElement('img');
+    img.src = imgSrc;
+    img.alt = name;
+    img.onerror = function(){
+      lb.innerHTML = '<div class="ppl-lightbox-initials" style="background:'+bg+';">'+initials+'</div>'+
+        '<button class="ppl-lightbox-close" onclick="pplCloseLightbox()">✕</button>'+
+        '<div class="ppl-lightbox-name">'+name+'</div>';
+    };
+    lb.appendChild(img);
+  } else {
+    var ini = document.createElement('div');
+    ini.className = 'ppl-lightbox-initials';
+    ini.style.background = bg;
+    ini.textContent = initials;
+    lb.appendChild(ini);
+  }
+
+  var close = document.createElement('button');
+  close.className = 'ppl-lightbox-close';
+  close.innerHTML = '✕';
+  close.onclick = pplCloseLightbox;
+  lb.appendChild(close);
+
+  var nameTag = document.createElement('div');
+  nameTag.className = 'ppl-lightbox-name';
+  nameTag.textContent = name;
+  lb.appendChild(nameTag);
+
+  document.body.appendChild(lb);
+
+  // Close on Escape key
+  document.addEventListener('keydown', function escClose(e){
+    if(e.key==='Escape'){ pplCloseLightbox(); document.removeEventListener('keydown', escClose); }
+  });
+}
+
+function pplCloseLightbox(){
+  var lb = document.getElementById('ppl-lightbox');
+  if(lb){ lb.style.opacity='0'; lb.style.transition='opacity .18s'; setTimeout(function(){ if(lb.parentNode) lb.parentNode.removeChild(lb); }, 180); }
 }
 
 </script>
