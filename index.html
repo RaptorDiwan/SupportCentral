@@ -7004,10 +7004,15 @@ function pplOpenEdit(id){
   html += '<div class="ppl-edit-section">Photo</div>'+
     '<div class="ppl-photo-upload">'+
       '<div id="ppl-photo-preview-wrap">'+previewHTML+'</div>'+
-      '<div>'+
-        '<button class="ppl-upload-btn" onclick="document.getElementById(\'ppl-file-input\').click()">📷 Upload Photo</button>'+
-        '<input type="file" id="ppl-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="pplHandlePhoto(this)"/>'+
-        '<div style="font-size:.7rem;color:var(--text-dim);margin-top:.3rem;">Max 100KB · JPG, PNG, WebP</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<label class="ppl-edit-label" style="margin-bottom:.35rem;display:block;">Photo URL (Cloudinary)</label>'+
+        '<input id="pf-photo-url" class="ppl-edit-input" style="font-size:.78rem;" '+
+          'value="'+(p&&p.photo_url?p.photo_url:'')+'" '+
+          'placeholder="https://res.cloudinary.com/dvp62lqmv/image/upload/k7team/name.jpg" '+
+          'oninput="pplPreviewUrl(this.value)"/>'+
+        '<div style="font-size:.7rem;color:var(--text-dim);margin-top:.3rem;">'+
+          'Paste Cloudinary URL · or leave blank to use auto-generated from name'+
+        '</div>'+
         '<div id="ppl-upload-msg" style="font-size:.72rem;color:var(--accent-red);margin-top:.2rem;display:none;"></div>'+
       '</div>'+
     '</div>';
@@ -7079,6 +7084,16 @@ function pplCloseEdit(e){
 }
 
 // ── Photo upload ──
+function pplPreviewUrl(url){
+  var wrap = document.getElementById('ppl-photo-preview-wrap');
+  if(!wrap) return;
+  if(url && url.trim()){
+    wrap.innerHTML = '<div class="ppl-photo-preview"><img src="'+url.trim()+'" onerror="this.parentElement.innerHTML='<div class=ppl-photo-preview style=font-size:.7rem;color:var(--text-dim);>Invalid URL</div>'"/></div>';
+  } else {
+    wrap.innerHTML = '<div class="ppl-photo-preview" style="font-size:.7rem;color:var(--text-dim);">No photo</div>';
+  }
+}
+
 function pplHandlePhoto(input){
   var file = input.files[0];
   var msg = document.getElementById('ppl-upload-msg');
@@ -7161,13 +7176,9 @@ async function pplSaveProfile(){
 
     if(!data.name && isNew){ msg.textContent='Name is required.'; msg.style.display='block'; btn.disabled=false; btn.textContent='Save Profile'; return; }
 
-    // Upload photo if pending
-    if(window._pplPendingFile){
-      var userId = p?p.user_id:(data.user_id||'unknown');
-      var photoUrl = await pplUploadPhoto(window._pplPendingFile, userId);
-      data.photo_url = photoUrl;
-      window._pplPendingFile = null;
-    }
+    // Read photo URL from input field (Cloudinary URL)
+    var photoUrlInput = (document.getElementById('pf-photo-url')||{}).value||'';
+    if(photoUrlInput.trim()) data.photo_url = photoUrlInput.trim();
 
     if(isNew){
       await sbInsert('people', data);
