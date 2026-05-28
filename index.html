@@ -1743,7 +1743,7 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .chat-bubble svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;}
   .chat-unread-badge{position:absolute;top:-2px;right:-2px;background:#E24B4A;color:#fff;font-size:.6rem;font-weight:700;min-width:18px;height:18px;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--navy-card);}
 
-  .chat-panel{position:fixed;bottom:145px;right:1.2rem;z-index:801;width:300px;height:400px;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:16px;box-shadow:0 12px 40px rgba(7,13,45,.18);display:none;flex-direction:column;overflow:hidden;}
+  .chat-panel{display:none !important;}
   .chat-panel.open{display:flex;animation:chatSlideUp .22s ease;}
   @keyframes chatSlideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
@@ -2087,6 +2087,86 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
   .about-modal textarea { resize: vertical; min-height: 90px; }
   body.dark .about-modal select, body.dark .about-modal textarea, body.dark .about-modal input { background: #1F2937; border-color: #2D3748; color: #F1F5F9; }
   .about-modal-btns { display: flex; gap: .6rem; margin-top: 1.2rem; justify-content: flex-end; }
+  .about-update-check-btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.35rem 1rem; border-radius:20px;
+    border:1px solid var(--navy-border); background:var(--navy-card);
+    color:var(--text-muted); font-family:'DM Sans',sans-serif;
+    font-size:.75rem; font-weight:600; cursor:pointer; transition:all .18s;
+  }
+  .about-update-check-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+  .about-update-check-btn.checking { color:var(--accent-blue); border-color:rgba(76,118,168,.3); }
+  .about-update-check-btn.up-to-date { color:#1a7a45; border-color:rgba(46,197,111,.3); background:rgba(46,197,111,.05); }
+
+  
+  /* ── FULL PAGE MESSAGES LAYOUT ── */
+  .msg-left-panel {
+    width: 280px; min-width: 280px; max-width: 280px;
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--navy-border);
+    background: var(--navy-card); height: 100%; overflow: hidden;
+  }
+  .msg-left-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .85rem 1rem; border-bottom: 1px solid var(--navy-border);
+    flex-shrink: 0;
+  }
+  .msg-search {
+    margin: .5rem .75rem; padding: .45rem .8rem;
+    background: var(--navy-hover); border: 1px solid var(--navy-border);
+    border-radius: var(--radius-sm); color: var(--text-primary);
+    font-family: 'DM Sans',sans-serif; font-size: .82rem; outline: none;
+  }
+  .msg-search:focus { border-color: var(--gold-dim); }
+  .msg-conv-list {
+    flex: 1; overflow-y: auto; padding: .25rem 0;
+  }
+  .msg-conv-item {
+    display: flex; align-items: center; gap: .65rem;
+    padding: .6rem 1rem; cursor: pointer; transition: background .12s;
+    border-bottom: 1px solid transparent;
+  }
+  .msg-conv-item:hover { background: var(--navy-hover); }
+  .msg-conv-item.active { background: rgba(239,73,60,.07); border-left: 3px solid var(--gold); }
+  .msg-conv-av {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .65rem; font-weight: 700; color: #fff;
+  }
+  .msg-conv-av.group { border-radius: 10px; font-size: .9rem; }
+  .msg-conv-info { flex: 1; min-width: 0; }
+  .msg-conv-name { font-size: .83rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-conv-preview { display: none; } /* hide last message preview */
+  .msg-conv-meta { display: flex; flex-direction: column; align-items: flex-end; gap: .2rem; flex-shrink: 0; }
+  .msg-conv-time { font-size: .68rem; color: var(--text-dim); white-space: nowrap; }
+  .msg-conv-badge { background: var(--gold); color: #fff; border-radius: 20px; font-size: .62rem; font-weight: 700; padding: .1rem .4rem; min-width: 16px; text-align: center; }
+  .msg-empty-state { text-align: center; padding: 2rem 1rem; font-size: .8rem; color: var(--text-dim); }
+  .msg-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: .3rem; border-radius: 6px; display: flex; align-items: center; transition: background .12s; }
+  .msg-icon-btn:hover { background: var(--navy-hover); color: var(--text-primary); }
+
+  .msg-right-panel {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; height: 100%;
+    background: var(--navy);
+  }
+  .msg-empty-right { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: var(--text-muted); }
+  .msg-conv-view { display: flex; flex-direction: column; height: 100%; }
+  .msg-conv-header { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--navy-border); background: var(--navy-card); flex-shrink: 0; }
+  .msg-e2e-bar { font-size: .7rem; color: var(--accent-green,#1a7a45); background: rgba(46,197,111,.07); border-bottom: 1px solid rgba(46,197,111,.15); padding: .3rem 1rem; text-align: center; flex-shrink: 0; }
+  .msg-messages-area { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .5rem; }
+  .msg-emoji-picker { position: absolute; bottom: 60px; left: 1rem; z-index: 100; }
+  .msg-input-row { display: flex; align-items: flex-end; gap: .5rem; padding: .65rem 1rem; border-top: 1px solid var(--navy-border); background: var(--navy-card); flex-shrink: 0; }
+  .msg-input { flex: 1; padding: .5rem .75rem; background: var(--navy-hover); border: 1px solid var(--navy-border); border-radius: 20px; color: var(--text-primary); font-family: 'DM Sans',sans-serif; font-size: .83rem; outline: none; resize: none; max-height: 100px; overflow-y: auto; }
+  .msg-input:focus { border-color: var(--gold-dim); }
+  .msg-send-btn { background: var(--gold); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background .15s; }
+  .msg-send-btn:hover { background: var(--gold-dim); }
+  .msg-emoji-btn { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: .2rem; line-height: 1; flex-shrink: 0; opacity: .7; }
+  .msg-emoji-btn:hover { opacity: 1; }
+  @media(max-width:600px){
+    .msg-left-panel { width: 100%; min-width: 0; border-right: none; }
+    .msg-right-panel { display: none; }
+    .msg-right-panel.mobile-open { display: flex; position: absolute; inset: 0; z-index: 10; }
+  }
 
   </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2793,7 +2873,13 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
               <span class="about-version-dot"></span>
               v5.2.0 &nbsp;·&nbsp; Build 2605.28
             </div>
-            <div class="about-credit">Designed &amp; engineered by Diwan</div>
+            <div class="about-credit" style="font-size:.8rem;color:var(--text-muted);opacity:.85;margin-top:.1rem;">Designed &amp; engineered by Diwan</div>
+            <div style="display:flex;align-items:center;gap:.6rem;justify-content:center;margin-top:.9rem;">
+              <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                Check for Updates
+              </button>
+            </div>
             <p class="about-desc">This application is continuously improved to ensure better performance, stability, and user experience across all team workflows.</p>
           </div>
 
@@ -6719,8 +6805,18 @@ function pplRender(people){
   grid.innerHTML = people.map(function(p){
     var ini = pplInitials(p.name);
     var bg  = pplColor(p.name);
-    var avatar = p.photo_url
-      ? '<div class="ppl-card-avatar"><img src="'+p.photo_url+'" onerror="this.parentElement.innerHTML=\'<div class=ppl-card-initials style=width:64px;height:64px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;>'+ini+'</div>\'"/></div>'
+
+    // Auto-build Cloudinary URL from name if no photo_url saved
+    // Format: firstname_lastname.jpg e.g. "Diwan Chowthry" → "diwan_chowthry.jpg"
+    var cloudUrl = '';
+    if(!p.photo_url && p.name && CLOUDINARY_CLOUD){
+      var slug = p.name.toLowerCase().trim().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+      cloudUrl = 'https://res.cloudinary.com/'+CLOUDINARY_CLOUD+'/image/upload/k7team/'+slug+'.jpg';
+    }
+    var imgSrc = p.photo_url || cloudUrl;
+
+    var avatar = imgSrc
+      ? '<div class="ppl-card-avatar"><img src="'+imgSrc+'" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div class=ppl-card-initials style=width:64px;height:64px;background:'+bg+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#fff;>'+ini+'</div>\'"/></div>'
       : '<div class="ppl-card-initials" style="background:'+bg+';">'+ini+'</div>';
 
     var statusHtml = '';
@@ -8708,7 +8804,7 @@ window.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ CT
 <div id="chat-wrap" style="display:none;">
 
   <!-- Floating bubble button -->
-  <button class="chat-bubble" id="chat-bubble-btn" onclick="chatTogglePanel()" title="Messages">
+  <button class="chat-bubble" id="chat-bubble-btn" onclick="showPage('messages',document.querySelector('.sidebar-item[onclick*=messages]')||null)" title="Messages">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
       <circle cx="9" cy="12" r=".8" fill="#fff"/>
@@ -9399,6 +9495,25 @@ function escHTML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&l
 
 </script>
 <script>
+
+// ── ABOUT PAGE — Check for Updates + Report Issue ──
+function aboutCheckUpdate(){
+  var btn = document.getElementById('about-update-btn');
+  if(!btn) return;
+  // Show checking state
+  btn.className = 'about-update-check-btn checking';
+  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Checking…';
+
+  setTimeout(function(){
+    btn.className = 'about-update-check-btn up-to-date';
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 v5.2.0';
+    // Reset after 5 seconds
+    setTimeout(function(){
+      btn.className = 'about-update-check-btn';
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> Check for Updates';
+    }, 5000);
+  }, 1800);
+}
 
 // ── ABOUT PAGE — Report Issue ──
 function aboutOpenReport(){

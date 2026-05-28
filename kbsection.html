@@ -181,9 +181,42 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:1rem 2re
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
 @media(max-width:768px){.comments-section{padding:1.2rem;}.notes-panel{position:static;}.hero h1{font-size:1.8rem;}.article-grid{grid-template-columns:1fr;}.escalate-fields{grid-template-columns:1fr;}.footer-inner{justify-content:center;}.stats-inner{gap:1rem;}}
-</style>
+
+  /* ── Back to K7TeamCore bar ── */
+  .kb-back-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: rgba(7,13,45,.96); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    display: flex; align-items: center; gap: .75rem;
+    padding: .55rem 1.2rem; height: 42px;
+  }
+  .kb-back-btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .28rem .85rem; border-radius: 20px;
+    background: rgba(239,73,60,.15); border: 1px solid rgba(239,73,60,.35);
+    color: #FF6658; font-family: 'DM Sans', sans-serif;
+    font-size: .75rem; font-weight: 700; cursor: pointer;
+    transition: all .18s; text-decoration: none;
+  }
+  .kb-back-btn:hover { background: rgba(239,73,60,.25); color: #FF8880; }
+  .kb-back-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+  .kb-back-title { font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.5); font-family: 'DM Sans', sans-serif; }
+  .kb-back-title span { color: rgba(255,255,255,.8); }
+  /* Push page content down to avoid overlap */
+  body { padding-top: 42px; }
+
+  </style>
 </head>
 <body>
+
+<div class="kb-back-bar">
+  <button class="kb-back-btn" onclick="window.close()">
+    <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to K7TeamCore
+  </button>
+  <span class="kb-back-title">K7<span>Security</span> Knowledge Base</span>
+</div>
+
 <header class="header">
 <div class="header-inner">
 <div class="logo" onclick="showHome()">
