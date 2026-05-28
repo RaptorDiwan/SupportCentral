@@ -3808,7 +3808,23 @@ async function removeUser(id,name){
   try{await sbDelete('users','id',id);loadUsersPage();}catch(e){alert('Could not remove user.');}
 }
 
-const ROSTER_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTUz9_-oYx9wJQGEifWDYUyPIFwo513v2vNBkPm4L1v-02o3d6Yqkoz_GDFQIMWUaRrMlsPwQmmujWA/pub?output=csv';
+// Roster URLs — one spreadsheet, per-month GIDs
+const ROSTER_BASE_URL = '2PACX-1vTGmLIzXLioRQFdy7h19uyav3E_LTEmmrde08fAwrCdPNfdV3sBR9EtV6AO8LjJocAz22Y_LDu4GQjM';
+const ROSTER_MONTH_GIDS = {
+  0:'305209856',   // January
+  1:'952874924',   // February
+  2:'576729577',   // March
+  3:'1780653272',  // April
+  4:'574438143',   // May
+  5:'914934387',   // June
+  6:'',7:'',8:'',9:'',10:'',11:''
+};
+function getRosterUrlForMonth(monthIndex){
+  var gid = ROSTER_MONTH_GIDS[monthIndex] || ROSTER_MONTH_GIDS[new Date().getMonth()];
+  if(!gid) return null;
+  return 'https://docs.google.com/spreadsheets/d/e/'+ROSTER_BASE_URL+'/pub?gid='+gid+'&single=true&output=csv';
+}
+const ROSTER_CSV_URL = getRosterUrlForMonth(new Date().getMonth());
 const NOT_PRESENT_CODES=new Set(['L','CO','W']);
 window.rosterCache=null;
 function parseCsv(t){var rows=[],row=[],cell='',inQ=false;for(var i=0;i<t.length;i++){var c=t[i],n=t[i+1];if(c==='"'&&inQ&&n==='"'){cell+='"';i++;}else if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){row.push(cell.trim());cell='';}else if((c==='\n'||c==='\r')&&!inQ){if(c==='\r'&&n==='\n')i++;row.push(cell.trim());rows.push(row);row=[];cell='';}else{cell+=c;}}if(cell||row.length){row.push(cell.trim());rows.push(row);}return rows;}
@@ -3820,12 +3836,40 @@ function updateRosterBanner(s){
   var p=[formatNames(s.absent,'No agents')+(s.absent.length?' are on leave (L/CO/W)':' are marked absent')];
   if(s.wfh.length)p.push('WFH: '+formatNames(s.wfh,''));
   if(s.halfDay.length)p.push('Half-day: '+formatNames(s.halfDay,''));
+
+  // Also compute tomorrow's absent agents from roster rows
+  var tomorrowNames = [];
+  try{
+    var rows = window._rosterAllRows || window.rosterCache;
+    if(rows && rows.length){
+      var dateRow = rows.find(function(r){ return String(r[1]).trim().toUpperCase()==='DATE'; });
+      if(dateRow){
+        var tmr = new Date(); tmr.setDate(tmr.getDate()+1);
+        var tmrDay = tmr.getDate();
+        var colIdx = -1;
+        dateRow.slice(2).forEach(function(cell,i){ if(Number(cell)===tmrDay) colIdx=i+2; });
+        if(colIdx > -1){
+          rows.forEach(function(row){
+            var ei=String(row[0]||'').trim(), n=String(row[1]||'').trim();
+            if(!ei||!n||!/^K\d+/i.test(ei)) return;
+            var parts=statusParts(row[colIdx]);
+            if(parts.some(function(x){ return NOT_PRESENT_CODES.has(x); })) tomorrowNames.push(n);
+          });
+        }
+      }
+    }
+  }catch(e){}
+
+  if(tomorrowNames.length){
+    p.push('Tomorrow off: '+formatNames(tomorrowNames,''));
+  }
+
   var titleEl=document.getElementById('absence-title');
   var detailEl=document.getElementById('absence-detail');
   var bar=document.getElementById('absent-names-bar');
   if(titleEl)titleEl.textContent=s.absent.length+' '+l;
-  if(detailEl)detailEl.textContent=p.join('. ');
-  if(bar)bar.style.display=s.absent.length||s.wfh.length||s.halfDay.length?'flex':'none';
+  if(detailEl)detailEl.textContent=p.join(' · ');
+  if(bar)bar.style.display=s.absent.length||s.wfh.length||s.halfDay.length||tomorrowNames.length?'flex':'none';
   updateAbsentStat(s.absent.length);
 }
 // ── Week navigation state ──
@@ -4065,7 +4109,7 @@ async function loadRosterSummary(){try{
         if(setting && setting.length && setting[0].value) { window._rosterCsvUrl = setting[0].value; rosterUrl = setting[0].value; }
       }catch(e2){}
     }
-    var r=await fetch(rosterUrl+'&cacheBust='+Date.now());if(!r.ok)throw new Error('fail');var rows=parseCsv(await r.text());window.rosterCache=rows;var mr=rows.find(function(row){return row.some(function(c){return/[A-Za-z]+\s*-\s*\d{4}/.test(c);});});var dr=rows.find(function(row){return String(row[1]).trim().toUpperCase()==='DATE';});if(!mr||!dr)throw new Error('hdr');var mi=getMonthIndex(mr.find(function(c){return/[A-Za-z]+\s*-\s*\d{4}/.test(c);})||'');var today=new Date();if(!mi||mi.month!==today.getMonth()||mi.year!==today.getFullYear()){document.getElementById('absence-title').textContent='Roster month does not match today';document.getElementById('absence-detail').textContent='Please publish the current month roster.';renderRosterPage(rows,false);return;}var day=String(today.getDate());var dc=dr.findIndex(function(c,i){return i>=2&&String(Number(c))===day;});if(dc<0)throw new Error('col');var s={absent:[],wfh:[],halfDay:[]};rows.slice(rows.indexOf(dr)+2).forEach(function(row){var ei=String(row[0]||'').trim(),n=String(row[1]||'').trim();if(!ei||!n||!/^K\d+/i.test(ei))return;var p=statusParts(row[dc]);if(p.some(function(x){return NOT_PRESENT_CODES.has(x);}))s.absent.push(n);if(p.indexOf('WFH')>-1)s.wfh.push(n);if(p.indexOf('HL')>-1)s.halfDay.push(n);});updateRosterBanner(s);renderRosterPage(rows,dc);loadMyShift(rows);}catch(e){document.getElementById('absence-title').textContent='Roster sync unavailable';document.getElementById('absence-detail').textContent='Could not read Google Sheets right now.';renderRosterPage(null,null,e);}}
+    var r=await fetch(rosterUrl+'&cacheBust='+Date.now());if(!r.ok)throw new Error('fail');var rows=parseCsv(await r.text());window.rosterCache=rows;var mr=rows.find(function(row){return row.some(function(c){return/[A-Za-z]+\s*-\s*\d{4}/.test(c);});});var dr=rows.find(function(row){return String(row[1]).trim().toUpperCase()==='DATE';});if(!mr||!dr)throw new Error('hdr');var mi=getMonthIndex(mr.find(function(c){return/[A-Za-z]+\s*-\s*\d{4}/.test(c);})||'');var today=new Date();// Month check relaxed — load whatever month is availablevar day=String(today.getDate());var dc=dr.findIndex(function(c,i){return i>=2&&String(Number(c))===day;});if(dc<0)throw new Error('col');var s={absent:[],wfh:[],halfDay:[]};rows.slice(rows.indexOf(dr)+2).forEach(function(row){var ei=String(row[0]||'').trim(),n=String(row[1]||'').trim();if(!ei||!n||!/^K\d+/i.test(ei))return;var p=statusParts(row[dc]);if(p.some(function(x){return NOT_PRESENT_CODES.has(x);}))s.absent.push(n);if(p.indexOf('WFH')>-1)s.wfh.push(n);if(p.indexOf('HL')>-1)s.halfDay.push(n);});updateRosterBanner(s);renderRosterPage(rows,dc);loadMyShift(rows);if(_rosterActiveMonth)_rosterMonthCache[_rosterActiveMonth]=rows;}catch(e){document.getElementById('absence-title').textContent='Roster sync unavailable';document.getElementById('absence-detail').textContent='Could not read Google Sheets right now.';renderRosterPage(null,null,e);}}
 
 const CLOUDINARY_CLOUD='dvp62lqmv';
 const M_TAG_MAP={all:null,birthday:'birthday',outing:'team-outing',dinner:'team-dinner',funfriday:'fun-friday'};
@@ -9203,13 +9247,11 @@ var ROSTER_MONTHS = {
   'May': { label:'May 2026', gid:'574438143'  },
   'Jun': { label:'Jun 2026', gid:'914934387'  }
 };
-
-var _rosterBaseUrl = '2PACX-1vTGmLIzXLioRQFdy7h19uyav3E_LTEmmrde08fAwrCdPNfdV3sBR9EtV6AO8LjJocAz22Y_LDu4GQjM';
+var _rosterBaseUrl = ROSTER_BASE_URL; // use canonical constant
 var _rosterActiveMonth = null;
 
 function getRosterMonthUrl(gid){
-  var base = 'https://docs.google.com/spreadsheets/d/e/'+_rosterBaseUrl+'/pub?gid='+gid+'&single=true&output=csv';
-  return base;
+  return 'https://docs.google.com/spreadsheets/d/e/'+ROSTER_BASE_URL+'/pub?gid='+gid+'&single=true&output=csv';
 }
 
 function initRosterMonthTabs(){
@@ -9253,9 +9295,11 @@ async function loadRosterMonthSettings(){
   }catch(e){ console.warn('loadRosterMonthSettings:', e.message); }
 }
 
+// Per-month roster cache to avoid re-fetching
+var _rosterMonthCache = {};
+
 function switchRosterMonth(key, silent){
   _rosterActiveMonth = key;
-  // Update active button
   ['Jan','Feb','Mar','Apr','May','Jun'].forEach(function(k){
     var btn = document.getElementById('rmb-'+k);
     if(btn) btn.classList.toggle('active', k === key);
@@ -9267,10 +9311,28 @@ function switchRosterMonth(key, silent){
   window._rosterCsvUrl = url;
 
   if(!silent){
-    // Force reload of roster with new URL
-    if(typeof loadRosterData === 'function') loadRosterData();
+    // Use cached rows if available for this month
+    if(_rosterMonthCache[key]){
+      window.rosterCache   = _rosterMonthCache[key];
+      window._rosterAllRows = _rosterMonthCache[key];
+      if(typeof renderRosterPage === 'function'){
+        var rows = _rosterMonthCache[key];
+        var dateRow = rows.find(function(r){ return String(r[1]).trim().toUpperCase()==='DATE'; });
+        var today = new Date(), day = String(today.getDate());
+        var dc = dateRow ? dateRow.findIndex(function(c,i){ return i>=2&&String(Number(c))===day; }) : -1;
+        renderRosterPage(rows, dc > -1 ? dc : false);
+      }
+    } else {
+      // Not cached — fetch fresh
+      window.rosterCache    = null;
+      window._rosterAllRows = null;
+      if(typeof loadRosterData === 'function') loadRosterData();
+    }
   }
 }
+
+// Hook into rosterCache to save per-month
+var _origLoadRosterData = typeof loadRosterData !== 'undefined' ? loadRosterData : null;
 
 // Hook into roster page show
 (function(){
