@@ -1044,6 +1044,13 @@
   .moments-grid{columns:4 200px;column-gap:1rem;}
   .moment-card{break-inside:avoid;margin-bottom:1rem;border-radius:var(--radius);overflow:hidden;background:var(--navy-card);border:1px solid var(--navy-border);cursor:pointer;transition:all .22s;position:relative;display:block;}
   .moment-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(7,13,45,.14);border-color:rgba(239,73,60,.3);}
+  .moment-hide-btn {
+    position:absolute; top:.5rem; right:.5rem; z-index:10;
+    background:rgba(7,13,45,.75); border:1px solid rgba(255,255,255,.15);
+    border-radius:6px; padding:.2rem .35rem; font-size:.75rem;
+    cursor:pointer; opacity:0; transition:opacity .18s; line-height:1;
+  }
+  .moment-card:hover .moment-hide-btn { opacity:1; }
   .moment-card:hover .moment-overlay{opacity:1;}
   .moment-img{width:100%;display:block;object-fit:cover;background:var(--navy-mid);}
   .moment-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(7,13,45,.72) 0%,transparent 55%);opacity:0;transition:opacity .22s;display:flex;align-items:flex-end;padding:.9rem;}
@@ -4045,10 +4052,57 @@ function _mInitials(n){return(n||'U').split(' ').map(function(w){return w[0];}).
 async function _mFetch(tag){if(!CLOUDINARY_CLOUD||CLOUDINARY_CLOUD==='YOUR_CLOUD_NAME'){var v=M_TAG_MAP[tag];return v?DEMO_MOMENTS.filter(function(r){return(r.tags||[]).indexOf(v)>-1;}):DEMO_MOMENTS;}var v2=M_TAG_MAP[tag]||'site_moments';try{var res=await fetch('https://res.cloudinary.com/'+CLOUDINARY_CLOUD+'/image/list/'+v2+'.json');if(!res.ok)throw new Error('fail');var data=await res.json();var resources=(data.resources||[]).map(function(r){// Construct secure_url from public_id if missing
 if(!r.secure_url&&r.public_id){r.secure_url='https://res.cloudinary.com/'+CLOUDINARY_CLOUD+'/image/upload/q_auto,f_auto,w_600/'+r.public_id;}// Add tags array from the tag used to fetch
 if(!r.tags||!r.tags.length){var cTag=M_TAG_MAP[tag];r.tags=cTag?[cTag]:[];}return r;});return resources.sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);});}catch(e){console.warn('Cloudinary fetch error:',e.message);var v3=M_TAG_MAP[tag];return v3?DEMO_MOMENTS.filter(function(r){return(r.tags||[]).indexOf(v3)>-1;}):DEMO_MOMENTS;}}
+// Hidden moments — stored in Supabase for global visibility
+var _mHiddenIds = []; // cache of hidden public_ids
+var _mHiddenLoaded = false;
+
+async function mLoadHidden(){
+  if(_mHiddenLoaded) return;
+  try{
+    var rows = await sbQuery('hidden_moments','select=public_id');
+    _mHiddenIds = (rows||[]).map(function(r){ return r.public_id; });
+    _mHiddenLoaded = true;
+  }catch(e){ console.warn('mLoadHidden:', e.message); }
+}
+
+function mGetHidden(){ return _mHiddenIds; }
+
+async function mHideImage(safe, e){
+  e.stopPropagation();
+  if(!confirm('Hide this image for everyone? It will disappear for all users.')) return;
+  // Find original public_id from pid map
+  var pid = (window._momentsPidMap && window._momentsPidMap[safe]) || safe.replace(/_/g,'/');
+  try{
+    await sbInsert('hidden_moments', {
+      public_id: safe,
+      hidden_by: currentUser ? currentUser.name : 'admin'
+    });
+    _mHiddenIds.push(safe);
+    // Remove card from DOM
+    var card = document.querySelector('.moment-card[data-pid="'+safe+'"]');
+    if(card){ card.style.transition='opacity .3s'; card.style.opacity='0'; setTimeout(function(){ card.remove(); },300); }
+  }catch(e2){
+    // If already hidden (duplicate), just remove from UI
+    if(e2.message && e2.message.includes('duplicate')){
+      _mHiddenIds.push(safe);
+      var card2 = document.querySelector('.moment-card[data-pid="'+safe+'"]');
+      if(card2) card2.style.display='none';
+    } else {
+      alert('Could not hide image: '+e2.message);
+    }
+  }
+}
+
 function _mRenderGrid(resources){
   var grid=document.getElementById('moments-grid');
   if(!resources.length){grid.innerHTML='<div class="moments-empty">No moments in this category yet.</div>';return;}
-  grid.innerHTML=resources.map(function(r){
+  var hidden = mGetHidden();
+  var isAdmin = typeof isAdminUser==='function' ? isAdminUser() : false;
+  var visible = resources.filter(function(r){
+    return hidden.indexOf(r.public_id.replace(/[^a-z0-9]/gi,'_')) === -1;
+  });
+  if(!visible.length){grid.innerHTML='<div class="moments-empty">No moments in this category yet.</div>';return;}
+  grid.innerHTML=visible.map(function(r){
     var pid=r.public_id;
     var safe=pid.replace(/[^a-z0-9]/gi,'_');
     var cap=(r.context&&r.context.custom&&r.context.custom.caption)||pid.replace(/[/_-]/g,' ');
@@ -4056,9 +4110,11 @@ function _mRenderGrid(resources){
     var dt=_mFmtDate(r.created_at);
     var lk=_mlikes[pid]||0;
     var liked=_mliked[pid]?'liked':'';
+    var hideBtn = isAdmin ? '<button class="moment-hide-btn" onclick="mHideImage(\''+safe+'\',event)" title="Hide this image">\uD83D\uDE48</button>' : '';
     return '<div class="moment-card" onclick="openMomentLightbox(this.dataset.pid)" data-pid="'+safe+'">'+
       '<div style="position:relative">'+
-      '<img class="moment-img" src="'+r.secure_url+'" alt="moment" loading="lazy" onerror="this.src=\'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=60\'"/>'+
+      hideBtn+
+      '<img class="moment-img" src="'+r.secure_url+'" alt="moment" loading="lazy" onerror="this.closest(\'.moment-card\').style.display=\'none\'"/>'+
       '<div class="moment-overlay"><div class="moment-overlay-content">'+
       '<div class="moment-overlay-caption">'+cap+'</div>'+
       '<span class="moment-tag-pill">'+M_LABELS[tk]+'</span>'+
@@ -4070,11 +4126,10 @@ function _mRenderGrid(resources){
       '<span id="lcnt_'+safe+'">'+lk+'</span>'+
       '</button></div></div>';
   }).join('');
-  // Store pid map
   window._momentsPidMap=window._momentsPidMap||{};
   resources.forEach(function(r){window._momentsPidMap[r.public_id.replace(/[^a-z0-9]/gi,'_')]=r.public_id;});
 }
-async function _mLoadTab(tag){var grid=document.getElementById('moments-grid');if(!grid)return;grid.innerHTML='<div class="moments-loading"><div class="moments-spinner"></div><span>Loading moments...</span></div>';if(!window._momentsCache[tag])window._momentsCache[tag]=await _mFetch(tag);_mRenderGrid(window._momentsCache[tag]);}
+async function _mLoadTab(tag){var grid=document.getElementById('moments-grid');if(!grid)return;grid.innerHTML='<div class="moments-loading"><div class="moments-spinner"></div><span>Loading moments...</span></div>';await mLoadHidden();if(!window._momentsCache[tag])window._momentsCache[tag]=await _mFetch(tag);_mRenderGrid(window._momentsCache[tag]);}
 function switchMomentsTab(tag,btn){_mActiveTab=tag;document.querySelectorAll('.mtab').forEach(function(t){t.classList.remove('active');});if(btn)btn.classList.add('active');_mLoadTab(tag);}
 function toggleMomentLike(safe){var was=_mliked[safe]||false;_mliked[safe]=!was;_mlikes[safe]=Math.max(0,(_mlikes[safe]||0)+(was?-1:1));var b=document.getElementById('lbtn_'+safe);var c=document.getElementById('lcnt_'+safe);if(b)b.classList.toggle('liked',!was);if(c)c.textContent=_mlikes[safe];}
 function openMomentLightbox(safe){
