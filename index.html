@@ -1745,12 +1745,12 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   /* ═══════════════════════════════════════
      CHAT SYSTEM
   ═══════════════════════════════════════ */
-  .chat-bubble{display:none !important;}
+  .chat-bubble{position:fixed;bottom:80px;right:1.2rem;z-index:800;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(239,73,60,.35);transition:transform .18s;}
   .chat-bubble:hover{transform:scale(1.08);}
   .chat-bubble svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;}
   .chat-unread-badge{position:absolute;top:-2px;right:-2px;background:#E24B4A;color:#fff;font-size:.6rem;font-weight:700;min-width:18px;height:18px;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--navy-card);}
 
-  .chat-panel{display:none !important;}
+  .chat-panel{position:fixed;bottom:145px;right:1.2rem;z-index:801;width:300px;height:400px;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:16px;box-shadow:0 12px 40px rgba(7,13,45,.18);display:none;flex-direction:column;overflow:hidden;}
   .chat-panel.open{display:flex;animation:chatSlideUp .22s ease;}
   @keyframes chatSlideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
@@ -8859,7 +8859,7 @@ window.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ CT
 <div id="chat-wrap" style="display:none;">
 
   <!-- Floating bubble button -->
-  <button class="chat-bubble" id="chat-bubble-btn" onclick="showPage('messages',document.querySelector('.sidebar-item[onclick*=messages]')||null)" title="Messages">
+  <button class="chat-bubble" id="chat-bubble-btn" onclick="chatTogglePanel()" title="Messages">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
       <circle cx="9" cy="12" r=".8" fill="#fff"/>
