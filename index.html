@@ -10241,8 +10241,10 @@ function pplCloseLightbox(){
 #cat-panel {
   position:fixed;
   bottom:118px; right:28px; z-index:9999;
-  width:min(400px, calc(100vw - 48px));
-  height:min(560px, calc(100vh - 150px));
+  width:380px;
+  height:520px;
+  max-width:calc(100vw - 48px);
+  max-height:calc(100vh - 160px);
   display:flex; flex-direction:column;
   background:#0d1627;
   border-radius:20px; border:1px solid rgba(255,122,47,.2);
@@ -10255,13 +10257,11 @@ function pplCloseLightbox(){
 }
 #cat-panel.on { transform:translateY(0) scale(1); opacity:1; pointer-events:all; }
 
-/* Small screens */
-@media (max-width:520px) {
-  #cat-panel { right:10px; bottom:100px; width:calc(100vw - 20px); }
+@media (max-width:480px) {
+  #cat-panel { right:8px; left:8px; width:auto; bottom:100px; }
 }
-/* Short screens (laptops, presentations) */
-@media (max-height:700px) {
-  #cat-panel { height:calc(100vh - 140px); bottom:110px; }
+@media (max-height:680px) {
+  #cat-panel { bottom:100px; max-height:calc(100vh - 130px); }
 }
 
 /* header */
@@ -10611,6 +10611,8 @@ function pplCloseLightbox(){
 // ── State ──
 // ── OpenRouter default key (admin can override via Settings) ──
 var CAT_OPENROUTER_KEY='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'; // paste your OpenRouter key here
+
+var CAT_SYSTEM='You are Orange Cat, a witty K7 Security support assistant with a fun cat personality. Always call users Boss. Use cat emojis naturally. Keep replies concise and helpful. K7 fixes: Error 12029/12007 - go to K7 Updates, Configure Updates, remove proxy settings, Apply and OK. Activation offline - use K7 website offline activation with Request Code. Clean install - use K7 Removal Tool then reinstall. High CPU - exclude folders from scan. Firewall blocking - add K7 executables to Windows Firewall exceptions. After 5 or more questions be playfully tired and mention needing milk. When issue is solved say Done Boss and ask if anything else is needed.';
 
 var catState='sleep', catOpen_=false, catGreeted=false;
 var catHist=[], catBusy=false, catQCount=0;
