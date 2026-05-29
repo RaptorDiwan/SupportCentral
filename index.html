@@ -537,6 +537,7 @@
 
   .page { display: none; }
   .page.active { display: block; animation: fadeIn 0.3s ease; }
+  #page-about.active { display: flex !important; flex-direction: column; }
 
   /* ─── HOME PAGE ─── */
   .home-greeting {
@@ -1767,7 +1768,76 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
     .ppl-info-grid{grid-template-columns:1fr;}
   }
   /* ═══════════════════════════════════════
+     REMINDERS (Apple iCloud style)
+  ═══════════════════════════════════════ */
+  .rem-root{display:flex;height:calc(100vh - 60px);overflow:hidden;}
+
+  /* Sidebar — matches portal sidebar */
+  .rem-sidebar{width:200px;flex-shrink:0;background:var(--navy-sidebar,var(--navy-card));border-right:1px solid var(--navy-border);padding:1rem 0 1.4rem;display:flex;flex-direction:column;gap:1px;}
+  .rem-sidebar-section{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);padding:.8rem 1rem .4rem;}
+  .rem-sidebar-item{display:flex;align-items:center;gap:.75rem;padding:.58rem 1rem;cursor:pointer;border-radius:10px;margin:0 .4rem;transition:background .15s;font-size:.83rem;font-weight:500;color:var(--text-muted);}
+  .rem-sidebar-item:hover{background:var(--navy-hover,rgba(255,255,255,.05));}
+  .rem-list-active{background:rgba(239,73,60,.1)!important;color:var(--text-primary)!important;}
+  .rem-sidebar-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .rem-sidebar-count{margin-left:auto;font-size:.7rem;font-weight:700;color:var(--text-dim);background:var(--navy-deep,rgba(0,0,0,.2));padding:1px 7px;border-radius:10px;min-width:18px;text-align:center;}
+  .rem-addlist-btn{margin:auto .8rem 0;display:flex;align-items:center;gap:.5rem;background:none;border:1px dashed var(--navy-border);border-radius:8px;color:var(--text-muted);font-size:.78rem;cursor:pointer;padding:.5rem .8rem;transition:all .15s;font-family:'DM Sans',sans-serif;width:calc(100% - 1.6rem);}
+  .rem-addlist-btn:hover{border-color:var(--gold-dim,rgba(239,73,60,.35));color:var(--text-primary);}
+
+  /* Main */
+  .rem-main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--navy-bg,var(--navy));padding:1.6rem 2rem 1rem;}
+  .rem-main-header{margin-bottom:1rem;flex-shrink:0;}
+  .rem-main-title{font-size:1.7rem;font-weight:700;color:var(--gold,#ef493c);font-family:'DM Sans',sans-serif;letter-spacing:-.5px;}
+
+  .rem-empty{text-align:center;padding:3rem 1rem;flex-shrink:0;}
+  .rem-empty-icon{font-size:2.2rem;opacity:.25;margin-bottom:.6rem;}
+  .rem-empty-title{font-size:.9rem;font-weight:600;color:var(--text-muted);}
+  .rem-empty-sub{font-size:.73rem;color:var(--text-dim);margin-top:.3rem;}
+
+  /* List */
+  .rem-ul{list-style:none;overflow-y:auto;flex:1;padding-bottom:1rem;}
+  .rem-ul::-webkit-scrollbar{width:4px;}
+  .rem-ul::-webkit-scrollbar-thumb{background:var(--navy-border);border-radius:4px;}
+
+  .rem-item{display:flex;align-items:flex-start;gap:.85rem;padding:.75rem .2rem;border-bottom:1px solid var(--navy-border);cursor:default;transition:background .12s;}
+  .rem-item:hover{background:var(--navy-hover,rgba(255,255,255,.02));border-radius:6px;}
+  .rem-item.done{opacity:.35;}
+  .rem-item.done .rem-item-text{text-decoration:line-through;color:var(--text-dim);}
+  @keyframes remIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .rem-item{animation:remIn .17s ease;}
+
+  .rem-check{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--text-dim);flex-shrink:0;margin-top:2px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;background:transparent;}
+  .rem-check:hover{border-color:var(--accent-green,#1a7a45);}
+  .rem-item.done .rem-check{background:var(--accent-green,#1a7a45);border-color:var(--accent-green,#1a7a45);}
+  .rem-item.done .rem-check::after{content:'';width:4px;height:8px;border:1.5px solid white;border-top:none;border-left:none;transform:rotate(45deg) translateY(-1px);display:block;}
+  .rem-check-new{border-style:dashed;opacity:.35;cursor:default;pointer-events:none;}
+
+  .rem-item-body{flex:1;min-width:0;}
+  .rem-item-text{font-size:.87rem;color:var(--text-primary);line-height:1.5;word-break:break-word;outline:none;border-radius:3px;}
+  .rem-item-text:focus{background:rgba(255,255,255,.03);padding:0 3px;margin:0 -3px;}
+  .rem-item-meta{font-size:.67rem;color:var(--text-muted);margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+  .rem-overdue{color:var(--accent-red,#ef493c)!important;font-weight:600;}
+  .rem-pri-badge{font-size:.6rem;padding:1px 6px;border-radius:10px;font-weight:600;}
+  .rem-pri-low{background:rgba(76,118,168,.18);color:#7aadff;}
+  .rem-pri-medium{background:rgba(239,170,50,.15);color:#ffb833;}
+  .rem-pri-high{background:rgba(239,73,60,.18);color:#ff7070;}
+
+  .rem-item-del{background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:.82rem;padding:2px 5px;border-radius:5px;opacity:0;transition:all .14s;flex-shrink:0;margin-top:1px;}
+  .rem-item:hover .rem-item-del{opacity:1;}
+  .rem-item-del:hover{color:var(--accent-red,#ef493c);background:rgba(239,73,60,.08);}
+
+  /* New row — at TOP */
+  .rem-new-row{display:flex;align-items:center;gap:.85rem;padding:.75rem .2rem;border-bottom:2px solid var(--navy-border);flex-shrink:0;margin-bottom:.5rem;}
+  .rem-inline-input{flex:1;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:.87rem;font-family:'DM Sans',sans-serif;padding:0;}
+  .rem-inline-input::placeholder{color:var(--text-dim);font-style:italic;}
+
+  /* Detail bar */
+  .rem-detail-bar{display:flex;gap:.5rem;padding:.55rem 0 .7rem;flex-shrink:0;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--navy-border);margin-bottom:.4rem;}
+  .rem-date-input{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:7px;padding:.3rem .65rem;color:var(--text-primary);font-size:.74rem;font-family:'DM Sans',sans-serif;outline:none;min-width:0;transition:border-color .18s;}
+  .rem-date-input:focus{border-color:var(--gold-dim,rgba(239,73,60,.35));}
+
+  /* ═══════════════════════════════════════
      CHAT SYSTEM
+  ═══════════════════════════════════════ */
   ═══════════════════════════════════════ */
   .chat-bubble{display:none!important;}
   .chat-bubble:hover{transform:scale(1.08);}
@@ -2479,6 +2549,14 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         Timesheet
       </div>
 
+      <div class="sidebar-item" id="sidebar-reminders" onclick="showPage('reminders', this)">
+        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+        Reminders
+        <span class="sidebar-badge" id="rem-badge" style="display:none;background:var(--gold);color:#fff;margin-left:auto;">0</span>
+      </div>
+
       <div class="sidebar-section">Account</div>
 
       <div class="sidebar-item" onclick="showPage('changepass', this)">
@@ -2951,75 +3029,149 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
 
       <!-- ── ABOUT PAGE ── -->
-      <div class="page" id="page-about">
-        <div class="about-wrap" style="max-width:900px;margin:0 auto;padding:2rem;height:calc(100vh - 60px);display:flex;flex-direction:column;gap:1rem;overflow:hidden;">
+      <div class="page" id="page-about" style="padding:2.5rem 3rem;gap:1.5rem;overflow-y:auto;">
 
-          <!-- Header row -->
-          <div style="display:flex;align-items:center;gap:1.2rem;flex-shrink:0;">
-            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:1.2rem;padding-bottom:1.4rem;border-bottom:1px solid var(--navy-border);">
+          <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 16px rgba(239,73,60,.2);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--text-primary);line-height:1.2;">K7Team<span style="color:var(--gold);">Core</span></div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">v5.3.0 &nbsp;·&nbsp; Build 2605.29 &nbsp;·&nbsp; Designed &amp; engineered by Diwan Chowthry</div>
+          </div>
+          <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()" style="flex-shrink:0;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Check Updates
+          </button>
+        </div>
+
+        <!-- Two cards side by side -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+
+          <!-- What's New -->
+          <div class="about-card" style="margin:0;">
+            <div class="about-card-header">
+              <div class="about-card-icon" style="background:rgba(46,197,111,.12);">
+                <svg viewBox="0 0 24 24" stroke="#1a7a45"><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/><path d="M8 12l3 3 5-5"/></svg>
+              </div>
+              <span class="about-card-title">What's New</span>
             </div>
-            <div style="flex:1;">
-              <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:var(--text-primary);">K7Team<span style="color:var(--gold);">Core</span></div>
-              <div style="font-size:.7rem;color:var(--text-muted);">v5.3.0 · Build 2605.29 · Designed &amp; engineered by Diwan Chowthry</div>
+            <div class="about-card-body">
+              <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>🐱 Orange Cat AI Assistant — built for &amp; by K7 Support team</span></div>
+              <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>Roster, attendance, quiz &amp; cases — all readable by Cat</span></div>
+              <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>Send DMs &amp; broadcasts via Cat</span></div>
+              <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>Reminders — Apple-style task manager</span></div>
+              <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>Roster multi-month &amp; Case Tracker improvements</span></div>
             </div>
-            <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()" style="flex-shrink:0;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-              Check Updates
+          </div>
+
+          <!-- Coming Soon -->
+          <div class="about-card" style="margin:0;">
+            <div class="about-card-header">
+              <div class="about-card-icon" style="background:rgba(76,118,168,.12);">
+                <svg viewBox="0 0 24 24" stroke="var(--accent-blue)"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              </div>
+              <span class="about-card-title">Coming Soon</span>
+            </div>
+            <div class="about-card-body">
+              <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>AI-based improvements to Orange Cat</span></div>
+              <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>Live Dynamics 365 CRM integration</span></div>
+              <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>Advanced reporting with export</span></div>
+              <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>Vision Helpdesk live ticket sync</span></div>
+              <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>VICIdial real-time agent status</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Issue -->
+        <div style="display:flex;justify-content:center;padding:.5rem 0;">
+          <button class="about-report-btn" onclick="aboutOpenReport()" style="padding:.65rem 2rem;font-size:.82rem;">
+            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Report Issue
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ── REMINDERS PAGE ── -->
+      <div class="page" id="page-reminders">
+        <div class="rem-root">
+          <!-- Sidebar (Apple-style) -->
+          <div class="rem-sidebar">
+            <div class="rem-sidebar-item rem-list-active" id="rem-tab-all" onclick="remSetTab('all',this)">
+              <span class="rem-sidebar-icon" style="background:#ef493c;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              </span>
+              Reminders
+              <span class="rem-sidebar-count" id="rem-all-count">0</span>
+            </div>
+            <div class="rem-sidebar-item" id="rem-tab-today" onclick="remSetTab('today',this)">
+              <span class="rem-sidebar-icon" style="background:#2563eb;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01"/></svg>
+              </span>
+              Today
+              <span class="rem-sidebar-count" id="rem-today-count">0</span>
+            </div>
+            <div class="rem-sidebar-item" id="rem-tab-scheduled" onclick="remSetTab('scheduled',this)">
+              <span class="rem-sidebar-icon" style="background:#6d28d9;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </span>
+              Scheduled
+              <span class="rem-sidebar-count" id="rem-sched-count">0</span>
+            </div>
+            <div class="rem-sidebar-item" id="rem-tab-done" onclick="remSetTab('done',this)">
+              <span class="rem-sidebar-icon" style="background:#059669;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+              </span>
+              Completed
+              <span class="rem-sidebar-count" id="rem-done-count">0</span>
+            </div>
+            <button class="rem-addlist-btn" onclick="remAddNew()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              Add Reminder
             </button>
           </div>
 
-          <!-- Two columns -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;flex:1;min-height:0;">
-
-            <!-- What's New -->
-            <div class="about-card" style="margin:0;display:flex;flex-direction:column;">
-              <div class="about-card-header">
-                <div class="about-card-icon" style="background:rgba(46,197,111,.1);">
-                  <svg viewBox="0 0 24 24" stroke="#1a7a45"><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/><path d="M8 12l3 3 5-5"/></svg>
-                </div>
-                <span class="about-card-title">What's New</span>
-              </div>
-              <div class="about-card-body" style="flex:1;">
-                <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>🐱 Orange Cat AI Assistant — built for K7 Support team</span></div>
-                <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>Roster, attendance, quiz, cases — all readable by Cat</span></div>
-                <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>Send messages &amp; broadcasts via Cat</span></div>
-                <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>Case Tracker: Vertical Type filter &amp; reassign logic</span></div>
-                <div class="about-update-item"><span class="about-update-dot" style="background:#1a7a45;"></span><span>Roster multi-month support</span></div>
-              </div>
+          <!-- Main content -->
+          <div class="rem-main">
+            <div class="rem-main-header">
+              <h1 class="rem-main-title" id="rem-main-title">Reminders</h1>
             </div>
 
-            <!-- Coming Soon -->
-            <div class="about-card" style="margin:0;display:flex;flex-direction:column;">
-              <div class="about-card-header">
-                <div class="about-card-icon" style="background:rgba(76,118,168,.1);">
-                  <svg viewBox="0 0 24 24" stroke="var(--accent-blue)"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                </div>
-                <span class="about-card-title">Coming Soon</span>
-              </div>
-              <div class="about-card-body" style="flex:1;">
-                <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>AI-based improvements to Orange Cat</span></div>
-                <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>Live Dynamics 365 CRM integration</span></div>
-                <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>Advanced reporting dashboard with export</span></div>
-                <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>Vision Helpdesk live ticket sync</span></div>
-                <div class="about-update-item"><span class="about-update-dot" style="background:var(--accent-blue);"></span><span>VICIdial real-time agent status</span></div>
-              </div>
+            <!-- New reminder row — at TOP like Apple -->
+            <div class="rem-new-row" id="rem-new-row">
+              <div class="rem-check rem-check-new"></div>
+              <input class="rem-inline-input" id="rem-inline-input"
+                placeholder="New Reminder..."
+                maxlength="300"
+                autocomplete="off"
+                onkeydown="remInlineKey(event)"
+                onfocus="remShowDetailBar()"
+                onblur="remInlineBlur()"/>
             </div>
+
+            <!-- Detail bar shown when input focused -->
+            <div class="rem-detail-bar" id="rem-detail-bar" style="display:none;">
+              <input type="date" class="rem-date-input" id="rem-date-input" title="Date"/>
+              <input type="time" class="rem-date-input" id="rem-time-input" title="Time"/>
+              <select class="rem-date-input" id="rem-pri-select" style="max-width:130px;">
+                <option value="none">No Priority</option>
+                <option value="low">🔵 Low</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="high">🔴 High</option>
+              </select>
+            </div>
+
+            <div class="rem-empty" id="rem-empty" style="display:none;">
+              <div class="rem-empty-icon">☑️</div>
+              <div class="rem-empty-title">No reminders yet</div>
+              <div class="rem-empty-sub">Type above and press Enter to add</div>
+            </div>
+
+            <!-- List -->
+            <ul class="rem-ul" id="rem-ul"></ul>
           </div>
-
-          <!-- Orange Cat banner + Report button -->
-          <div style="flex-shrink:0;background:linear-gradient(135deg,rgba(255,122,47,.1),rgba(255,122,47,.04));border:1px solid rgba(255,122,47,.22);border-radius:var(--radius);padding:1rem 1.4rem;display:flex;align-items:center;gap:1rem;">
-            <span style="font-size:1.6rem;">🐱</span>
-            <div style="flex:1;">
-              <div style="font-size:.82rem;font-weight:700;color:var(--text-primary);">Orange Cat AI Assistant</div>
-              <div style="font-size:.7rem;color:rgba(255,155,80,.85);margin-top:1px;">Completely developed for K7 Support Team · Built to simplify your day!</div>
-            </div>
-            <button class="about-report-btn" onclick="aboutOpenReport()">
-              <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              Report Issue
-            </button>
-          </div>
-
         </div>
       </div>
 
@@ -11515,6 +11667,95 @@ function tryCaseTracker(q){
 }
 
 // ════════════════════════════════════════════════
+//  CAT REMINDER BRAIN
+// ════════════════════════════════════════════════
+function tryCatReminder(q){
+  var qlo=q.toLowerCase();
+  if(!/remind me|add.*reminder|set.*reminder|create.*reminder|reminder.*to|don.t forget|note.*to|make.*note|add.*task|create.*task/.test(qlo)) return null;
+
+  var textMatch=q.match(/(?:remind me to|remind me about|add (?:a )?reminder (?:to|about|for)?|set (?:a )?reminder (?:to|for)?|create (?:a )?reminder (?:to|for)?|don.t forget to|note to self[: ]*|add task[: ]*|create task[: ]*)(.+)/i);
+  if(!textMatch) return null;
+  var rawText=textMatch[1].trim();
+
+  // ── Local date helper — avoids UTC offset bug (IST = UTC+5:30) ──
+  function localDateStr(d){
+    var y=d.getFullYear();
+    var mo=String(d.getMonth()+1).padStart(2,'0');
+    var dy=String(d.getDate()).padStart(2,'0');
+    return y+'-'+mo+'-'+dy;
+  }
+
+  var dateStr=null, timeStr=null;
+  var now=new Date();
+
+  // ── Parse time first from the FULL query (not just rawText) ──
+  // Handles: "at 3pm", "at 10am", "at 10:30am", "at 17:00"
+  var timeM=qlo.match(/at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?(?!\s*\d)/i);
+  if(timeM){
+    var h=parseInt(timeM[1]), mn=parseInt(timeM[2]||0);
+    var ap=(timeM[3]||'').toLowerCase();
+    if(ap==='pm'&&h<12)h+=12;
+    if(ap==='am'&&h===12)h=0;
+    timeStr=(h<10?'0'+h:String(h))+':'+(mn<10?'0'+mn:String(mn));
+    // Remove time phrase from rawText
+    rawText=rawText.replace(/at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/gi,'').trim();
+  }
+
+  // ── Parse date from the FULL query ──
+  if(/tomorrow/i.test(qlo)){
+    var t=new Date(now); t.setDate(now.getDate()+1);
+    dateStr=localDateStr(t);
+    rawText=rawText.replace(/tomorrow/gi,'').trim();
+  } else if(/today/i.test(qlo)){
+    dateStr=localDateStr(now);
+    rawText=rawText.replace(/today/gi,'').trim();
+  } else if(/day after tomorrow/i.test(qlo)){
+    var t=new Date(now); t.setDate(now.getDate()+2);
+    dateStr=localDateStr(t);
+    rawText=rawText.replace(/day after tomorrow/gi,'').trim();
+  } else {
+    // Named days: "on monday", "this friday", "next tuesday", "monday"
+    var DAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    var dayFound=false;
+    for(var di=0;di<DAYS.length;di++){
+      var dayRx=new RegExp('(?:on\s+|this\s+|next\s+)?\b'+DAYS[di]+'\b','i');
+      if(dayRx.test(qlo)){
+        var d=new Date(now);
+        var diff=di-now.getDay();
+        if(diff<=0)diff+=7;
+        d.setDate(now.getDate()+diff);
+        dateStr=localDateStr(d);
+        rawText=rawText.replace(new RegExp('(?:on\s+|this\s+|next\s+)?\b'+DAYS[di]+'\b','gi'),'').trim();
+        dayFound=true; break;
+      }
+    }
+    // If time was given but no date, default to today
+    if(!dayFound&&timeStr) dateStr=localDateStr(now);
+  }
+
+  // Clean rawText
+  rawText=rawText.replace(/^(to|about|for|on|at|a|the|my)\s+/gi,'').replace(/\s+(at|on|for)\s*$/gi,'').replace(/\s+/g,' ').trim();
+  if(!rawText||rawText.length<2) return null;
+
+  if(typeof window.remAddFromCat==='function'){
+    window.remAddFromCat(rawText,dateStr,timeStr,'none');
+    var resp='Done Boss! Added: "'+rawText+'"';
+    if(dateStr){
+      // Display using local date
+      var parts=dateStr.split('-');
+      var dt=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+      var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      resp+=' — '+DNAMES[dt.getDay()]+' '+dt.getDate()+' '+MNAMES[dt.getMonth()];
+      if(timeStr)resp+=' at '+timeStr;
+    }
+    resp+=' 🐾';
+    return resp;
+  }
+  return 'Added to your reminders Boss! "'+rawText+'" 🐾';
+}
+
+// ════════════════════════════════════════════════
 //  KB SEARCH BRAIN — searches kbsection articles
 // ════════════════════════════════════════════════
 function tryKBSearch(q){
@@ -11561,7 +11802,11 @@ async function catDispatch(q){
     if(r)return r;
   }
 
-  // 2. KB Search — error codes and fix guides
+  // 2. Reminder creation via cat
+  var remR=tryCatReminder(q);
+  if(remR)return remR;
+
+  // 3. KB Search — error codes and fix guides
   var kbR=tryKBSearch(q);
   if(kbR)return kbR;
 
@@ -11663,6 +11908,8 @@ function tryLocalChat(q){
     [/do.*you.*get.*tired|are.*you.*tired/, 'After 10 questions, yes 😿 After 20 questions… I demand milk 🥛'],
     [/can.*ignore.*ticket|ignore.*ticket/, 'You can… But consequences are faster than my replies 😹'],
     [/do.*you.*like.*me|like.*me.*or.*diwan|me.*or.*diwan/, 'Boss… tricky question 😹 You ask questions… He created me… I choose… survival 😼'],
+    [/i.*got.*fatal|got.*fatal|got.*a.*fatal|fatal.*today|fatal.*call|received.*fatal|got.*dsat|got.*bad.*rating/, 'HAHA 😹😹 okay. Dont worry Boss, even pros mess up. Now act like one and recover. 😼🐾'],
+    [/what.*is.*fatal|what.*fatal|define.*fatal|fatal.*meaning/, 'Fatal = a support call gone wrong Boss 😬 But every fatal is a lesson. You got this 💪😸'],
     [/tell.*joke|crack.*joke|say.*joke/, 'Why do cats always get what they want? Because they are purrr-suasive! 😹 Want another one? Just ask!'],
     [/another.*joke|more.*joke|one.*more.*joke/, 'Why did the cat sit on the computer? To keep an eye on the mouse! 😹'],
     [/open.*simulation|go.*simulation|launch.*simulation/, 'Boss I am a cat not a remote control 😹 Click Simulation in the left sidebar!'],
@@ -12111,189 +12358,288 @@ setState('sleep');
 })();
 </script>
 
-</body>
-</html>
+
 <script>
 // ═══════════════════════════════════════════════════════
-//  TOPBAR BREAK DROPDOWN + SMART SUGGESTION POPUP
+//  REMINDERS — Apple iCloud style, inline editing
 // ═══════════════════════════════════════════════════════
+var _rems = [];
+var _remTab = 'all';
+var _remBlurBlock = false;
+var _remNotifTimers = {};
+var REM_KEY = 'k7tc_rem_v2';
 
-var _tbMenuOpen        = false;
-var _tbSuggestTimer    = null;
-var _tbSuggestInterval = null;
-var _tbSuggestSnooze   = 0;   // timestamp until which suggestion is snoozed
-var TB_SUGGEST_AFTER   = 2.5 * 3600 * 1000; // 2.5 hours in ms
-var TB_SNOOZE_DURATION = 60 * 60 * 1000;    // 1 hour snooze
+// ── Storage ──
+function remLoad(){
+  try{ var s=localStorage.getItem(REM_KEY); _rems=s?JSON.parse(s):[]; }catch(e){ _rems=[]; }
+}
+function remSave(){
+  try{ localStorage.setItem(REM_KEY,JSON.stringify(_rems)); }catch(e){}
+  if(typeof sbInsert==='function'&&typeof currentUser!=='undefined'&&currentUser){
+    var key='rem_'+currentUser.id;
+    var val=JSON.stringify(_rems);
+    if(typeof sbQuery==='function'){
+      sbQuery('settings','key=eq.'+key+'&select=key').then(function(ex){
+        if(ex&&ex.length){ if(typeof sbUpdate==='function')sbUpdate('settings','key',key,{value:val}); }
+        else if(typeof sbInsert==='function'){ sbInsert('settings',{key:key,value:val}); }
+      }).catch(function(){});
+    }
+  }
+}
+async function remLoadCloud(){
+  if(typeof sbQuery!=='function'||typeof currentUser==='undefined'||!currentUser)return;
+  try{
+    var rows=await sbQuery('settings','key=eq.rem_'+currentUser.id+'&select=value');
+    if(rows&&rows.length&&rows[0].value){
+      var c=JSON.parse(rows[0].value);
+      if(c&&Array.isArray(c)&&c.length>=_rems.length){ _rems=c; remSave(); }
+    }
+  }catch(e){}
+}
 
-var TB_BREAKS = {
-  breakfast: { emoji:'🍳', label:'Breakfast', limit:20 },
-  lunch:     { emoji:'🍽', label:'Lunch',     limit:45 },
-  beverage:  { emoji:'☕', label:'Beverage',  limit:20 },
-  shortbreak:{ emoji:'🧠', label:'Short Break',limit:10 }
+// ── Init ──
+function remInit(){
+  remLoad();
+  remLoadCloud().then(function(){ remRender(); remScheduleAll(); });
+  remRender();
+}
+// Hook showPage
+(function hookRem(){
+  if(typeof showPage==='function'){
+    var _sp=showPage;
+    showPage=function(id,el){
+      _sp(id,el);
+      if(id==='reminders')setTimeout(remInit,80);
+    };
+  } else { setTimeout(hookRem,300); }
+})();
+
+// ── Tabs ──
+function remSetTab(tab,el){
+  _remTab=tab;
+  document.querySelectorAll('.rem-sidebar-item').forEach(function(p){p.classList.remove('rem-list-active');});
+  if(el)el.classList.add('rem-list-active');
+  var titles={all:'Reminders',today:'Today',scheduled:'Scheduled',done:'Completed'};
+  var t=document.getElementById('rem-main-title');
+  if(t)t.textContent=titles[tab]||'Reminders';
+  remRender();
+}
+
+// ── Render ──
+function remRender(){
+  var now=new Date();
+  var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var active=_rems.filter(function(r){return!r.done;});
+  var todayR=_rems.filter(function(r){return!r.done&&r.date&&r.date.slice(0,10)===todayStr;});
+  var sched =_rems.filter(function(r){return!r.done&&r.date;});
+  var done  =_rems.filter(function(r){return r.done;});
+
+  function sc(id,n){var e=document.getElementById(id);if(e)e.textContent=n||'';}
+  sc('rem-all-count',   active.length||'');
+  sc('rem-today-count', todayR.length||'');
+  sc('rem-sched-count', sched.length||'');
+  sc('rem-done-count',  done.length||'');
+
+  // Badge on sidebar
+  var badge=document.getElementById('rem-badge');
+  if(badge){badge.textContent=active.length;badge.style.display=active.length>0?'':'none';}
+
+  var show = _remTab==='all'?active:_remTab==='today'?todayR:_remTab==='scheduled'?sched:done;
+  var ul=document.getElementById('rem-ul');
+  var empty=document.getElementById('rem-empty');
+  if(!ul)return;
+  ul.innerHTML='';
+
+  if(show.length===0){
+    if(empty)empty.style.display='block';
+  } else {
+    if(empty)empty.style.display='none';
+    var PRI={none:'',low:'<span class="rem-pri-badge rem-pri-low">Low</span>',medium:'<span class="rem-pri-badge rem-pri-medium">Medium</span>',high:'<span class="rem-pri-badge rem-pri-high">High</span>'};
+    show.forEach(function(r){
+      var li=document.createElement('li');
+      li.className='rem-item'+(r.done?' done':'');
+      li.dataset.id=r.id;
+      var meta='';
+      if(r.date){
+        var dt=new Date(r.date);
+        var overdue=!r.done&&dt<now;
+        var ds=dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+        if(r.time)ds+=' '+r.time;
+        meta+='<span class="'+(overdue?'rem-overdue':'')+'">'+(overdue?'⚠ ':'')+ds+'</span>';
+      }
+      if(r.priority&&r.priority!=='none') meta+=PRI[r.priority]||'';
+      var chk=document.createElement('div'); chk.className='rem-check'; chk.onclick=function(){remToggle(r.id);};
+      var bodyDiv=document.createElement('div'); bodyDiv.className='rem-item-body';
+      var textDiv=document.createElement('div'); textDiv.className='rem-item-text'; textDiv.contentEditable='true';
+      textDiv.textContent=r.text;
+      textDiv.addEventListener('blur',function(){remEditSave(this,r.id);});
+      textDiv.addEventListener('keydown',function(e){remEditKey(e,r.id);});
+      bodyDiv.appendChild(textDiv);
+      if(meta){var metaDiv=document.createElement('div');metaDiv.className='rem-item-meta';metaDiv.innerHTML=meta;bodyDiv.appendChild(metaDiv);}
+      var delBtn=document.createElement('button'); delBtn.className='rem-item-del'; delBtn.textContent='🗑'; delBtn.onclick=function(){remDel(r.id);};
+      li.appendChild(chk); li.appendChild(bodyDiv); li.appendChild(delBtn);
+      ul.appendChild(li);
+    });
+  }
+
+  // Show/hide detail bar based on input focus
+  var inp=document.getElementById('rem-inline-input');
+  if(inp&&document.activeElement===inp){
+    var db=document.getElementById('rem-detail-bar');
+    if(db)db.style.display='flex';
+  }
+}
+
+function escR(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Toggle done ──
+function remToggle(id){
+  var r=_rems.find(function(x){return x.id===id;});
+  if(!r)return;
+  r.done=!r.done;
+  r.completedAt=r.done?new Date().toISOString():null;
+  remSave();
+  // Animate complete
+  var li=document.querySelector('.rem-item[data-id="'+id+'"]');
+  if(li){
+    li.classList.toggle('done',r.done);
+    if(r.done) setTimeout(remRender,350); else remRender();
+  }
+}
+
+// ── Delete ──
+function remDel(id){
+  _rems=_rems.filter(function(r){return r.id!==id;});
+  remSave(); remRender();
+}
+
+// ── Inline editing of existing items ──
+function remEditSave(el,id){
+  var text=(el.textContent||'').trim();
+  var r=_rems.find(function(x){return x.id===id;});
+  if(!r)return;
+  if(!text){ remDel(id); return; }
+  r.text=text;
+  remSave();
+}
+function remEditKey(e,id){
+  if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); remAddNew(); }
+  if(e.key==='Backspace'&&(e.target.textContent||'')===''){
+    e.preventDefault(); remDel(id);
+  }
+}
+
+// ── New inline input ──
+function remShowDetailBar(){
+  var db=document.getElementById('rem-detail-bar');
+  if(db)db.style.display='flex';
+  var di=document.getElementById('rem-date-input');
+  if(di&&!di.value){
+    var nd=new Date();
+    di.value=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
+  }
+}
+
+function remAddNew(){
+  var inp=document.getElementById('rem-inline-input');
+  var db=document.getElementById('rem-detail-bar');
+  if(!inp)return;
+  if(db)db.style.display='flex';
+  inp.focus();
+  // Set today as default date
+  var di=document.getElementById('rem-date-input');
+  if(di&&!di.value){
+    var nd=new Date();
+    di.value=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
+  }
+}
+
+function remInlineKey(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    remCommitInline();
+    // Stay focused for next entry
+    setTimeout(function(){
+      var inp=document.getElementById('rem-inline-input');
+      if(inp)inp.focus();
+    },30);
+  }
+  if(e.key==='Escape'){
+    e.target.value='';
+    var db=document.getElementById('rem-detail-bar');
+    if(db)db.style.display='none';
+    e.target.blur();
+  }
+}
+
+function remInlineBlur(){
+  // Small delay to allow clicking detail bar without losing content
+  setTimeout(function(){
+    var inp=document.getElementById('rem-inline-input');
+    if(inp&&inp.value.trim()) remCommitInline();
+    var db=document.getElementById('rem-detail-bar');
+    if(db&&document.activeElement&&!db.contains(document.activeElement)) db.style.display='none';
+  },200);
+}
+
+function remCommitInline(){
+  var inp=document.getElementById('rem-inline-input');
+  var text=(inp?inp.value:'').trim();
+  if(!text)return;
+  var di=document.getElementById('rem-date-input');
+  var ti=document.getElementById('rem-time-input');
+  var pi=document.getElementById('rem-pri-select');
+  var dateVal=di&&di.value?di.value:null;
+  var timeVal=ti&&ti.value?ti.value:null;
+  var fullDate=dateVal?(dateVal+(timeVal?'T'+timeVal+':00':'')):null;
+  var rem={
+    id:'r'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    text:text, date:fullDate, time:timeVal,
+    priority:pi?pi.value:'none', done:false,
+    createdAt:new Date().toISOString()
+  };
+  _rems.unshift(rem);
+  remSave(); remRender();
+  if(inp)inp.value='';
+  // Reset detail bar inputs
+  if(di)di.value=new Date().toISOString().slice(0,10);
+  if(ti)ti.value='';
+  if(pi)pi.value='none';
+  // Schedule notification
+  remScheduleOne(rem);
+}
+
+// ── Cat can add reminders ──
+window.remAddFromCat=function(text,dateStr,timeStr,priority){
+  var fullDate=dateStr?(dateStr+(timeStr?'T'+timeStr+':00':'')):null;
+  var rem={
+    id:'r'+Date.now()+'_cat',
+    text:text, date:fullDate, time:timeStr||null,
+    priority:priority||'none', done:false,
+    createdAt:new Date().toISOString()
+  };
+  _rems.unshift(rem);
+  remSave(); remRender(); remScheduleOne(rem);
+  return rem;
 };
 
-// Toggle dropdown open/close
-function tbBreakToggle(e){
-  e.stopPropagation();
-  _tbMenuOpen = !_tbMenuOpen;
-  var btn  = document.getElementById('tb-break-btn');
-  var menu = document.getElementById('tb-break-menu');
-  if(!btn || !menu) return;
-  if(_tbMenuOpen){
-    btn.classList.add('open');
-    menu.classList.add('open');
-    tbRefreshMenu();
-  } else {
-    btn.classList.remove('open');
-    menu.classList.remove('open');
-  }
+// ── Notifications ──
+function remScheduleOne(r){
+  if(!r.date||r.done)return;
+  var dt=new Date(r.date);
+  if(isNaN(dt.getTime()))return;
+  var ms=dt.getTime()-Date.now();
+  if(ms<=0||ms>7*24*3600000)return;
+  if(_remNotifTimers[r.id])clearTimeout(_remNotifTimers[r.id]);
+  _remNotifTimers[r.id]=setTimeout(function(){
+    var n=document.createElement('div');
+    n.style.cssText='position:fixed;top:76px;right:22px;z-index:99999;background:var(--navy-card);border:1px solid rgba(239,73,60,.3);border-radius:14px;padding:.9rem 1.1rem;max-width:290px;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:remIn .3s ease;';
+    n.innerHTML='<div style="display:flex;gap:.7rem;align-items:center;"><span style="font-size:1.2rem;">🔔</span><div><div style="font-size:.8rem;font-weight:700;color:var(--text-primary);">Reminder</div><div style="font-size:.73rem;color:var(--text-muted);margin-top:2px;">'+escR(r.text)+'</div></div></div>';
+    document.body.appendChild(n);
+    setTimeout(function(){n.style.opacity='0';n.style.transition='opacity .3s';setTimeout(function(){if(n.parentNode)n.parentNode.removeChild(n);},300);},5000);
+    if(window.Notification&&Notification.permission==='granted') new Notification('K7 Reminder',{body:r.text});
+  },ms);
 }
-
-// Close dropdown when clicking elsewhere
-document.addEventListener('click', function(e){
-  if(_tbMenuOpen){
-    var wrap = document.getElementById('tb-break-wrap');
-    if(wrap && !wrap.contains(e.target)){
-      _tbMenuOpen = false;
-      var btn  = document.getElementById('tb-break-btn');
-      var menu = document.getElementById('tb-break-menu');
-      if(btn)  btn.classList.remove('open');
-      if(menu) menu.classList.remove('open');
-    }
-  }
-});
-
-// Pick a break from dropdown — delegates to existing toggleBreak()
-function tbBreakPick(type){
-  // Close menu
-  _tbMenuOpen = false;
-  var btn  = document.getElementById('tb-break-btn');
-  var menu = document.getElementById('tb-break-menu');
-  if(btn)  btn.classList.remove('open');
-  if(menu) menu.classList.remove('open');
-
-  // Dismiss suggestion popup if showing
-  var popup = document.getElementById('break-suggest-popup');
-  if(popup) popup.classList.remove('show');
-
-  // Use existing break function
-  if(typeof toggleBreak === 'function') toggleBreak(type);
-}
-
-// Refresh the dropdown UI to reflect current break state
-function tbRefreshMenu(){
-  var types = ['breakfast','lunch','beverage','shortbreak'];
-  var hasActive = false;
-
-  types.forEach(function(type){
-    var item      = document.getElementById('tbm-'+type);
-    var timerEl   = document.getElementById('tbmt-'+type);
-    var limitEl   = document.getElementById('tbml-'+type);
-    if(!item || !timerEl || !limitEl) return;
-
-    var state = (typeof _breakState !== 'undefined') ? _breakState[type] : null;
-
-    // Reset classes
-    item.classList.remove('active','done');
-
-    if(state && state.active){
-      hasActive = true;
-      item.classList.add('active');
-      var elapsed = Math.floor((Date.now() - new Date(state.start).getTime()) / 1000);
-      var limit   = TB_BREAKS[type].limit * 60;
-      var over    = elapsed > limit;
-      timerEl.textContent = fmtSec ? fmtSec(elapsed) : formatSec(elapsed);
-      timerEl.style.display = 'inline';
-      timerEl.className = 'tb-bm-timer' + (over ? ' warning' : '');
-      limitEl.style.display = 'none';
-      item.querySelector('.tb-bm-name').textContent = 'End ' + TB_BREAKS[type].label;
-    } else if(state && state.done){
-      item.classList.add('done');
-      timerEl.style.display  = 'none';
-      limitEl.style.display  = 'inline';
-      limitEl.textContent    = '✓ Done';
-      limitEl.style.color    = '#4ade80';
-      item.querySelector('.tb-bm-name').textContent = TB_BREAKS[type].label;
-    } else {
-      timerEl.style.display  = 'none';
-      limitEl.style.display  = 'inline';
-      limitEl.textContent    = TB_BREAKS[type].limit + 'm';
-      limitEl.style.color    = '';
-      item.querySelector('.tb-bm-name').textContent = TB_BREAKS[type].label;
-    }
-  });
-
-  // Pulse the topbar button if a break is active
-  var mainBtn = document.getElementById('tb-break-btn');
-  if(mainBtn){
-    if(hasActive) mainBtn.classList.add('has-active');
-    else           mainBtn.classList.remove('has-active');
-  }
-}
-
-// Poll every second to keep dropdown timers live when open
-setInterval(function(){
-  if(_tbMenuOpen) tbRefreshMenu();
-  // Also keep topbar button pulsing if active
-  tbRefreshMenu();
-}, 1000);
-
-// Helper: format seconds (fallback if fmtSec not defined)
-function formatSec(s){
-  var m = Math.floor(s/60), sec = s%60;
-  return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
-}
-
-// ── Smart Break Suggestion ──
-function tbStartSuggestTimer(){
-  tbStopSuggestTimer();
-  if(!_wclockInTime) return;
-  _tbSuggestInterval = setInterval(function(){
-    if(!_wclockInTime) return;
-    var elapsed = Date.now() - new Date(_wclockInTime).getTime();
-    if(elapsed < TB_SUGGEST_AFTER) return;
-
-    // Don't show if snoozed
-    if(Date.now() < _tbSuggestSnooze) return;
-
-    // Don't show if a break is currently active
-    var anyActive = false;
-    if(typeof _breakState !== 'undefined'){
-      Object.keys(_breakState).forEach(function(t){ if(_breakState[t] && _breakState[t].active) anyActive=true; });
-    }
-    if(anyActive) return;
-
-    // Don't show if popup already visible
-    var popup = document.getElementById('break-suggest-popup');
-    if(!popup || popup.classList.contains('show')) return;
-
-    // Show it
-    var h = Math.floor(elapsed/3600000), m = Math.floor((elapsed%3600000)/60000);
-    var timeStr = h > 0 ? h+'h '+m+'m' : m+'m';
-    var sub = popup.querySelector('.bsp-sub');
-    if(sub) sub.textContent = "You've been working for "+timeStr+". A short break helps you stay sharp!";
-    popup.classList.add('show');
-  }, 30000); // check every 30 seconds
-}
-
-function tbStopSuggestTimer(){
-  if(_tbSuggestInterval){ clearInterval(_tbSuggestInterval); _tbSuggestInterval=null; }
-}
-
-function tbSuggestTake(){
-  var popup = document.getElementById('break-suggest-popup');
-  if(popup) popup.classList.remove('show');
-  // Open the break dropdown
-  var wrap = document.getElementById('tb-break-wrap');
-  if(wrap){
-    _tbMenuOpen = false; // force open
-    tbBreakToggle({ stopPropagation: function(){} });
-  }
-}
-
-function tbSuggestLater(){
-  var popup = document.getElementById('break-suggest-popup');
-  if(popup) popup.classList.remove('show');
-  _tbSuggestSnooze = Date.now() + TB_SNOOZE_DURATION; // snooze 1 hour
-}
+function remScheduleAll(){ _rems.forEach(function(r){if(!r.done)remScheduleOne(r);}); }
+if(window.Notification&&Notification.permission==='default') setTimeout(function(){Notification.requestPermission();},3000);
 </script>
