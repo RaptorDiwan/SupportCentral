@@ -10598,6 +10598,15 @@ function pplCloseLightbox(){
 </div><!-- end #catw -->
 
 <script>
+// ═══════════════════════════════════════════════════
+//  ORANGE CAT GLOBALS — defined outside IIFE so all
+//  window.* functions (catTestAI etc) can access them
+// ═══════════════════════════════════════════════════
+window.CAT_OPENROUTER_KEY = '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';
+window.CAT_SYSTEM = 'You are Orange Cat, a witty K7 Security support assistant with a fun cat personality. Always call users Boss. Use cat emojis naturally. Keep replies concise and helpful. K7 fixes: Error 12029/12007 - go to K7 Updates, Configure Updates, remove proxy settings, Apply and OK. Activation offline - use K7 website offline activation with Request Code. Clean install - use K7 Removal Tool then reinstall. High CPU - exclude folders from scan. Firewall blocking - add K7 executables to Windows Firewall exceptions. After 5+ questions be playfully tired and mention needing milk. When issue solved say Done Boss.';
+</script>
+
+<script>
 (function(){
 'use strict';
 
@@ -10610,9 +10619,7 @@ function pplCloseLightbox(){
 
 // ── State ──
 // ── OpenRouter default key (admin can override via Settings) ──
-var CAT_OPENROUTER_KEY='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'; // paste your OpenRouter key here
-
-var CAT_SYSTEM='You are Orange Cat, a witty K7 Security support assistant with a fun cat personality. Always call users Boss. Use cat emojis naturally. Keep replies concise and helpful. K7 fixes: Error 12029/12007 - go to K7 Updates, Configure Updates, remove proxy settings, Apply and OK. Activation offline - use K7 website offline activation with Request Code. Clean install - use K7 Removal Tool then reinstall. High CPU - exclude folders from scan. Firewall blocking - add K7 executables to Windows Firewall exceptions. After 5 or more questions be playfully tired and mention needing milk. When issue is solved say Done Boss and ask if anything else is needed.';
+// CAT_SYSTEM and CAT_OPENROUTER_KEY defined globally above this script
 
 var catState='sleep', catOpen_=false, catGreeted=false;
 var catHist=[], catBusy=false, catQCount=0;
@@ -11556,7 +11563,7 @@ window.catCloseSettings=function(){
 
 var _MODELS={
   openrouter:[
-    {v:'openrouter/auto',                        l:'Auto — Best free model (Recommended)'},
+    {v:'openrouter/free',                        l:'Free — Best free model (Recommended)'},
     {v:'meta-llama/llama-3.3-70b-instruct:free', l:'Llama 3.3 70B (Free)'},
     {v:'mistralai/mistral-7b-instruct:free',     l:'Mistral 7B (Free, Fast)'},
     {v:'google/gemma-3-27b-it:free',             l:'Gemma 3 27B (Free)'},
@@ -11660,7 +11667,7 @@ async function callAI(provider,apiKey,model,userMsg,useHistory){
         'X-Title':'K7 Orange Cat'
       },
       body:JSON.stringify({
-        model:'openrouter/auto',
+        model:'openrouter/free',
         messages:msgs,
         max_tokens:800,
         temperature:0.8
@@ -11739,7 +11746,7 @@ async function catAskAI(msg){
     // Use Pollinations as free default fallback if no AI configured
     var useProvider=_aiCfg&&_aiCfg.provider?_aiCfg.provider:'openrouter';
     var useKey=_aiCfg&&_aiCfg.apiKey?_aiCfg.apiKey:CAT_OPENROUTER_KEY;
-    var useModel=_aiCfg&&_aiCfg.model?_aiCfg.model:'openrouter/auto';
+    var useModel=_aiCfg&&_aiCfg.model?_aiCfg.model:'openrouter/free';
 
     // Build message with session context
     var contextNote=memBuildContext();
