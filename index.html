@@ -1810,9 +1810,11 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .msg-tick.sent{color:rgba(255,255,255,.3);}
   .msg-tick.read{color:#4fc3f7;}
   .msg-meta .msg-tick{font-size:.65rem;}
-  .msg-del-btn{background:none;border:none;cursor:pointer;opacity:0;font-size:.65rem;color:rgba(255,100,100,.7);padding:0 2px;margin-left:4px;transition:opacity .15s;line-height:1;}
-  .chat-msg.mine:hover .msg-del-btn,.msg-bubble-wrap.mine:hover .msg-del-btn{opacity:1;}
-  .msg-del-btn:hover{color:#ff4444;}
+  .msg-del-btn{background:none;border:none;cursor:pointer;opacity:0;font-size:.7rem;color:rgba(255,80,80,.6);padding:2px 4px;margin-left:6px;transition:all .15s;line-height:1;border-radius:4px;}
+  .chat-msg.mine:hover .msg-del-btn,.msg-bubble-wrap.mine:hover .msg-del-btn{opacity:1;background:rgba(255,80,80,.08);}
+  .msg-del-btn:hover{color:#ff3333;background:rgba(255,80,80,.15)!important;opacity:1!important;}
+  /* Always show on touch devices */
+  @media (hover:none){.chat-msg.mine .msg-del-btn,.msg-bubble-wrap.mine .msg-del-btn{opacity:.6;}}
   .chat-msg-expires{color:rgba(239,73,60,.6);}
   .chat-input-row{padding:.65rem .9rem;border-top:1px solid var(--navy-border);display:flex;align-items:center;gap:.5rem;}
   .chat-emoji-btn{background:none;border:none;cursor:pointer;font-size:1.2rem;padding:.2rem;flex-shrink:0;}
@@ -2949,103 +2951,77 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
 
       <!-- ── ABOUT PAGE ── -->
-      <div class="page" id="page-about" style="overflow:hidden;height:calc(100vh - 60px);">
-        <div class="about-wrap" style="height:100%;overflow-y:auto;">
+      <div class="page" id="page-about" style="height:calc(100vh - 60px);overflow:hidden;display:flex;align-items:stretch;">
+        <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:1.2rem;padding:1.8rem 2rem;max-width:960px;margin:0 auto;width:100%;align-content:start;">
 
-          <!-- Header -->
-          <div class="about-header">
-            <div class="about-logo-ring">
-              <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <!-- Top: Logo + Name -->
+          <div style="grid-column:1/-1;display:flex;align-items:center;gap:1.4rem;padding-bottom:1rem;border-bottom:1px solid var(--navy-border);">
+            <div style="width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 16px rgba(239,73,60,.2);">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
             </div>
-            <div class="about-app-name">K7Team<span>Core</span></div>
-            <div class="about-version">
-              <span class="about-version-dot"></span>
-              v5.2.0 &nbsp;·&nbsp; Build 2605.28
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--text-primary);">K7Team<span style="color:var(--gold);">Core</span></div>
+              <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;">v5.3.0 &nbsp;·&nbsp; Build 2605.29 &nbsp;·&nbsp; Designed &amp; engineered by Diwan Chowthry</div>
             </div>
-            <div class="about-credit" style="font-size:.8rem;color:var(--text-muted);opacity:.85;margin-top:.1rem;">Designed &amp; engineered by Diwan</div>
-            <div style="display:flex;align-items:center;gap:.6rem;justify-content:center;margin-top:.9rem;">
-              <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-                Check for Updates
+            <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()" style="margin-left:auto;white-space:nowrap;flex-shrink:0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              Check Updates
+            </button>
+          </div>
+
+          <!-- Card: Recent Updates -->
+          <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.2rem 1.4rem;">
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem;">
+              <div style="width:28px;height:28px;border-radius:8px;background:rgba(46,197,111,.12);display:flex;align-items:center;justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2EC56F" stroke-width="2.2"><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/><path d="M8 12l3 3 5-5"/></svg>
+              </div>
+              <span style="font-size:.8rem;font-weight:700;color:var(--text-primary);">What's New</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.55rem;">
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:#2EC56F;margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">Orange Cat AI Assistant — built for K7 Support team</span></div>
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:#2EC56F;margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">Roster, attendance, quiz, case tracker — all readable by Cat</span></div>
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:#2EC56F;margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">Send team messages and broadcasts via Cat</span></div>
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:#2EC56F;margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">Case Tracker: Vertical Type filter and reassign logic improved</span></div>
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:#2EC56F;margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">Roster multi-month support with per-month URL management</span></div>
+            </div>
+          </div>
+
+          <!-- Card: Upcoming -->
+          <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.2rem 1.4rem;">
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem;">
+              <div style="width:28px;height:28px;border-radius:8px;background:rgba(76,118,168,.12);display:flex;align-items:center;justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              </div>
+              <span style="font-size:.8rem;font-weight:700;color:var(--text-primary);">Coming Soon</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.55rem;">
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-blue);margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">AI-based improvements to Orange Cat</span></div>
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-blue);margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">Live Dynamics 365 CRM integration — real-time case tracking</span></div>
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-blue);margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">Advanced reporting dashboard with export options</span></div>
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-blue);margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">Vision Helpdesk live ticket sync</span></div>
+              <div style="display:flex;gap:.7rem;align-items:flex-start;"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent-blue);margin-top:5px;flex-shrink:0;"></div><span style="font-size:.75rem;color:var(--text-muted);line-height:1.5;">VICIdial real-time agent status integration</span></div>
+            </div>
+          </div>
+
+          <!-- Card: Orange Cat -->
+          <div style="background:linear-gradient(135deg,rgba(255,122,47,.08),rgba(255,122,47,.03));border:1px solid rgba(255,122,47,.2);border-radius:var(--radius);padding:1.2rem 1.4rem;grid-column:1/-1;">
+            <div style="display:flex;align-items:center;gap:.8rem;">
+              <div style="font-size:1.8rem;line-height:1;">🐱</div>
+              <div>
+                <div style="font-size:.82rem;font-weight:700;color:var(--text-primary);">Orange Cat AI Assistant</div>
+                <div style="font-size:.72rem;color:rgba(255,122,47,.8);margin-top:2px;">Completely developed for K7 Support Team · Built to simplify your day!</div>
+              </div>
+              <button class="about-report-btn" onclick="aboutOpenReport()" style="margin-left:auto;white-space:nowrap;flex-shrink:0;">
+                <svg viewBox="0 0 24 24" width="12" height="12"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Report Issue
               </button>
             </div>
-            <p class="about-desc">This application is continuously improved to ensure better performance, stability, and user experience across all team workflows.</p>
           </div>
-
-          <!-- Recent Updates -->
-          <div class="about-card">
-            <div class="about-card-header">
-              <div class="about-card-icon" style="background:rgba(46,197,111,.1);">
-                <svg viewBox="0 0 24 24" stroke="#1a7a45"><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/><path d="M8 12l3 3 5-5"/></svg>
-              </div>
-              <span class="about-card-title">Recent Updates</span>
-            </div>
-            <div class="about-card-body">
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:#1a7a45;"></span>
-                <span>Bug fixes and performance improvements across Case Tracker and Roster modules</span>
-              </div>
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:#1a7a45;"></span>
-                <span>Enhanced UI responsiveness — messages input now pinned correctly on all screen sizes</span>
-              </div>
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:#1a7a45;"></span>
-                <span>Case Tracker: Vertical Type filter, leave coverage improvements, and reassign logic</span>
-              </div>
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:#1a7a45;"></span>
-                <span>Roster multi-month support with per-month URL management</span>
-              </div>
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:#1a7a45;"></span>
-                <span>Minor stability updates and login audio refinement</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Upcoming Updates -->
-          <div class="about-card">
-            <div class="about-card-header">
-              <div class="about-card-icon" style="background:rgba(76,118,168,.1);">
-                <svg viewBox="0 0 24 24" stroke="var(--accent-blue)"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-              </div>
-              <span class="about-card-title">Upcoming Updates</span>
-            </div>
-            <div class="about-card-body">
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:var(--accent-blue);"></span>
-                <span>Live Dynamics 365 CRM integration — real-time case tracking without manual uploads</span>
-              </div>
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:var(--accent-blue);"></span>
-                <span>Vision Helpdesk live ticket sync once CORS access is enabled</span>
-              </div>
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:var(--accent-blue);"></span>
-                <span>Advanced reporting dashboard with export options</span>
-              </div>
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:var(--accent-blue);"></span>
-                <span>Improved notification system and additional user controls</span>
-              </div>
-              <div class="about-update-item">
-                <span class="about-update-dot" style="background:var(--accent-blue);"></span>
-                <span>VICIdial real-time agent status integration</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Report Issue Button -->
-          <button class="about-report-btn" onclick="aboutOpenReport()">
-            <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            Report an Issue
-          </button>
 
         </div>
       </div>
 
-      <!-- ── CHANGE PASSWORD PAGE ── -->
+      <!-- ── CHANGE PASSWORD PAGE ── -->      <!-- ── CHANGE PASSWORD PAGE ── -->
       <div class="page" id="page-changepass">
         <div class="cp-wrap">
           <h2 class="um-title">Change Password</h2>
@@ -3669,7 +3645,18 @@ window.addEventListener('DOMContentLoaded',function(){
 });
 
 function showPage(id,elem){
-  if(id==='kb'){window.open('kbsection.html','_blank');return;}
+  if(id==='kb'){
+  var kbWin=window.open('kbsection.html','_blank');
+  // When KB opens, it will set window.opener._kbArticles
+  // Also preload inline for cat search
+  if(!window._kbArticles){
+    fetch('kbsection.html').then(function(r){return r.text();}).then(function(html){
+      var m=html.match(/const ARTICLES=(\[[\s\S]*?\]);/);
+      if(m){try{window._kbArticles=JSON.parse(m[1].replace(/<[^>]+>/g,' '));console.log('[Cat] KB preloaded: '+window._kbArticles.length+' articles');}catch(e){}}
+    }).catch(function(){});
+  }
+  return;
+}
   if(isAdminPage(id)&&!isAdminUser()){showPage('home',document.querySelector('.sidebar-item'));return;}
 
   // Hide all pages
@@ -10551,7 +10538,7 @@ function pplCloseLightbox(){
     <div id="cp-hdr">
       <div id="cp-av">🐱</div>
       <div id="cp-info">
-        <div id="cp-name">K7 AI Assistant <span class="cp-badge">SUPPORT</span></div>
+        <div id="cp-name">K7 Orange Cat AI <span class="cp-badge">BY SUPPORT</span></div><div style="font-family:'DM Sans',sans-serif;font-size:.6rem;color:rgba(255,255,255,.35);margin-top:1px;">Built to simplify your day!</div>
         <div id="cp-status">Online • Here to help you!</div>
       </div>
       <button id="cp-gear" title="AI Settings (Admin)" onclick="catOpenSettings()">⚙️</button>
@@ -10677,6 +10664,19 @@ function speak(txt,ms){
 // ── FAB / Panel ──
 window.catFabClick=function(){
   document.getElementById('cat-notif').style.display='none';
+  // Play mild cat purr sound
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var o=ctx.createOscillator(); var g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type='sine'; o.frequency.setValueAtTime(520,ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(380,ctx.currentTime+0.18);
+    o.frequency.exponentialRampToValueAtTime(460,ctx.currentTime+0.32);
+    g.gain.setValueAtTime(0,ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.09,ctx.currentTime+0.04);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.42);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime+0.45);
+  }catch(e){}
   if(catOpen_){catClose();return;}
   catOpen();
 };
@@ -11513,6 +11513,43 @@ function tryCaseTracker(q){
 }
 
 // ════════════════════════════════════════════════
+//  KB SEARCH BRAIN — searches kbsection articles
+// ════════════════════════════════════════════════
+function tryKBSearch(q){
+  var qlo=q.toLowerCase().trim();
+  // Trigger on error codes, "how to fix", "steps to", "solution for"
+  var isKBQ=/error\s*\d{3,}|fix|solve|solution|steps|how.*to|not.*work|issue|problem|install|update.*fail|activation|connect/i.test(qlo);
+  if(!isKBQ)return null;
+  // Access KB articles from kbsection if loaded
+  var articles=window._kbArticles||window.kbArticles||[];
+  if(!articles.length)return null;
+  // Search title and content for matches
+  var words=qlo.replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(function(w){return w.length>2;});
+  var scored=articles.map(function(art){
+    var title=(art.title||art.Title||'').toLowerCase();
+    var body=(art.content||art.body||art.steps||'').toLowerCase();
+    var score=0;
+    words.forEach(function(w){
+      if(title.includes(w))score+=3;
+      if(body.includes(w))score+=1;
+    });
+    return{art:art,score:score};
+  }).filter(function(x){return x.score>0;}).sort(function(a,b){return b.score-a.score;});
+  if(!scored.length)return null;
+  var top=scored[0].art;
+  var title=top.title||top.Title||'Article';
+  var steps=top.steps||top.content||top.body||top.solution||'';
+  if(!steps)return null;
+  memRemember('lastTopic','kb_search');
+  var lines=['Found this in KB Boss:','',title,''];
+  // Clean up steps text
+  var cleanSteps=String(steps).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,600);
+  lines.push(cleanSteps);
+  if(top.url||top.link)lines.push('Full article: '+window.location.origin+'/kbsection.html');
+  return lines.join('\n');
+}
+
+// ════════════════════════════════════════════════
 //  MAIN DISPATCH — try all brains in order
 // ════════════════════════════════════════════════
 async function catDispatch(q){
@@ -11522,7 +11559,11 @@ async function catDispatch(q){
     if(r)return r;
   }
 
-  // 2. Roster — FIRST priority (leave, shift, off, who is on leave)
+  // 2. KB Search — error codes and fix guides
+  var kbR=tryKBSearch(q);
+  if(kbR)return kbR;
+
+  // 3. Roster — FIRST priority (leave, shift, off, who is on leave)
   var rosterR=tryRoster(q);
   if(rosterR)return rosterR;
 
@@ -11672,6 +11713,151 @@ function tryLocalChat(q){
 
   return null;
 }
+
+// ════════════════════════════════════════════════
+//  AI SETTINGS — loadAiCfg, catOpenSettings, etc.
+// ════════════════════════════════════════════════
+var _AI_KEY='cat_ai_cfg';
+var _aiCfg=null;
+
+function loadAiCfg(){
+  _aiCfg=null;
+  // Load from localStorage first (instant)
+  try{
+    var s=localStorage.getItem(_AI_KEY)||localStorage.getItem('cat_ai_settings');
+    if(s){ var c=JSON.parse(s); if(c&&c.provider&&c.apiKey)_aiCfg=c; }
+  }catch(e){}
+  // If hardcoded key and no saved config, use OpenRouter default
+  if(!_aiCfg&&window.CAT_OPENROUTER_KEY&&window.CAT_OPENROUTER_KEY!=='YOUR_KEY_HERE'){
+    _aiCfg={provider:'openrouter',apiKey:window.CAT_OPENROUTER_KEY,model:'openrouter/free'};
+  }
+  // Also try Supabase in background
+  if(typeof sbQuery==='function'){
+    sbQuery('settings','key=eq.'+_AI_KEY+'&select=value').then(function(rows){
+      if(rows&&rows.length&&rows[0].value){
+        try{var c=JSON.parse(rows[0].value);if(c&&c.provider&&c.apiKey){_aiCfg=c;localStorage.setItem(_AI_KEY,rows[0].value);}}catch(e){}
+      }
+      updateNoAiBanner();
+    }).catch(function(){ updateNoAiBanner(); });
+  } else { updateNoAiBanner(); }
+}
+
+window.catOpenSettings=function(){
+  if(typeof isAdminUser!=='function'||!isAdminUser())return;
+  var p=document.getElementById('cs-provider');
+  var k=document.getElementById('cs-apikey');
+  if(_aiCfg&&_aiCfg.provider){
+    if(p)p.value=_aiCfg.provider;
+    if(k)k.value=_aiCfg.apiKey||'';
+    window.catProviderChange();
+    var m=document.getElementById('cs-model');
+    if(m&&_aiCfg.model)setTimeout(function(){if(m)m.value=_aiCfg.model;},50);
+  } else {
+    if(p)p.value='openrouter';
+    window.catProviderChange();
+  }
+  var st=document.getElementById('cs-status');
+  if(st)st.textContent='';
+  var modal=document.getElementById('cat-settings-modal');
+  if(modal)modal.classList.add('on');
+};
+
+window.catCloseSettings=function(){
+  var modal=document.getElementById('cat-settings-modal');
+  if(modal)modal.classList.remove('on');
+};
+
+var _MODELS={
+  openrouter:[
+    {v:'openrouter/free',                        l:'Free — Best free model (Recommended)'},
+    {v:'meta-llama/llama-3.3-70b-instruct:free', l:'Llama 3.3 70B (Free)'},
+    {v:'mistralai/mistral-7b-instruct:free',     l:'Mistral 7B (Free, Fast)'},
+    {v:'google/gemma-3-27b-it:free',             l:'Gemma 3 27B (Free)'},
+    {v:'deepseek/deepseek-chat-v3-0324:free',    l:'DeepSeek V3 (Free)'},
+  ],
+  gemini:[
+    {v:'gemini-2.0-flash',               l:'Gemini 2.0 Flash (Free, Recommended)'},
+    {v:'gemini-2.0-flash-lite',          l:'Gemini 2.0 Flash Lite (Free, Fastest)'},
+    {v:'gemini-2.5-flash-preview-05-20', l:'Gemini 2.5 Flash Preview (Free, Best)'},
+  ],
+  openai:[
+    {v:'gpt-4o-mini',  l:'GPT-4o Mini (Fast, Affordable)'},
+    {v:'gpt-4.1-nano', l:'GPT-4.1 Nano (Cheapest)'},
+    {v:'gpt-4.1-mini', l:'GPT-4.1 Mini (Balanced)'},
+    {v:'gpt-4o',       l:'GPT-4o (Best quality)'},
+  ],
+  claude:[
+    {v:'claude-haiku-4-5-20251001', l:'Claude Haiku 4.5 (Fast)'},
+    {v:'claude-sonnet-4-6',         l:'Claude Sonnet 4.6 (Best)'},
+  ]
+};
+
+var _HINTS={
+  openrouter:'Free key at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> — free models, no credit card',
+  gemini:'Free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — no credit card',
+  openai:'Key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
+  claude:'Key at <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>'
+};
+
+window.catProviderChange=function(){
+  var p=document.getElementById('cs-provider');
+  if(!p)return;
+  var pv=p.value;
+  var hint=document.getElementById('cs-key-hint');
+  var mf=document.getElementById('cs-model-field');
+  var ms=document.getElementById('cs-model');
+  if(hint)hint.innerHTML=_HINTS[pv]||'';
+  if(!pv){if(mf)mf.style.display='none';return;}
+  if(mf)mf.style.display='';
+  if(ms){
+    ms.innerHTML='';
+    (_MODELS[pv]||[]).forEach(function(m){
+      var o=document.createElement('option');
+      o.value=m.v; o.textContent=m.l;
+      ms.appendChild(o);
+    });
+  }
+};
+
+window.catSaveSettings=async function(){
+  var p=document.getElementById('cs-provider').value;
+  var k=document.getElementById('cs-apikey').value.trim();
+  var ms=document.getElementById('cs-model');
+  var m=ms?ms.value:'openrouter/free';
+  var st=document.getElementById('cs-status');
+  if(!p||!k){if(st){st.textContent='Please select a provider and enter your API key.';st.style.color='#ff7777';}return;}
+  if(st){st.textContent='Saving...';st.style.color='rgba(255,255,255,.4)';}
+  _aiCfg={provider:p,apiKey:k,model:m};
+  var val=JSON.stringify(_aiCfg);
+  localStorage.setItem(_AI_KEY,val);
+  try{
+    if(typeof sbQuery==='function'){
+      var ex=await sbQuery('settings','key=eq.'+_AI_KEY+'&select=key');
+      if(ex&&ex.length){if(typeof sbUpdate==='function')await sbUpdate('settings','key',_AI_KEY,{value:val});}
+      else{if(typeof sbInsert==='function')await sbInsert('settings',{key:_AI_KEY,value:val});}
+    }
+  }catch(e){}
+  if(st){st.textContent='Saved! Cat is now using '+p+'.';st.style.color='#4ade80';}
+  updateNoAiBanner();
+  setTimeout(window.catCloseSettings,1800);
+};
+
+window.catTestAI=async function(){
+  var p=document.getElementById('cs-provider').value;
+  var k=document.getElementById('cs-apikey').value.trim();
+  var ms=document.getElementById('cs-model');
+  var m=ms?ms.value:'openrouter/free';
+  var st=document.getElementById('cs-status');
+  if(!p||!k){if(st){st.textContent='Fill provider and API key first.';st.style.color='#ff7777';}return;}
+  if(st){st.textContent='Testing...';st.style.color='rgba(255,255,255,.4)';}
+  try{
+    var r=await callAI(p,k,m,'Reply with exactly three words: Connection works perfectly',false);
+    if(st){st.textContent='Connected: '+String(r).slice(0,60);st.style.color='#4ade80';}
+  }catch(e){
+    if(st){st.textContent='Error: '+e.message;st.style.color='#ff7777';}
+  }
+};
+
 
 async function callAI(provider,apiKey,model,userMsg,useHistory){
   // OpenRouter — streaming response for speed
@@ -11856,6 +12042,16 @@ window.catShowWidget=function(){
   loadAiCfg();
   // Load chat users for messaging
   if(typeof chatLoadUsers==='function')setTimeout(chatLoadUsers,1000);
+  // Preload KB articles silently for cat search
+  setTimeout(function(){
+    if(!window._kbArticles){
+      fetch('kbsection.html').then(function(r){return r.text();}).then(function(html){
+        var m=html.match(/const ARTICLES=(\[[\s\S]*?\]);/);
+        if(m){try{window._kbArticles=JSON.parse(m[1].replace(/<[^>]+>/g,' '));console.log('[Cat] KB loaded: '+window._kbArticles.length+' articles');}catch(e){}}
+      }).catch(function(){});
+    }
+  },2000);
+
   // Background roster cache — silent, fast
   setTimeout(function(){
     try{

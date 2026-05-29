@@ -7,6 +7,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f0f4f8;--bg2:#ffffff;--bg3:#e8edf3;--border:#e2e8f0;--border2:#cbd5e1;--text:#1e293b;--text2:#64748b;--text3:#94a3b8;--accent:#2563eb;--accent-light:#eff6ff;--accent-border:#bfdbfe;--accent2:#1d4ed8;--green:#059669;--green-bg:#ecfdf5;--amber:#d97706;--amber-bg:#fffbeb;--red:#dc2626;--red-bg:#fef2f2;--tag-activation:#7c3aed;--tag-updates:#059669;--tag-scanning:#d97706;--tag-connectivity:#2563eb;--tag-installation:#db2777;--radius:10px;--radius-lg:14px;--shadow:0 1px 3px rgba(0,0,0,0.07);--shadow-md:0 4px 16px rgba(0,0,0,0.08);}
+[data-theme="dark"]{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--border2:#3d444d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--accent:#58a6ff;--accent-light:#131f35;--accent-border:#1f4068;--accent2:#79c0ff;--green:#3fb950;--green-bg:#122118;--amber:#d29922;--amber-bg:#272012;--red:#f85149;--red-bg:#2d1517;--shadow:0 1px 3px rgba(0,0,0,0.3);--shadow-md:0 4px 16px rgba(0,0,0,0.4);}
+code{background:var(--bg3)!important;border-color:var(--border)!important;color:var(--text2)!important;}
+[data-theme="dark"] .search-input{background:var(--bg2);color:var(--text);border-color:var(--border);}
+[data-theme="dark"] .search-input::placeholder{color:var(--text3);}
+[data-theme="dark"] .hero{background:linear-gradient(135deg,#0d1b2a 0%,#0f2339 40%,#112d48 70%,#1a3a5c 100%);}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
 .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);}
@@ -226,6 +231,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:1rem 2re
 </div>
 <nav class="header-nav">
 <button class="nav-btn" id="nav-articles" onclick="showArticles()">All Articles</button>
+<button class="nav-btn" id="kb-theme-btn" onclick="kbToggleTheme()" title="Toggle dark mode" style="padding:5px 10px;font-size:15px;">🌙</button>
 <button class="nav-btn nav-request" onclick="showRequest()">Request KB</button>
 </nav>
 </div>
@@ -619,6 +625,40 @@ async function submitRequest(){
 }
 
 showHome();
+
+// ── Dark mode ──
+function kbToggleTheme(){
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  var next=isDark?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('kb_theme',next);
+  document.getElementById('kb-theme-btn').textContent=next==='dark'?'☀️':'🌙';
+}
+(function(){
+  var saved=localStorage.getItem('kb_theme');
+  // Also sync with parent portal theme if open inside iframe or same session
+  if(!saved){saved=localStorage.getItem('theme')||'light';}
+  if(saved==='dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    var btn=document.getElementById('kb-theme-btn');
+    if(btn)btn.textContent='☀️';
+  }
+})();
+
+// ── KB Bridge — expose ARTICLES to parent window for Orange Cat ──
+(function(){
+  try{
+    window._kbArticles=ARTICLES;
+    // Also expose to parent if opened as popup
+    if(window.opener&&!window.opener.closed){
+      window.opener._kbArticles=ARTICLES;
+    }
+    // Expose to parent frame
+    if(window.parent&&window.parent!==window){
+      window.parent._kbArticles=ARTICLES;
+    }
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
