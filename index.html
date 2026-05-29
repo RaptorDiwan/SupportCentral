@@ -7958,7 +7958,7 @@ function chatRenderMessages(rows){
     var timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     var tick='';
     if(isMine){ tick=m.read_at?'<span class="msg-tick read" title="Read '+new Date(m.read_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'">✓✓</span>':'<span class="msg-tick sent">✓✓</span>'; }
-    var delBtn=isMine?'<button class="msg-del-btn" onclick="msgDeleteById(''+m.id+'')" title="Delete">🗑</button>':'';
+    var delBtn=isMine?'<button class="msg-del-btn" onclick="msgDeleteById(this.dataset.id)" data-id="'+m.id+'" title="Delete">🗑</button>':'';
     return divider+'<div class="chat-msg '+(isMine?'mine':'theirs')+'">'+
       '<div class="chat-msg-bubble">'+esc(m.content)+'</div>'+
       '<div class="chat-msg-meta"><span>'+timeStr+'</span>'+tick+'<span class="chat-msg-expires">⏱ '+(hoursLeft<=1?'<1h':hoursLeft+'h')+'</span>'+delBtn+'</div>'+
@@ -8211,7 +8211,7 @@ function msgRenderMessagesInPage(rows, isGroup){
           '<span>'+timeStr+'</span>'+
           (isMine?(m.read_at?'<span class="msg-tick read" title="Read '+new Date(m.read_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'">✓✓</span>':'<span class="msg-tick sent">✓✓</span>'):'')+ 
           '<span class="msg-expiry">⏱ '+(hoursLeft<=1?'<1h left':hoursLeft+'h left')+'</span>'+
-          (isMine?'<button class="msg-del-btn" onclick="msgDeleteById(''+m.id+'')" title="Delete message">🗑</button>':'')+
+          (isMine?'<button class="msg-del-btn" onclick="msgDeleteById(this.dataset.id)" data-id="'+m.id+'" title="Delete message">🗑</button>':'')+
         '</div>'+
       '</div>';
   }).join('');
