@@ -1331,6 +1331,30 @@
   .ann-pin-btn.pinned{background:rgba(239,73,60,.18);}
 
 
+  /* Roster loading spinner */
+  .roster-spinner-wrap {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 3rem 1rem; gap: .75rem; color: var(--text-muted); font-size: .82rem;
+  }
+  .roster-spinner {
+    width: 32px; height: 32px; border: 3px solid var(--navy-border);
+    border-top-color: var(--gold); border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  /* Roster pagination */
+  .roster-pagination {
+    display: flex; align-items: center; justify-content: center; gap: .5rem;
+    padding: .75rem 0; border-top: 1px solid var(--navy-border); margin-top: auto;
+  }
+  .roster-pg-btn {
+    padding: .3rem .7rem; border: 1px solid var(--navy-border); border-radius: 6px;
+    background: var(--navy-card); color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+    font-size: .75rem; cursor: pointer; transition: all .15s;
+  }
+  .roster-pg-btn:hover { background: var(--navy-hover); color: var(--text-primary); }
+  .roster-pg-btn.active { background: rgba(239,73,60,.1); border-color: rgba(239,73,60,.3); color: var(--gold); font-weight: 700; }
+  .roster-pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .roster-pg-info { font-size: .72rem; color: var(--text-dim); padding: 0 .4rem; }
+
   /* ── ROSTER REDESIGN ── */
   .roster-page { display:flex; flex-direction:column; gap:1.2rem; }
 
@@ -2027,29 +2051,29 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
   
   /* ── ABOUT PAGE ── */
-  .about-wrap { max-width: 580px; margin: 0 auto; padding: 2rem 0 4rem; }
-  .about-header { text-align: center; padding: 2.5rem 2rem 2rem; margin-bottom: 1.5rem; }
+  .about-wrap { max-width: 580px; margin: 0 auto; padding: .75rem 0 1rem; }
+  .about-header { text-align: center; padding: 1rem 2rem .75rem; margin-bottom: .75rem; }
   .about-logo-ring {
-    width: 72px; height: 72px; border-radius: 20px;
+    width: 52px; height: 52px; border-radius: 14px;
     background: linear-gradient(135deg, var(--gold), var(--gold-dim));
     display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 1.2rem; box-shadow: 0 8px 32px rgba(239,73,60,.25);
+    margin: 0 auto .75rem; box-shadow: 0 6px 20px rgba(239,73,60,.2);
   }
-  .about-logo-ring svg { width: 36px; height: 36px; stroke: #fff; fill: none; stroke-width: 1.6; }
-  .about-app-name { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 600; color: var(--text-primary); letter-spacing: -.02em; margin-bottom: .25rem; }
+  .about-logo-ring svg { width: 26px; height: 26px; stroke: #fff; fill: none; stroke-width: 1.6; }
+  .about-app-name { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--text-primary); letter-spacing: -.02em; margin-bottom: .2rem; }
   .about-app-name span { color: var(--gold); }
-  .about-version { display: inline-flex; align-items: center; gap: .5rem; background: var(--navy-card); border: 1px solid var(--navy-border); border-radius: 20px; padding: .28rem .85rem; font-size: .75rem; font-weight: 600; color: var(--text-muted); margin-bottom: .75rem; }
+  .about-version { display: inline-flex; align-items: center; gap: .5rem; background: var(--navy-card); border: 1px solid var(--navy-border); border-radius: 20px; padding: .22rem .75rem; font-size: .72rem; font-weight: 600; color: var(--text-muted); margin-bottom: .5rem; }
   .about-version-dot { width: 6px; height: 6px; border-radius: 50%; background: #1a7a45; }
   .about-credit { font-size: .72rem; color: var(--text-dim); opacity: .7; letter-spacing: .02em; }
-  .about-desc { font-size: .82rem; color: var(--text-muted); line-height: 1.7; text-align: center; max-width: 380px; margin: .75rem auto 0; }
+  .about-desc { font-size: .78rem; color: var(--text-muted); line-height: 1.5; text-align: center; max-width: 380px; margin: .5rem auto 0; }
 
   .about-card {
     background: var(--navy-card); border: 1px solid var(--navy-border);
-    border-radius: var(--radius); margin-bottom: .85rem; overflow: hidden;
+    border-radius: var(--radius); margin-bottom: .5rem; overflow: hidden;
   }
   .about-card-header {
     display: flex; align-items: center; gap: .65rem;
-    padding: .85rem 1.2rem; border-bottom: 1px solid var(--navy-border);
+    padding: .65rem 1.2rem; border-bottom: 1px solid var(--navy-border);
   }
   .about-card-icon {
     width: 30px; height: 30px; border-radius: 8px;
@@ -2057,11 +2081,11 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
   }
   .about-card-icon svg { width: 15px; height: 15px; fill: none; stroke-width: 2; }
   .about-card-title { font-size: .82rem; font-weight: 700; color: var(--text-primary); }
-  .about-card-body { padding: .5rem 1.2rem .9rem; }
+  .about-card-body { padding: .3rem 1.2rem .6rem; }
   .about-update-item {
     display: flex; align-items: flex-start; gap: .65rem;
-    padding: .55rem 0; border-bottom: 1px solid var(--navy-border);
-    font-size: .8rem; color: var(--text-muted); line-height: 1.5;
+    padding: .4rem 0; border-bottom: 1px solid var(--navy-border);
+    font-size: .78rem; color: var(--text-muted); line-height: 1.45;
   }
   .about-update-item:last-child { border-bottom: none; padding-bottom: 0; }
   .about-update-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: .45rem; flex-shrink: 0; }
@@ -2909,8 +2933,8 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
 
       <!-- ── ABOUT PAGE ── -->
-      <div class="page" id="page-about">
-        <div class="about-wrap">
+      <div class="page" id="page-about" style="overflow:hidden;height:calc(100vh - 60px);">
+        <div class="about-wrap" style="height:100%;overflow-y:auto;">
 
           <!-- Header -->
           <div class="about-header">
@@ -3039,16 +3063,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           <button class="um-add-btn" onclick="toggleAddUser()">+ Add Agent</button>
         </div>
 
-        <!-- Gaming feature toggle -->
-        <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
-          <div style="display:flex;align-items:center;gap:.75rem;">
-            <span id="gaming-status-label" style="font-size:.78rem;font-weight:600;color:#1a7a45;">Enabled</span>
-            <label class="ts-switch" style="width:44px;height:24px;">
-              <input type="checkbox" id="gaming-toggle" checked onchange="toggleGamingFeature(this.checked)"/>
-              <span class="ts-slider"></span>
-            </label>
-          </div>
-        </div>
+
 
         <div class="um-add-form" id="um-add-form" style="display:none;">
           <div class="um-form-row">
@@ -3652,7 +3667,16 @@ function showPage(id,elem){
   if(id==='users'){loadUsersPage();}
   if(id==='changepass') resetChangePasswordForm();
   if(id==='reports'){loadReportAgents();initReportDates();}
-  if(id==='roster'){if(window.rosterCache)renderRosterPage(window.rosterCache,window._rosterTodayColGlobal||false);else loadRosterSummary();}
+  if(id==='roster'){
+    if(window._rosterActiveMonth && window._rosterCsvUrl){
+      // Month already selected — use cache or reload
+      loadRosterData();
+    } else if(window.rosterCache){
+      renderRosterPage(window.rosterCache, window._rosterTodayColGlobal||false);
+    } else {
+      loadRosterSummary();
+    }
+  }
   if(id==='moments') setTimeout(function(){_mLoadTab(_mActiveTab);},60);
   if(id==='quiz') loadAgentQuiz();
   if(id==='announcements') loadAnnouncementsAdmin();
@@ -3833,10 +3857,12 @@ var _rosterWeekOffset = 0;
 
 function rosterNavWeek(dir){
   _rosterWeekOffset += dir;
+  _rosterPage = 0;
   if(window._rosterAllRows) renderRosterPage(window._rosterAllRows, window._rosterTodayColGlobal||false, null);
 }
 function rosterGoToday(){
   _rosterWeekOffset = 0;
+  _rosterPage = 0;
   if(window._rosterAllRows) renderRosterPage(window._rosterAllRows, window._rosterTodayColGlobal||false, null);
 }
 
@@ -3934,6 +3960,9 @@ function getTodayStatusTag(val){
   return '<span class="rc rc-p">'+(val?String(val).trim():'P')+'</span>';
 }
 
+var _rosterPage = 0;
+var ROSTER_PAGE_SIZE = 15;
+
 function renderRosterGrid(agentRows, visibleCols, todayCol, search){
   var wrap = document.getElementById('roster-table-wrap');
   var todayM = window._rosterTodayM !== undefined ? window._rosterTodayM : new Date().getMonth();
@@ -3947,6 +3976,12 @@ function renderRosterGrid(agentRows, visibleCols, todayCol, search){
   if(!visibleCols||!visibleCols.length){ wrap.innerHTML='<div class="roster-empty">No dates to display.</div>'; return; }
 
   var DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Pagination
+  var totalPages = Math.ceil(filtered.length / ROSTER_PAGE_SIZE);
+  if(_rosterPage >= totalPages) _rosterPage = 0;
+  var pageStart = _rosterPage * ROSTER_PAGE_SIZE;
+  var pageRows = filtered.slice(pageStart, pageStart + ROSTER_PAGE_SIZE);
 
   var thead = '<thead><tr>'+
     '<th style="text-align:left;">Agent</th>'+
@@ -3962,7 +3997,7 @@ function renderRosterGrid(agentRows, visibleCols, todayCol, search){
     }).join('')+
   '</tr></thead>';
 
-  var tbody = '<tbody>'+filtered.map(function(row){
+  var tbody = '<tbody>'+pageRows.map(function(row){
     var name = String(row[1]||'').trim();
     var ini = name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
     var todayVal = todayCol>=0 ? (row[todayCol]||'') : '';
@@ -3987,13 +4022,41 @@ function renderRosterGrid(agentRows, visibleCols, todayCol, search){
     '</tr>';
   }).join('')+'</tbody>';
 
-  wrap.innerHTML = '<table class="roster-tbl">'+thead+tbody+'</table>';
+  // Pagination controls
+  var pgHtml = '';
+  if(totalPages > 1){
+    pgHtml = '<div class="roster-pagination">';
+    pgHtml += '<button class="roster-pg-btn" onclick="rosterChangePage(-1)" '+((_rosterPage===0)?'disabled':'')+'>&#8592; Prev</button>';
+    for(var p=0;p<totalPages;p++){
+      pgHtml += '<button class="roster-pg-btn'+(p===_rosterPage?' active':'')+'" onclick="rosterGotoPage('+p+')">'+(p+1)+'</button>';
+    }
+    pgHtml += '<button class="roster-pg-btn" onclick="rosterChangePage(1)" '+((_rosterPage===totalPages-1)?'disabled':'')+'>Next &#8594;</button>';
+    pgHtml += '<span class="roster-pg-info">'+(pageStart+1)+'–'+Math.min(pageStart+ROSTER_PAGE_SIZE,filtered.length)+' of '+filtered.length+'</span>';
+    pgHtml += '</div>';
+  }
+
+  wrap.innerHTML = '<table class="roster-tbl">'+thead+tbody+'</table>'+pgHtml;
+}
+
+function rosterChangePage(dir){
+  var rows = window._rosterRenderedRows || [];
+  var search = document.getElementById('roster-search') ? document.getElementById('roster-search').value : '';
+  var filtered = search ? rows.filter(function(r){ return String(r[1]||'').toLowerCase().indexOf(search.toLowerCase())>-1; }) : rows;
+  var totalPages = Math.ceil(filtered.length / ROSTER_PAGE_SIZE);
+  _rosterPage = Math.max(0, Math.min(_rosterPage + dir, totalPages - 1));
+  renderRosterGrid(rows, window._rosterVisibleCols, window._rosterTodayCol, search);
+}
+
+function rosterGotoPage(p){
+  _rosterPage = p;
+  renderRosterGrid(window._rosterRenderedRows||[], window._rosterVisibleCols, window._rosterTodayCol, document.getElementById('roster-search')?document.getElementById('roster-search').value:'');
 }
 
 function getCellClass(val,isToday){ return ''; } // kept for compat
 function getCellDisplay(val){ return String(val||'').trim()||'-'; } // kept for compat
 
 function filterRoster(search){
+  _rosterPage = 0;
   if(window._rosterRenderedRows && window._rosterVisibleCols){
     renderRosterGrid(window._rosterRenderedRows, window._rosterVisibleCols, window._rosterTodayCol, search);
   }
@@ -4009,20 +4072,19 @@ function loadMyShift(rows){
   var userName=currentUser.name.toLowerCase().trim();
   var agentRow=rows.slice(rows.indexOf(dateRow)+2).find(function(r){
     var rName=String(r[1]||'').toLowerCase().trim();
-    // Try full match, first name match, or partial match
     return rName===userName||
            rName.split(' ')[0]===userName.split(' ')[0]||
            rName.indexOf(userName.split(' ')[0])>-1||
            userName.indexOf(rName.split(' ')[0])>-1;
   });
 
-  if(!agentRow)return; // Agent not found in roster
+  if(!agentRow)return;
 
   var today=new Date();
   var todayDay=today.getDate();
   var upcoming=[];
 
-  // Get next 5 days from today
+  // Get next 5 days from today (current month)
   dateRow.forEach(function(d,i){
     if(i<2)return;
     var num=Number(d);
@@ -4030,8 +4092,50 @@ function loadMyShift(rows){
     var val=String(agentRow[i]||'').trim();
     var date=new Date(today.getFullYear(),today.getMonth(),num);
     var dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
-    upcoming.push({day:dayName,date:num,val:val,isToday:num===todayDay});
+    upcoming.push({day:dayName,date:num,month:today.getMonth(),val:val,isToday:num===todayDay});
   });
+
+  // Check if we need to spill into next month (last few days of month)
+  var daysInMonth=new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+  if(todayDay+5 > daysInMonth){
+    // Try to get next month's data from cache
+    var monthKeys=Object.keys(ROSTER_MONTHS);
+    var curKey=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][today.getMonth()];
+    var curIdx=monthKeys.indexOf(curKey);
+    if(curIdx>-1 && curIdx<monthKeys.length-1){
+      var nextKey=monthKeys[curIdx+1];
+      var nextMonth=ROSTER_MONTHS[nextKey];
+      if(nextMonth){
+        var nextUrl=nextMonth.customUrl||getRosterMonthUrl(nextMonth.gid);
+        var cached=window._rosterDataCache[nextUrl];
+        if(cached && cached.rows){
+          var nRows=cached.rows;
+          var nDateRow=nRows.find(function(r){return String(r[1]).trim().toUpperCase()==='DATE';});
+          var nAgentRow=nRows.slice(nRows.indexOf(nDateRow)+2).find(function(r){
+            var rName=String(r[1]||'').toLowerCase().trim();
+            return rName===userName||
+                   rName.split(' ')[0]===userName.split(' ')[0]||
+                   rName.indexOf(userName.split(' ')[0])>-1||
+                   userName.indexOf(rName.split(' ')[0])>-1;
+          });
+          if(nDateRow && nAgentRow){
+            // Get days from 1 to spillover needed
+            var need=Math.min(5, (todayDay+5)-daysInMonth);
+            nDateRow.forEach(function(d,i){
+              if(i<2)return;
+              var num=Number(d);
+              if(isNaN(num)||num<1||num>need)return;
+              if(upcoming.find(function(u){return u.date===num&&u.month===today.getMonth()+1;}))return;
+              var val=String(nAgentRow[i]||'').trim();
+              var date=new Date(today.getFullYear(),today.getMonth()+1,num);
+              var dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
+              upcoming.push({day:dayName,date:num,month:today.getMonth()+1,val:val,isToday:false,nextMonth:true});
+            });
+          }
+        }
+      }
+    }
+  }
 
   if(!upcoming.length)return;
 
@@ -4039,9 +4143,10 @@ function loadMyShift(rows){
   var row=document.getElementById('my-shift-row');
   if(!card||!row)return;
 
+  var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   row.innerHTML=upcoming.map(function(s){
     var v=String(s.val||'').toUpperCase().trim();
-    var label=s.isToday?'Today':s.dayName;
+    var label=s.isToday?'Today':s.day+' '+s.date+(s.nextMonth?' '+monthNames[s.month]:'');
     var cls='', display=s.val||'-';
     if(!v||v==='-'||v==='WO'||v==='H'||v==='SH'){cls='off';display='Off';}
     else if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W'){cls='red';display='On Leave';}
@@ -4049,23 +4154,105 @@ function loadMyShift(rows){
     else if(v.indexOf('HL')>-1){cls='';display='Half Day';}
     else{cls='green';display=v||'Working';}
     return '<div class="my-shift-item">'+
-      '<span class="my-shift-label">'+(s.isToday?'<strong>Today</strong>':s.day+' '+s.date)+'</span>'+
+      '<span class="my-shift-label">'+(s.isToday?'<strong>Today</strong>':label)+'</span>'+
       '<span class="my-shift-val '+cls+'">'+display+'</span>'+
     '</div>';
   }).join('');
 
   card.style.display='block';
 }
-async function loadRosterSummary(){try{
+// ── ROSTER MULTI-MONTH CACHE ──
+// Key = URL, Value = { rows, timestamp }
+window._rosterDataCache = {};
+var ROSTER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function _rosterShowSpinner(){
+  var wrap = document.getElementById('roster-table-wrap');
+  if(wrap) wrap.innerHTML = '<div class="roster-spinner-wrap"><div class="roster-spinner"></div><span>Loading roster…</span></div>';
+}
+
+// loadRosterData: called when switching months (uses cache if fresh)
+async function loadRosterData(){
+  var url = window._rosterCsvUrl || ROSTER_CSV_URL;
+  _rosterShowSpinner();
+  var now = Date.now();
+  var cached = window._rosterDataCache[url];
+  if(cached && (now - cached.timestamp) < ROSTER_CACHE_TTL){
+    // Use cached data instantly
+    _processRosterRows(cached.rows);
+    return;
+  }
+  try{
+    var r = await fetch(url + '&cacheBust=' + now);
+    if(!r.ok) throw new Error('fail');
+    var rows = parseCsv(await r.text());
+    window._rosterDataCache[url] = { rows: rows, timestamp: now };
+    _processRosterRows(rows);
+  }catch(e){
+    document.getElementById('absence-title').textContent='Roster sync unavailable';
+    document.getElementById('absence-detail').textContent='Could not read Google Sheets right now.';
+    renderRosterPage(null, null, e);
+  }
+}
+
+// _processRosterRows: shared between loadRosterData and loadRosterSummary
+function _processRosterRows(rows){
+  window.rosterCache = rows;
+  var mr = rows.find(function(row){ return row.some(function(c){ return /[A-Za-z]+\s*-\s*\d{4}/.test(c); }); });
+  var dr = rows.find(function(row){ return String(row[1]).trim().toUpperCase()==='DATE'; });
+  if(!mr||!dr){ renderRosterPage(rows, false); return; }
+  var mi = getMonthIndex(mr.find(function(c){ return /[A-Za-z]+\s*-\s*\d{4}/.test(c); })||'');
+  var today = new Date();
+  if(!mi||mi.month!==today.getMonth()||mi.year!==today.getFullYear()){
+    document.getElementById('absence-title').textContent='Roster loaded';
+    document.getElementById('absence-detail').textContent='Showing '+(mi?(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mi.month]+' '+mi.year):'this month')+' roster.';
+    renderRosterPage(rows, false); return;
+  }
+  var day = String(today.getDate());
+  var dc = dr.findIndex(function(c,i){ return i>=2&&String(Number(c))===day; });
+  if(dc<0){ renderRosterPage(rows, false); return; }
+  var s={absent:[],wfh:[],halfDay:[]};
+  rows.slice(rows.indexOf(dr)+2).forEach(function(row){
+    var ei=String(row[0]||'').trim(),n=String(row[1]||'').trim();
+    if(!ei||!n||!/^K\d+/i.test(ei))return;
+    var p=statusParts(row[dc]);
+    if(p.some(function(x){return NOT_PRESENT_CODES.has(x);}))s.absent.push(n);
+    if(p.indexOf('WFH')>-1)s.wfh.push(n);
+    if(p.indexOf('HL')>-1)s.halfDay.push(n);
+  });
+  updateRosterBanner(s);
+  renderRosterPage(rows, dc);
+  loadMyShift(rows);
+}
+
+async function loadRosterSummary(){
+  _rosterShowSpinner();
+  try{
     // Use admin-saved URL from Supabase if available, fallback to hardcoded constant
     var rosterUrl = window._rosterCsvUrl || ROSTER_CSV_URL;
     if(!window._rosterCsvUrl){
       try{
         var setting = await sbQuery('settings','key=eq.roster_url&select=value');
-        if(setting && setting.length && setting[0].value) { window._rosterCsvUrl = setting[0].value; rosterUrl = setting[0].value; }
+        if(setting && setting.length && setting[0].value){ window._rosterCsvUrl = setting[0].value; rosterUrl = setting[0].value; }
       }catch(e2){}
     }
-    var r=await fetch(rosterUrl+'&cacheBust='+Date.now());if(!r.ok)throw new Error('fail');var rows=parseCsv(await r.text());window.rosterCache=rows;var mr=rows.find(function(row){return row.some(function(c){return/[A-Za-z]+\s*-\s*\d{4}/.test(c);});});var dr=rows.find(function(row){return String(row[1]).trim().toUpperCase()==='DATE';});if(!mr||!dr)throw new Error('hdr');var mi=getMonthIndex(mr.find(function(c){return/[A-Za-z]+\s*-\s*\d{4}/.test(c);})||'');var today=new Date();if(!mi||mi.month!==today.getMonth()||mi.year!==today.getFullYear()){document.getElementById('absence-title').textContent='Roster month does not match today';document.getElementById('absence-detail').textContent='Please publish the current month roster.';renderRosterPage(rows,false);return;}var day=String(today.getDate());var dc=dr.findIndex(function(c,i){return i>=2&&String(Number(c))===day;});if(dc<0)throw new Error('col');var s={absent:[],wfh:[],halfDay:[]};rows.slice(rows.indexOf(dr)+2).forEach(function(row){var ei=String(row[0]||'').trim(),n=String(row[1]||'').trim();if(!ei||!n||!/^K\d+/i.test(ei))return;var p=statusParts(row[dc]);if(p.some(function(x){return NOT_PRESENT_CODES.has(x);}))s.absent.push(n);if(p.indexOf('WFH')>-1)s.wfh.push(n);if(p.indexOf('HL')>-1)s.halfDay.push(n);});updateRosterBanner(s);renderRosterPage(rows,dc);loadMyShift(rows);}catch(e){document.getElementById('absence-title').textContent='Roster sync unavailable';document.getElementById('absence-detail').textContent='Could not read Google Sheets right now.';renderRosterPage(null,null,e);}}
+    var now = Date.now();
+    var cached = window._rosterDataCache[rosterUrl];
+    if(cached && (now - cached.timestamp) < ROSTER_CACHE_TTL){
+      _processRosterRows(cached.rows);
+      return;
+    }
+    var r=await fetch(rosterUrl+'&cacheBust='+now);
+    if(!r.ok)throw new Error('fail');
+    var rows=parseCsv(await r.text());
+    window._rosterDataCache[rosterUrl]={rows:rows,timestamp:now};
+    _processRosterRows(rows);
+  }catch(e){
+    document.getElementById('absence-title').textContent='Roster sync unavailable';
+    document.getElementById('absence-detail').textContent='Could not read Google Sheets right now.';
+    renderRosterPage(null,null,e);
+  }
+}
 
 const CLOUDINARY_CLOUD='dvp62lqmv';
 const M_TAG_MAP={all:null,birthday:'birthday',outing:'team-outing',dinner:'team-dinner',funfriday:'fun-friday'};
@@ -9231,10 +9418,10 @@ function initRosterMonthTabs(){
     });
     container.innerHTML = html;
 
-    // Load current month
+    // Load current month — always use loadRosterData for spinner support
     var activeKey = monthKeys.indexOf(currentMonthKey) > -1 ? currentMonthKey : 'Jun';
     _rosterActiveMonth = activeKey;
-    switchRosterMonth(activeKey, true);
+    switchRosterMonth(activeKey, false); // false = trigger load
   });
 }
 
@@ -9265,11 +9452,28 @@ function switchRosterMonth(key, silent){
   if(!month) return;
   var url = month.customUrl || getRosterMonthUrl(month.gid);
   window._rosterCsvUrl = url;
+  window._rosterWeekOffset = 0; // reset week view on month switch
 
   if(!silent){
-    // Force reload of roster with new URL
-    if(typeof loadRosterData === 'function') loadRosterData();
+    loadRosterData();
   }
+
+  // Pre-fetch adjacent month in background (non-blocking)
+  var keys = Object.keys(ROSTER_MONTHS);
+  var idx = keys.indexOf(key);
+  [idx-1, idx+1].forEach(function(ni){
+    if(ni < 0 || ni >= keys.length) return;
+    var adjKey = keys[ni];
+    var adjMonth = ROSTER_MONTHS[adjKey];
+    if(!adjMonth) return;
+    var adjUrl = adjMonth.customUrl || getRosterMonthUrl(adjMonth.gid);
+    if(window._rosterDataCache[adjUrl]) return; // already cached
+    setTimeout(function(){
+      fetch(adjUrl + '&cacheBust=' + Date.now()).then(function(r){ return r.ok ? r.text() : null; }).then(function(text){
+        if(text) window._rosterDataCache[adjUrl] = { rows: parseCsv(text), timestamp: Date.now() };
+      }).catch(function(){});
+    }, 800);
+  });
 }
 
 // Hook into roster page show
