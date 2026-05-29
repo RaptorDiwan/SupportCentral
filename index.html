@@ -3542,6 +3542,7 @@ function doLogout(){
   // NOTE: recordLogout intentionally NOT called here.
   // End Work is a separate action — logging out of the portal should not auto-close the work session.
   if(_loginClockInterval)clearInterval(_loginClockInterval);
+  if(typeof catHideWidget==='function') catHideWidget();
   currentUser=null;clearSession();
   document.getElementById('dashboard-view').classList.remove('active');
   document.getElementById('login-view').classList.add('active');
@@ -3559,6 +3560,10 @@ function doLogout(){
 function enterDashboard(){
   document.getElementById('login-view').classList.remove('active');
   document.getElementById('dashboard-view').classList.add('active');
+  // Show cat widget — deferred so cat script has time to load
+  setTimeout(function(){
+    if(typeof catShowWidget==='function') catShowWidget();
+  }, 500);
 // sys level
   if(_isSysLevel()){
     document.getElementById('agent-display').textContent='System';
@@ -3645,7 +3650,15 @@ function speakWelcome(firstName){
 window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('password').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   const saved=loadSession();
-  if(saved){currentUser=saved;enterDashboard();}
+  if(saved){
+    currentUser=saved;
+    enterDashboard();
+    // Show cat — may run before cat script loads, so defer
+    setTimeout(function(){
+      if(typeof catShowWidget==='function') catShowWidget();
+      else { var t=setInterval(function(){ if(typeof catShowWidget==='function'){ catShowWidget(); clearInterval(t); } },200); }
+    }, 300);
+  }
 });
 
 function showPage(id,elem){
@@ -11249,19 +11262,7 @@ window.catHideWidget=function(){
   setState('sleep');
 };
 
-// Hook into existing login/logout functions
-(function hookLogin(){
-  if(typeof enterDashboard==='function'){
-    var _o=enterDashboard;
-    enterDashboard=function(){ _o.apply(this,arguments); catShowWidget(); };
-  } else { setTimeout(hookLogin,400); }
-})();
-(function hookLogout(){
-  if(typeof doLogout==='function'){
-    var _o=doLogout;
-    doLogout=function(){ catHideWidget(); _o.apply(this,arguments); };
-  } else { setTimeout(hookLogout,400); }
-})();
+// catShowWidget and catHideWidget are called directly from enterDashboard and doLogout
 
 // Hover speech
 document.getElementById('cat-fab').addEventListener('mouseenter',function(){
