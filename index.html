@@ -10654,13 +10654,19 @@ function catOpen(){
   if(gear)gear.classList.toggle('on',typeof isAdminUser==='function'&&isAdminUser());
   updateNoAiBanner();
   transTo('wake','idle',800);
-  if(!catGreeted){
-    catGreeted=true;
-    setTimeout(function(){
-      catAddBot("Meow! I'm Orange Cat, your K7 buddy!\nAsk me about shifts, leaves, attendance, quiz, cases, or type 'tell Abeed to come here' to send a message Boss! 🐾");
-      transTo('happy','idle',1200);
-    },500);
-  }
+  // Fresh greeting every time panel opens
+  setTimeout(function(){
+    var GREETINGS=[
+      "Meow! I'm Orange Cat 🐾 — your K7 buddy and your personal support pet 🧡\nNeed help with shifts, leaves, attendance, quizzes, or cases? Just call me!",
+      "Meow! I was having the best dream about fish 🐟 and YOU woke me up Boss! Anyway... I know everything about this team. Try me 😼",
+      "Ah, Boss is here! 😸 I know who's on leave, who skipped quiz, who has stale cases, and I can even message people for you. Ask away — I don't bite 🐾",
+      "Finally Boss! I've been sleeping on this roster data all day 😴 Ask me anything — leaves, shifts, quiz scores, cases... or just tell me who to message 🐾"
+    ];
+    var msg=GREETINGS[Math.floor(Math.random()*GREETINGS.length)];
+    document.getElementById('cp-msgs').innerHTML='';
+    catAddBot(msg);
+    transTo('happy','idle',1200);
+  },500);
   setTimeout(function(){var t=document.getElementById('cp-ta');if(t)t.focus();},450);
 }
 
@@ -11217,7 +11223,13 @@ var OFF_C=new Set(['L','CO','W','OFF']), LEAVE_C=new Set(['L','CO']);
 var DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var DAYS3=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-function getRosterRows(){return window.rosterCache||window._rosterAllRows||null;}
+function getRosterRows(){
+  // Prefer the currently active month's cached rows
+  if(window._rosterCsvUrl && window._rosterDataCache && window._rosterDataCache[window._rosterCsvUrl]){
+    return window._rosterDataCache[window._rosterCsvUrl].rows;
+  }
+  return window._rosterAllRows||window.rosterCache||null;
+}
 function getDateRow(rows){return rows.find(function(r){return String(r[1]).trim().toUpperCase()==='DATE';});}
 function getAgentRows(rows){
   var dr=getDateRow(rows);if(!dr)return[];
@@ -11227,6 +11239,20 @@ function getAgentRows(rows){
 function colForDate(rows,d){
   var dr=getDateRow(rows);if(!dr)return -1;
   var day=d.getDate();
+  // Check active month matches requested date's month
+  var activeMonth=window._rosterActiveMonth;
+  if(activeMonth){
+    var monthMap={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    var sheetMonth=monthMap[activeMonth];
+    // If requested date is not in sheet's month, find correct sheet
+    if(sheetMonth!==undefined && sheetMonth!==d.getMonth()){
+      // Try to switch to right month silently
+      var needKey=Object.keys(monthMap).find(function(k){return monthMap[k]===d.getMonth();});
+      if(needKey && typeof switchRosterMonth==='function' && window.ROSTER_MONTHS && window.ROSTER_MONTHS[needKey]){
+        // Just find in current sheet by day number — best effort
+      }
+    }
+  }
   for(var i=2;i<dr.length;i++){if(Number(dr[i])===day)return i;}
   return -1;
 }
@@ -11325,6 +11351,10 @@ function tryRoster(q){
   var isWorkingMatch=qlo.match(/is\s+([a-z ]+?)\s+(?:working|in|present|coming|available)(?:\s+today|\s+tomorrow)?/i);
   if(isWorkingMatch){
     var nameG=(isWorkingMatch[1]||'').trim();
+    // Resolve pronouns from session memory
+    if(/^(she|he|him|her|they|them|this person|same person)$/.test(nameG)&&_sessionCtx.lastMentionedAgent){
+      nameG=_sessionCtx.lastMentionedAgent;
+    }
     var row=findAgent(rows,nameG);
     if(row){var rd=relativeDate(qlo),col=colForDate(rows,rd.date);if(col<0)return 'That date is not in the roster Boss';var code=String(row[col]||'').trim();var name=String(row[1]).trim();memRemember('lastMentionedAgent',name);if(!code||code==='')return name+' is not scheduled '+rd.label+' Boss.';if(isOff(code)||isLeave(code))return name+' is NOT in '+rd.label+' — '+shiftLabel(code);return name+' IS working '+rd.label+' Boss!\nShift: '+shiftLabel(code);}
   }
@@ -11338,8 +11368,8 @@ function tryCaseTracker(q){
   if(typeof CT==='undefined'||typeof CT.getSnapshot!=='function')return null;
   var snap=CT.getSnapshot();
   var qlo=q.toLowerCase();
-  if(!snap)return 'No case data loaded yet Boss! Upload the Dynamics 365 export in Case Tracker first.';
-  var isCTQ=/case|follow.?up|stale|no action|not.?follow|unattended|pending case|agent.*case|case.*agent|who.*not|not.*actioned|aging|old case|overdue/.test(qlo);
+  if(!snap)return null; // no CT data — let AI handle the query
+  var isCTQ=/\bcase(s|\b)|follow.?up|stale case|no action|unattended case|pending case|not.*actioned|old case|overdue case|case tracker|case.*summary|case.*overview/.test(qlo);
   if(!isCTQ)return null;
   memRemember('lastTopic','cases');
   if(/overview|summary|status|how many|total|all case/.test(qlo)){
@@ -11524,13 +11554,34 @@ window.catTestAI=async function(){
 var CAT_SYSTEM='You are Orange Cat, a witty K7 Security support assistant. Always call users "Boss". Use cat emojis. Keep replies concise. K7 fixes: Error 12029/12007 -> K7->Updates->Configure Updates->remove proxy->Apply->OK. Activation offline -> K7 website Request Code. Clean install -> K7 Removal Tool. High CPU -> exclude scan folders. After 5+ questions be playfully tired. When solved say "Done Boss!"';
 
 async function callAI(provider,apiKey,model,userMsg,useHistory){
+  // Pollinations — free, no key needed
+  if(provider==='pollinations'||!provider){
+    var history=useHistory?catHist.slice(-8):[];
+    var msgs=[{role:'system',content:CAT_SYSTEM}];
+    history.forEach(function(h){msgs.push({role:h.role,content:h.content});});
+    msgs.push({role:'user',content:userMsg});
+    var res=await fetch('https://text.pollinations.ai/openai',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'openai',messages:msgs,seed:42,private:true})
+    });
+    if(!res.ok)throw new Error('Pollinations error '+res.status);
+    var data=await res.json();
+    return data.choices[0].message.content;
+  }
   var history=useHistory?catHist.slice(-12):[];
   if(provider==='gemini'){
     var url='https://generativelanguage.googleapis.com/v1/models/'+model+':generateContent?key='+apiKey;
     var contents=[];
     history.forEach(function(h){contents.push({role:h.role==='assistant'?'model':'user',parts:[{text:h.content}]});});
     contents.push({role:'user',parts:[{text:userMsg}]});
-    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:CAT_SYSTEM}]},contents:contents,generationConfig:{maxOutputTokens:800,temperature:0.8}})});
+    // Prepend system prompt as first user+model turn (compatible with all Gemini models)
+    var sysMsg='You are a support assistant. Follow these instructions strictly: '+CAT_SYSTEM;
+    var geminiContents=[
+      {role:'user',  parts:[{text:sysMsg}]},
+      {role:'model', parts:[{text:'Understood! I am Orange Cat, ready to help Boss!'}]}
+    ].concat(contents);
+    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:geminiContents,generationConfig:{maxOutputTokens:800,temperature:0.8}})});
     if(!res.ok){var err=await res.json();var msg=(err.error&&err.error.message)||'Gemini error '+res.status;if(res.status===404||msg.includes('not found'))msg='Model "'+model+'" is retired. Go to AI Settings and pick Gemini 2.0 Flash!';throw new Error(msg);}
     var data=await res.json();return data.candidates[0].content.parts[0].text;
   }else if(provider==='openai'){
@@ -11581,16 +11632,10 @@ async function catAskAI(msg){
       return;
     }
 
-    // No AI configured?
-    if(!_aiCfg||!_aiCfg.provider||!_aiCfg.apiKey){
-      showTyping(false);
-      var isAdmin=typeof isAdminUser==='function'&&isAdminUser();
-      catAddBot(isAdmin?'Meow Boss, I do not have an AI brain yet! Click the gear icon to connect me to Gemini or ChatGPT.':'My AI brain is not set up yet Boss. Ask your admin to connect me to an AI provider!');
-      transTo('idle');
-      catBusy=false;
-      document.getElementById('cp-send').disabled=false;
-      return;
-    }
+    // Use Pollinations as free default fallback if no AI configured
+    var useProvider=_aiCfg&&_aiCfg.provider?_aiCfg.provider:'pollinations';
+    var useKey=_aiCfg&&_aiCfg.apiKey?_aiCfg.apiKey:'';
+    var useModel=_aiCfg&&_aiCfg.model?_aiCfg.model:'openai';
 
     // Build message with session context
     var contextNote=memBuildContext();
@@ -11600,7 +11645,7 @@ async function catAskAI(msg){
     catHist.push({role:'user',content:msg});
     if(catHist.length>14)catHist=catHist.slice(-14);
 
-    var reply=await callAI(_aiCfg.provider,_aiCfg.apiKey,_aiCfg.model,sendMsg,true);
+    var reply=await callAI(useProvider,useKey,useModel,sendMsg,true);
     catHist.push({role:'assistant',content:reply});
     showTyping(false);
     var isTired=/tired|milk|break|whisker|exhausted/.test(reply.toLowerCase());
@@ -11609,7 +11654,12 @@ async function catAskAI(msg){
     if(!catOpen_)document.getElementById('cat-notif').style.display='block';
   }catch(e){
     showTyping(false);
-    catAddBot('Meow... something went wrong Boss ('+e.message+') Try again!');
+    var errMsg=e.message||'';
+    if(errMsg.includes('fetch')||errMsg.includes('network')||errMsg.includes('Failed')){
+      catAddBot('Meow... lost my wifi signal Boss! Check your connection and try again 📶😿');
+    } else {
+      catAddBot('Purrr... I am not yet trained for this Boss 😅 Try asking me about shifts, leaves, attendance, quiz scores, cases, or send a message to someone!');
+    }
     transTo('idle');
   }
   catBusy=false;
