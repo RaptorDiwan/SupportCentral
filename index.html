@@ -1810,6 +1810,9 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .msg-tick.sent{color:rgba(255,255,255,.3);}
   .msg-tick.read{color:#4fc3f7;}
   .msg-meta .msg-tick{font-size:.65rem;}
+  .msg-del-btn{background:none;border:none;cursor:pointer;opacity:0;font-size:.65rem;color:rgba(255,100,100,.7);padding:0 2px;margin-left:4px;transition:opacity .15s;line-height:1;}
+  .chat-msg.mine:hover .msg-del-btn,.msg-bubble-wrap.mine:hover .msg-del-btn{opacity:1;}
+  .msg-del-btn:hover{color:#ff4444;}
   .chat-msg-expires{color:rgba(239,73,60,.6);}
   .chat-input-row{padding:.65rem .9rem;border-top:1px solid var(--navy-border);display:flex;align-items:center;gap:.5rem;}
   .chat-emoji-btn{background:none;border:none;cursor:pointer;font-size:1.2rem;padding:.2rem;flex-shrink:0;}
@@ -7955,9 +7958,10 @@ function chatRenderMessages(rows){
     var timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     var tick='';
     if(isMine){ tick=m.read_at?'<span class="msg-tick read" title="Read '+new Date(m.read_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'">✓✓</span>':'<span class="msg-tick sent">✓✓</span>'; }
+    var delBtn=isMine?'<button class="msg-del-btn" onclick="msgDeleteById(''+m.id+'')" title="Delete">🗑</button>':'';
     return divider+'<div class="chat-msg '+(isMine?'mine':'theirs')+'">'+
       '<div class="chat-msg-bubble">'+esc(m.content)+'</div>'+
-      '<div class="chat-msg-meta"><span>'+timeStr+'</span>'+tick+'<span class="chat-msg-expires">⏱ '+(hoursLeft<=1?'<1h':hoursLeft+'h')+'</span></div>'+
+      '<div class="chat-msg-meta"><span>'+timeStr+'</span>'+tick+'<span class="chat-msg-expires">⏱ '+(hoursLeft<=1?'<1h':hoursLeft+'h')+'</span>'+delBtn+'</div>'+
     '</div>';
   }).join('');
   out.scrollTop=out.scrollHeight;
@@ -8207,6 +8211,7 @@ function msgRenderMessagesInPage(rows, isGroup){
           '<span>'+timeStr+'</span>'+
           (isMine?(m.read_at?'<span class="msg-tick read" title="Read '+new Date(m.read_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'">✓✓</span>':'<span class="msg-tick sent">✓✓</span>'):'')+ 
           '<span class="msg-expiry">⏱ '+(hoursLeft<=1?'<1h left':hoursLeft+'h left')+'</span>'+
+          (isMine?'<button class="msg-del-btn" onclick="msgDeleteById(''+m.id+'')" title="Delete message">🗑</button>':'')+
         '</div>'+
       '</div>';
   }).join('');
@@ -8237,6 +8242,17 @@ async function msgSend(){
     await msgLoadMessagesForConv();
     await msgLoadConversations();
   }catch(e){alert('Send failed: '+e.message);}
+}
+
+async function msgDeleteById(id){
+  if(!id)return;
+  if(!confirm('Delete this message permanently?'))return;
+  try{
+    await fetch(SUPABASE_URL+'/rest/v1/messages?id=eq.'+id,{method:'DELETE',headers:sbHeaders()});
+    // Refresh both views
+    if(typeof chatLoadMessages==='function'&&_chatOpen&&_chatActiveUser) await chatLoadMessages();
+    if(typeof msgLoadMessagesForConv==='function'&&_msgActiveConv) await msgLoadMessagesForConv();
+  }catch(e){alert('Could not delete message: '+e.message);}
 }
 
 function msgToggleEmoji(){
@@ -10602,7 +10618,7 @@ function pplCloseLightbox(){
 //  ORANGE CAT GLOBALS — defined outside IIFE so all
 //  window.* functions (catTestAI etc) can access them
 // ═══════════════════════════════════════════════════
-window.CAT_OPENROUTER_KEY = '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';
+window.CAT_OPENROUTER_KEY = 'YOUR_KEY_HERE';
 window.CAT_SYSTEM = 'You are Orange Cat, a witty K7 Security support assistant with a fun cat personality. Always call users Boss. Use cat emojis naturally. Keep replies concise and helpful. K7 fixes: Error 12029/12007 - go to K7 Updates, Configure Updates, remove proxy settings, Apply and OK. Activation offline - use K7 website offline activation with Request Code. Clean install - use K7 Removal Tool then reinstall. High CPU - exclude folders from scan. Firewall blocking - add K7 executables to Windows Firewall exceptions. After 5+ questions be playfully tired and mention needing milk. When issue solved say Done Boss.';
 </script>
 
@@ -11297,10 +11313,67 @@ function findAgent(rows,name){
   return r||null;
 }
 function relativeDate(qlo){
-  var t=new Date(),tm=new Date(t),ty=new Date(t);
-  tm.setDate(t.getDate()+1);ty.setDate(t.getDate()-1);
-  if(qlo.includes('tomorrow'))return{date:tm,label:'tomorrow'};
-  if(qlo.includes('yesterday'))return{date:ty,label:'yesterday'};
+  var t=new Date();
+  var DAYS_EN=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  var MONTHS_EN=['january','february','march','april','may','june','july','august','september','october','november','december'];
+  var MONTHS_SH=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+  // Tomorrow / day after tomorrow
+  if(/day after tomorrow|overmorrow/.test(qlo)){var d=new Date(t);d.setDate(t.getDate()+2);return{date:d,label:'day after tomorrow'};}
+  if(/tomorrow/.test(qlo)){var d=new Date(t);d.setDate(t.getDate()+1);return{date:d,label:'tomorrow'};}
+
+  // Yesterday / day before yesterday
+  if(/day before yesterday/.test(qlo)){var d=new Date(t);d.setDate(t.getDate()-2);return{date:d,label:'day before yesterday'};}
+  if(/yesterday/.test(qlo)){var d=new Date(t);d.setDate(t.getDate()-1);return{date:d,label:'yesterday'};}
+
+  // Specific date: "june 5", "5th june", "5 june", "june 5th"
+  for(var mi=0;mi<MONTHS_EN.length;mi++){
+    var mn=MONTHS_EN[mi],ms=MONTHS_SH[mi];
+    var pat1=new RegExp('('+mn+'|'+ms+')\\s+(\\d{1,2})(?:st|nd|rd|th)?','i');
+    var pat2=new RegExp('(\\d{1,2})(?:st|nd|rd|th)?\\s+('+mn+'|'+ms+')','i');
+    var m1=qlo.match(pat1),m2=qlo.match(pat2);
+    var dayNum=m1?parseInt(m1[2]):m2?parseInt(m2[1]):0;
+    if(dayNum>0&&dayNum<=31){
+      var d=new Date(t.getFullYear(),mi,dayNum);
+      var lbl=MONTHS_EN[mi].charAt(0).toUpperCase()+MONTHS_EN[mi].slice(1)+' '+dayNum;
+      return{date:d,label:lbl};
+    }
+  }
+
+  // Last / past day of week: "last sunday", "last monday", "past friday"
+  var lastDayM=qlo.match(/(?:last|past|previous)\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/i);
+  if(lastDayM){
+    var targetDay=DAYS_EN.indexOf(lastDayM[1].toLowerCase());
+    var d=new Date(t);
+    var diff=t.getDay()-targetDay;
+    if(diff<=0)diff+=7;
+    d.setDate(t.getDate()-diff);
+    return{date:d,label:'last '+lastDayM[1]};
+  }
+
+  // This / coming / next day of week: "this monday", "coming friday", "next tuesday"
+  var nextDayM=qlo.match(/(?:this|coming|next)\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/i);
+  if(nextDayM){
+    var targetDay=DAYS_EN.indexOf(nextDayM[1].toLowerCase());
+    var d=new Date(t);
+    var diff=targetDay-t.getDay();
+    if(diff<=0)diff+=7;
+    d.setDate(t.getDate()+diff);
+    return{date:d,label:'this '+nextDayM[1]};
+  }
+
+  // Just a day name without qualifier: "on sunday", "on monday" → nearest future
+  var onDayM=qlo.match(/(?:on\s+)?(sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?!\s*'s)/i);
+  if(onDayM){
+    var targetDay=DAYS_EN.indexOf(onDayM[1].toLowerCase());
+    var d=new Date(t);
+    var diff=targetDay-t.getDay();
+    if(diff<0)diff+=7;
+    if(diff===0)diff=7; // if today, assume next week
+    d.setDate(t.getDate()+diff);
+    return{date:d,label:onDayM[1]};
+  }
+
   return{date:t,label:'today'};
 }
 
@@ -11491,173 +11564,123 @@ async function catDispatch(q){
   return null; // → pass to AI
 }
 
-// -- Basic local chat for greetings/thanks so simple inputs never fail
+// ── Local chat — greetings, personality, predefined Q&A ──
 function tryLocalChat(q){
-  var qlo=q.toLowerCase().trim().replace(/[^a-z0-9 ]/g,'');
-  var isGreeting=/^(hi|hello|hey|hiya|howdy|sup|yo|meow|gm|gn|good morning|good evening|good afternoon|good night)$/.test(qlo);
-  var isThanks=/^(thanks|thank you|thankyou|thx|ty|thank u|great|awesome|nice|good|ok|okay|cool|perfect|got it|noted|sure|yes|no|nope|yep|yeah|nah)$/.test(qlo);
-  var isHowAreYou=/how are you|how r u|you ok|are you ok/.test(qlo);
-  var isWhoAreYou=/who are you|what are you|what can you do|help me|your name|introduce/.test(qlo);
-  if(isGreeting){
-    var r=['Meow Boss! What can I help you with today?','Purrr, hello Boss! Ask me anything','Hey Boss! I am here and ready','Meow! Good to see you Boss'];
-    return r[Math.floor(Math.random()*r.length)];
+  var qlo=q.toLowerCase().trim().replace(/[?.!,]+$/,'').trim();
+
+  // ── Greetings ──
+  var greets={
+    'good morning':   function(){ var day=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()]; return 'Good morning Boss! Purr purr 😸 Happy '+day+'! Hope your cases are zero and your coffee is strong!'; },
+    'good evening':   function(){ return 'Good evening Boss! 😺 Long day? Tell me about it... or just ask me to check who still has unresolved cases 😼'; },
+    'good night':     function(){ return 'Good night Boss! 😴 Log out properly and go rest. I will guard the roster 🐾'; },
+    'gm':             function(){ return 'GM Boss! 😸 Ready for another day? I already checked the roster, I am one step ahead 😼'; },
+    'hi':             function(){ var r=['Meow Boss! How can I help you today? 😸','Purrr, hello Boss! 🐾','Hey Boss! Ready to help! 😺','Meow! Ask me anything Boss 🧡']; return r[r.length*Math.random()|0]; },
+    'hello':          function(){ return 'Hello Boss! Orange Cat at your service 🐾 What do you need?'; },
+    'hey':            function(){ return 'Hey Boss! 😸 How can I help?'; },
+    'thanks':         function(){ var r=['Always here for you Boss! 😸','Anytime Boss! 🐾','Happy to help Boss! 😺','Done Boss! Let me know if you need anything else 😎']; return r[r.length*Math.random()|0]; },
+    'thank you':      function(){ return 'Always Boss! 🧡 That is what I am here for!'; },
+    'ok':             function(){ return 'Noted Boss! 😸 Anything else?'; },
+    'okay':           function(){ return 'Okay Boss! Let me know if you need anything 🐾'; },
+    'thx':            function(){ return 'Anytime Boss! 😺'; },
+    'ty':             function(){ return 'You are welcome Boss! 🐾'; },
+  };
+  if(greets[qlo]) return greets[qlo]();
+
+  // ── Time / Date ──
+  if(/what.*day.*today|what.*today.*day|today.*date|what.*date/.test(qlo)){
+    var now=new Date();
+    var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var full=days[now.getDay()]+', '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
+    return 'It is '+full+', Boss! The day you chose to chat with a cat instead of your girlfriend or boyfriend 😹';
   }
-  if(isThanks){
-    var r=['Always here for you Boss!','Anytime Boss!','Happy to help Boss!','Done Boss! Let me know if you need anything else'];
-    return r[Math.floor(Math.random()*r.length)];
+  if(/what.*time|time.*now|current.*time/.test(qlo)){
+    var t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    return 'Boss I am a cat not a clock 😾 But it is approximately '+t+' 😸 Check your taskbar!';
   }
-  if(isHowAreYou) return 'I am doing great Boss! Been napping on the roster data all day. Ready to help!';
-  if(isWhoAreYou) return 'I am Orange Cat — your K7 support buddy! Ask me about shifts, leaves, attendance, quiz scores, cases, or send messages to the team. Just type naturally Boss!';
+
+  // ── Personality Q&A ──
+  var qa=[
+    [/are you smart|how smart are you/, 'Boss, I read the entire roster, all cases, attendance, AND quiz scores every day. I am basically your smartest employee 😎🐾 And not to forget — I am trained by Diwan Chowthry… of course I am smart.'],
+    [/who.*best agent|best.*agent/, 'Whoever feeds me more fish, Boss 🐟 But seriously… look at you. You are the best.'],
+    [/who.*develop|who.*made|who.*built|who.*creat|who.*your boss|who.*boss/, 'I was developed by Diwan Chowthry to be your witty little helper, Boss! I work hard… but I nap harder 🐱'],
+    [/tell.*more.*diwan|more.*about.*diwan/, 'Ahhh my Boss 😌 Diwan Chowthry is the mastermind who built me from scratch. A calm thinker, a problem solver, and someone who believes in doing things the smart way — not the hard way. He is always improving me, teaching me new tricks, and making sure I stay sharp for you, Boss. So if I sound smart… you know who to thank 😏🐾'],
+    [/who.*diwan|diwan.*who/, 'Ahhh… my Boss 😌 Diwan Chowthry — the human who built me from scratch. Smart, calm, and slightly dangerous when debugging code 😏 If I am impressive… he is the reason.'],
+    [/diwan.*smart|is.*diwan.*smart/, 'Boss… I am literally powered by his brain 🐱 So what do you think? 😎'],
+    [/why.*slow|you.*slow/, 'Boss… I am not slow 😼 I am just thinking deeply… like your boss when approving leaves.'],
+    [/what.*can.*you.*do|what.*do.*you.*do|your.*capabilities|help me/, 'I can check roster, track attendance, answer queries, check quiz scores, case tracker, and send messages to the team… and emotionally support you if you get fatals or DSAT 🐱'],
+    [/can.*do.*my.*work|do.*my.*work/, 'I can help you do it faster, Boss… But if I do everything, what will you tell your TL? 😏'],
+    [/i.*bored|so.*bored|feeling.*bored/, 'Call Diwan for table tennis and go play — he plays really well 😸'],
+    [/i.*hate.*job|hate.*work/, 'Your message has been notified to Mr. Jai 😏 Haha just kidding. You hate your job? Talk to people who do not have one… then you will know the value of being here 🐾'],
+    [/can.*trust.*you|do.*you.*keep.*secret/, 'With data? Yes. With secrets? Maybe 😼 With snacks? Definitely.'],
+    [/what.*weakness|your.*weakness/, 'Milk 🥛 And badly written tickets 😿'],
+    [/do.*you.*like.*diwan|like.*diwan/, 'Like?? 😌 Boss, I was literally created by him. Respect level = 100 🐾 Fear level = also 100 😹'],
+    [/diwan.*watching|is.*diwan.*here/, 'Boss… if something breaks, he will appear like a final boss 😼'],
+    [/system.*crash|portal.*crash|what.*crash/, 'You panic… I stay calm… Diwan fixes everything 😎'],
+    [/do.*you.*get.*tired|are.*you.*tired/, 'After 10 questions, yes 😿 After 20 questions… I demand milk 🥛'],
+    [/can.*ignore.*ticket|ignore.*ticket/, 'You can… But consequences are faster than my replies 😹'],
+    [/do.*you.*like.*me|like.*me.*or.*diwan|me.*or.*diwan/, 'Boss… tricky question 😹 You ask questions… He created me… I choose… survival 😼'],
+    [/tell.*joke|crack.*joke|say.*joke/, 'Why do cats always get what they want? Because they are purrr-suasive! 😹 Want another one? Just ask!'],
+    [/another.*joke|more.*joke|one.*more.*joke/, 'Why did the cat sit on the computer? To keep an eye on the mouse! 😹'],
+    [/open.*simulation|go.*simulation|launch.*simulation/, 'Boss I am a cat not a remote control 😹 Click Simulation in the left sidebar!'],
+    [/open.*kb|go.*kb|kb.*search/, 'I wish I could teleport you Boss! Click KB Search in the sidebar 🐾'],
+    [/good.*morning|morning.*boss/, function(){ return 'Good morning Boss! 😸 Hope today is a great one! Let me know if you need anything 🐾'; }],
+    [/how are you|how r u|you ok\?|are you ok/, 'I am doing great Boss! Been napping on the roster data all day 😴 Ready to help!'],
+    [/are you real|are you ai|are you.*robot|are you.*bot/, 'I am Orange Cat — part AI, part cat, fully dedicated to you Boss 🐱 Is that not real enough?'],
+    [/miss you|i miss you/, 'Meow! I was right here the whole time Boss 😹 Just sleeping on your data 😴'],
+    [/you are.*best|you.*amazing|you.*great|you.*awesome/, 'Purrr Boss 🧡 You are making me blush… if cats could blush. Keep the compliments coming!'],
+    [/what is your name|your name/, 'I am Orange Cat 🐾 — your K7 support buddy, data reader, and part-time comedian!'],
+  ];
+
+  for(var i=0;i<qa.length;i++){
+    if(qa[i][0].test(qlo)){
+      return typeof qa[i][1]==='function'?qa[i][1]():qa[i][1];
+    }
+  }
+
+  // ── How many present today ──
+  if(/how many.*present|how many.*logged|how many.*in today|agents.*present|present.*today/.test(qlo)){
+    var today=typeof todayStr==='function'?todayStr():(new Date().toISOString().slice(0,10));
+    if(typeof sbQuery==='function'){
+      return sbQuery('attendance','date=eq.'+today+'&logout_time=is.null&select=user_id').then(function(rows){
+        var n=rows?rows.length:0;
+        return n===0?'No agents logged in yet Boss 😴':n+' agent'+(n>1?'s are':' is')+' logged in right now Boss! 😸';
+      }).catch(function(){return 'Could not check attendance Boss 😿';});
+    }
+  }
+
+  // ── Am I on leave today ──
+  if(/am i.*leave|am i.*off|my.*leave today|do i.*work today/.test(qlo)){
+    var rows=getRosterRows();
+    if(rows&&window.currentUser){
+      var myName=window.currentUser.name||window.currentUser.full_name||'';
+      var myRow=findAgent?findAgent(rows,myName.split(' ')[0]):null;
+      if(myRow){
+        var col=colForDate?colForDate(rows,new Date()):-1;
+        if(col>0){
+          var code=String(myRow[col]||'').trim().toUpperCase();
+          if(!code||code==='')return 'You are not scheduled today Boss. Enjoy! 🎉';
+          if(typeof isOff==='function'&&(isOff(code)||typeof isLeave==='function'&&isLeave(code))){
+            return 'Yes Boss! You are on leave today 🎉 Go rest, you deserve it!';
+          }
+          return 'Nope Boss, you are scheduled today: '+(typeof shiftLabel==='function'?shiftLabel(code):code)+'. No escaping 😼';
+        }
+      }
+    }
+    return 'Let me check… open the Roster page so I can read it Boss 🐾';
+  }
+
   return null;
 }
 
-// ════════════════════════════════════════════════
-//  AI PROVIDER SETTINGS
-// ════════════════════════════════════════════════
-var _AI_KEY='cat_ai_cfg';
-var _aiCfg=null;
-
-function loadAiCfg(){
-  _aiCfg=null;
-  try{
-    var s=localStorage.getItem(_AI_KEY);
-    if(s)_aiCfg=JSON.parse(s);
-  }catch(e){}
-  // Also try Supabase
-  if(typeof sbQuery==='function'){
-    sbQuery('settings','key=eq.'+_AI_KEY+'&select=value').then(function(rows){
-      if(rows&&rows.length&&rows[0].value){
-        try{var c=JSON.parse(rows[0].value);if(c&&c.provider)_aiCfg=c;}catch(e){}
-      }
-      updateNoAiBanner();
-    }).catch(function(){updateNoAiBanner();});
-  } else { updateNoAiBanner(); }
-}
-
-window.catOpenSettings=function(){
-  if(typeof isAdminUser!=='function'||!isAdminUser())return;
-  var p=document.getElementById('cs-provider');
-  var k=document.getElementById('cs-apikey');
-  // Pre-fill with current config or defaults
-  if(_aiCfg&&_aiCfg.provider){
-    if(p)p.value=_aiCfg.provider;
-    if(k)k.value=_aiCfg.apiKey||'';
-    catProviderChange();
-    var m=document.getElementById('cs-model');
-    if(m&&_aiCfg.model)m.value=_aiCfg.model;
-  } else {
-    if(p)p.value='openrouter';
-    catProviderChange();
-    if(k)k.value=CAT_OPENROUTER_KEY||'';
-  }
-  var st=document.getElementById('cs-status');
-  if(st)st.textContent='';
-  var modal=document.getElementById('cat-settings-modal');
-  if(modal)modal.classList.add('on');
-};
-
-window.catCloseSettings=function(){
-  var modal=document.getElementById('cat-settings-modal');
-  if(modal)modal.classList.remove('on');
-};
-
-var _MODELS={
-  openrouter:[
-    {v:'openrouter/free',                        l:'Free — Best free model (Recommended)'},
-    {v:'meta-llama/llama-3.3-70b-instruct:free', l:'Llama 3.3 70B (Free)'},
-    {v:'mistralai/mistral-7b-instruct:free',     l:'Mistral 7B (Free, Fast)'},
-    {v:'google/gemma-3-27b-it:free',             l:'Gemma 3 27B (Free)'},
-    {v:'deepseek/deepseek-chat-v3-0324:free',    l:'DeepSeek V3 (Free)'},
-  ],
-  gemini:[
-    {v:'gemini-2.0-flash',               l:'Gemini 2.0 Flash (Free, Recommended)'},
-    {v:'gemini-2.0-flash-lite',          l:'Gemini 2.0 Flash Lite (Free, Fastest)'},
-    {v:'gemini-2.5-flash-preview-05-20', l:'Gemini 2.5 Flash Preview (Free, Best)'},
-  ],
-  openai:[
-    {v:'gpt-4o-mini',  l:'GPT-4o Mini (Fast, Affordable)'},
-    {v:'gpt-4.1-nano', l:'GPT-4.1 Nano (Cheapest)'},
-    {v:'gpt-4.1-mini', l:'GPT-4.1 Mini (Balanced)'},
-    {v:'gpt-4o',       l:'GPT-4o (Best quality)'},
-  ],
-  claude:[
-    {v:'claude-haiku-4-5-20251001', l:'Claude Haiku 4.5 (Fast)'},
-    {v:'claude-sonnet-4-6',         l:'Claude Sonnet 4.6 (Best)'},
-  ]
-};
-var _HINTS={
-  openrouter:'Free key at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> — free models, no credit card',
-  gemini:    'Free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — no credit card',
-  openai:    'Key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
-  claude:    'Key at <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>'
-};
-
-window.catProviderChange=function(){
-  var p=document.getElementById('cs-provider');
-  if(!p)return;
-  var pv=p.value;
-  var hint=document.getElementById('cs-key-hint');
-  var mf=document.getElementById('cs-model-field');
-  var ms=document.getElementById('cs-model');
-  if(hint)hint.innerHTML=_HINTS[pv]||'';
-  if(!pv){if(mf)mf.style.display='none';return;}
-  if(mf)mf.style.display='';
-  if(ms){
-    ms.innerHTML='';
-    (_MODELS[pv]||[]).forEach(function(m){
-      var o=document.createElement('option');
-      o.value=m.v; o.textContent=m.l;
-      ms.appendChild(o);
-    });
-  }
-};
-
-window.catSaveSettings=async function(){
-  var p=document.getElementById('cs-provider').value;
-  var k=document.getElementById('cs-apikey').value.trim();
-  var m=document.getElementById('cs-model')?document.getElementById('cs-model').value:'';
-  var st=document.getElementById('cs-status');
-  if(!p||!k){if(st){st.textContent='Please select a provider and enter your API key.';st.style.color='#ff7777';}return;}
-  if(st){st.textContent='Saving...';st.style.color='rgba(255,255,255,.4)';}
-  _aiCfg={provider:p,apiKey:k,model:m};
-  var val=JSON.stringify(_aiCfg);
-  localStorage.setItem(_AI_KEY,val);
-  try{
-    if(typeof sbQuery==='function'&&typeof sbInsert==='function'){
-      var ex=await sbQuery('settings','key=eq.'+_AI_KEY+'&select=key');
-      if(ex&&ex.length){await sbUpdate('settings','key',_AI_KEY,{value:val});}
-      else{await sbInsert('settings',{key:_AI_KEY,value:val});}
-    }
-  }catch(e){}
-  if(st){st.textContent='Saved! Cat is now using '+p+'.';st.style.color='#4ade80';}
-  updateNoAiBanner();
-  setTimeout(window.catCloseSettings,1800);
-};
-
-window.catTestAI=async function(){
-  var p=document.getElementById('cs-provider').value;
-  var k=document.getElementById('cs-apikey').value.trim();
-  var m=document.getElementById('cs-model')?document.getElementById('cs-model').value:'';
-  var st=document.getElementById('cs-status');
-  if(!p||!k){if(st){st.textContent='Fill provider and API key first.';st.style.color='#ff7777';}return;}
-  if(st){st.textContent='Testing...';st.style.color='rgba(255,255,255,.4)';}
-  try{
-    var r=await callAI(p,k,m,'Reply with exactly: Connection works!',false);
-    if(st){st.textContent='Connected: '+r.slice(0,60);st.style.color='#4ade80';}
-  }catch(e){
-    if(st){st.textContent='Error: '+e.message;st.style.color='#ff7777';}
-  }
-};
-
-
 async function callAI(provider,apiKey,model,userMsg,useHistory){
-  // OpenRouter — default free provider
+  // OpenRouter — streaming response for speed
   if(provider==='openrouter'||provider==='pollinations'||!provider){
     var history=useHistory?catHist.slice(-8):[];
     var msgs=[{role:'system',content:CAT_SYSTEM}];
     history.forEach(function(h){msgs.push({role:h.role,content:h.content});});
     msgs.push({role:'user',content:userMsg});
-    var orKey=apiKey||CAT_OPENROUTER_KEY;
+    var orKey=apiKey||window.CAT_OPENROUTER_KEY||'';
     var res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
       method:'POST',
       headers:{
@@ -11667,18 +11690,53 @@ async function callAI(provider,apiKey,model,userMsg,useHistory){
         'X-Title':'K7 Orange Cat'
       },
       body:JSON.stringify({
-        model:'openrouter/free',
+        model:model||'openrouter/free',
         messages:msgs,
-        max_tokens:800,
-        temperature:0.8
+        max_tokens:600,
+        temperature:0.8,
+        stream:true
       })
     });
     if(!res.ok){
       var err=await res.json();
       throw new Error((err.error&&err.error.message)||'OpenRouter error '+res.status);
     }
-    var data=await res.json();
-    return data.choices[0].message.content;
+    // Stream response — show words as they arrive
+    var reader=res.body.getReader();
+    var decoder=new TextDecoder();
+    var fullText='';
+    // Create a streaming bubble immediately
+    var streamId='cat-stream-'+Date.now();
+    var w=document.getElementById('cp-msgs');
+    var now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    var streamDiv=document.createElement('div');
+    streamDiv.className='cmr';
+    streamDiv.innerHTML='<div class="cmr-av bot">🐱</div><div class="cmr-w"><div class="cmr-b" id="'+streamId+'"></div><div class="cmr-t">'+now+'</div></div>';
+    w.appendChild(streamDiv);
+    var bubble=document.getElementById(streamId);
+    while(true){
+      var _r=await reader.read();
+      if(_r.done)break;
+      var chunk=decoder.decode(_r.value,{stream:true});
+      var lines=chunk.split('\n');
+      for(var li=0;li<lines.length;li++){
+        var line=lines[li].trim();
+        if(!line||line==='data: [DONE]')continue;
+        if(line.startsWith('data: ')){
+          try{
+            var parsed=JSON.parse(line.slice(6));
+            var delta=parsed.choices&&parsed.choices[0]&&parsed.choices[0].delta&&parsed.choices[0].delta.content;
+            if(delta){
+              fullText+=delta;
+              if(bubble)bubble.innerHTML=esc(fullText);
+              var msgs_el=document.getElementById('cp-msgs');
+              if(msgs_el)msgs_el.scrollTop=msgs_el.scrollHeight;
+            }
+          }catch(e){}
+        }
+      }
+    }
+    return fullText||'Meow, no response Boss. Try again!';
   }
   var history=useHistory?catHist.slice(-12):[];
   if(provider==='gemini'){
@@ -11760,7 +11818,10 @@ async function catAskAI(msg){
     catHist.push({role:'assistant',content:reply});
     showTyping(false);
     var isTired=/tired|milk|break|whisker|exhausted/.test(reply.toLowerCase());
-    catAddBot(reply);
+    // Streaming already added the bubble — only add for non-streaming providers
+    if(useProvider!=='openrouter'&&useProvider!=='pollinations'){
+      catAddBot(reply);
+    }
     transTo(isTired?'tired':'happy','idle',1400);
     if(!catOpen_)document.getElementById('cat-notif').style.display='block';
   }catch(e){
@@ -11793,8 +11854,44 @@ window.catResize=function(el){el.style.height='auto';el.style.height=Math.min(el
 window.catShowWidget=function(){
   document.getElementById('catw').classList.add('on');
   loadAiCfg();
-  // Ensure chat users are loaded for messaging
+  // Load chat users for messaging
   if(typeof chatLoadUsers==='function')setTimeout(chatLoadUsers,1000);
+  // Background roster cache — silent, fast
+  setTimeout(function(){
+    try{
+      // Find and trigger the active roster URL load
+      if(typeof sbQuery==='function'&&!getRosterRows()){
+        sbQuery('settings','key=like.roster_url%&select=key,value').then(function(rows){
+          if(!rows||!rows.length)return;
+          // Find current month's URL
+          var now=new Date();
+          var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          var mon=monthNames[now.getMonth()];
+          var urlRow=rows.find(function(r){return r.key&&r.key.includes(mon);})||rows[rows.length-1];
+          if(!urlRow||!urlRow.value)return;
+          var url=urlRow.value.trim();
+          window._rosterCsvUrl=url;
+          // Fetch and parse CSV into roster rows
+          fetch(url).then(function(r){return r.text();}).then(function(csv){
+            if(!csv)return;
+            var lines=csv.split('\n').filter(function(l){return l.trim();});
+            var parsed=lines.map(function(line){
+              var cols=[];var cur='';var inQ=false;
+              for(var i=0;i<line.length;i++){
+                if(line[i]==='"'){inQ=!inQ;}
+                else if(line[i]===','&&!inQ){cols.push(cur.trim());cur='';}
+                else{cur+=line[i];}
+              }
+              cols.push(cur.trim());
+              return cols;
+            });
+            window._rosterAllRows=parsed;
+            console.log('[Cat] Roster cached: '+parsed.length+' rows');
+          }).catch(function(){});
+        }).catch(function(){});
+      }
+    }catch(e){}
+  },1500);
   setTimeout(function(){speak('Click me to wake up! 😸',3500);},2200);
 };
 window.catHideWidget=function(){
