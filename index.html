@@ -10233,17 +10233,22 @@ function pplCloseLightbox(){
 /* ══ Chat Panel ══ */
 #cat-panel {
   position:fixed; bottom:118px; right:28px; z-index:9999;
-  width:375px; max-height:560px; display:flex; flex-direction:column;
+  width:420px; height:580px; display:flex; flex-direction:column;
   background:#0d1627;
   border-radius:20px; border:1px solid rgba(255,122,47,.2);
   box-shadow:0 24px 70px rgba(0,0,0,.55), 0 6px 24px rgba(255,122,47,.1),
              inset 0 1px 0 rgba(255,255,255,.04);
   overflow:hidden;
-  transform:scale(.88) translateY(14px); opacity:0; pointer-events:none;
-  transition:transform .38s cubic-bezier(.34,1.56,.64,1), opacity .22s;
+  transform:translateY(12px) scale(.96); opacity:0; pointer-events:none;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
   transform-origin:bottom right;
 }
-#cat-panel.on { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
+#cat-panel.on { transform:translateY(0) scale(1); opacity:1; pointer-events:all; }
+
+/* Responsive — shrink on small screens */
+@media (max-width:480px) {
+  #cat-panel { width:calc(100vw - 20px); right:10px; bottom:108px; height:520px; }
+}
 
 /* header */
 #cp-hdr {
@@ -10294,6 +10299,7 @@ function pplCloseLightbox(){
 #cp-msgs {
   flex:1; overflow-y:auto; padding:13px 12px;
   display:flex; flex-direction:column; gap:9px; scroll-behavior:smooth;
+  min-height:0;
 }
 #cp-msgs::-webkit-scrollbar { width:3px; }
 #cp-msgs::-webkit-scrollbar-thumb { background:rgba(255,122,47,.2); border-radius:3px; }
@@ -10545,7 +10551,8 @@ function pplCloseLightbox(){
         <label>AI Provider</label>
         <select id="cs-provider" onchange="catProviderChange()">
           <option value="">— Select Provider —</option>
-          <option value="gemini">Google Gemini (Free tier available)</option>
+          <option value="gemini">Google Gemini (Free — Recommended)</option>
+          <option value="copilot">GitHub Copilot (Free with GitHub plan)</option>
           <option value="openai">OpenAI / ChatGPT</option>
           <option value="claude">Anthropic Claude</option>
         </select>
@@ -11007,24 +11014,33 @@ window.catCloseSettings=function(){
 
 var MODEL_MAP = {
   gemini: [
-    {v:'gemini-2.0-flash',    l:'Gemini 2.0 Flash (Free, Recommended)'},
-    {v:'gemini-1.5-flash',    l:'Gemini 1.5 Flash (Free)'},
-    {v:'gemini-1.5-pro',      l:'Gemini 1.5 Pro (Paid)'},
+    {v:'gemini-2.0-flash-lite',  l:'Gemini 2.0 Flash Lite (Free, Fastest)'},
+    {v:'gemini-2.0-flash',       l:'Gemini 2.0 Flash (Free, Recommended)'},
+    {v:'gemini-2.5-flash-preview-05-20', l:'Gemini 2.5 Flash Preview (Free, Best)'},
+    {v:'gemini-2.5-pro-preview-06-05',   l:'Gemini 2.5 Pro Preview (Paid, Smartest)'},
   ],
   openai: [
-    {v:'gpt-4o-mini',         l:'GPT-4o Mini (Fast, Cheap)'},
-    {v:'gpt-4o',              l:'GPT-4o (Best quality)'},
-    {v:'gpt-3.5-turbo',       l:'GPT-3.5 Turbo (Fastest)'},
+    {v:'gpt-4.1-nano',   l:'GPT-4.1 Nano (Free tier, Fastest)'},
+    {v:'gpt-4.1-mini',   l:'GPT-4.1 Mini (Cheap, Fast)'},
+    {v:'gpt-4.1',        l:'GPT-4.1 (Best quality)'},
+    {v:'gpt-4o',         l:'GPT-4o (High quality)'},
+    {v:'gpt-4o-mini',    l:'GPT-4o Mini (Fast, Cheap)'},
+  ],
+  copilot: [
+    {v:'gpt-4o',         l:'GPT-4o via GitHub Copilot'},
+    {v:'gpt-4.1',        l:'GPT-4.1 via GitHub Copilot'},
+    {v:'o4-mini',        l:'o4-mini via GitHub Copilot'},
   ],
   claude: [
-    {v:'claude-haiku-4-5-20251001', l:'Claude Haiku (Fast, Cheap)'},
-    {v:'claude-sonnet-4-6',         l:'Claude Sonnet (Best quality)'},
+    {v:'claude-haiku-4-5-20251001', l:'Claude Haiku 4.5 (Fast, Cheap)'},
+    {v:'claude-sonnet-4-6',         l:'Claude Sonnet 4.6 (Best quality)'},
   ]
 };
 var HINT_MAP = {
-  gemini: '🔑 Get free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>',
-  openai: '🔑 Get key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
-  claude: '🔑 Get key at <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>'
+  gemini:  '🔑 Free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — no credit card needed',
+  copilot: '🔑 Get token at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> — needs GitHub Copilot subscription. Use a Personal Access Token.',
+  openai:  '🔑 Get key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
+  claude:  '🔑 Get key at <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>'
 };
 
 window.catProviderChange = function(){
@@ -11095,10 +11111,9 @@ async function callAI(provider, apiKey, model, userMsg, useHistory){
   var history = useHistory ? catHist.slice(-12) : [];
 
   if(provider==='gemini'){
-    // Gemini REST API
-    var url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+apiKey;
+    // Gemini REST API — use v1 stable endpoint
+    var url='https://generativelanguage.googleapis.com/v1/models/'+model+':generateContent?key='+apiKey;
     var contents=[];
-    // Add history
     history.forEach(function(h){
       contents.push({role:h.role==='assistant'?'model':'user', parts:[{text:h.content}]});
     });
@@ -11110,7 +11125,15 @@ async function callAI(provider, apiKey, model, userMsg, useHistory){
         generationConfig:{maxOutputTokens:800,temperature:0.8}
       })
     });
-    if(!res.ok){ var err=await res.json(); throw new Error((err.error&&err.error.message)||'Gemini API error '+res.status); }
+    if(!res.ok){
+      var err=await res.json();
+      var msg=(err.error&&err.error.message)||'Gemini API error '+res.status;
+      // Friendly hint for retired models
+      if(res.status===404||msg.includes('not found')||msg.includes('deprecated')){
+        msg='Model "'+model+'" is retired. Go to AI Settings and pick Gemini 2.0 Flash instead Boss!';
+      }
+      throw new Error(msg);
+    }
     var data=await res.json();
     return data.candidates[0].content.parts[0].text;
 
@@ -11124,6 +11147,24 @@ async function callAI(provider, apiKey, model, userMsg, useHistory){
       body:JSON.stringify({model:model,messages:msgs,max_tokens:800,temperature:0.8})
     });
     if(!res.ok){ var err=await res.json(); throw new Error((err.error&&err.error.message)||'OpenAI error '+res.status); }
+    var data=await res.json();
+    return data.choices[0].message.content;
+
+  } else if(provider==='copilot'){
+    // GitHub Copilot uses OpenAI-compatible API
+    var msgs=[{role:'system',content:CAT_SYSTEM}];
+    history.forEach(function(h){ msgs.push({role:h.role,content:h.content}); });
+    msgs.push({role:'user',content:userMsg});
+    var res=await fetch('https://api.githubcopilot.com/chat/completions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+apiKey,
+        'Copilot-Integration-Id':'vscode-chat'
+      },
+      body:JSON.stringify({model:model,messages:msgs,max_tokens:800,temperature:0.8})
+    });
+    if(!res.ok){ var err=await res.json(); throw new Error((err.error&&err.error.message)||'Copilot error '+res.status); }
     var data=await res.json();
     return data.choices[0].message.content;
 
