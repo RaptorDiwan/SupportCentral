@@ -10874,67 +10874,49 @@ function tryCaseTracker(q){
   if(typeof CT==='undefined'||typeof CT.getSnapshot!=='function') return null;
   var snap=CT.getSnapshot();
   var qlo=q.toLowerCase();
-
-  // Only answer if CT data is loaded
-  if(!snap) return "Meow Boss 😺 No case data loaded yet! Upload the Dynamics 365 export in the Case Tracker page first.";
-
-  var isCTQ = /case|follow.?up|stale|no action|not.?follow|unattended|pending case|agent.*case|case.*agent|who.*not|not.*actioned|aging|old case|overdue/.test(qlo);
+  if(!snap) return 'Meow Boss, no case data loaded yet! Upload the Dynamics 365 export in Case Tracker first.';
+  var isCTQ=/case|follow.?up|stale|no action|not.?follow|unattended|pending case|agent.*case|case.*agent|who.*not|not.*actioned|aging|old case|overdue/.test(qlo);
   if(!isCTQ) return null;
 
-  // ── Summary overview ──
+  // Summary
   if(/overview|summary|status|how many|total|all case/.test(qlo)){
-    var out='📋 Case Tracker Summary (as of '+snap.uploadDate+'):
-
-';
-    out+='📦 Total Cases: '+snap.total+'
-';
-    out+='🔴 Flagged/Active: '+snap.flagged+'
-';
-    out+='⚠️ No Follow-up: '+snap.noAction+'
-';
-    out+='🕐 Stale (not updated today): '+snap.stale+'
-
-';
-    if(snap.noAction>0) out+='Boss, '+snap.noAction+' case'+(snap.noAction>1?'s are':' is')+' sitting with NO action — needs attention! 😼';
-    else out+='Purrrr, all cases have been actioned! 😸';
-    return out;
+    var lines=[];
+    lines.push('Case Tracker Summary (as of '+snap.uploadDate+'):');
+    lines.push('Total Cases: '+snap.total);
+    lines.push('Flagged/Active: '+snap.flagged);
+    lines.push('No Follow-up: '+snap.noAction);
+    lines.push('Stale (not updated today): '+snap.stale);
+    lines.push('');
+    if(snap.noAction>0) lines.push('Boss, '+snap.noAction+' case'+(snap.noAction>1?'s are':' is')+' sitting with NO action! Needs attention paw paw!');
+    else lines.push('Purrr, all cases have been actioned! Good job Boss!');
+    return lines.join('\n');
   }
 
-  // ── Who has no follow-up / unattended cases ──
+  // Who has no follow-up
   if(/who.*(no follow|not follow|no action|not action|unattended|not.*update)|no follow.*agent|agent.*no follow/.test(qlo)){
     var noA=snap.agents.filter(function(a){return a.noAction>0;});
-    if(!noA.length) return "Purrr! 😸 All agents have actioned their cases Boss! Nothing unattended!";
-    var out='⚠️ Agents with NO follow-up ('+snap.noAction+' cases total):
-
-';
+    if(!noA.length) return 'Purrr! All agents have actioned their cases Boss! Nothing unattended!';
+    var lines=['Agents with NO follow-up ('+snap.noAction+' cases total):\n'];
     noA.forEach(function(a){
-      out+='🔴 '+a.name+' — '+a.noAction+' case'+(a.noAction>1?'s':'')+' unactioned';
-      if(a.stale>0) out+=' ('+a.stale+' stale)';
-      out+='
-';
+      lines.push(a.name+' — '+a.noAction+' case'+(a.noAction>1?'s':'')+' unactioned'+(a.stale>0?' ('+a.stale+' stale)':''));
     });
-    return out;
+    return lines.join('\n');
   }
 
-  // ── Stale / old cases not updated today ──
+  // Stale cases
   if(/stale|not.*update|not.*touch|old case|aging|overdue|not.*today/.test(qlo)){
-    if(!snap.stale) return "All flagged cases were updated today Boss! 😸 Clean slate!";
-    var out='🕐 Stale Cases — not updated today ('+snap.stale+' total):
-
-';
+    if(!snap.stale) return 'All flagged cases were updated today Boss! Clean slate!';
+    var lines=['Stale Cases — not updated today ('+snap.stale+' total):\n'];
     snap.staleCases.forEach(function(c){
-      out+='• '+c.caseNum+' — '+c.owner+' ('+c.days+'d old)
-';
-      if(c.title) out+='  "'+c.title.slice(0,50)+'"
-';
+      lines.push(c.caseNum+' — '+c.owner+' ('+c.days+'d old)');
+      if(c.title) lines.push('  "'+c.title.slice(0,50)+'"');
     });
-    if(snap.stale>snap.staleCases.length) out+='…and '+(snap.stale-snap.staleCases.length)+' more.';
-    return out;
+    if(snap.stale>snap.staleCases.length) lines.push('...and '+(snap.stale-snap.staleCases.length)+' more.');
+    return lines.join('\n');
   }
 
-  // ── Specific agent case check ── "how many cases does Abeed have"
-  var agentCaseMatch=qlo.match(/(?:how many|show|check|list).{0,20}cases?.{0,10}(?:does|for|of|has|assigned to)?\s+([a-z ]{3,30})/i)
-    ||qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?)\s*(?:case|follow|action|handled|active)/i);
+  // Specific agent
+  var agentCaseMatch=qlo.match(/(?:how many|show|check|list).{0,20}cases?.{0,10}(?:does|for|of|has|assigned to)?\s+([a-z ]{3,30})/i)||qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?)\s*(?:case|follow|action|handled|active)/i);
   if(agentCaseMatch){
     var stopW2=new Set(['how','many','show','check','list','cases','does','for','has','and','the','assigned','to','case','follow','action','handled','active','is','are','what']);
     var words=(agentCaseMatch[1]||'').toLowerCase().split(' ').filter(function(w){return w.length>2&&!stopW2.has(w);});
@@ -10944,42 +10926,30 @@ function tryCaseTracker(q){
         return words.some(function(w){return n.includes(w);});
       });
       if(matched){
-        var out='📋 '+matched.name+"'s Case Summary:
-
-";
-        out+='🔢 Active Cases: '+matched.active+'
-';
-        out+='⚠️ No Action: '+matched.noAction+'
-';
-        out+='🕐 Stale: '+matched.stale+'
-';
-        if(matched.cases.length) out+='
-Cases: '+matched.cases.slice(0,6).join(', ')+(matched.cases.length>6?' …':'');
-        if(matched.noAction>0) out+='
-
-Boss, '+matched.noAction+' case'+(matched.noAction>1?'s need':'needs')+' follow-up! 😼';
-        return out;
+        var lines=[matched.name+"'s Case Summary:\n"];
+        lines.push('Active Cases: '+matched.active);
+        lines.push('No Action: '+matched.noAction);
+        lines.push('Stale: '+matched.stale);
+        if(matched.cases.length) lines.push('\nCases: '+matched.cases.slice(0,6).join(', ')+(matched.cases.length>6?' ...':''));
+        if(matched.noAction>0) lines.push('\nBoss, '+matched.noAction+' case'+(matched.noAction>1?'s need':'needs')+' follow-up!');
+        return lines.join('\n');
       }
     }
   }
 
-  // ── Top offenders ──
-  if(/worst|top|most|highest|who.*most|rank|leaderboard.*case/.test(qlo)){
+  // Top offenders
+  if(/worst|top|most|highest|who.*most|rank|leaderboard/.test(qlo)){
     var top=snap.agents.filter(function(a){return a.noAction>0;}).slice(0,5);
-    if(!top.length) return "Everyone is on top of their cases Boss! 😸";
-    var out='🏆 Top agents needing attention:
-
-';
+    if(!top.length) return 'Everyone is on top of their cases Boss!';
+    var lines=['Top agents needing attention:\n'];
     top.forEach(function(a,i){
-      out+=(i+1)+'. '+a.name+' — '+a.noAction+' unactioned, '+a.stale+' stale
-';
+      lines.push((i+1)+'. '+a.name+' — '+a.noAction+' unactioned, '+a.stale+' stale');
     });
-    return out;
+    return lines.join('\n');
   }
 
   return null;
 }
-
 // ═══════════════════════════════════════
 //  AI PROVIDER SETTINGS
 // ═══════════════════════════════════════
