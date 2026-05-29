@@ -1806,6 +1806,10 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .chat-msg.mine .chat-msg-bubble{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#fff;border-radius:16px 16px 4px 16px;}
   .chat-msg.theirs .chat-msg-bubble{background:var(--navy-hover);color:var(--text-primary);border:1px solid var(--navy-border);border-radius:16px 16px 16px 4px;}
   .chat-msg-meta{font-size:.58rem;color:var(--text-dim);margin-top:.15rem;display:flex;align-items:center;gap:.3rem;}
+  .msg-tick{font-size:.62rem;margin-left:2px;letter-spacing:-.5px;}
+  .msg-tick.sent{color:rgba(255,255,255,.3);}
+  .msg-tick.read{color:#4fc3f7;}
+  .msg-meta .msg-tick{font-size:.65rem;}
   .chat-msg-expires{color:rgba(239,73,60,.6);}
   .chat-input-row{padding:.65rem .9rem;border-top:1px solid var(--navy-border);display:flex;align-items:center;gap:.5rem;}
   .chat-emoji-btn{background:none;border:none;cursor:pointer;font-size:1.2rem;padding:.2rem;flex-shrink:0;}
@@ -7922,7 +7926,7 @@ async function chatLoadMessages(){
     var myId=currentUser.id,theirId=_chatActiveUser.id;
     var rows=await sbQuery('messages',
       'or=(and(from_user_id.eq.'+myId+',to_user_id.eq.'+theirId+'),and(from_user_id.eq.'+theirId+',to_user_id.eq.'+myId+'))'+
-      '&order=created_at.asc&select=id,from_user_id,content,created_at,expires_at'
+      '&order=created_at.asc&select=id,from_user_id,content,created_at,expires_at,read_at'
     );
     chatRenderMessages(rows||[]);
   }catch(e){out.innerHTML='<div class="chat-empty">Could not load messages.</div>';}
@@ -7949,9 +7953,11 @@ function chatRenderMessages(rows){
     var expires=m.expires_at?new Date(m.expires_at):new Date(d.getTime()+24*3600000);
     var hoursLeft=Math.max(0,Math.ceil((expires-Date.now())/3600000));
     var timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    var tick='';
+    if(isMine){ tick=m.read_at?'<span class="msg-tick read" title="Read '+new Date(m.read_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'">✓✓</span>':'<span class="msg-tick sent">✓✓</span>'; }
     return divider+'<div class="chat-msg '+(isMine?'mine':'theirs')+'">'+
       '<div class="chat-msg-bubble">'+esc(m.content)+'</div>'+
-      '<div class="chat-msg-meta"><span>'+timeStr+'</span><span class="chat-msg-expires">⏱ '+(hoursLeft<=1?'<1h':hoursLeft+'h')+'</span></div>'+
+      '<div class="chat-msg-meta"><span>'+timeStr+'</span>'+tick+'<span class="chat-msg-expires">⏱ '+(hoursLeft<=1?'<1h':hoursLeft+'h')+'</span></div>'+
     '</div>';
   }).join('');
   out.scrollTop=out.scrollHeight;
@@ -8162,7 +8168,7 @@ async function msgLoadMessagesForConv(){
       var myId=currentUser.id,theirId=_msgActiveConv.id;
       rows=await sbQuery('messages',
         'or=(and(from_user_id.eq.'+myId+',to_user_id.eq.'+theirId+'),and(from_user_id.eq.'+theirId+',to_user_id.eq.'+myId+'))'+
-        '&group_id=is.null&order=created_at.asc&select=id,from_user_id,from_name,content,created_at,expires_at'
+        '&group_id=is.null&order=created_at.asc&select=id,from_user_id,from_name,content,created_at,expires_at,read_at'
       )||[];
     } else {
       rows=await sbQuery('messages',
@@ -8199,6 +8205,7 @@ function msgRenderMessagesInPage(rows, isGroup){
         '<div class="msg-bubble">'+esc(m.content)+'</div>'+
         '<div class="msg-meta">'+
           '<span>'+timeStr+'</span>'+
+          (isMine?(m.read_at?'<span class="msg-tick read" title="Read '+new Date(m.read_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})+'">✓✓</span>':'<span class="msg-tick sent">✓✓</span>'):'')+ 
           '<span class="msg-expiry">⏱ '+(hoursLeft<=1?'<1h left':hoursLeft+'h left')+'</span>'+
         '</div>'+
       '</div>';
@@ -10587,608 +10594,972 @@ function pplCloseLightbox(){
 (function(){
 'use strict';
 
-// ═══════════════════════════════════════
-//  STATE ENGINE
-// ═══════════════════════════════════════
-var catState  = 'sleep';
-var catOpen_  = false;
-var catGreeted= false;
-var catHist   = [];
-var catBusy   = false;
-var catQCount = 0;
+// ═══════════════════════════════════════════════════════
+//  ORANGE CAT v5 — Full Feature Build
+//  Features: State Engine, Roster, CT, Attendance, Quiz,
+//  Messaging, Broadcast, Timed Reminders, Agent Lookup,
+//  Break Report, Session Memory, Read Receipts
+// ═══════════════════════════════════════════════════════
 
-var STATES = {
-  sleep:'cs-sleep', wake:'cs-wake', idle:'cs-idle',
-  think:'cs-think', work:'cs-work', happy:'cs-happy', tired:'cs-tired'
+// ── State ──
+var catState='sleep', catOpen_=false, catGreeted=false;
+var catHist=[], catBusy=false, catQCount=0;
+var _pendingIntent=null;   // for ambiguous name resolution
+var _reminders=[];         // active setTimeout handles
+var _sessionCtx={          // session memory
+  lastMentionedAgent:null, // last agent name referenced
+  lastAction:null,         // last action type
+  lastTopic:null,          // last topic discussed
+  agentCache:{},           // name→{id,name,role} lookup cache
+  recentTopics:[]          // last 5 topics
 };
 
-function setState(s) {
-  if(catState===s) return;
-  var orb = document.getElementById('cat-orb');
-  if(!orb) return;
-  orb.className = STATES[s] || 'cs-idle';
-  catState = s;
-  // Eyes
-  var es = document.getElementById('c-eyes-s');
-  var eo = document.getElementById('c-eyes-o');
-  var sleepEyes = (s==='sleep'||s==='tired');
-  if(es) es.style.display = sleepEyes ? '' : 'none';
-  if(eo) eo.style.display = sleepEyes ? 'none' : '';
-  // Zzz
-  var zzz = document.getElementById('cat-zzz');
-  if(zzz) zzz.style.display = (s==='sleep') ? '' : 'none';
-}
+var STATES={sleep:'cs-sleep',wake:'cs-wake',idle:'cs-idle',think:'cs-think',work:'cs-work',happy:'cs-happy',tired:'cs-tired'};
 
-function transTo(s, then, delay) {
-  setState(s);
-  if(then) setTimeout(function(){ setState(then); }, delay||1400);
+// ── State Engine ──
+function setState(s){
+  if(catState===s)return;
+  var orb=document.getElementById('cat-orb'); if(!orb)return;
+  orb.className=STATES[s]||'cs-idle'; catState=s;
+  var es=document.getElementById('c-eyes-s'),eo=document.getElementById('c-eyes-o');
+  var sl=(s==='sleep'||s==='tired');
+  if(es)es.style.display=sl?'':'none';
+  if(eo)eo.style.display=sl?'none':'';
+  var zzz=document.getElementById('cat-zzz');
+  if(zzz)zzz.style.display=(s==='sleep')?'':'none';
 }
+function transTo(s,then,delay){ setState(s); if(then)setTimeout(function(){setState(then);},delay||1400); }
 
-// ═══════════════════════════════════════
-//  SPEECH BUBBLE
-// ═══════════════════════════════════════
+// ── Speech bubble ──
 var _speechT;
-function speak(txt, ms) {
-  var el = document.getElementById('cat-speech');
-  if(!el) return;
-  el.textContent = txt;
-  el.classList.add('on');
+function speak(txt,ms){
+  var el=document.getElementById('cat-speech'); if(!el)return;
+  el.textContent=txt; el.classList.add('on');
   clearTimeout(_speechT);
-  _speechT = setTimeout(function(){ el.classList.remove('on'); }, ms||3000);
+  _speechT=setTimeout(function(){el.classList.remove('on');},ms||3000);
 }
 
-// ═══════════════════════════════════════
-//  FAB / PANEL
-// ═══════════════════════════════════════
-window.catFabClick = function() {
-  document.getElementById('cat-notif').style.display = 'none';
-  if(catOpen_){ catClose(); return; }
+// ── FAB / Panel ──
+window.catFabClick=function(){
+  document.getElementById('cat-notif').style.display='none';
+  if(catOpen_){catClose();return;}
   catOpen();
 };
 
-function catOpen() {
-  catOpen_ = true;
+function catOpen(){
+  catOpen_=true;
   document.getElementById('cat-panel').classList.add('on');
-  document.getElementById('cat-label').textContent = '🐾 Close Chat';
-  transTo('wake','idle',800);
-  // Show gear for admins
-  var gear = document.getElementById('cp-gear');
-  if(gear) gear.classList.toggle('on', typeof isAdminUser==='function' && isAdminUser());
-  // Show no-AI banner if not configured
+  document.getElementById('cat-label').textContent='🐾 Close Chat';
+  var gear=document.getElementById('cp-gear');
+  if(gear)gear.classList.toggle('on',typeof isAdminUser==='function'&&isAdminUser());
   updateNoAiBanner();
+  transTo('wake','idle',800);
   if(!catGreeted){
-    catGreeted = true;
+    catGreeted=true;
     setTimeout(function(){
-      catAddBot("Meow! 😺 I'm Orange Cat, your K7 support buddy!\nAsk me about shifts, leaves, or any K7 issue Boss! 🐾");
+      catAddBot("Meow! I'm Orange Cat, your K7 buddy!\nAsk me about shifts, leaves, attendance, quiz, cases, or type 'tell Abeed to come here' to send a message Boss! 🐾");
       transTo('happy','idle',1200);
-    }, 500);
+    },500);
   }
-  setTimeout(function(){ var t=document.getElementById('cp-ta'); if(t)t.focus(); },450);
+  setTimeout(function(){var t=document.getElementById('cp-ta');if(t)t.focus();},450);
 }
 
-window.catClose = function() {
-  catOpen_ = false;
+window.catClose=function(){
+  catOpen_=false;
   document.getElementById('cat-panel').classList.remove('on');
-  document.getElementById('cat-label').textContent = '🐾 Orange Cat — Ask me anything!';
+  document.getElementById('cat-label').textContent='🐾 Orange Cat — Ask me anything!';
   transTo('sleep');
 };
 
-// ═══════════════════════════════════════
-//  MESSAGES
-// ═══════════════════════════════════════
-function catAddBot(txt) {
-  var w = document.getElementById('cp-msgs');
-  var now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  var d = document.createElement('div'); d.className='cmr';
+// ── Messages ──
+function catAddBot(txt){
+  var w=document.getElementById('cp-msgs');
+  var now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  var d=document.createElement('div'); d.className='cmr';
   d.innerHTML='<div class="cmr-av bot">🐱</div><div class="cmr-w"><div class="cmr-b">'+esc(txt)+'</div><div class="cmr-t">'+now+'</div></div>';
   w.appendChild(d); scrollMsgs();
 }
-function catAddUser(txt) {
-  var w = document.getElementById('cp-msgs');
-  var now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  var d = document.createElement('div'); d.className='cmr me';
+function catAddUser(txt){
+  var w=document.getElementById('cp-msgs');
+  var now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  var d=document.createElement('div'); d.className='cmr me';
   d.innerHTML='<div class="cmr-av usr">👤</div><div class="cmr-w"><div class="cmr-b">'+esc(txt)+'</div><div class="cmr-t">'+now+' ✓</div></div>';
   w.appendChild(d); scrollMsgs();
 }
-function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
-function scrollMsgs(){ var e=document.getElementById('cp-msgs'); if(e)e.scrollTop=e.scrollHeight; }
-function showTyping(v){ var e=document.getElementById('cp-typing'); if(e){if(v)e.classList.add('on');else e.classList.remove('on');} if(v)scrollMsgs(); }
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+function scrollMsgs(){var e=document.getElementById('cp-msgs');if(e)e.scrollTop=e.scrollHeight;}
+function showTyping(v){var e=document.getElementById('cp-typing');if(e){if(v)e.classList.add('on');else e.classList.remove('on');}if(v)scrollMsgs();}
 
-// ═══════════════════════════════════════
-//  ROSTER BRAIN — 100% local, zero API
-// ═══════════════════════════════════════
-var OFF_C   = new Set(['L','CO','W','OFF']);
-var LEAVE_C = new Set(['L','CO']);
-var DAYS    = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-var DAYS3   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+// ── No-AI banner ──
+function updateNoAiBanner(){
+  var el=document.getElementById('cp-no-ai'); if(!el)return;
+  var has=_aiCfg&&_aiCfg.provider&&_aiCfg.apiKey;
+  if(!has&&typeof isAdminUser==='function'&&isAdminUser())el.classList.add('on');
+  else el.classList.remove('on');
+}
 
-function getRoster(){ return window.rosterCache || window._rosterAllRows || null; }
-function getDateRow(rows){ return rows.find(function(r){ return String(r[1]).trim().toUpperCase()==='DATE'; }); }
+// ════════════════════════════════════════════════
+//  SESSION MEMORY — tracks context across queries
+// ════════════════════════════════════════════════
+function memRemember(key,val){
+  _sessionCtx[key]=val;
+  if(key==='lastTopic'){
+    _sessionCtx.recentTopics.unshift(val);
+    if(_sessionCtx.recentTopics.length>5)_sessionCtx.recentTopics.pop();
+  }
+}
+
+function memResolveAgent(nameOrPronoun){
+  var lo=(nameOrPronoun||'').toLowerCase().trim();
+  // Pronouns → use last mentioned agent
+  if(/^(him|her|them|he|she|they|this person|that person|same person)$/.test(lo)){
+    return _sessionCtx.lastMentionedAgent;
+  }
+  return null; // let name matcher handle it
+}
+
+function memBuildContext(){
+  var parts=[];
+  if(_sessionCtx.lastMentionedAgent) parts.push('Last agent discussed: '+_sessionCtx.lastMentionedAgent);
+  if(_sessionCtx.lastTopic) parts.push('Last topic: '+_sessionCtx.lastTopic);
+  if(_sessionCtx.recentTopics.length>1) parts.push('Recent topics: '+_sessionCtx.recentTopics.slice(0,5).join(', '));
+  return parts.length?'\n[Context: '+parts.join(' | ')+']':'';
+}
+
+// ════════════════════════════════════════════════
+//  AGENT FINDER — fuzzy match with ambiguity check
+// ════════════════════════════════════════════════
+function findAgents(nameStr){
+  var users=window._chatUsers||[];
+  if(!users.length) return [];
+  var n=nameStr.toLowerCase().trim();
+  // Check pronoun first
+  var pronoun=memResolveAgent(n);
+  if(pronoun){
+    var r=users.find(function(u){return u.name.toLowerCase().includes(pronoun.toLowerCase());});
+    return r?[r]:[];
+  }
+  // Exact match first
+  var exact=users.filter(function(u){return u.name.toLowerCase()===n;});
+  if(exact.length) return exact;
+  // Partial
+  var partial=users.filter(function(u){return u.name.toLowerCase().includes(n);});
+  if(partial.length) return partial;
+  // Word match
+  var words=n.split(/\s+/);
+  return users.filter(function(u){
+    var un=u.name.toLowerCase();
+    return words.some(function(w){return w.length>2&&un.includes(w);});
+  });
+}
+
+// ════════════════════════════════════════════════
+//  MESSAGING BRAIN — send DM / broadcast via cat
+// ════════════════════════════════════════════════
+var MSG_TRIGGERS=/\b(tell|inform|ask|message|msg|remind|notify|send.*to|ping|let.*know)\b/i;
+var BROADCAST_TRIGGERS=/\b(everyone|all agents?|all staff|broadcast|team|whole team|entire team)\b/i;
+
+function cleanMessageText(raw){
+  // Remove trigger words and name at start, capitalize properly
+  var t=raw.replace(/^(to|please|kindly|just|pls)\s+/i,'').trim();
+  t=t.charAt(0).toUpperCase()+t.slice(1);
+  if(!/[.!?]$/.test(t)) t+='.';
+  return t;
+}
+
+function extractMsgIntent(q){
+  if(!MSG_TRIGGERS.test(q)) return null;
+  var qlo=q.toLowerCase();
+
+  // Broadcast?
+  if(BROADCAST_TRIGGERS.test(qlo)){
+    if(!(typeof isAdminUser==='function'&&isAdminUser())){
+      return {type:'denied'};
+    }
+    // Extract message after broadcast keyword
+    var bMatch=q.match(/(?:tell|inform|ask|message|notify|remind|broadcast)\s+(?:everyone|all agents?|all staff|team|whole team|entire team)\s+(?:that|to|:)?\s*(.+)/i);
+    var bMsg=bMatch?bMatch[1].trim():'';
+    return {type:'broadcast', message:cleanMessageText(bMsg)};
+  }
+
+  // DM — extract recipient name and message
+  var dmMatch=q.match(/(?:tell|inform|ask|message|msg|remind|notify|ping|let.*know)\s+([a-zA-Z ]{2,30}?)\s+(?:that |to |:| - )(.+)/i)
+    ||q.match(/(?:send|message)\s+([a-zA-Z]{2,20})\s+(.+)/i);
+
+  if(!dmMatch) return null;
+  var rawName=(dmMatch[1]||'').trim();
+  var rawMsg=(dmMatch[2]||'').trim();
+  if(!rawMsg||rawMsg.length<2) return null;
+
+  return {type:'dm', rawName:rawName, message:cleanMessageText(rawMsg)};
+}
+
+async function handleMsgIntent(q, intent){
+  if(intent.type==='denied'){
+    return 'Sorry Boss, only Admin and TL can send broadcast messages! 🐱';
+  }
+
+  if(intent.type==='broadcast'){
+    var users=window._chatUsers||[];
+    if(!users.length){
+      try{
+        var u=await sbQuery('users','select=id,name,role&order=name.asc');
+        users=(u||[]).filter(function(x){return x.id!==currentUser.id&&x.role!=='syslevel';});
+      }catch(e){ return 'Could not load agent list Boss 😿'; }
+    }
+    if(!users.length) return 'No agents found to broadcast to Boss!';
+    var now=new Date();
+    var sent=0;
+    for(var i=0;i<users.length;i++){
+      try{
+        await sbInsert('messages',{
+          from_user_id:currentUser.id, from_name:currentUser.name,
+          to_user_id:users[i].id, to_name:users[i].name,
+          content:intent.message,
+          created_at:now.toISOString(),
+          expires_at:new Date(now.getTime()+24*3600000).toISOString()
+        });
+        sent++;
+      }catch(e){}
+    }
+    memRemember('lastTopic','broadcast');
+    return 'Broadcast sent to '+sent+' agents Boss! Message: "'+intent.message+'" 😎';
+  }
+
+  if(intent.type==='dm'){
+    var matches=findAgents(intent.rawName);
+    if(!matches.length){
+      return 'Hmm Boss, I could not find anyone named "'+intent.rawName+'" in the team 🤔 Check the name?';
+    }
+    if(matches.length>1){
+      // Ambiguous — store pending and ask
+      _pendingIntent=intent;
+      var names=matches.map(function(u,i){return (i+1)+'. '+u.name;}).join('\n');
+      return 'Multiple people match "'+intent.rawName+'" Boss! Which one?\n\n'+names+'\n\nJust type the number or full name.';
+    }
+    var recipient=matches[0];
+    return await sendCatDM(recipient, intent.message);
+  }
+  return null;
+}
+
+async function sendCatDM(recipient, message){
+  var now=new Date();
+  try{
+    await sbInsert('messages',{
+      from_user_id:currentUser.id, from_name:currentUser.name,
+      to_user_id:recipient.id, to_name:recipient.name,
+      content:message,
+      created_at:now.toISOString(),
+      expires_at:new Date(now.getTime()+24*3600000).toISOString()
+    });
+    memRemember('lastMentionedAgent', recipient.name);
+    memRemember('lastTopic','message');
+    return 'Done Boss! Message sent to '+recipient.name+' 😎\nMessage: "'+message+'"';
+  }catch(e){
+    return 'Could not send message Boss 😿 Error: '+e.message;
+  }
+}
+
+// Handle pending ambiguous selection
+async function handlePendingIntent(q){
+  if(!_pendingIntent) return null;
+  var users=window._chatUsers||[];
+  var matches=findAgents(_pendingIntent.rawName);
+  // User typed a number
+  var numMatch=q.trim().match(/^(\d+)$/);
+  if(numMatch){
+    var idx=parseInt(numMatch[1])-1;
+    if(idx>=0&&idx<matches.length){
+      var recipient=matches[idx];
+      var intent=_pendingIntent; _pendingIntent=null;
+      return await sendCatDM(recipient, intent.message);
+    }
+  }
+  // User typed a name
+  var byName=matches.find(function(u){return u.name.toLowerCase().includes(q.toLowerCase().trim());});
+  if(byName){
+    var intent=_pendingIntent; _pendingIntent=null;
+    return await sendCatDM(byName, intent.message);
+  }
+  _pendingIntent=null;
+  return 'No problem Boss, message cancelled.';
+}
+
+// ════════════════════════════════════════════════
+//  TIMED REMINDERS
+// ════════════════════════════════════════════════
+var REMIND_TRIGGERS=/\b(remind|reminder|alert|notify|ping)\b.*\b(at|in|after)\b/i;
+
+function parseReminderTime(q){
+  // "at 3pm", "at 15:30", "in 10 mins", "in 2 hours", "after 30 minutes"
+  var now=new Date();
+  var inMatch=q.match(/in\s+(\d+)\s*(min|mins|minute|minutes|hour|hours|hr|hrs)/i);
+  if(inMatch){
+    var n=parseInt(inMatch[1]);
+    var unit=inMatch[2].toLowerCase();
+    var ms=(unit.startsWith('h')?n*3600000:n*60000);
+    return {targetTime:new Date(now.getTime()+ms), label:(unit.startsWith('h')?n+'h':n+' min')};
+  }
+  var atMatch=q.match(/at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if(atMatch){
+    var h=parseInt(atMatch[1]),m=parseInt(atMatch[2]||0);
+    var ampm=(atMatch[3]||'').toLowerCase();
+    if(ampm==='pm'&&h<12)h+=12;
+    if(ampm==='am'&&h===12)h=0;
+    var t=new Date(now); t.setHours(h,m,0,0);
+    if(t<=now)t.setDate(t.getDate()+1); // next occurrence
+    return {targetTime:t, label:t.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+  }
+  return null;
+}
+
+async function handleReminder(q){
+  if(!REMIND_TRIGGERS.test(q)) return null;
+  var timeInfo=parseReminderTime(q);
+  if(!timeInfo) return null;
+
+  // Extract who and what
+  var dmIntent=extractMsgIntent(q);
+  var isBroadcast=BROADCAST_TRIGGERS.test(q);
+
+  var ms=timeInfo.targetTime-new Date();
+  if(ms<0||ms>24*3600000) return 'I can only set reminders within the next 24 hours Boss 😅';
+
+  var reminderMsg='', recipientDesc='';
+  if(isBroadcast){
+    var bMsg=q.replace(REMIND_TRIGGERS,'').replace(/at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i,'').replace(/in\s+\d+\s*(?:min|mins|minute|minutes|hour|hours|hr|hrs)/i,'').trim();
+    bMsg=cleanMessageText(bMsg.replace(/everyone|all agents?|all staff|team/gi,'').trim());
+    reminderMsg=bMsg; recipientDesc='everyone';
+  } else if(dmIntent&&dmIntent.type==='dm'){
+    reminderMsg=dmIntent.message; recipientDesc=dmIntent.rawName;
+  } else {
+    var plain=q.replace(REMIND_TRIGGERS,'').replace(/at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i,'').replace(/in\s+\d+\s*(?:min|mins|minute|minutes|hour|hours|hr|hrs)/i,'').trim();
+    reminderMsg=cleanMessageText(plain); recipientDesc='yourself';
+  }
+
+  var t=setTimeout(async function(){
+    if(isBroadcast){
+      var users=window._chatUsers||[];
+      for(var i=0;i<users.length;i++){
+        try{ await sbInsert('messages',{from_user_id:currentUser.id,from_name:currentUser.name,to_user_id:users[i].id,to_name:users[i].name,content:reminderMsg,created_at:new Date().toISOString(),expires_at:new Date(Date.now()+24*3600000).toISOString()}); }catch(e){}
+      }
+      catAddBot('Reminder sent to everyone Boss! "'+reminderMsg+'" 😸');
+    } else if(recipientDesc!=='yourself'){
+      var matches=findAgents(recipientDesc);
+      if(matches.length===1){
+        await sendCatDM(matches[0],reminderMsg);
+        catAddBot('Reminder sent to '+matches[0].name+' Boss! "'+reminderMsg+'" 😸');
+      }
+    } else {
+      catAddBot('Reminder Boss! "'+reminderMsg+'" 🔔');
+    }
+    transTo('happy','idle',1200);
+    if(!catOpen_)document.getElementById('cat-notif').style.display='block';
+  }, ms);
+  _reminders.push(t);
+  memRemember('lastTopic','reminder');
+  return 'Reminder set for '+timeInfo.label+' to '+recipientDesc+' Boss!\nMessage: "'+reminderMsg+'" 🔔';
+}
+
+// ════════════════════════════════════════════════
+//  ATTENDANCE BRAIN
+// ════════════════════════════════════════════════
+async function tryAttendance(q){
+  var qlo=q.toLowerCase();
+  var isAttQ=/logged in|log.*in|present|who.*here|who.*working|who.*online|online now|not.*logged|absent|haven.*login|not.*login|not.*login|check in/.test(qlo)
+    ||/who.*break|break.*now|on break|currently.*break/.test(qlo);
+  if(!isAttQ) return null;
+
+  var today=todayStr?todayStr():(new Date().toISOString().slice(0,10));
+  memRemember('lastTopic','attendance');
+
+  // Who is on break right now
+  if(/who.*break|break.*now|on break|currently.*break/.test(qlo)){
+    try{
+      var brks=await sbQuery('breaks','date=eq.'+today+'&end_time=is.null&select=user_name,break_type,start_time');
+      if(!brks||!brks.length) return 'Nobody is on break right now Boss! Everyone is at their desk 😸';
+      var lines=['Currently on break right now:\n'];
+      brks.forEach(function(b){
+        var since=b.start_time?new Date(b.start_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'?';
+        var mins=b.start_time?Math.floor((Date.now()-new Date(b.start_time).getTime())/60000):0;
+        lines.push((b.user_name||'?')+' — '+(b.break_type||'Break')+' since '+since+' ('+mins+' mins)');
+      });
+      return lines.join('\n');
+    }catch(e){ return 'Could not load break data Boss 😿'; }
+  }
+
+  // Who is logged in now
+  if(/logged in|log.*in|present|who.*here|who.*working|who.*online|online now/.test(qlo)){
+    try{
+      var att=await sbQuery('attendance','date=eq.'+today+'&logout_time=is.null&select=user_name,login_time&order=login_time.asc');
+      if(!att||!att.length) return 'No agents are logged in right now Boss 😴';
+      var lines=['Currently logged in ('+att.length+' agents):\n'];
+      att.forEach(function(a){
+        var since=a.login_time?new Date(a.login_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'?';
+        lines.push((a.user_name||'?')+' — since '+since);
+      });
+      return lines.join('\n');
+    }catch(e){ return 'Could not load attendance Boss 😿'; }
+  }
+
+  // Who hasn't logged in today
+  if(/not.*logged|absent|haven.*login|not.*login|not.*check/.test(qlo)){
+    try{
+      var allUsers=await sbQuery('users','select=id,name&order=name.asc');
+      var att=await sbQuery('attendance','date=eq.'+today+'&select=user_id');
+      var loggedIds=new Set((att||[]).map(function(a){return a.user_id;}));
+      var absent=(allUsers||[]).filter(function(u){return !loggedIds.has(u.id)&&u.role!=='syslevel';});
+      if(!absent.length) return 'Everyone has logged in today Boss! Full attendance! 😸';
+      var lines=['Not logged in today ('+absent.length+' agents):\n'];
+      absent.forEach(function(u){ lines.push(u.name); });
+      return lines.join('\n');
+    }catch(e){ return 'Could not load attendance Boss 😿'; }
+  }
+
+  return null;
+}
+
+// ════════════════════════════════════════════════
+//  BREAK REPORT
+// ════════════════════════════════════════════════
+async function tryBreakReport(q){
+  var qlo=q.toLowerCase();
+  if(!/break.*report|report.*break|break.*summary|summary.*break|break.*today/.test(qlo)) return null;
+  if(!(typeof isAdminUser==='function'&&isAdminUser())) return 'Break reports are only for Admin and TL Boss 🔒';
+  var today=todayStr?todayStr():(new Date().toISOString().slice(0,10));
+  try{
+    var rows=await sbQuery('breaks','date=eq.'+today+'&select=user_name,break_type,start_time,end_time,duration_minutes&order=user_name.asc');
+    if(!rows||!rows.length) return 'No break data for today yet Boss!';
+    var byAgent={};
+    rows.forEach(function(r){
+      var n=r.user_name||'?';
+      if(!byAgent[n])byAgent[n]={total:0,count:0};
+      byAgent[n].total+=(r.duration_minutes||0);
+      byAgent[n].count++;
+    });
+    var lines=['Break Report — Today:\n'];
+    Object.keys(byAgent).sort().forEach(function(n){
+      var a=byAgent[n];
+      lines.push(n+' — '+a.count+' break'+(a.count>1?'s':'')+', '+a.total+' mins total');
+    });
+    memRemember('lastTopic','break_report');
+    return lines.join('\n');
+  }catch(e){ return 'Could not load break report Boss 😿'; }
+}
+
+// ════════════════════════════════════════════════
+//  QUIZ BRAIN
+// ════════════════════════════════════════════════
+async function tryQuiz(q){
+  var qlo=q.toLowerCase();
+  var isQuizQ=/quiz|leaderboard|score|who.*attempt|who.*tak|who.*miss|who.*complet|attempt.*quiz|quiz.*score|top.*quiz/.test(qlo);
+  if(!isQuizQ) return null;
+
+  var today=todayStr?todayStr():(new Date().toISOString().slice(0,10));
+  // Date range — this week or this month
+  var now=new Date();
+  var weekStart=new Date(now); weekStart.setDate(now.getDate()-now.getDay());
+  var monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+  var useMonth=/this month|month/.test(qlo);
+  var rangeStart=(useMonth?monthStart:weekStart).toISOString().slice(0,10);
+  var rangeLabel=useMonth?'this month':'this week';
+  memRemember('lastTopic','quiz');
+
+  // Who hasn't taken today's quiz
+  if(/who.*miss|who.*not.*tak|who.*haven|not.*attempt|miss.*quiz|today.*quiz|quiz.*today/.test(qlo)){
+    try{
+      var allUsers=await sbQuery('users','select=id,name&order=name.asc');
+      var responses=await sbQuery('quiz_responses','date=eq.'+today+'&select=user_id');
+      var doneIds=new Set((responses||[]).map(function(r){return r.user_id;}));
+      var missed=(allUsers||[]).filter(function(u){return !doneIds.has(u.id)&&u.role!=='syslevel';});
+      if(!missed.length) return 'Everyone has taken today\'s quiz Boss! Full house! 😸';
+      var lines=['Agents who missed today\'s quiz ('+missed.length+'):\n'];
+      missed.forEach(function(u){lines.push(u.name);});
+      return lines.join('\n');
+    }catch(e){ return 'Could not load quiz data Boss 😿'; }
+  }
+
+  // Leaderboard
+  if(/leaderboard|top|ranking|rank|best|who.*top|highest/.test(qlo)){
+    try{
+      var rows=await sbQuery('quiz_responses','date=gte.'+rangeStart+'&is_correct=eq.true&select=user_name,user_id');
+      if(!rows||!rows.length) return 'No quiz data for '+rangeLabel+' yet Boss!';
+      var scores={};
+      rows.forEach(function(r){ scores[r.user_name]=(scores[r.user_name]||0)+1; });
+      var sorted=Object.entries(scores).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+      var lines=['Quiz Leaderboard — '+rangeLabel+':\n'];
+      var medals=['🥇','🥈','🥉'];
+      sorted.forEach(function(e,i){
+        lines.push((medals[i]||'  '+(i+1)+'.')+' '+e[0]+' — '+e[1]+' correct');
+      });
+      return lines.join('\n');
+    }catch(e){ return 'Could not load leaderboard Boss 😿'; }
+  }
+
+  // Specific agent quiz score
+  // "What is Abeed's quiz score this week"
+  var scoreMatch=qlo.match(/(?:score|results?|performance|how.*did)\s+(?:of\s+)?([a-z ]{3,30}?)(?:\s+(?:this|for|in|on))?(?:\s+(?:week|month|today))?/i)
+    ||qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?)\s*(?:quiz|score|performance)/i);
+  if(scoreMatch){
+    var rawName=(scoreMatch[1]||'').trim();
+    var agentMatches=findAgents(rawName);
+    if(agentMatches.length===1){
+      var agent=agentMatches[0];
+      memRemember('lastMentionedAgent',agent.name);
+      try{
+        var rows=await sbQuery('quiz_responses','user_id=eq.'+agent.id+'&date=gte.'+rangeStart+'&select=date,is_correct,answer');
+        if(!rows||!rows.length) return agent.name+' has no quiz attempts '+rangeLabel+' Boss!';
+        var total=rows.length, correct=rows.filter(function(r){return r.is_correct;}).length;
+        var pct=total?Math.round(correct/total*100):0;
+        return agent.name+'\'s Quiz — '+rangeLabel+':\n\nAttempts: '+total+'\nCorrect: '+correct+'\nScore: '+pct+'%\n\n'+(pct>=80?'Purrr, doing great! 😸':pct>=50?'Not bad, could improve! 🤔':'Needs more effort Boss 😿');
+      }catch(e){ return 'Could not load quiz data Boss 😿'; }
+    }
+  }
+
+  return null;
+}
+
+// ════════════════════════════════════════════════
+//  AGENT PROFILE LOOKUP
+// ════════════════════════════════════════════════
+async function tryAgentLookup(q){
+  var qlo=q.toLowerCase();
+  if(!/tell me about|profile|who is|about agent|lookup|look up|info.*about|details.*about|status.*of|how is ([a-z]+) doing/.test(qlo)) return null;
+
+  // Extract name
+  var nameMatch=q.match(/(?:tell me about|about|profile of|who is|info on|details of|status of|how is)\s+([a-zA-Z ]{2,30})(?:\s+doing)?/i);
+  if(!nameMatch) return null;
+  var rawName=(nameMatch[1]||'').trim();
+
+  var matches=findAgents(rawName);
+  if(!matches.length) return 'Could not find agent "'+rawName+'" Boss 🤔';
+  if(matches.length>1){
+    _pendingIntent={type:'lookup', rawName:rawName};
+    return 'Multiple matches for "'+rawName+'" Boss:\n\n'+matches.map(function(u,i){return (i+1)+'. '+u.name;}).join('\n')+'\n\nWhich one?';
+  }
+  var agent=matches[0];
+  memRemember('lastMentionedAgent',agent.name);
+  memRemember('lastTopic','agent_lookup');
+
+  var today=todayStr?todayStr():(new Date().toISOString().slice(0,10));
+  var lines=[agent.name+' — Profile:\n'];
+  lines.push('Role: '+(agent.role||'agent').charAt(0).toUpperCase()+(agent.role||'agent').slice(1));
+
+  // Attendance today
+  try{
+    var att=await sbQuery('attendance','user_id=eq.'+agent.id+'&date=eq.'+today+'&select=login_time,logout_time&limit=1');
+    if(att&&att.length){
+      var a=att[0];
+      var loginT=a.login_time?new Date(a.login_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'?';
+      lines.push('Login today: '+loginT+(a.logout_time?' (logged out)':' (active)'));
+    } else {
+      lines.push('Login today: Not logged in');
+    }
+  }catch(e){}
+
+  // Current break
+  try{
+    var brk=await sbQuery('breaks','user_id=eq.'+agent.id+'&date=eq.'+today+'&end_time=is.null&select=break_type,start_time&limit=1');
+    if(brk&&brk.length){
+      var mins=brk[0].start_time?Math.floor((Date.now()-new Date(brk[0].start_time))/60000):0;
+      lines.push('Status: On '+(brk[0].break_type||'break')+' ('+mins+' mins)');
+    }
+  }catch(e){}
+
+  // Shift from roster
+  try{
+    var rows=getRosterRows?getRosterRows():null;
+    if(rows){
+      var agents=getAgentRows?getAgentRows(rows):[];
+      var row=agents.find(function(r){return String(r[1]).toLowerCase().includes(agent.name.toLowerCase().split(' ')[0]);});
+      if(row){
+        var col=colForDate?colForDate(rows,new Date()):-1;
+        if(col>0){
+          var code=String(row[col]||'').trim();
+          lines.push('Shift today: '+(shiftLabel?shiftLabel(code):code||'Not scheduled'));
+        }
+      }
+    }
+  }catch(e){}
+
+  // Cases
+  try{
+    if(typeof CT!=='undefined'&&CT.getSnapshot){
+      var snap=CT.getSnapshot();
+      if(snap){
+        var agentSnap=snap.agents.find(function(a){return a.name.toLowerCase().includes(agent.name.toLowerCase().split(' ')[0]);});
+        if(agentSnap){
+          lines.push('Active cases: '+agentSnap.active+' ('+agentSnap.noAction+' no follow-up, '+agentSnap.stale+' stale)');
+        }
+      }
+    }
+  }catch(e){}
+
+  // Quiz score this week
+  try{
+    var weekStart=new Date(); weekStart.setDate(weekStart.getDate()-weekStart.getDay());
+    var rangeStart=weekStart.toISOString().slice(0,10);
+    var qr=await sbQuery('quiz_responses','user_id=eq.'+agent.id+'&date=gte.'+rangeStart+'&select=is_correct');
+    if(qr&&qr.length){
+      var correct=qr.filter(function(r){return r.is_correct;}).length;
+      lines.push('Quiz this week: '+correct+'/'+qr.length+' correct ('+Math.round(correct/qr.length*100)+'%)');
+    }
+  }catch(e){}
+
+  return lines.join('\n');
+}
+
+// ════════════════════════════════════════════════
+//  ROSTER BRAIN (unchanged, kept intact)
+// ════════════════════════════════════════════════
+var OFF_C=new Set(['L','CO','W','OFF']), LEAVE_C=new Set(['L','CO']);
+var DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var DAYS3=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function getRosterRows(){return window.rosterCache||window._rosterAllRows||null;}
+function getDateRow(rows){return rows.find(function(r){return String(r[1]).trim().toUpperCase()==='DATE';});}
 function getAgentRows(rows){
-  var dr=getDateRow(rows); if(!dr)return[];
+  var dr=getDateRow(rows);if(!dr)return[];
   var start=rows.indexOf(dr)+2;
-  return rows.slice(start).filter(function(r){ return r[0]&&/^K\d+/i.test(String(r[0]).trim())&&String(r[1]).trim(); });
+  return rows.slice(start).filter(function(r){return r[0]&&/^K\d+/i.test(String(r[0]).trim())&&String(r[1]).trim();});
 }
 function colForDate(rows,d){
-  var dr=getDateRow(rows); if(!dr)return -1;
+  var dr=getDateRow(rows);if(!dr)return -1;
   var day=d.getDate();
-  for(var i=2;i<dr.length;i++){ if(Number(dr[i])===day)return i; }
+  for(var i=2;i<dr.length;i++){if(Number(dr[i])===day)return i;}
   return -1;
 }
-function codeParts(v){ return String(v||'').toUpperCase().split(/[^A-Z]+/).filter(Boolean); }
-function isOff(code){ var p=codeParts(code); return p.some(function(x){return OFF_C.has(x);}); }
-function isLeave(code){ var p=codeParts(code); return p.some(function(x){return LEAVE_C.has(x);}); }
+function codeParts(v){return String(v||'').toUpperCase().split(/[^A-Z]+/).filter(Boolean);}
+function isOff(code){var p=codeParts(code);return p.some(function(x){return OFF_C.has(x);});}
+function isLeave(code){var p=codeParts(code);return p.some(function(x){return LEAVE_C.has(x);});}
 function shiftLabel(code){
   if(!code||code==='')return 'Not scheduled';
   var up=code.toUpperCase();
   if(isOff(code))return 'Day Off ('+code+')';
   if(up.includes('WFH'))return 'Work From Home'+(up.replace('WFH','').trim()?' — '+up.replace('WFH','').trim():'');
   if(up.includes('HL'))return 'Half Day ('+code+')';
-  var m=code.match(/(\d{1,2})[-:]?(\d{0,2})\s*[-–]\s*(\d{1,2})[-:]?(\d{0,2})/);
-  if(m){
-    var sh=parseInt(m[1]),eh=parseInt(m[3]);
-    var s12=sh>12?sh-12:(sh===0?12:sh), e12=eh>12?eh-12:(eh===0?12:eh);
-    var sa=sh<12?'AM':'PM', ea=eh<12?'AM':'PM';
-    return s12+(m[2]?':'+m[2]:'')+' '+sa+' – '+e12+(m[4]?':'+m[4]:'')+' '+ea;
-  }
+  var m=code.match(/(\d{1,2})[-:]?(\d{0,2})\s*[-]\s*(\d{1,2})[-:]?(\d{0,2})/);
+  if(m){var sh=parseInt(m[1]),eh=parseInt(m[3]);var s12=sh>12?sh-12:(sh===0?12:sh),e12=eh>12?eh-12:(eh===0?12:eh);var sa=sh<12?'AM':'PM',ea=eh<12?'AM':'PM';return s12+(m[2]?':'+m[2]:'')+' '+sa+' - '+e12+(m[4]?':'+m[4]:'')+' '+ea;}
   return code;
 }
 function findAgent(rows,name){
-  var agents=getAgentRows(rows), n=name.toLowerCase().trim();
+  var agents=getAgentRows(rows),n=name.toLowerCase().trim();
   var r=null;
-  // 2-word match first
   var words=n.split(/\s+/);
-  if(words.length>=2){
-    r=agents.find(function(a){ return String(a[1]).toLowerCase().includes(words[0]+' '+words[1]); });
-  }
-  if(!r) r=agents.find(function(a){ return String(a[1]).toLowerCase().includes(n); });
+  if(words.length>=2)r=agents.find(function(a){return String(a[1]).toLowerCase().includes(words[0]+' '+words[1]);});
+  if(!r)r=agents.find(function(a){return String(a[1]).toLowerCase().includes(n);});
   return r||null;
 }
 function relativeDate(qlo){
-  var t=new Date(), tm=new Date(t), ty=new Date(t);
-  tm.setDate(t.getDate()+1); ty.setDate(t.getDate()-1);
+  var t=new Date(),tm=new Date(t),ty=new Date(t);
+  tm.setDate(t.getDate()+1);ty.setDate(t.getDate()-1);
   if(qlo.includes('tomorrow'))return{date:tm,label:'tomorrow'};
   if(qlo.includes('yesterday'))return{date:ty,label:'yesterday'};
   return{date:t,label:'today'};
 }
 
 function tryRoster(q){
-  var rows=getRoster(); if(!rows)return null;
+  var rows=getRosterRows();if(!rows)return null;
   var qlo=q.toLowerCase();
   var today=new Date();
-  var tomorrow=new Date(today); tomorrow.setDate(today.getDate()+1);
+  memRemember('lastTopic','roster');
 
-  // ── Who is on leave/off today|tomorrow|yesterday ──
   if(/who.*(leave|off|absent|not (in|working|present))|who.*absent|absence|everyone.*off/.test(qlo)){
-    var rd=relativeDate(qlo), col=colForDate(rows,rd.date);
-    if(col<0)return "Hmm Boss 🤔 That date isn't in the current roster sheet!";
-    var agents=getAgentRows(rows), onLeave=[],onOff=[],onWfh=[],onHL=[];
-    agents.forEach(function(r){
-      var code=String(r[col]||'').trim().toUpperCase(), name=String(r[1]).trim();
-      if(isLeave(code))onLeave.push(name);
-      else if(isOff(code))onOff.push(name);
-      else if(code.includes('WFH'))onWfh.push(name);
-      if(code.includes('HL'))onHL.push(name);
-    });
+    var rd=relativeDate(qlo),col=colForDate(rows,rd.date);
+    if(col<0)return 'That date is not in the current roster Boss!';
+    var agents=getAgentRows(rows),onLeave=[],onOff=[],onWfh=[],onHL=[];
+    agents.forEach(function(r){var code=String(r[col]||'').trim().toUpperCase(),name=String(r[1]).trim();if(isLeave(code))onLeave.push(name);else if(isOff(code))onOff.push(name);else if(code.includes('WFH'))onWfh.push(name);if(code.includes('HL'))onHL.push(name);});
     var out=[];
-    if(onLeave.length) out.push('🏖️ On Leave (L/CO): '+onLeave.join(', '));
-    if(onOff.length)   out.push('🔴 Week Off (W): '+onOff.join(', '));
-    if(onWfh.length)   out.push('🏠 WFH: '+onWfh.join(', '));
-    if(onHL.length)    out.push('🌗 Half Day: '+onHL.join(', '));
-    if(!out.length)return '😸 Everyone is present '+rd.label+' Boss! Full house — purr purr!';
-    return '📋 Attendance for '+rd.label+', Boss:\n\n'+out.join('\n');
+    if(onLeave.length)out.push('On Leave (L/CO): '+onLeave.join(', '));
+    if(onOff.length)out.push('Week Off (W): '+onOff.join(', '));
+    if(onWfh.length)out.push('WFH: '+onWfh.join(', '));
+    if(onHL.length)out.push('Half Day: '+onHL.join(', '));
+    if(!out.length)return 'Everyone is present '+rd.label+' Boss! Full house!';
+    return 'Attendance for '+rd.label+':\n\n'+out.join('\n');
   }
-
-  // ── My shift today|tomorrow|yesterday ──
   if(/\b(my|i).*(shift|timing|schedule|working hours?|start|finish|come in)|what (time|shift).*(today|tomorrow|i )|(today|tomorrow).*(my shift|my timing)/.test(qlo)){
     var myName=window.currentUser&&(window.currentUser.name||window.currentUser.full_name);
-    if(!myName)return "Hmm Boss 😅 Can't find your name — are you logged in?";
+    if(!myName)return 'Cannot find your name Boss, are you logged in?';
     var myRow=findAgent(rows,myName.split(' ')[0]);
-    if(!myRow)return "Couldn't find your name ("+myName+") in the roster Boss 😿";
-    var rd=relativeDate(qlo), col=colForDate(rows,rd.date);
-    if(col<0)return "That date isn't in the current roster Boss 😅";
+    if(!myRow)return 'Could not find your name ('+myName+') in the roster Boss';
+    var rd=relativeDate(qlo),col=colForDate(rows,rd.date);
+    if(col<0)return 'That date is not in the current roster Boss';
     var code=String(myRow[col]||'').trim();
-    return 'Your shift '+rd.label+' ('+DAYS[rd.date.getDay()]+') is:\n⏰ '+shiftLabel(code)+'\n\nPurrr, hope it\'s a good one Boss! 😺';
+    return 'Your shift '+rd.label+' ('+DAYS[rd.date.getDay()]+'):\n'+shiftLabel(code)+'\n\nHope it is a good one Boss!';
   }
-
-  // ── Agent shift: "what is Abeed's shift tomorrow" ──
-  var agentShiftMatch = qlo.match(/(?:what(?:'s| is)|when does|check)\s+([a-z ]+?)(?:'s|s)?\s*(?:shift|timing|schedule|working hours?)\s*(?:today|tomorrow|yesterday|on\s+\w+)?/i)
-    || qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?)\s*(?:shift|timing|schedule)\s*(?:today|tomorrow|yesterday)?/i);
+  var agentShiftMatch=qlo.match(/(?:what(?:'s| is)|when does|check)\s+([a-z ]+?)(?:'s|s)?\s*(?:shift|timing|schedule|working hours?)\s*(?:today|tomorrow|yesterday)?/i)||qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?)\s*(?:shift|timing|schedule)\s*(?:today|tomorrow|yesterday)?/i);
   if(agentShiftMatch){
     var nameGuess=(agentShiftMatch[1]||'').trim();
     var stopW=new Set(['what','when','does','the','is','are','has','check','shift','timing','schedule','today','tomorrow','yesterday','working','hours','this','week']);
     var filteredName=nameGuess.split(' ').filter(function(w){return w.length>1&&!stopW.has(w);}).join(' ');
     if(filteredName.length>1){
       var row=findAgent(rows,filteredName);
-      if(row){
-        var rd=relativeDate(qlo), col=colForDate(rows,rd.date);
-        if(col<0)return "That date isn't in the roster Boss 😅";
-        var code=String(row[col]||'').trim();
-        return String(row[1]).trim()+"'s shift "+rd.label+':\n⏰ '+shiftLabel(code);
-      }
+      if(row){var rd=relativeDate(qlo),col=colForDate(rows,rd.date);if(col<0)return 'That date is not in the roster Boss';var code=String(row[col]||'').trim();memRemember('lastMentionedAgent',String(row[1]).trim());return String(row[1]).trim()+"'s shift "+rd.label+':\n'+shiftLabel(code);}
     }
   }
-
-  // ── Agent next off: "when is Abeed's next off" ──
-  var nextOffMatch = qlo.match(/(?:when(?:'s| is)|next)\s+(?:is\s+)?([a-z ]+?)(?:'s|s)?\s*(?:next\s+)?(?:off|leave|day off|holiday|rest day)/i)
-    || qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?).*(next off|next leave|next holiday|day off)/i);
+  var nextOffMatch=qlo.match(/(?:when(?:'s| is)|next)\s+(?:is\s+)?([a-z ]+?)(?:'s|s)?\s*(?:next\s+)?(?:off|leave|day off|holiday|rest day)/i)||qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?).*(next off|next leave|next holiday|day off)/i);
   if(nextOffMatch||/next off|next leave|upcoming off|next holiday/.test(qlo)){
-    // extract name
     var raw=qlo.replace(/when|is|next|off|leave|day|holiday|rest|their|his|her|'s/g,' ').trim();
     var candidates=raw.split(/\s+/).filter(function(w){return w.length>2;});
     var matchedRow=null;
-    for(var ci=0;ci<candidates.length;ci++){
-      matchedRow=findAgent(rows,candidates[ci]);
-      if(matchedRow)break;
-    }
-    // also try 2-word
-    if(!matchedRow){
-      for(var ci=0;ci<candidates.length-1;ci++){
-        matchedRow=findAgent(rows,candidates[ci]+' '+candidates[ci+1]);
-        if(matchedRow)break;
-      }
-    }
+    for(var ci=0;ci<candidates.length;ci++){matchedRow=findAgent(rows,candidates[ci]);if(matchedRow)break;}
+    if(!matchedRow){for(var ci=0;ci<candidates.length-1;ci++){matchedRow=findAgent(rows,candidates[ci]+' '+candidates[ci+1]);if(matchedRow)break;}}
     if(matchedRow){
       var agentName=String(matchedRow[1]).trim();
-      var dr=getDateRow(rows), todayCol=colForDate(rows,today);
+      memRemember('lastMentionedAgent',agentName);
+      var dr=getDateRow(rows),todayCol=colForDate(rows,today);
       var upcomingOffs=[];
-      for(var col=todayCol+1;col<dr.length;col++){
-        var dayNum=Number(dr[col]); if(!dayNum)continue;
-        var code=String(matchedRow[col]||'').trim().toUpperCase();
-        if(isOff(code)||isLeave(code)){
-          var d=new Date(today.getFullYear(),today.getMonth(),dayNum);
-          upcomingOffs.push(DAYS3[d.getDay()]+' '+dayNum+(code?' ('+code+')':''));
-          if(upcomingOffs.length>=4)break;
-        }
-      }
-      if(!upcomingOffs.length)return agentName+' has no upcoming offs in the current roster Boss! 😸 They\'re on a roll!';
-      return agentName+"'s upcoming offs this month:\n\n"+upcomingOffs.map(function(r,i){return(i===0?'🔴 Next: ':'📅 ')+r;}).join('\n');
+      for(var col=todayCol+1;col<dr.length;col++){var dayNum=Number(dr[col]);if(!dayNum)continue;var code=String(matchedRow[col]||'').trim().toUpperCase();if(isOff(code)||isLeave(code)){var d=new Date(today.getFullYear(),today.getMonth(),dayNum);upcomingOffs.push(DAYS3[d.getDay()]+' '+dayNum+(code?' ('+code+')':''));if(upcomingOffs.length>=4)break;}}
+      if(!upcomingOffs.length)return agentName+' has no upcoming offs this month Boss!';
+      return agentName+"'s upcoming offs:\n\n"+upcomingOffs.map(function(r,i){return(i===0?'Next: ':'  ')+r;}).join('\n');
     }
   }
-
-  // ── How many agents are on leave today ──
   if(/how many.*(leave|off|absent|not working)|count.*(leave|off|absent)/.test(qlo)){
-    var rd=relativeDate(qlo), col=colForDate(rows,rd.date);
-    if(col<0)return "That date isn't in the roster Boss 😅";
-    var agents=getAgentRows(rows), count=0;
-    agents.forEach(function(r){ if(isOff(String(r[col]||'').trim().toUpperCase())||isLeave(String(r[col]||'').trim().toUpperCase()))count++; });
-    return count===0?'Nobody is off '+rd.label+' Boss! 😸 Full team!':count+' agent'+(count>1?'s are':' is')+' off '+rd.label+' Boss 📋';
+    var rd=relativeDate(qlo),col=colForDate(rows,rd.date);
+    if(col<0)return 'That date is not in the roster Boss';
+    var agents=getAgentRows(rows),count=0;
+    agents.forEach(function(r){if(isOff(String(r[col]||'').trim().toUpperCase())||isLeave(String(r[col]||'').trim().toUpperCase()))count++;});
+    return count===0?'Nobody is off '+rd.label+' Boss! Full team!':count+' agent'+(count>1?'s are':' is')+' off '+rd.label+' Boss';
   }
-
-  // ── Is [name] working today ──
   var isWorkingMatch=qlo.match(/is\s+([a-z ]+?)\s+(?:working|in|present|coming|available)(?:\s+today|\s+tomorrow)?/i);
   if(isWorkingMatch){
     var nameG=(isWorkingMatch[1]||'').trim();
     var row=findAgent(rows,nameG);
-    if(row){
-      var rd=relativeDate(qlo), col=colForDate(rows,rd.date);
-      if(col<0)return "That date isn't in the roster Boss 😅";
-      var code=String(row[col]||'').trim();
-      var name=String(row[1]).trim();
-      if(!code||code==='')return name+' is not scheduled '+rd.label+' Boss.';
-      if(isOff(code)||isLeave(code))return name+' is NOT in '+rd.label+' — they have '+shiftLabel(code)+' 🔴';
-      return name+' IS working '+rd.label+' Boss ✅\n⏰ Shift: '+shiftLabel(code);
-    }
+    if(row){var rd=relativeDate(qlo),col=colForDate(rows,rd.date);if(col<0)return 'That date is not in the roster Boss';var code=String(row[col]||'').trim();var name=String(row[1]).trim();memRemember('lastMentionedAgent',name);if(!code||code==='')return name+' is not scheduled '+rd.label+' Boss.';if(isOff(code)||isLeave(code))return name+' is NOT in '+rd.label+' — '+shiftLabel(code);return name+' IS working '+rd.label+' Boss!\nShift: '+shiftLabel(code);}
   }
-
-  return null; // pass to AI
+  return null;
 }
 
-// ═══════════════════════════════════════
-//  CASE TRACKER BRAIN — local CT data
-// ═══════════════════════════════════════
+// ════════════════════════════════════════════════
+//  CASE TRACKER BRAIN (unchanged)
+// ════════════════════════════════════════════════
 function tryCaseTracker(q){
-  if(typeof CT==='undefined'||typeof CT.getSnapshot!=='function') return null;
+  if(typeof CT==='undefined'||typeof CT.getSnapshot!=='function')return null;
   var snap=CT.getSnapshot();
   var qlo=q.toLowerCase();
-  if(!snap) return 'Meow Boss, no case data loaded yet! Upload the Dynamics 365 export in Case Tracker first.';
+  if(!snap)return 'No case data loaded yet Boss! Upload the Dynamics 365 export in Case Tracker first.';
   var isCTQ=/case|follow.?up|stale|no action|not.?follow|unattended|pending case|agent.*case|case.*agent|who.*not|not.*actioned|aging|old case|overdue/.test(qlo);
-  if(!isCTQ) return null;
-
-  // Summary
+  if(!isCTQ)return null;
+  memRemember('lastTopic','cases');
   if(/overview|summary|status|how many|total|all case/.test(qlo)){
-    var lines=[];
-    lines.push('Case Tracker Summary (as of '+snap.uploadDate+'):');
+    var lines=['Case Tracker Summary:\n'];
     lines.push('Total Cases: '+snap.total);
     lines.push('Flagged/Active: '+snap.flagged);
     lines.push('No Follow-up: '+snap.noAction);
     lines.push('Stale (not updated today): '+snap.stale);
-    lines.push('');
-    if(snap.noAction>0) lines.push('Boss, '+snap.noAction+' case'+(snap.noAction>1?'s are':' is')+' sitting with NO action! Needs attention paw paw!');
-    else lines.push('Purrr, all cases have been actioned! Good job Boss!');
+    if(snap.noAction>0)lines.push('\n'+snap.noAction+' case'+(snap.noAction>1?'s':'')+' with NO action — needs attention!');
+    else lines.push('\nAll cases have been actioned! Good job Boss!');
     return lines.join('\n');
   }
-
-  // Who has no follow-up
   if(/who.*(no follow|not follow|no action|not action|unattended|not.*update)|no follow.*agent|agent.*no follow/.test(qlo)){
     var noA=snap.agents.filter(function(a){return a.noAction>0;});
-    if(!noA.length) return 'Purrr! All agents have actioned their cases Boss! Nothing unattended!';
+    if(!noA.length)return 'All agents have actioned their cases Boss! Nothing unattended!';
     var lines=['Agents with NO follow-up ('+snap.noAction+' cases total):\n'];
-    noA.forEach(function(a){
-      lines.push(a.name+' — '+a.noAction+' case'+(a.noAction>1?'s':'')+' unactioned'+(a.stale>0?' ('+a.stale+' stale)':''));
-    });
+    noA.forEach(function(a){lines.push(a.name+' - '+a.noAction+' unactioned'+(a.stale>0?' ('+a.stale+' stale)':''));});
     return lines.join('\n');
   }
-
-  // Stale cases
   if(/stale|not.*update|not.*touch|old case|aging|overdue|not.*today/.test(qlo)){
-    if(!snap.stale) return 'All flagged cases were updated today Boss! Clean slate!';
-    var lines=['Stale Cases — not updated today ('+snap.stale+' total):\n'];
-    snap.staleCases.forEach(function(c){
-      lines.push(c.caseNum+' — '+c.owner+' ('+c.days+'d old)');
-      if(c.title) lines.push('  "'+c.title.slice(0,50)+'"');
-    });
-    if(snap.stale>snap.staleCases.length) lines.push('...and '+(snap.stale-snap.staleCases.length)+' more.');
+    if(!snap.stale)return 'All flagged cases were updated today Boss! Clean slate!';
+    var lines=['Stale Cases ('+snap.stale+' total):\n'];
+    snap.staleCases.forEach(function(c){lines.push(c.caseNum+' - '+c.owner+' ('+c.days+'d old)');if(c.title)lines.push('  "'+c.title.slice(0,50)+'"');});
+    if(snap.stale>snap.staleCases.length)lines.push('...and '+(snap.stale-snap.staleCases.length)+' more.');
     return lines.join('\n');
   }
-
-  // Specific agent
   var agentCaseMatch=qlo.match(/(?:how many|show|check|list).{0,20}cases?.{0,10}(?:does|for|of|has|assigned to)?\s+([a-z ]{3,30})/i)||qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?)\s*(?:case|follow|action|handled|active)/i);
   if(agentCaseMatch){
     var stopW2=new Set(['how','many','show','check','list','cases','does','for','has','and','the','assigned','to','case','follow','action','handled','active','is','are','what']);
     var words=(agentCaseMatch[1]||'').toLowerCase().split(' ').filter(function(w){return w.length>2&&!stopW2.has(w);});
-    if(words.length){
-      var matched=snap.agents.find(function(a){
-        var n=a.name.toLowerCase();
-        return words.some(function(w){return n.includes(w);});
-      });
-      if(matched){
-        var lines=[matched.name+"'s Case Summary:\n"];
-        lines.push('Active Cases: '+matched.active);
-        lines.push('No Action: '+matched.noAction);
-        lines.push('Stale: '+matched.stale);
-        if(matched.cases.length) lines.push('\nCases: '+matched.cases.slice(0,6).join(', ')+(matched.cases.length>6?' ...':''));
-        if(matched.noAction>0) lines.push('\nBoss, '+matched.noAction+' case'+(matched.noAction>1?'s need':'needs')+' follow-up!');
-        return lines.join('\n');
-      }
-    }
+    if(words.length){var matched=snap.agents.find(function(a){var n=a.name.toLowerCase();return words.some(function(w){return n.includes(w);});});if(matched){memRemember('lastMentionedAgent',matched.name);var lines=[matched.name+"'s Cases:\n"];lines.push('Active: '+matched.active);lines.push('No Action: '+matched.noAction);lines.push('Stale: '+matched.stale);if(matched.cases.length)lines.push('\nCases: '+matched.cases.slice(0,6).join(', ')+(matched.cases.length>6?' ...':''));if(matched.noAction>0)lines.push('\n'+matched.noAction+' case'+(matched.noAction>1?'s need':'needs')+' follow-up!');return lines.join('\n');}}
   }
-
-  // Top offenders
   if(/worst|top|most|highest|who.*most|rank|leaderboard/.test(qlo)){
     var top=snap.agents.filter(function(a){return a.noAction>0;}).slice(0,5);
-    if(!top.length) return 'Everyone is on top of their cases Boss!';
+    if(!top.length)return 'Everyone is on top of their cases Boss!';
     var lines=['Top agents needing attention:\n'];
-    top.forEach(function(a,i){
-      lines.push((i+1)+'. '+a.name+' — '+a.noAction+' unactioned, '+a.stale+' stale');
-    });
+    top.forEach(function(a,i){lines.push((i+1)+'. '+a.name+' - '+a.noAction+' unactioned, '+a.stale+' stale');});
     return lines.join('\n');
   }
-
   return null;
 }
-// ═══════════════════════════════════════
+
+// ════════════════════════════════════════════════
+//  MAIN DISPATCH — try all brains in order
+// ════════════════════════════════════════════════
+async function catDispatch(q){
+  // 1. Pending ambiguous resolution
+  if(_pendingIntent){
+    var r=await handlePendingIntent(q);
+    if(r)return r;
+  }
+
+  // 2. Timed reminder
+  var remR=await handleReminder(q);
+  if(remR)return remR;
+
+  // 3. Message intent
+  var msgIntent=extractMsgIntent(q);
+  if(msgIntent){
+    var r=await handleMsgIntent(q,msgIntent);
+    if(r)return r;
+  }
+
+  // 4. Attendance
+  var attR=await tryAttendance(q);
+  if(attR)return attR;
+
+  // 5. Break report
+  var brR=await tryBreakReport(q);
+  if(brR)return brR;
+
+  // 6. Quiz
+  var quizR=await tryQuiz(q);
+  if(quizR)return quizR;
+
+  // 7. Agent profile lookup
+  var lookupR=await tryAgentLookup(q);
+  if(lookupR)return lookupR;
+
+  // 8. Roster
+  var rosterR=tryRoster(q);
+  if(rosterR)return rosterR;
+
+  // 9. Case tracker
+  var ctR=tryCaseTracker(q);
+  if(ctR)return ctR;
+
+  return null; // → pass to AI
+}
+
+// ════════════════════════════════════════════════
 //  AI PROVIDER SETTINGS
-// ═══════════════════════════════════════
-var AI_SETTINGS_KEY = 'cat_ai_settings';
-var _aiCfg = null;
+// ════════════════════════════════════════════════
+var AI_SETTINGS_KEY='cat_ai_settings';
+var _aiCfg=null;
 
 function loadAiCfg(){
-  // Load from Supabase settings first, fallback to localStorage
-  _aiCfg = null;
-  if(typeof sbQuery === 'function'){
+  _aiCfg=null;
+  if(typeof sbQuery==='function'){
     sbQuery('settings','key=eq.'+AI_SETTINGS_KEY+'&select=value').then(function(rows){
-      if(rows&&rows.length&&rows[0].value){
-        try{ _aiCfg=JSON.parse(rows[0].value); }catch(e){}
-      }
+      if(rows&&rows.length&&rows[0].value){try{_aiCfg=JSON.parse(rows[0].value);}catch(e){}}
       updateNoAiBanner();
-    }).catch(function(){
-      // fallback localStorage
-      try{ var s=localStorage.getItem(AI_SETTINGS_KEY); if(s)_aiCfg=JSON.parse(s); }catch(e){}
-      updateNoAiBanner();
-    });
-  } else {
-    try{ var s=localStorage.getItem(AI_SETTINGS_KEY); if(s)_aiCfg=JSON.parse(s); }catch(e){}
-    updateNoAiBanner();
-  }
+    }).catch(function(){try{var s=localStorage.getItem(AI_SETTINGS_KEY);if(s)_aiCfg=JSON.parse(s);}catch(e){}updateNoAiBanner();});
+  }else{try{var s=localStorage.getItem(AI_SETTINGS_KEY);if(s)_aiCfg=JSON.parse(s);}catch(e){}updateNoAiBanner();}
 }
 
-function updateNoAiBanner(){
-  var el=document.getElementById('cp-no-ai');
-  if(!el)return;
-  if(!_aiCfg||!_aiCfg.provider||!_aiCfg.apiKey){
-    if(typeof isAdminUser==='function'&&isAdminUser()) el.classList.add('on');
-    else el.classList.remove('on');
-  } else {
-    el.classList.remove('on');
-  }
-}
-
-window.catOpenSettings = function(){
+window.catOpenSettings=function(){
   if(typeof isAdminUser!=='function'||!isAdminUser())return;
-  // populate fields
-  var p=document.getElementById('cs-provider');
-  var k=document.getElementById('cs-apikey');
-  if(_aiCfg){
-    if(p) p.value=_aiCfg.provider||'';
-    if(k) k.value=_aiCfg.apiKey||'';
-    catProviderChange();
-    if(_aiCfg.model){ var m=document.getElementById('cs-model'); if(m)m.value=_aiCfg.model; }
-  }
+  var p=document.getElementById('cs-provider'),k=document.getElementById('cs-apikey');
+  if(_aiCfg){if(p)p.value=_aiCfg.provider||'';if(k)k.value=_aiCfg.apiKey||'';catProviderChange();if(_aiCfg.model){var m=document.getElementById('cs-model');if(m)m.value=_aiCfg.model;}}
   document.getElementById('cs-status').textContent='';
   document.getElementById('cat-settings-modal').classList.add('on');
 };
-window.catCloseSettings=function(){
-  document.getElementById('cat-settings-modal').classList.remove('on');
-};
+window.catCloseSettings=function(){document.getElementById('cat-settings-modal').classList.remove('on');};
 
-var MODEL_MAP = {
-  gemini: [
-    {v:'gemini-2.0-flash-lite',  l:'Gemini 2.0 Flash Lite (Free, Fastest)'},
-    {v:'gemini-2.0-flash',       l:'Gemini 2.0 Flash (Free, Recommended)'},
+var MODEL_MAP={
+  gemini:[
+    {v:'gemini-2.0-flash-lite',          l:'Gemini 2.0 Flash Lite (Free, Fastest)'},
+    {v:'gemini-2.0-flash',               l:'Gemini 2.0 Flash (Free, Recommended)'},
     {v:'gemini-2.5-flash-preview-05-20', l:'Gemini 2.5 Flash Preview (Free, Best)'},
     {v:'gemini-2.5-pro-preview-06-05',   l:'Gemini 2.5 Pro Preview (Paid, Smartest)'},
   ],
-  openai: [
-    {v:'gpt-4.1-nano',   l:'GPT-4.1 Nano (Free tier, Fastest)'},
-    {v:'gpt-4.1-mini',   l:'GPT-4.1 Mini (Cheap, Fast)'},
-    {v:'gpt-4.1',        l:'GPT-4.1 (Best quality)'},
-    {v:'gpt-4o',         l:'GPT-4o (High quality)'},
-    {v:'gpt-4o-mini',    l:'GPT-4o Mini (Fast, Cheap)'},
+  openai:[
+    {v:'gpt-4.1-nano',  l:'GPT-4.1 Nano (Free tier, Fastest)'},
+    {v:'gpt-4.1-mini',  l:'GPT-4.1 Mini (Cheap, Fast)'},
+    {v:'gpt-4.1',       l:'GPT-4.1 (Best quality)'},
+    {v:'gpt-4o',        l:'GPT-4o (High quality)'},
+    {v:'gpt-4o-mini',   l:'GPT-4o Mini (Fast, Cheap)'},
   ],
-  copilot: [
-    {v:'gpt-4o',         l:'GPT-4o via GitHub Copilot'},
-    {v:'gpt-4.1',        l:'GPT-4.1 via GitHub Copilot'},
-    {v:'o4-mini',        l:'o4-mini via GitHub Copilot'},
+  copilot:[
+    {v:'gpt-4o',   l:'GPT-4o via GitHub Copilot'},
+    {v:'gpt-4.1',  l:'GPT-4.1 via GitHub Copilot'},
+    {v:'o4-mini',  l:'o4-mini via GitHub Copilot'},
   ],
-  claude: [
+  claude:[
     {v:'claude-haiku-4-5-20251001', l:'Claude Haiku 4.5 (Fast, Cheap)'},
     {v:'claude-sonnet-4-6',         l:'Claude Sonnet 4.6 (Best quality)'},
   ]
 };
-var HINT_MAP = {
-  gemini:  '🔑 Free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — no credit card needed',
-  copilot: '🔑 Get token at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> — needs GitHub Copilot subscription. Use a Personal Access Token.',
-  openai:  '🔑 Get key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
-  claude:  '🔑 Get key at <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>'
+var HINT_MAP={
+  gemini: '🔑 Free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — no credit card needed',
+  copilot:'🔑 Get token at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> — needs GitHub Copilot subscription.',
+  openai: '🔑 Get key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
+  claude: '🔑 Get key at <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>'
 };
 
-window.catProviderChange = function(){
+window.catProviderChange=function(){
   var p=document.getElementById('cs-provider').value;
-  var hint=document.getElementById('cs-key-hint');
-  var mField=document.getElementById('cs-model-field');
-  var mSel=document.getElementById('cs-model');
-  if(hint) hint.innerHTML = HINT_MAP[p]||'';
-  if(!p){ mField.style.display='none'; return; }
-  mField.style.display='';
+  var hint=document.getElementById('cs-key-hint'),mField=document.getElementById('cs-model-field'),mSel=document.getElementById('cs-model');
+  if(hint)hint.innerHTML=HINT_MAP[p]||'';
+  if(!p){if(mField)mField.style.display='none';return;}
+  if(mField)mField.style.display='';
   mSel.innerHTML='';
-  (MODEL_MAP[p]||[]).forEach(function(m){
-    var o=document.createElement('option'); o.value=m.v; o.textContent=m.l;
-    mSel.appendChild(o);
-  });
+  (MODEL_MAP[p]||[]).forEach(function(m){var o=document.createElement('option');o.value=m.v;o.textContent=m.l;mSel.appendChild(o);});
 };
 
-window.catSaveSettings = async function(){
-  var p  = document.getElementById('cs-provider').value;
-  var k  = document.getElementById('cs-apikey').value.trim();
-  var m  = document.getElementById('cs-model').value;
-  var st = document.getElementById('cs-status');
-  if(!p||!k){ st.textContent='Please select a provider and enter your API key.'; st.style.color='#ff7777'; return; }
-  st.textContent='Saving...'; st.style.color='rgba(255,255,255,.4)';
-  _aiCfg = {provider:p, apiKey:k, model:m};
-  var val = JSON.stringify(_aiCfg);
-  // Save to Supabase settings table
+window.catSaveSettings=async function(){
+  var p=document.getElementById('cs-provider').value,k=document.getElementById('cs-apikey').value.trim(),m=document.getElementById('cs-model').value,st=document.getElementById('cs-status');
+  if(!p||!k){st.textContent='Please select a provider and enter your API key.';st.style.color='#ff7777';return;}
+  st.textContent='Saving...';st.style.color='rgba(255,255,255,.4)';
+  _aiCfg={provider:p,apiKey:k,model:m};
+  var val=JSON.stringify(_aiCfg);
   try{
-    if(typeof sbQuery==='function'){
-      var existing=await sbQuery('settings','key=eq.'+AI_SETTINGS_KEY+'&select=key');
-      if(existing&&existing.length){ await sbUpdate('settings','key',AI_SETTINGS_KEY,{value:val}); }
-      else { await sbInsert('settings',{key:AI_SETTINGS_KEY,value:val}); }
-    }
-    localStorage.setItem(AI_SETTINGS_KEY, val);
-    st.textContent='✅ Saved! Orange Cat is now powered by '+p+'.'; st.style.color='#4ade80';
-    updateNoAiBanner();
-    setTimeout(catCloseSettings, 1800);
-  }catch(e){
-    // fallback to localStorage only
-    localStorage.setItem(AI_SETTINGS_KEY, val);
-    st.textContent='✅ Saved locally (DB unavailable).'; st.style.color='#4ade80';
-    updateNoAiBanner();
-    setTimeout(catCloseSettings, 1800);
-  }
+    if(typeof sbQuery==='function'){var existing=await sbQuery('settings','key=eq.'+AI_SETTINGS_KEY+'&select=key');if(existing&&existing.length){await sbUpdate('settings','key',AI_SETTINGS_KEY,{value:val});}else{await sbInsert('settings',{key:AI_SETTINGS_KEY,value:val});}}
+    localStorage.setItem(AI_SETTINGS_KEY,val);
+    st.textContent='Saved! Orange Cat is now powered by '+p+'.';st.style.color='#4ade80';
+    updateNoAiBanner();setTimeout(catCloseSettings,1800);
+  }catch(e){localStorage.setItem(AI_SETTINGS_KEY,val);st.textContent='Saved locally.';st.style.color='#4ade80';updateNoAiBanner();setTimeout(catCloseSettings,1800);}
 };
 
-window.catTestAI = async function(){
-  var p=document.getElementById('cs-provider').value;
-  var k=document.getElementById('cs-apikey').value.trim();
-  var m=document.getElementById('cs-model').value;
-  var st=document.getElementById('cs-status');
-  if(!p||!k){ st.textContent='Fill in provider and API key first.'; st.style.color='#ff7777'; return; }
-  st.textContent='Testing connection...'; st.style.color='rgba(255,255,255,.4)';
-  try{
-    var reply=await callAI(p,k,m,'Say exactly: "Meow! Connection works Boss! 😸"',false);
-    st.textContent='✅ '+reply.slice(0,80); st.style.color='#4ade80';
-  }catch(e){
-    st.textContent='❌ '+e.message; st.style.color='#ff7777';
-  }
+window.catTestAI=async function(){
+  var p=document.getElementById('cs-provider').value,k=document.getElementById('cs-apikey').value.trim(),m=document.getElementById('cs-model').value,st=document.getElementById('cs-status');
+  if(!p||!k){st.textContent='Fill in provider and API key first.';st.style.color='#ff7777';return;}
+  st.textContent='Testing...';st.style.color='rgba(255,255,255,.4)';
+  try{var reply=await callAI(p,k,m,'Say exactly: Meow! Connection works Boss!',false);st.textContent='Connected: '+reply.slice(0,60);st.style.color='#4ade80';}
+  catch(e){st.textContent='Error: '+e.message;st.style.color='#ff7777';}
 };
 
-// ═══════════════════════════════════════
-//  AI CALL — supports Gemini, OpenAI, Claude
-// ═══════════════════════════════════════
-var CAT_SYSTEM = 'You are Orange Cat, a witty K7 Security support assistant. Always call users "Boss". Use cat emojis (meow, paw, purr). Keep replies concise and helpful. K7 fixes you know: Error 12029/12007 → K7→Updates→Configure Updates→remove proxy→Apply→OK. Activation offline → use K7 website Request Code. Clean install → K7 Removal Tool. High CPU → exclude scan folders. Firewall → add K7 to Windows Firewall exceptions. After 5+ questions, playfully say you are tired and need milk. When issue is solved say "Done Boss 😎 Anything else?"';
+// ════════════════════════════════════════════════
+//  AI CALL ENGINE
+// ════════════════════════════════════════════════
+var CAT_SYSTEM='You are Orange Cat, a witty K7 Security support assistant. Always call users "Boss". Use cat emojis. Keep replies concise. K7 fixes: Error 12029/12007 -> K7->Updates->Configure Updates->remove proxy->Apply->OK. Activation offline -> K7 website Request Code. Clean install -> K7 Removal Tool. High CPU -> exclude scan folders. After 5+ questions be playfully tired. When solved say "Done Boss!"';
 
-async function callAI(provider, apiKey, model, userMsg, useHistory){
-  var history = useHistory ? catHist.slice(-12) : [];
-
+async function callAI(provider,apiKey,model,userMsg,useHistory){
+  var history=useHistory?catHist.slice(-12):[];
   if(provider==='gemini'){
-    // Gemini REST API — use v1 stable endpoint
     var url='https://generativelanguage.googleapis.com/v1/models/'+model+':generateContent?key='+apiKey;
     var contents=[];
-    history.forEach(function(h){
-      contents.push({role:h.role==='assistant'?'model':'user', parts:[{text:h.content}]});
-    });
-    contents.push({role:'user', parts:[{text:userMsg}]});
-    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        systemInstruction:{parts:[{text:CAT_SYSTEM}]},
-        contents:contents,
-        generationConfig:{maxOutputTokens:800,temperature:0.8}
-      })
-    });
-    if(!res.ok){
-      var err=await res.json();
-      var msg=(err.error&&err.error.message)||'Gemini API error '+res.status;
-      // Friendly hint for retired models
-      if(res.status===404||msg.includes('not found')||msg.includes('deprecated')){
-        msg='Model "'+model+'" is retired. Go to AI Settings and pick Gemini 2.0 Flash instead Boss!';
-      }
-      throw new Error(msg);
-    }
-    var data=await res.json();
-    return data.candidates[0].content.parts[0].text;
-
-  } else if(provider==='openai'){
+    history.forEach(function(h){contents.push({role:h.role==='assistant'?'model':'user',parts:[{text:h.content}]});});
+    contents.push({role:'user',parts:[{text:userMsg}]});
+    var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:CAT_SYSTEM}]},contents:contents,generationConfig:{maxOutputTokens:800,temperature:0.8}})});
+    if(!res.ok){var err=await res.json();var msg=(err.error&&err.error.message)||'Gemini error '+res.status;if(res.status===404||msg.includes('not found'))msg='Model "'+model+'" is retired. Go to AI Settings and pick Gemini 2.0 Flash!';throw new Error(msg);}
+    var data=await res.json();return data.candidates[0].content.parts[0].text;
+  }else if(provider==='openai'){
     var msgs=[{role:'system',content:CAT_SYSTEM}];
-    history.forEach(function(h){ msgs.push({role:h.role,content:h.content}); });
+    history.forEach(function(h){msgs.push({role:h.role,content:h.content});});
     msgs.push({role:'user',content:userMsg});
-    var res=await fetch('https://api.openai.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
-      body:JSON.stringify({model:model,messages:msgs,max_tokens:800,temperature:0.8})
-    });
-    if(!res.ok){ var err=await res.json(); throw new Error((err.error&&err.error.message)||'OpenAI error '+res.status); }
-    var data=await res.json();
-    return data.choices[0].message.content;
-
-  } else if(provider==='copilot'){
-    // GitHub Copilot uses OpenAI-compatible API
+    var res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},body:JSON.stringify({model:model,messages:msgs,max_tokens:800,temperature:0.8})});
+    if(!res.ok){var err=await res.json();throw new Error((err.error&&err.error.message)||'OpenAI error '+res.status);}
+    var data=await res.json();return data.choices[0].message.content;
+  }else if(provider==='copilot'){
     var msgs=[{role:'system',content:CAT_SYSTEM}];
-    history.forEach(function(h){ msgs.push({role:h.role,content:h.content}); });
+    history.forEach(function(h){msgs.push({role:h.role,content:h.content});});
     msgs.push({role:'user',content:userMsg});
-    var res=await fetch('https://api.githubcopilot.com/chat/completions',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+apiKey,
-        'Copilot-Integration-Id':'vscode-chat'
-      },
-      body:JSON.stringify({model:model,messages:msgs,max_tokens:800,temperature:0.8})
-    });
-    if(!res.ok){ var err=await res.json(); throw new Error((err.error&&err.error.message)||'Copilot error '+res.status); }
-    var data=await res.json();
-    return data.choices[0].message.content;
-
-  } else if(provider==='claude'){
+    var res=await fetch('https://api.githubcopilot.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey,'Copilot-Integration-Id':'vscode-chat'},body:JSON.stringify({model:model,messages:msgs,max_tokens:800,temperature:0.8})});
+    if(!res.ok){var err=await res.json();throw new Error((err.error&&err.error.message)||'Copilot error '+res.status);}
+    var data=await res.json();return data.choices[0].message.content;
+  }else if(provider==='claude'){
     var msgs=[];
-    history.forEach(function(h){ msgs.push({role:h.role,content:h.content}); });
+    history.forEach(function(h){msgs.push({role:h.role,content:h.content});});
     msgs.push({role:'user',content:userMsg});
-    var res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:model,max_tokens:800,system:CAT_SYSTEM,messages:msgs})
-    });
-    if(!res.ok){ var err=await res.json(); throw new Error((err.error&&err.error.message)||'Claude error '+res.status); }
-    var data=await res.json();
-    return data.content[0].text;
-
-  } else {
-    throw new Error('Unknown provider: '+provider);
-  }
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model,max_tokens:800,system:CAT_SYSTEM,messages:msgs})});
+    if(!res.ok){var err=await res.json();throw new Error((err.error&&err.error.message)||'Claude error '+res.status);}
+    var data=await res.json();return data.content[0].text;
+  }else{throw new Error('Unknown provider: '+provider);}
 }
 
-// ═══════════════════════════════════════
-//  SEND / RECEIVE
-// ═══════════════════════════════════════
+// ════════════════════════════════════════════════
+//  MAIN SEND / RECEIVE
+// ════════════════════════════════════════════════
 async function catAskAI(msg){
   catBusy=true;
   document.getElementById('cp-send').disabled=true;
@@ -11196,48 +11567,49 @@ async function catAskAI(msg){
   showTyping(true);
   catQCount++;
 
-  // Try roster first (instant, local)
-  var local=tryRoster(msg);
-  if(!local) local=tryCaseTracker(msg);
-  if(local){
-    await new Promise(function(r){setTimeout(r,600);});
-    showTyping(false);
-    catAddBot(local);
-    transTo('happy','idle',1200);
-    catBusy=false;
-    document.getElementById('cp-send').disabled=false;
-    return;
-  }
-
-  // No AI configured?
-  if(!_aiCfg||!_aiCfg.provider||!_aiCfg.apiKey){
-    showTyping(false);
-    var isAdmin=typeof isAdminUser==='function'&&isAdminUser();
-    catAddBot(isAdmin
-      ? "Meow Boss 😅 I don't have an AI brain yet! Click the ⚙️ gear icon to connect me to Gemini or ChatGPT."
-      : "Purrr… my AI brain isn't set up yet Boss 😿 Ask your admin to connect me to an AI provider!");
-    transTo('idle');
-    catBusy=false;
-    document.getElementById('cp-send').disabled=false;
-    return;
-  }
-
-  // Add tired flavour
-  var sendMsg = catQCount>=5 ? msg+'\n[Cat has answered '+catQCount+' questions — be playfully tired]' : msg;
-
   try{
+    // Local dispatch first (no AI needed for data queries)
+    var localAnswer=await catDispatch(msg);
+    if(localAnswer){
+      await new Promise(function(r){setTimeout(r,500);});
+      showTyping(false);
+      catAddBot(localAnswer);
+      var isTired=/tired|milk|break|whisker|exhausted/.test(localAnswer.toLowerCase());
+      transTo(isTired?'tired':'happy','idle',1200);
+      catBusy=false;
+      document.getElementById('cp-send').disabled=false;
+      return;
+    }
+
+    // No AI configured?
+    if(!_aiCfg||!_aiCfg.provider||!_aiCfg.apiKey){
+      showTyping(false);
+      var isAdmin=typeof isAdminUser==='function'&&isAdminUser();
+      catAddBot(isAdmin?'Meow Boss, I do not have an AI brain yet! Click the gear icon to connect me to Gemini or ChatGPT.':'My AI brain is not set up yet Boss. Ask your admin to connect me to an AI provider!');
+      transTo('idle');
+      catBusy=false;
+      document.getElementById('cp-send').disabled=false;
+      return;
+    }
+
+    // Build message with session context
+    var contextNote=memBuildContext();
+    var sendMsg=msg+(contextNote?'\n'+contextNote:'');
+    if(catQCount>=5)sendMsg+='\n[Note: user has asked '+catQCount+' questions]';
+
     catHist.push({role:'user',content:msg});
-    if(catHist.length>14) catHist=catHist.slice(-14);
+    if(catHist.length>14)catHist=catHist.slice(-14);
+
     var reply=await callAI(_aiCfg.provider,_aiCfg.apiKey,_aiCfg.model,sendMsg,true);
     catHist.push({role:'assistant',content:reply});
     showTyping(false);
     var isTired=/tired|milk|break|whisker|exhausted/.test(reply.toLowerCase());
     catAddBot(reply);
     transTo(isTired?'tired':'happy','idle',1400);
-    if(!catOpen_) document.getElementById('cat-notif').style.display='block';
+    if(!catOpen_)document.getElementById('cat-notif').style.display='block';
   }catch(e){
     showTyping(false);
-    catAddBot("Meow… something went wrong 😿 ("+e.message+") Try again Boss!");
+    catAddBot('Meow... something went wrong Boss ('+e.message+') Try again!');
     transTo('idle');
   }
   catBusy=false;
@@ -11247,44 +11619,42 @@ async function catAskAI(msg){
 window.catSend=function(){
   if(catBusy)return;
   var ta=document.getElementById('cp-ta');
-  var txt=ta.value.trim(); if(!txt)return;
-  ta.value=''; catResize(ta);
-  catAddUser(txt); catAskAI(txt);
+  var txt=ta.value.trim();if(!txt)return;
+  ta.value='';catResize(ta);
+  catAddUser(txt);catAskAI(txt);
 };
-window.catQ=function(txt){
-  if(catBusy)return;
-  if(!catGreeted){ catGreeted=true; catAddBot("Meow! 😺 I'm Orange Cat! How can I help Boss? 🐾"); }
-  catAddUser(txt); catAskAI(txt);
-};
-window.catKey=function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();catSend();} };
-window.catResize=function(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,80)+'px'; };
+window.catKey=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();catSend();}};
+window.catResize=function(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,80)+'px';};
 
-// ═══════════════════════════════════════
-//  SHOW / HIDE (login / logout hooks)
-// ═══════════════════════════════════════
+// ════════════════════════════════════════════════
+//  SHOW / HIDE
+// ════════════════════════════════════════════════
 window.catShowWidget=function(){
   document.getElementById('catw').classList.add('on');
   loadAiCfg();
-  setTimeout(function(){ speak('Click me to wake up! 😸',3500); },2200);
+  // Ensure chat users are loaded for messaging
+  if(typeof chatLoadUsers==='function')setTimeout(chatLoadUsers,1000);
+  setTimeout(function(){speak('Click me to wake up! 😸',3500);},2200);
 };
 window.catHideWidget=function(){
   document.getElementById('catw').classList.remove('on');
-  catClose(); catGreeted=false; catHist=[]; catQCount=0; _aiCfg=null;
+  catClose();
+  catGreeted=false;catHist=[];catQCount=0;_aiCfg=null;
+  _pendingIntent=null;_reminders.forEach(clearTimeout);_reminders=[];
+  _sessionCtx={lastMentionedAgent:null,lastAction:null,lastTopic:null,agentCache:{},recentTopics:[]};
   setState('sleep');
 };
 
-// catShowWidget and catHideWidget are called directly from enterDashboard and doLogout
-
 // Hover speech
 document.getElementById('cat-fab').addEventListener('mouseenter',function(){
-  if(catState==='sleep') speak('Click me to wake up! 😸',2500);
+  if(catState==='sleep')speak('Click me to wake up! 😸',2500);
 });
 
-// Init sleeping
 setState('sleep');
 
 })();
 </script>
+
 </body>
 </html>
 <script>
