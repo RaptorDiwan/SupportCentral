@@ -11131,7 +11131,7 @@ async function tryQuiz(q){
 // ════════════════════════════════════════════════
 async function tryAgentLookup(q){
   var qlo=q.toLowerCase();
-  if(!/tell me about|profile|who is|about agent|lookup|look up|info.*about|details.*about|status.*of|how is ([a-z]+) doing/.test(qlo)) return null;
+  if(!/tell me about|show.*profile|agent profile|lookup agent|look up agent|info about agent|details about [a-z]|how is [a-z]+ doing|show me [a-z]+ info/.test(qlo)) return null;
 
   // Extract name
   var nameMatch=q.match(/(?:tell me about|about|profile of|who is|info on|details of|status of|how is)\s+([a-zA-Z ]{2,30})(?:\s+doing)?/i);
@@ -11286,7 +11286,15 @@ function relativeDate(qlo){
 }
 
 function tryRoster(q){
-  var rows=getRosterRows();if(!rows)return null;
+  var rows=getRosterRows();
+  var qlo_check=q.toLowerCase();
+  // If clearly a roster question but no data loaded, say so
+  if(!rows){
+    if(/leave|shift|off|absent|roster|who.*working|timing|schedule/.test(qlo_check)){
+      return 'The roster is not loaded yet Boss! Please open the Roster page first so I can read the data 🐾';
+    }
+    return null;
+  }
   var qlo=q.toLowerCase();
   var today=new Date();
   memRemember('lastTopic','roster');
@@ -11422,40 +11430,40 @@ async function catDispatch(q){
     if(r)return r;
   }
 
-  // 2. Timed reminder
-  var remR=await handleReminder(q);
-  if(remR)return remR;
+  // 2. Roster — FIRST priority (leave, shift, off, who is on leave)
+  var rosterR=tryRoster(q);
+  if(rosterR)return rosterR;
 
-  // 3. Message intent
+  // 3. Attendance (logged in, on break, absent)
+  var attR=await tryAttendance(q);
+  if(attR)return attR;
+
+  // 4. Quiz
+  var quizR=await tryQuiz(q);
+  if(quizR)return quizR;
+
+  // 5. Case tracker
+  var ctR=tryCaseTracker(q);
+  if(ctR)return ctR;
+
+  // 6. Break report
+  var brR=await tryBreakReport(q);
+  if(brR)return brR;
+
+  // 7. Message intent
   var msgIntent=extractMsgIntent(q);
   if(msgIntent){
     var r=await handleMsgIntent(q,msgIntent);
     if(r)return r;
   }
 
-  // 4. Attendance
-  var attR=await tryAttendance(q);
-  if(attR)return attR;
+  // 8. Timed reminder
+  var remR=await handleReminder(q);
+  if(remR)return remR;
 
-  // 5. Break report
-  var brR=await tryBreakReport(q);
-  if(brR)return brR;
-
-  // 6. Quiz
-  var quizR=await tryQuiz(q);
-  if(quizR)return quizR;
-
-  // 7. Agent profile lookup
+  // 9. Agent profile lookup — LAST (most likely to false-positive)
   var lookupR=await tryAgentLookup(q);
   if(lookupR)return lookupR;
-
-  // 8. Roster
-  var rosterR=tryRoster(q);
-  if(rosterR)return rosterR;
-
-  // 9. Case tracker
-  var ctR=tryCaseTracker(q);
-  if(ctR)return ctR;
 
   return null; // → pass to AI
 }
@@ -11554,20 +11562,31 @@ window.catTestAI=async function(){
 var CAT_SYSTEM='You are Orange Cat, a witty K7 Security support assistant. Always call users "Boss". Use cat emojis. Keep replies concise. K7 fixes: Error 12029/12007 -> K7->Updates->Configure Updates->remove proxy->Apply->OK. Activation offline -> K7 website Request Code. Clean install -> K7 Removal Tool. High CPU -> exclude scan folders. After 5+ questions be playfully tired. When solved say "Done Boss!"';
 
 async function callAI(provider,apiKey,model,userMsg,useHistory){
-  // Pollinations — free, no key needed
+  // Pollinations — free, no key needed, works from browser
   if(provider==='pollinations'||!provider){
     var history=useHistory?catHist.slice(-8):[];
     var msgs=[{role:'system',content:CAT_SYSTEM}];
     history.forEach(function(h){msgs.push({role:h.role,content:h.content});});
     msgs.push({role:'user',content:userMsg});
-    var res=await fetch('https://text.pollinations.ai/openai',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'openai',messages:msgs,seed:42,private:true})
-    });
-    if(!res.ok)throw new Error('Pollinations error '+res.status);
-    var data=await res.json();
-    return data.choices[0].message.content;
+    // Use GET endpoint as fallback if POST fails
+    try {
+      var res=await fetch('https://text.pollinations.ai/openai',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'openai',messages:msgs,private:true})
+      });
+      if(res.ok){
+        var txt=await res.text();
+        // Response may be plain text or JSON
+        try{ var data=JSON.parse(txt); return data.choices?data.choices[0].message.content:txt; }
+        catch(e){ return txt; }
+      }
+    } catch(e2){}
+    // Fallback: GET endpoint with encoded prompt
+    var prompt=encodeURIComponent(CAT_SYSTEM.slice(0,200)+' User asks: '+userMsg);
+    var res2=await fetch('https://text.pollinations.ai/'+prompt+'?model=openai&private=true');
+    if(!res2.ok)throw new Error('Pollinations unavailable ('+res2.status+'). Please ask admin to configure an AI provider in Settings.');
+    return await res2.text();
   }
   var history=useHistory?catHist.slice(-12):[];
   if(provider==='gemini'){
