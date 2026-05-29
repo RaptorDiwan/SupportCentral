@@ -10239,8 +10239,11 @@ function pplCloseLightbox(){
 
 /* ══ Chat Panel ══ */
 #cat-panel {
-  position:fixed; bottom:118px; right:28px; z-index:9999;
-  width:420px; height:580px; display:flex; flex-direction:column;
+  position:fixed;
+  bottom:118px; right:28px; z-index:9999;
+  width:min(400px, calc(100vw - 48px));
+  height:min(560px, calc(100vh - 150px));
+  display:flex; flex-direction:column;
   background:#0d1627;
   border-radius:20px; border:1px solid rgba(255,122,47,.2);
   box-shadow:0 24px 70px rgba(0,0,0,.55), 0 6px 24px rgba(255,122,47,.1),
@@ -10252,9 +10255,13 @@ function pplCloseLightbox(){
 }
 #cat-panel.on { transform:translateY(0) scale(1); opacity:1; pointer-events:all; }
 
-/* Responsive — shrink on small screens */
-@media (max-width:480px) {
-  #cat-panel { width:calc(100vw - 20px); right:10px; bottom:108px; height:520px; }
+/* Small screens */
+@media (max-width:520px) {
+  #cat-panel { right:10px; bottom:100px; width:calc(100vw - 20px); }
+}
+/* Short screens (laptops, presentations) */
+@media (max-height:700px) {
+  #cat-panel { height:calc(100vh - 140px); bottom:110px; }
 }
 
 /* header */
@@ -10558,8 +10565,8 @@ function pplCloseLightbox(){
         <label>AI Provider</label>
         <select id="cs-provider" onchange="catProviderChange()">
           <option value="">— Select Provider —</option>
-          <option value="gemini">Google Gemini (Free — Recommended)</option>
-          <option value="copilot">GitHub Copilot (Free with GitHub plan)</option>
+          <option value="openrouter">OpenRouter (Free models — Default)</option>
+          <option value="gemini">Google Gemini (Free)</option>
           <option value="openai">OpenAI / ChatGPT</option>
           <option value="claude">Anthropic Claude</option>
         </select>
@@ -10602,6 +10609,9 @@ function pplCloseLightbox(){
 // ═══════════════════════════════════════════════════════
 
 // ── State ──
+// ── OpenRouter default key (admin can override via Settings) ──
+var CAT_OPENROUTER_KEY='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'; // paste your OpenRouter key here
+
 var catState='sleep', catOpen_=false, catGreeted=false;
 var catHist=[], catBusy=false, catQCount=0;
 var _pendingIntent=null;   // for ambiguous name resolution
@@ -11465,128 +11475,201 @@ async function catDispatch(q){
   var lookupR=await tryAgentLookup(q);
   if(lookupR)return lookupR;
 
+  // 10. Local conversational fallback — basic chat so "hi", "hello", "thanks" never fail
+  var localChat = tryLocalChat(q);
+  if(localChat) return localChat;
+
   return null; // → pass to AI
+}
+
+// -- Basic local chat for greetings/thanks so simple inputs never fail
+function tryLocalChat(q){
+  var qlo=q.toLowerCase().trim().replace(/[^a-z0-9 ]/g,'');
+  var isGreeting=/^(hi|hello|hey|hiya|howdy|sup|yo|meow|gm|gn|good morning|good evening|good afternoon|good night)$/.test(qlo);
+  var isThanks=/^(thanks|thank you|thankyou|thx|ty|thank u|great|awesome|nice|good|ok|okay|cool|perfect|got it|noted|sure|yes|no|nope|yep|yeah|nah)$/.test(qlo);
+  var isHowAreYou=/how are you|how r u|you ok|are you ok/.test(qlo);
+  var isWhoAreYou=/who are you|what are you|what can you do|help me|your name|introduce/.test(qlo);
+  if(isGreeting){
+    var r=['Meow Boss! What can I help you with today?','Purrr, hello Boss! Ask me anything','Hey Boss! I am here and ready','Meow! Good to see you Boss'];
+    return r[Math.floor(Math.random()*r.length)];
+  }
+  if(isThanks){
+    var r=['Always here for you Boss!','Anytime Boss!','Happy to help Boss!','Done Boss! Let me know if you need anything else'];
+    return r[Math.floor(Math.random()*r.length)];
+  }
+  if(isHowAreYou) return 'I am doing great Boss! Been napping on the roster data all day. Ready to help!';
+  if(isWhoAreYou) return 'I am Orange Cat — your K7 support buddy! Ask me about shifts, leaves, attendance, quiz scores, cases, or send messages to the team. Just type naturally Boss!';
+  return null;
 }
 
 // ════════════════════════════════════════════════
 //  AI PROVIDER SETTINGS
 // ════════════════════════════════════════════════
-var AI_SETTINGS_KEY='cat_ai_settings';
+var _AI_KEY='cat_ai_cfg';
 var _aiCfg=null;
 
 function loadAiCfg(){
   _aiCfg=null;
+  try{
+    var s=localStorage.getItem(_AI_KEY);
+    if(s)_aiCfg=JSON.parse(s);
+  }catch(e){}
+  // Also try Supabase
   if(typeof sbQuery==='function'){
-    sbQuery('settings','key=eq.'+AI_SETTINGS_KEY+'&select=value').then(function(rows){
-      if(rows&&rows.length&&rows[0].value){try{_aiCfg=JSON.parse(rows[0].value);}catch(e){}}
+    sbQuery('settings','key=eq.'+_AI_KEY+'&select=value').then(function(rows){
+      if(rows&&rows.length&&rows[0].value){
+        try{var c=JSON.parse(rows[0].value);if(c&&c.provider)_aiCfg=c;}catch(e){}
+      }
       updateNoAiBanner();
-    }).catch(function(){try{var s=localStorage.getItem(AI_SETTINGS_KEY);if(s)_aiCfg=JSON.parse(s);}catch(e){}updateNoAiBanner();});
-  }else{try{var s=localStorage.getItem(AI_SETTINGS_KEY);if(s)_aiCfg=JSON.parse(s);}catch(e){}updateNoAiBanner();}
+    }).catch(function(){updateNoAiBanner();});
+  } else { updateNoAiBanner(); }
 }
 
 window.catOpenSettings=function(){
   if(typeof isAdminUser!=='function'||!isAdminUser())return;
-  var p=document.getElementById('cs-provider'),k=document.getElementById('cs-apikey');
-  if(_aiCfg){if(p)p.value=_aiCfg.provider||'';if(k)k.value=_aiCfg.apiKey||'';catProviderChange();if(_aiCfg.model){var m=document.getElementById('cs-model');if(m)m.value=_aiCfg.model;}}
-  document.getElementById('cs-status').textContent='';
-  document.getElementById('cat-settings-modal').classList.add('on');
+  var p=document.getElementById('cs-provider');
+  var k=document.getElementById('cs-apikey');
+  // Pre-fill with current config or defaults
+  if(_aiCfg&&_aiCfg.provider){
+    if(p)p.value=_aiCfg.provider;
+    if(k)k.value=_aiCfg.apiKey||'';
+    catProviderChange();
+    var m=document.getElementById('cs-model');
+    if(m&&_aiCfg.model)m.value=_aiCfg.model;
+  } else {
+    if(p)p.value='openrouter';
+    catProviderChange();
+    if(k)k.value=CAT_OPENROUTER_KEY||'';
+  }
+  var st=document.getElementById('cs-status');
+  if(st)st.textContent='';
+  var modal=document.getElementById('cat-settings-modal');
+  if(modal)modal.classList.add('on');
 };
-window.catCloseSettings=function(){document.getElementById('cat-settings-modal').classList.remove('on');};
 
-var MODEL_MAP={
+window.catCloseSettings=function(){
+  var modal=document.getElementById('cat-settings-modal');
+  if(modal)modal.classList.remove('on');
+};
+
+var _MODELS={
+  openrouter:[
+    {v:'openrouter/auto',                        l:'Auto — Best free model (Recommended)'},
+    {v:'meta-llama/llama-3.3-70b-instruct:free', l:'Llama 3.3 70B (Free)'},
+    {v:'mistralai/mistral-7b-instruct:free',     l:'Mistral 7B (Free, Fast)'},
+    {v:'google/gemma-3-27b-it:free',             l:'Gemma 3 27B (Free)'},
+    {v:'deepseek/deepseek-chat-v3-0324:free',    l:'DeepSeek V3 (Free)'},
+  ],
   gemini:[
-    {v:'gemini-2.0-flash-lite',          l:'Gemini 2.0 Flash Lite (Free, Fastest)'},
     {v:'gemini-2.0-flash',               l:'Gemini 2.0 Flash (Free, Recommended)'},
+    {v:'gemini-2.0-flash-lite',          l:'Gemini 2.0 Flash Lite (Free, Fastest)'},
     {v:'gemini-2.5-flash-preview-05-20', l:'Gemini 2.5 Flash Preview (Free, Best)'},
-    {v:'gemini-2.5-pro-preview-06-05',   l:'Gemini 2.5 Pro Preview (Paid, Smartest)'},
   ],
   openai:[
-    {v:'gpt-4.1-nano',  l:'GPT-4.1 Nano (Free tier, Fastest)'},
-    {v:'gpt-4.1-mini',  l:'GPT-4.1 Mini (Cheap, Fast)'},
-    {v:'gpt-4.1',       l:'GPT-4.1 (Best quality)'},
-    {v:'gpt-4o',        l:'GPT-4o (High quality)'},
-    {v:'gpt-4o-mini',   l:'GPT-4o Mini (Fast, Cheap)'},
-  ],
-  copilot:[
-    {v:'gpt-4o',   l:'GPT-4o via GitHub Copilot'},
-    {v:'gpt-4.1',  l:'GPT-4.1 via GitHub Copilot'},
-    {v:'o4-mini',  l:'o4-mini via GitHub Copilot'},
+    {v:'gpt-4o-mini',  l:'GPT-4o Mini (Fast, Affordable)'},
+    {v:'gpt-4.1-nano', l:'GPT-4.1 Nano (Cheapest)'},
+    {v:'gpt-4.1-mini', l:'GPT-4.1 Mini (Balanced)'},
+    {v:'gpt-4o',       l:'GPT-4o (Best quality)'},
   ],
   claude:[
-    {v:'claude-haiku-4-5-20251001', l:'Claude Haiku 4.5 (Fast, Cheap)'},
-    {v:'claude-sonnet-4-6',         l:'Claude Sonnet 4.6 (Best quality)'},
+    {v:'claude-haiku-4-5-20251001', l:'Claude Haiku 4.5 (Fast)'},
+    {v:'claude-sonnet-4-6',         l:'Claude Sonnet 4.6 (Best)'},
   ]
 };
-var HINT_MAP={
-  gemini: '🔑 Free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — no credit card needed',
-  copilot:'🔑 Get token at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a> — needs GitHub Copilot subscription.',
-  openai: '🔑 Get key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
-  claude: '🔑 Get key at <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>'
+var _HINTS={
+  openrouter:'Free key at <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> — free models, no credit card',
+  gemini:    'Free key at <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> — no credit card',
+  openai:    'Key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
+  claude:    'Key at <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a>'
 };
 
 window.catProviderChange=function(){
-  var p=document.getElementById('cs-provider').value;
-  var hint=document.getElementById('cs-key-hint'),mField=document.getElementById('cs-model-field'),mSel=document.getElementById('cs-model');
-  if(hint)hint.innerHTML=HINT_MAP[p]||'';
-  if(!p){if(mField)mField.style.display='none';return;}
-  if(mField)mField.style.display='';
-  mSel.innerHTML='';
-  (MODEL_MAP[p]||[]).forEach(function(m){var o=document.createElement('option');o.value=m.v;o.textContent=m.l;mSel.appendChild(o);});
+  var p=document.getElementById('cs-provider');
+  if(!p)return;
+  var pv=p.value;
+  var hint=document.getElementById('cs-key-hint');
+  var mf=document.getElementById('cs-model-field');
+  var ms=document.getElementById('cs-model');
+  if(hint)hint.innerHTML=_HINTS[pv]||'';
+  if(!pv){if(mf)mf.style.display='none';return;}
+  if(mf)mf.style.display='';
+  if(ms){
+    ms.innerHTML='';
+    (_MODELS[pv]||[]).forEach(function(m){
+      var o=document.createElement('option');
+      o.value=m.v; o.textContent=m.l;
+      ms.appendChild(o);
+    });
+  }
 };
 
 window.catSaveSettings=async function(){
-  var p=document.getElementById('cs-provider').value,k=document.getElementById('cs-apikey').value.trim(),m=document.getElementById('cs-model').value,st=document.getElementById('cs-status');
-  if(!p||!k){st.textContent='Please select a provider and enter your API key.';st.style.color='#ff7777';return;}
-  st.textContent='Saving...';st.style.color='rgba(255,255,255,.4)';
+  var p=document.getElementById('cs-provider').value;
+  var k=document.getElementById('cs-apikey').value.trim();
+  var m=document.getElementById('cs-model')?document.getElementById('cs-model').value:'';
+  var st=document.getElementById('cs-status');
+  if(!p||!k){if(st){st.textContent='Please select a provider and enter your API key.';st.style.color='#ff7777';}return;}
+  if(st){st.textContent='Saving...';st.style.color='rgba(255,255,255,.4)';}
   _aiCfg={provider:p,apiKey:k,model:m};
   var val=JSON.stringify(_aiCfg);
+  localStorage.setItem(_AI_KEY,val);
   try{
-    if(typeof sbQuery==='function'){var existing=await sbQuery('settings','key=eq.'+AI_SETTINGS_KEY+'&select=key');if(existing&&existing.length){await sbUpdate('settings','key',AI_SETTINGS_KEY,{value:val});}else{await sbInsert('settings',{key:AI_SETTINGS_KEY,value:val});}}
-    localStorage.setItem(AI_SETTINGS_KEY,val);
-    st.textContent='Saved! Orange Cat is now powered by '+p+'.';st.style.color='#4ade80';
-    updateNoAiBanner();setTimeout(catCloseSettings,1800);
-  }catch(e){localStorage.setItem(AI_SETTINGS_KEY,val);st.textContent='Saved locally.';st.style.color='#4ade80';updateNoAiBanner();setTimeout(catCloseSettings,1800);}
+    if(typeof sbQuery==='function'&&typeof sbInsert==='function'){
+      var ex=await sbQuery('settings','key=eq.'+_AI_KEY+'&select=key');
+      if(ex&&ex.length){await sbUpdate('settings','key',_AI_KEY,{value:val});}
+      else{await sbInsert('settings',{key:_AI_KEY,value:val});}
+    }
+  }catch(e){}
+  if(st){st.textContent='Saved! Cat is now using '+p+'.';st.style.color='#4ade80';}
+  updateNoAiBanner();
+  setTimeout(window.catCloseSettings,1800);
 };
 
 window.catTestAI=async function(){
-  var p=document.getElementById('cs-provider').value,k=document.getElementById('cs-apikey').value.trim(),m=document.getElementById('cs-model').value,st=document.getElementById('cs-status');
-  if(!p||!k){st.textContent='Fill in provider and API key first.';st.style.color='#ff7777';return;}
-  st.textContent='Testing...';st.style.color='rgba(255,255,255,.4)';
-  try{var reply=await callAI(p,k,m,'Say exactly: Meow! Connection works Boss!',false);st.textContent='Connected: '+reply.slice(0,60);st.style.color='#4ade80';}
-  catch(e){st.textContent='Error: '+e.message;st.style.color='#ff7777';}
+  var p=document.getElementById('cs-provider').value;
+  var k=document.getElementById('cs-apikey').value.trim();
+  var m=document.getElementById('cs-model')?document.getElementById('cs-model').value:'';
+  var st=document.getElementById('cs-status');
+  if(!p||!k){if(st){st.textContent='Fill provider and API key first.';st.style.color='#ff7777';}return;}
+  if(st){st.textContent='Testing...';st.style.color='rgba(255,255,255,.4)';}
+  try{
+    var r=await callAI(p,k,m,'Reply with exactly: Connection works!',false);
+    if(st){st.textContent='Connected: '+r.slice(0,60);st.style.color='#4ade80';}
+  }catch(e){
+    if(st){st.textContent='Error: '+e.message;st.style.color='#ff7777';}
+  }
 };
 
-// ════════════════════════════════════════════════
-//  AI CALL ENGINE
-// ════════════════════════════════════════════════
-var CAT_SYSTEM='You are Orange Cat, a witty K7 Security support assistant. Always call users "Boss". Use cat emojis. Keep replies concise. K7 fixes: Error 12029/12007 -> K7->Updates->Configure Updates->remove proxy->Apply->OK. Activation offline -> K7 website Request Code. Clean install -> K7 Removal Tool. High CPU -> exclude scan folders. After 5+ questions be playfully tired. When solved say "Done Boss!"';
 
 async function callAI(provider,apiKey,model,userMsg,useHistory){
-  // Pollinations — free, no key needed, works from browser
-  if(provider==='pollinations'||!provider){
+  // OpenRouter — default free provider
+  if(provider==='openrouter'||provider==='pollinations'||!provider){
     var history=useHistory?catHist.slice(-8):[];
     var msgs=[{role:'system',content:CAT_SYSTEM}];
     history.forEach(function(h){msgs.push({role:h.role,content:h.content});});
     msgs.push({role:'user',content:userMsg});
-    // Use GET endpoint as fallback if POST fails
-    try {
-      var res=await fetch('https://text.pollinations.ai/openai',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'openai',messages:msgs,private:true})
-      });
-      if(res.ok){
-        var txt=await res.text();
-        // Response may be plain text or JSON
-        try{ var data=JSON.parse(txt); return data.choices?data.choices[0].message.content:txt; }
-        catch(e){ return txt; }
-      }
-    } catch(e2){}
-    // Fallback: GET endpoint with encoded prompt
-    var prompt=encodeURIComponent(CAT_SYSTEM.slice(0,200)+' User asks: '+userMsg);
-    var res2=await fetch('https://text.pollinations.ai/'+prompt+'?model=openai&private=true');
-    if(!res2.ok)throw new Error('Pollinations unavailable ('+res2.status+'). Please ask admin to configure an AI provider in Settings.');
-    return await res2.text();
+    var orKey=apiKey||CAT_OPENROUTER_KEY;
+    var res=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+orKey,
+        'HTTP-Referer':'https://k7teamcore.app',
+        'X-Title':'K7 Orange Cat'
+      },
+      body:JSON.stringify({
+        model:'openrouter/auto',
+        messages:msgs,
+        max_tokens:800,
+        temperature:0.8
+      })
+    });
+    if(!res.ok){
+      var err=await res.json();
+      throw new Error((err.error&&err.error.message)||'OpenRouter error '+res.status);
+    }
+    var data=await res.json();
+    return data.choices[0].message.content;
   }
   var history=useHistory?catHist.slice(-12):[];
   if(provider==='gemini'){
@@ -11652,9 +11735,9 @@ async function catAskAI(msg){
     }
 
     // Use Pollinations as free default fallback if no AI configured
-    var useProvider=_aiCfg&&_aiCfg.provider?_aiCfg.provider:'pollinations';
-    var useKey=_aiCfg&&_aiCfg.apiKey?_aiCfg.apiKey:'';
-    var useModel=_aiCfg&&_aiCfg.model?_aiCfg.model:'openai';
+    var useProvider=_aiCfg&&_aiCfg.provider?_aiCfg.provider:'openrouter';
+    var useKey=_aiCfg&&_aiCfg.apiKey?_aiCfg.apiKey:CAT_OPENROUTER_KEY;
+    var useModel=_aiCfg&&_aiCfg.model?_aiCfg.model:'openrouter/auto';
 
     // Build message with session context
     var contextNote=memBuildContext();
