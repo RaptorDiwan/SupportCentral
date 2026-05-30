@@ -4664,11 +4664,60 @@ function tbBreakToggle(e){
 function tbBreakPick(type){
   // Close the dropdown
   var menu=document.getElementById('tb-break-menu');
-  var btn=document.getElementById('tb-break-btn');
+  var mainBtn=document.getElementById('tb-break-btn');
   if(menu)menu.classList.remove('open');
-  if(btn)btn.classList.remove('open');
-  // Call the real break toggle
-  toggleBreak(type);
+  if(mainBtn)mainBtn.classList.remove('open');
+
+  // Check if already active — end the break
+  var state=_breakState[type];
+  if(state&&state.active){
+    // End break — call real toggle
+    toggleBreak(type);
+    // Update topbar UI
+    var tbmBtn=document.getElementById('tbm-'+type);
+    var tbmTimer=document.getElementById('tbmt-'+type);
+    if(tbmBtn){tbmBtn.classList.remove('active','over');tbmBtn.classList.add('done');}
+    if(tbmTimer)tbmTimer.style.display='none';
+    if(mainBtn){mainBtn.classList.remove('has-active');mainBtn.innerHTML='☕ Break <span class="tb-break-arrow">▼</span>';}
+    return;
+  }
+
+  // Check if another break is active
+  for(var t in _breakState){
+    if(_breakState[t]&&_breakState[t].active){
+      alert('Please end your '+BREAK_LABELS[t]+' break first.');
+      return;
+    }
+  }
+
+  // Start break
+  var startTime=new Date().toISOString();
+  _breakState[type]={active:true,start:startTime,done:false};
+  try{localStorage.setItem('tc_break_'+currentUser.id+'_'+type,JSON.stringify({start:startTime,date:todayStr()}));}catch(e){}
+
+  // Supabase insert
+  sbInsert('breaks',{user_id:currentUser.id,user_name:currentUser.name,date:todayStr(),break_type:type,start_time:startTime,over_limit:false,over_by_seconds:0})
+    .catch(function(e){console.warn('Break insert failed:',e);});
+
+  // Update topbar button
+  var tbmBtn=document.getElementById('tbm-'+type);
+  var tbmTimer=document.getElementById('tbmt-'+type);
+  if(tbmBtn){tbmBtn.classList.add('active');}
+  if(tbmTimer){tbmTimer.style.display='inline';tbmTimer.textContent='00:00';}
+  if(mainBtn){mainBtn.classList.add('has-active');mainBtn.innerHTML='🟠 On Break <span class="tb-break-arrow">▼</span>';}
+
+  // Start timer on topbar
+  _breakState[type].interval=setInterval(function(){
+    if(!_breakState[type]||!_breakState[type].active)return;
+    var elapsed=Math.floor((Date.now()-new Date(_breakState[type].start).getTime())/1000);
+    var limit=BREAK_LIMITS[type]*60;
+    if(tbmTimer)tbmTimer.textContent=fmtSec(elapsed);
+    if(elapsed>limit){
+      if(tbmTimer)tbmTimer.classList.add('warning');
+      if(tbmBtn)tbmBtn.classList.add('over');
+      if(mainBtn)mainBtn.classList.add('over');
+    }
+  },1000);
 }
 var _todayAttendance = null;
 var _loginClockInterval = null;
@@ -4884,6 +4933,13 @@ async function restoreBreakState(){
       if(openRow){
         // Active break — restore timer from real start time
         console.log('[restoreBreakState] Restoring active break:', type, 'start:', openRow.start_time);
+        // Update topbar UI
+        var tbmBtn2=document.getElementById('tbm-'+type);
+        var tbmTimer2=document.getElementById('tbmt-'+type);
+        var mainBtn2=document.getElementById('tb-break-btn');
+        if(tbmBtn2)tbmBtn2.classList.add('active');
+        if(tbmTimer2){tbmTimer2.style.display='inline';tbmTimer2.textContent='00:00';}
+        if(mainBtn2){mainBtn2.classList.add('has-active');mainBtn2.innerHTML='🟠 On Break <span class="tb-break-arrow">▼</span>';}
         var startTime = openRow.start_time;
         _breakState[type] = { active: true, start: startTime, done: false };
 
