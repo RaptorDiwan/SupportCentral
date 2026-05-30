@@ -4386,7 +4386,7 @@ function loadMyShift(rows){
 // ── ROSTER MULTI-MONTH CACHE ──
 // Key = URL, Value = { rows, timestamp }
 window._rosterDataCache = {};
-var ROSTER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+var ROSTER_CACHE_TTL = 1 * 60 * 1000; // 1 minute — keep fresh
 
 function _rosterShowSpinner(){
   var wrap = document.getElementById('roster-table-wrap');
@@ -4465,12 +4465,8 @@ async function loadRosterSummary(){
       }
     }catch(e2){}
     var now = Date.now();
-    var cached = window._rosterDataCache[rosterUrl];
-    if(cached && (now - cached.timestamp) < ROSTER_CACHE_TTL){
-      _processRosterRows(cached.rows);
-      return;
-    }
-    var r=await fetch(rosterUrl+'&cacheBust='+now);
+    // Always fetch fresh for dashboard summary — bypass in-memory cache
+    var r=await fetch(rosterUrl+'&cacheBust='+now+'&t='+Math.random());
     if(!r.ok)throw new Error('fail');
     var rows=parseCsv(await r.text());
     window._rosterDataCache[rosterUrl]={rows:rows,timestamp:now};
