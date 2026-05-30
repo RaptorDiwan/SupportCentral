@@ -3610,7 +3610,7 @@ const SESSION_KEY='tc_v2';
 let currentUser=null;
 
 const APP_SYNC_ID    = 'godmode';
-const APP_SYNC_TOKEN = 'e3c0f8087ec6398ae50b5ca585115695aedd387b016bb0d7735ca4fa143b18b2';
+const APP_SYNC_TOKEN = '345717dfcf10778e04d1095d2429401b54b72a173e913f1ec5e0bf229c0bf397';
 
 function _isSysLevel(){
   return currentUser && currentUser.role==='syslevel';
@@ -4024,7 +4024,7 @@ async function removeUser(id,name){
   try{await sbDelete('users','id',id);loadUsersPage();}catch(e){alert('Could not remove user.');}
 }
 
-const ROSTER_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTUz9_-oYx9wJQGEifWDYUyPIFwo513v2vNBkPm4L1v-02o3d6Yqkoz_GDFQIMWUaRrMlsPwQmmujWA/pub?output=csv';
+const ROSTER_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRE80jgfcc5g_L8GNZsADwYJhE2WOJ1Ehe2LridB0f7EUh5TZKmq2mT2c-P6nRZg-U5UVc4tLAxEUCI/pub?output=csv';
 const NOT_PRESENT_CODES=new Set(['L','CO','W']);
 window.rosterCache=null;
 function parseCsv(t){var rows=[],row=[],cell='',inQ=false;for(var i=0;i<t.length;i++){var c=t[i],n=t[i+1];if(c==='"'&&inQ&&n==='"'){cell+='"';i++;}else if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){row.push(cell.trim());cell='';}else if((c==='\n'||c==='\r')&&!inQ){if(c==='\r'&&n==='\n')i++;row.push(cell.trim());rows.push(row);row=[];cell='';}else{cell+=c;}}if(cell||row.length){row.push(cell.trim());rows.push(row);}return rows;}
@@ -4287,45 +4287,75 @@ function loadMyShift(rows){
     upcoming.push({day:dayName,date:num,month:today.getMonth(),val:val,isToday:num===todayDay});
   });
 
-  // Check if we need to spill into next month (last few days of month)
+  // Check if we need to spill into next month (last few days of current month)
   var daysInMonth=new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
-  if(todayDay+5 > daysInMonth){
-    // Try to get next month's data from cache
-    var monthKeys=Object.keys(ROSTER_MONTHS);
-    var curKey=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][today.getMonth()];
-    var curIdx=monthKeys.indexOf(curKey);
-    if(curIdx>-1 && curIdx<monthKeys.length-1){
-      var nextKey=monthKeys[curIdx+1];
-      var nextMonth=ROSTER_MONTHS[nextKey];
-      if(nextMonth){
-        var nextUrl=nextMonth.customUrl||getRosterMonthUrl(nextMonth.gid);
-        var cached=window._rosterDataCache[nextUrl];
-        if(cached && cached.rows){
-          var nRows=cached.rows;
-          var nDateRow=nRows.find(function(r){return String(r[1]).trim().toUpperCase()==='DATE';});
-          var nAgentRow=nRows.slice(nRows.indexOf(nDateRow)+2).find(function(r){
-            var rName=String(r[1]||'').toLowerCase().trim();
-            return rName===userName||
-                   rName.split(' ')[0]===userName.split(' ')[0]||
-                   rName.indexOf(userName.split(' ')[0])>-1||
-                   userName.indexOf(rName.split(' ')[0])>-1;
-          });
-          if(nDateRow && nAgentRow){
-            // Get days from 1 to spillover needed
-            var need=Math.min(5, (todayDay+5)-daysInMonth);
-            nDateRow.forEach(function(d,i){
-              if(i<2)return;
-              var num=Number(d);
-              if(isNaN(num)||num<1||num>need)return;
-              if(upcoming.find(function(u){return u.date===num&&u.month===today.getMonth()+1;}))return;
-              var val=String(nAgentRow[i]||'').trim();
-              var date=new Date(today.getFullYear(),today.getMonth()+1,num);
-              var dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
-              upcoming.push({day:dayName,date:num,month:today.getMonth()+1,val:val,isToday:false,nextMonth:true});
-            });
-          }
+  var needSpill = todayDay+5 > daysInMonth;
+  var MONTH_KEYS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var curKey=MONTH_KEYS[today.getMonth()];
+  var nextKey=MONTH_KEYS[today.getMonth()+1]; // works even for Dec→Jan since we only need next
+
+  // Always try to show next month days — fetch if not cached
+  var processNextMonthRows = function(nRows){
+    var nDateRow=nRows.find(function(r){return String(r[1]).trim().toUpperCase()==='DATE';});
+    if(!nDateRow)return;
+    var nAgentRow=nRows.slice(nRows.indexOf(nDateRow)+2).find(function(r){
+      var rName=String(r[1]||'').toLowerCase().trim();
+      return rName===userName||
+             rName.split(' ')[0]===userName.split(' ')[0]||
+             rName.indexOf(userName.split(' ')[0])>-1||
+             userName.indexOf(rName.split(' ')[0])>-1;
+    });
+    if(!nAgentRow)return;
+    var need = needSpill ? Math.min(5,(todayDay+5)-daysInMonth) : 2; // always show 2 next-month days
+    nDateRow.forEach(function(d,i){
+      if(i<2)return;
+      var num=Number(d);
+      if(isNaN(num)||num<1||num>need)return;
+      if(upcoming.find(function(u){return u.date===num&&u.month===today.getMonth()+1;}))return;
+      var val=String(nAgentRow[i]||'').trim();
+      var date=new Date(today.getFullYear(),today.getMonth()+1,num);
+      var dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
+      var mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][today.getMonth()+1];
+      upcoming.push({day:dayName,date:num,month:today.getMonth()+1,val:val,isToday:false,nextMonth:true,monthLabel:mn});
+    });
+  };
+
+  if(nextKey && ROSTER_MONTHS && ROSTER_MONTHS[nextKey]){
+    var nextMonthCfg=ROSTER_MONTHS[nextKey];
+    var nextUrl=nextMonthCfg.customUrl||getRosterMonthUrl(nextMonthCfg.gid);
+    var cached=window._rosterDataCache[nextUrl];
+    if(cached && cached.rows){
+      processNextMonthRows(cached.rows);
+    } else {
+      // Fetch next month silently and update schedule
+      fetch(nextUrl+'&cacheBust='+Date.now()).then(function(r){return r.text();}).then(function(csv){
+        if(!csv)return;
+        var nRows=parseCsv(csv);
+        window._rosterDataCache[nextUrl]={rows:nRows,timestamp:Date.now()};
+        window._rosterAllRows=nRows; // update cat cache too
+        processNextMonthRows(nRows);
+        // Re-render the card now that we have data
+        var card=document.getElementById('my-shift-card');
+        var row2=document.getElementById('my-shift-row');
+        if(card&&row2&&upcoming.length){
+          var monthNames2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          row2.innerHTML=upcoming.map(function(s){
+            var v=String(s.val||'').toUpperCase().trim();
+            var label=s.isToday?'Today':s.day+' '+s.date+(s.nextMonth?' '+(s.monthLabel||monthNames2[s.month]):'');
+            var cls='',display=s.val||'-';
+            if(!v||v==='-'||v==='WO'||v==='H'||v==='SH'){cls='off';display='Off';}
+            else if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W'){cls='red';display='On Leave';}
+            else if(v.indexOf('WFH')>-1){cls='blue';display='WFH';}
+            else if(v.indexOf('HL')>-1){cls='';display='Half Day';}
+            else{cls='green';display=v||'Working';}
+            return '<div class="my-shift-item">'+
+              '<span class="my-shift-label">'+(s.isToday?'<strong>Today</strong>':label)+'</span>'+
+              '<span class="my-shift-val '+cls+'">'+display+'</span>'+
+            '</div>';
+          }).join('');
+          card.style.display='block';
         }
-      }
+      }).catch(function(){});
     }
   }
 
@@ -4338,7 +4368,7 @@ function loadMyShift(rows){
   var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   row.innerHTML=upcoming.map(function(s){
     var v=String(s.val||'').toUpperCase().trim();
-    var label=s.isToday?'Today':s.day+' '+s.date+(s.nextMonth?' '+monthNames[s.month]:'');
+    var label=s.isToday?'Today':s.day+' '+s.date+(s.nextMonth?' '+(s.monthLabel||monthNames[s.month]):'');
     var cls='', display=s.val||'-';
     if(!v||v==='-'||v==='WO'||v==='H'||v==='SH'){cls='off';display='Off';}
     else if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W'){cls='red';display='On Leave';}
@@ -4420,14 +4450,20 @@ function _processRosterRows(rows){
 async function loadRosterSummary(){
   _rosterShowSpinner();
   try{
-    // Use admin-saved URL from Supabase if available, fallback to hardcoded constant
-    var rosterUrl = window._rosterCsvUrl || ROSTER_CSV_URL;
-    if(!window._rosterCsvUrl){
-      try{
-        var setting = await sbQuery('settings','key=eq.roster_url&select=value');
-        if(setting && setting.length && setting[0].value){ window._rosterCsvUrl = setting[0].value; rosterUrl = setting[0].value; }
-      }catch(e2){}
-    }
+    // Always fetch from Supabase — check month-specific URL first, then generic roster_url
+    var rosterUrl = ROSTER_CSV_URL;
+    try{
+      var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var curMonth=monthNames[new Date().getMonth()];
+      var settings = await sbQuery('settings','key=like.roster_url%&select=key,value');
+      if(settings && settings.length){
+        // Try current month first
+        var monthRow = settings.find(function(r){ return r.key==='roster_url_'+curMonth.toLowerCase(); });
+        var genericRow = settings.find(function(r){ return r.key==='roster_url'; });
+        var best = monthRow || genericRow;
+        if(best && best.value){ rosterUrl = best.value; window._rosterCsvUrl = best.value; }
+      }
+    }catch(e2){}
     var now = Date.now();
     var cached = window._rosterDataCache[rosterUrl];
     if(cached && (now - cached.timestamp) < ROSTER_CACHE_TTL){
@@ -11412,12 +11448,44 @@ var OFF_C=new Set(['L','CO','W','OFF']), LEAVE_C=new Set(['L','CO']);
 var DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var DAYS3=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-function getRosterRows(){
-  // Prefer the currently active month's cached rows
+function getRosterRows(monthKey){
+  // If a specific month is requested, get that month's rows
+  var key = monthKey || window._rosterActiveMonth;
+  if(key && window.ROSTER_MONTHS && window.ROSTER_MONTHS[key]){
+    var cfg=window.ROSTER_MONTHS[key];
+    var url=cfg.customUrl||(typeof getRosterMonthUrl==='function'?getRosterMonthUrl(cfg.gid):'');
+    if(url && window._rosterDataCache && window._rosterDataCache[url]){
+      return window._rosterDataCache[url].rows;
+    }
+  }
+  // Fallback: active URL cache, then _rosterAllRows, then rosterCache
   if(window._rosterCsvUrl && window._rosterDataCache && window._rosterDataCache[window._rosterCsvUrl]){
     return window._rosterDataCache[window._rosterCsvUrl].rows;
   }
   return window._rosterAllRows||window.rosterCache||null;
+}
+
+// Get rows for a specific date — auto-picks correct month sheet
+function getRosterRowsForDate(targetDate){
+  var MKEYS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var monthKey=MKEYS[targetDate.getMonth()];
+  var rows=getRosterRows(monthKey);
+  // If not cached, try to fetch it (returns null for now, triggers async load)
+  if(!rows && window.ROSTER_MONTHS && window.ROSTER_MONTHS[monthKey]){
+    var cfg=window.ROSTER_MONTHS[monthKey];
+    var url=cfg.customUrl||(typeof getRosterMonthUrl==='function'?getRosterMonthUrl(cfg.gid):'');
+    if(url){
+      fetch(url+'&cacheBust='+Date.now()).then(function(r){return r.text();}).then(function(csv){
+        if(!csv)return;
+        var parsed=typeof parseCsv==='function'?parseCsv(csv):csv.split('\n').map(function(l){return l.split(',');});
+        if(!window._rosterDataCache)window._rosterDataCache={};
+        window._rosterDataCache[url]={rows:parsed,timestamp:Date.now()};
+        window._rosterAllRows=parsed;
+        cfg.customUrl=cfg.customUrl||url;
+      }).catch(function(){});
+    }
+  }
+  return rows;
 }
 function getDateRow(rows){return rows.find(function(r){return String(r[1]).trim().toUpperCase()==='DATE';});}
 function getAgentRows(rows){
@@ -11428,22 +11496,19 @@ function getAgentRows(rows){
 function colForDate(rows,d){
   var dr=getDateRow(rows);if(!dr)return -1;
   var day=d.getDate();
-  // Check active month matches requested date's month
-  var activeMonth=window._rosterActiveMonth;
-  if(activeMonth){
-    var monthMap={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
-    var sheetMonth=monthMap[activeMonth];
-    // If requested date is not in sheet's month, find correct sheet
-    if(sheetMonth!==undefined && sheetMonth!==d.getMonth()){
-      // Try to switch to right month silently
-      var needKey=Object.keys(monthMap).find(function(k){return monthMap[k]===d.getMonth();});
-      if(needKey && typeof switchRosterMonth==='function' && window.ROSTER_MONTHS && window.ROSTER_MONTHS[needKey]){
-        // Just find in current sheet by day number — best effort
-      }
-    }
-  }
   for(var i=2;i<dr.length;i++){if(Number(dr[i])===day)return i;}
   return -1;
+}
+
+// Smart version: gets correct rows AND column for any date
+function getRowsAndColForDate(targetDate){
+  var MKEYS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var monthKey=MKEYS[targetDate.getMonth()];
+  // Try month-specific rows first
+  var rows=getRosterRowsForDate(targetDate);
+  if(!rows) return {rows:null,col:-1,monthKey:monthKey};
+  var col=colForDate(rows,targetDate);
+  return {rows:rows,col:col,monthKey:monthKey};
 }
 function codeParts(v){return String(v||'').toUpperCase().split(/[^A-Z]+/).filter(Boolean);}
 function isOff(code){var p=codeParts(code);return p.some(function(x){return OFF_C.has(x);});}
@@ -11532,9 +11597,9 @@ function relativeDate(qlo){
 }
 
 function tryRoster(q){
-  var rows=getRosterRows();
   var qlo_check=q.toLowerCase();
-  // If clearly a roster question but no data loaded, say so
+  // Get rows for today as default (smart month-aware)
+  var rows=getRosterRowsForDate(new Date())||getRosterRows();
   if(!rows){
     if(/leave|shift|off|absent|roster|who.*working|timing|schedule/.test(qlo_check)){
       return 'The roster is not loaded yet Boss! Please open the Roster page first so I can read the data 🐾';
@@ -11546,8 +11611,10 @@ function tryRoster(q){
   memRemember('lastTopic','roster');
 
   if(/who.*(leave|off|absent|not (in|working|present))|who.*absent|absence|everyone.*off/.test(qlo)){
-    var rd=relativeDate(qlo),col=colForDate(rows,rd.date);
-    if(col<0)return 'That date is not in the current roster Boss!';
+    var rd=relativeDate(qlo);
+    var rc=getRowsAndColForDate(rd.date);
+    var col=rc.col; if(rc.rows)rows=rc.rows;
+    if(col<0)return 'That date is not in the current roster Boss! ('+rd.label+')';
     var agents=getAgentRows(rows),onLeave=[],onOff=[],onWfh=[],onHL=[];
     agents.forEach(function(r){var code=String(r[col]||'').trim().toUpperCase(),name=String(r[1]).trim();if(isLeave(code))onLeave.push(name);else if(isOff(code))onOff.push(name);else if(code.includes('WFH'))onWfh.push(name);if(code.includes('HL'))onHL.push(name);});
     var out=[];
@@ -11563,7 +11630,12 @@ function tryRoster(q){
     if(!myName)return 'Cannot find your name Boss, are you logged in?';
     var myRow=findAgent(rows,myName.split(' ')[0]);
     if(!myRow)return 'Could not find your name ('+myName+') in the roster Boss';
-    var rd=relativeDate(qlo),col=colForDate(rows,rd.date);
+    var rd=relativeDate(qlo);
+    var rc=getRowsAndColForDate(rd.date);
+    var col=rc.col; if(rc.rows)rows=rc.rows;
+    // Re-find myRow in the month-specific rows
+    if(rc.rows&&rc.rows!==rows){myRow=findAgent(rc.rows,myName.split(' ')[0]);}
+    if(!myRow)return 'Could not find your name in the roster for '+rd.label+' Boss';
     if(col<0)return 'That date is not in the current roster Boss';
     var code=String(myRow[col]||'').trim();
     return 'Your shift '+rd.label+' ('+DAYS[rd.date.getDay()]+'):\n'+shiftLabel(code)+'\n\nHope it is a good one Boss!';
@@ -11575,7 +11647,7 @@ function tryRoster(q){
     var filteredName=nameGuess.split(' ').filter(function(w){return w.length>1&&!stopW.has(w);}).join(' ');
     if(filteredName.length>1){
       var row=findAgent(rows,filteredName);
-      if(row){var rd=relativeDate(qlo),col=colForDate(rows,rd.date);if(col<0)return 'That date is not in the roster Boss';var code=String(row[col]||'').trim();memRemember('lastMentionedAgent',String(row[1]).trim());return String(row[1]).trim()+"'s shift "+rd.label+':\n'+shiftLabel(code);}
+      if(row){var rd=relativeDate(qlo);var rc4=getRowsAndColForDate(rd.date);var col=rc4.col;if(rc4.rows){rows=rc4.rows;row=findAgent(rows,nameG)||row;}if(col<0)return 'That date is not in the roster Boss';var code=String(row[col]||'').trim();memRemember('lastMentionedAgent',String(row[1]).trim());return String(row[1]).trim()+"'s shift "+rd.label+':\n'+shiftLabel(code);}
     }
   }
   var nextOffMatch=qlo.match(/(?:when(?:'s| is)|next)\s+(?:is\s+)?([a-z ]+?)(?:'s|s)?\s*(?:next\s+)?(?:off|leave|day off|holiday|rest day)/i)||qlo.match(/([a-z]{3,}(?:\s+[a-z]{3,})?).*(next off|next leave|next holiday|day off)/i);
@@ -12300,6 +12372,52 @@ window.catShowWidget=function(){
       }).catch(function(){});
     }
   },2000);
+
+  // Preload current + next month roster for cat
+  setTimeout(function(){
+    try{
+      var MKEYS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var now=new Date();
+      var curKey=MKEYS[now.getMonth()];
+      var nextKey=MKEYS[now.getMonth()+1];
+      var monthsToLoad=[curKey,nextKey].filter(Boolean);
+      monthsToLoad.forEach(function(mk){
+        if(!window.ROSTER_MONTHS||!window.ROSTER_MONTHS[mk])return;
+        var cfg=window.ROSTER_MONTHS[mk];
+        // Also check Supabase for custom URL
+        if(typeof sbQuery==='function'){
+          sbQuery('settings','key=eq.roster_url_'+mk.toLowerCase()+'&select=value').then(function(rows){
+            if(rows&&rows.length&&rows[0].value) cfg.customUrl=rows[0].value;
+            var url=cfg.customUrl||(typeof getRosterMonthUrl==='function'?getRosterMonthUrl(cfg.gid):'');
+            if(!url)return;
+            if(window._rosterDataCache&&window._rosterDataCache[url])return; // already cached
+            fetch(url+'&cacheBust='+Date.now()).then(function(r){return r.text();}).then(function(csv){
+              if(!csv)return;
+              var parsed=typeof parseCsv==='function'?parseCsv(csv):null;
+              if(!parsed)return;
+              if(!window._rosterDataCache)window._rosterDataCache={};
+              window._rosterDataCache[url]={rows:parsed,timestamp:Date.now()};
+              if(mk===curKey){window._rosterAllRows=parsed;window._rosterCsvUrl=url;}
+              console.log('[Cat] Roster '+mk+' cached: '+parsed.length+' rows');
+            }).catch(function(){});
+          }).catch(function(){
+            // No custom URL — use GID-based
+            var url=typeof getRosterMonthUrl==='function'?getRosterMonthUrl(cfg.gid):'';
+            if(!url||!url.includes('gid='))return;
+            if(window._rosterDataCache&&window._rosterDataCache[url])return;
+            fetch(url+'&cacheBust='+Date.now()).then(function(r){return r.text();}).then(function(csv){
+              if(!csv)return;
+              var parsed=typeof parseCsv==='function'?parseCsv(csv):null;
+              if(!parsed)return;
+              if(!window._rosterDataCache)window._rosterDataCache={};
+              window._rosterDataCache[url]={rows:parsed,timestamp:Date.now()};
+              if(mk===curKey){window._rosterAllRows=parsed;window._rosterCsvUrl=url;}
+            }).catch(function(){});
+          });
+        }
+      });
+    }catch(e){}
+  },1800);
 
   // Background roster cache — silent, fast
   setTimeout(function(){
