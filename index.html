@@ -13038,6 +13038,291 @@ setState('sleep');
 })();
 </script>
 
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  REMINDERS — Apple iCloud style, inline editing
+// ═══════════════════════════════════════════════════════
+var _rems = [];
+var _remTab = 'all';
+var _remBlurBlock = false;
+var _remNotifTimers = {};
+var REM_KEY = 'k7tc_rem_v2';
+
+// ── Storage ──
+function remLoad(){
+  try{ var s=localStorage.getItem(REM_KEY); _rems=s?JSON.parse(s):[]; }catch(e){ _rems=[]; }
+}
+function remSave(){
+  try{ localStorage.setItem(REM_KEY,JSON.stringify(_rems)); }catch(e){}
+  if(typeof sbInsert==='function'&&typeof currentUser!=='undefined'&&currentUser){
+    var key='rem_'+currentUser.id;
+    var val=JSON.stringify(_rems);
+    if(typeof sbQuery==='function'){
+      sbQuery('settings','key=eq.'+key+'&select=key').then(function(ex){
+        if(ex&&ex.length){ if(typeof sbUpdate==='function')sbUpdate('settings','key',key,{value:val}); }
+        else if(typeof sbInsert==='function'){ sbInsert('settings',{key:key,value:val}); }
+      }).catch(function(){});
+    }
+  }
+}
+async function remLoadCloud(){
+  if(typeof sbQuery!=='function'||typeof currentUser==='undefined'||!currentUser)return;
+  try{
+    var rows=await sbQuery('settings','key=eq.rem_'+currentUser.id+'&select=value');
+    if(rows&&rows.length&&rows[0].value){
+      var c=JSON.parse(rows[0].value);
+      if(c&&Array.isArray(c)&&c.length>=_rems.length){ _rems=c; remSave(); }
+    }
+  }catch(e){}
+}
+
+// ── Init ──
+function remInit(){
+  remLoad();
+  remLoadCloud().then(function(){ remRender(); remScheduleAll(); });
+  remRender();
+}
+// Hook showPage
+(function hookRem(){
+  if(typeof showPage==='function'){
+    var _sp=showPage;
+    showPage=function(id,el){
+      _sp(id,el);
+      if(id==='reminders')setTimeout(remInit,80);
+    };
+  } else { setTimeout(hookRem,300); }
+})();
+
+// ── Tabs ──
+function remSetTab(tab,el){
+  _remTab=tab;
+  document.querySelectorAll('.rem-sidebar-item').forEach(function(p){p.classList.remove('rem-list-active');});
+  if(el)el.classList.add('rem-list-active');
+  var titles={all:'Reminders',today:'Today',scheduled:'Scheduled',done:'Completed'};
+  var t=document.getElementById('rem-main-title');
+  if(t)t.textContent=titles[tab]||'Reminders';
+  remRender();
+}
+
+// ── Render ──
+function remRender(){
+  var now=new Date();
+  var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var active=_rems.filter(function(r){return!r.done;});
+  var todayR=_rems.filter(function(r){return!r.done&&r.date&&r.date.slice(0,10)===todayStr;});
+  var sched =_rems.filter(function(r){return!r.done&&r.date;});
+  var done  =_rems.filter(function(r){return r.done;});
+
+  function sc(id,n){var e=document.getElementById(id);if(e)e.textContent=n||'';}
+  sc('rem-all-count',   active.length||'');
+  sc('rem-today-count', todayR.length||'');
+  sc('rem-sched-count', sched.length||'');
+  sc('rem-done-count',  done.length||'');
+
+  // Badge on sidebar
+  var badge=document.getElementById('rem-badge');
+  if(badge){badge.textContent=active.length;badge.style.display=active.length>0?'':'none';}
+
+  var show = _remTab==='all'?active:_remTab==='today'?todayR:_remTab==='scheduled'?sched:done;
+  var ul=document.getElementById('rem-ul');
+  var empty=document.getElementById('rem-empty');
+  if(!ul)return;
+  ul.innerHTML='';
+
+  if(show.length===0){
+    if(empty)empty.style.display='block';
+  } else {
+    if(empty)empty.style.display='none';
+    var PRI={none:'',low:'<span class="rem-pri-badge rem-pri-low">Low</span>',medium:'<span class="rem-pri-badge rem-pri-medium">Medium</span>',high:'<span class="rem-pri-badge rem-pri-high">High</span>'};
+    show.forEach(function(r){
+      var li=document.createElement('li');
+      li.className='rem-item'+(r.done?' done':'');
+      li.dataset.id=r.id;
+      var meta='';
+      if(r.date){
+        var dt=new Date(r.date);
+        var overdue=!r.done&&dt<now;
+        var ds=dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+        if(r.time)ds+=' '+r.time;
+        meta+='<span class="'+(overdue?'rem-overdue':'')+'">'+(overdue?'⚠ ':'')+ds+'</span>';
+      }
+      if(r.priority&&r.priority!=='none') meta+=PRI[r.priority]||'';
+      var chk=document.createElement('div'); chk.className='rem-check'; chk.onclick=function(){remToggle(r.id);};
+      var bodyDiv=document.createElement('div'); bodyDiv.className='rem-item-body';
+      var textDiv=document.createElement('div'); textDiv.className='rem-item-text'; textDiv.contentEditable='true';
+      textDiv.textContent=r.text;
+      textDiv.addEventListener('blur',function(){remEditSave(this,r.id);});
+      textDiv.addEventListener('keydown',function(e){remEditKey(e,r.id);});
+      bodyDiv.appendChild(textDiv);
+      if(meta){var metaDiv=document.createElement('div');metaDiv.className='rem-item-meta';metaDiv.innerHTML=meta;bodyDiv.appendChild(metaDiv);}
+      var delBtn=document.createElement('button'); delBtn.className='rem-item-del'; delBtn.textContent='🗑'; delBtn.onclick=function(){remDel(r.id);};
+      li.appendChild(chk); li.appendChild(bodyDiv); li.appendChild(delBtn);
+      ul.appendChild(li);
+    });
+  }
+
+  // Show/hide detail bar based on input focus
+  var inp=document.getElementById('rem-inline-input');
+  if(inp&&document.activeElement===inp){
+    var db=document.getElementById('rem-detail-bar');
+    if(db)db.style.display='flex';
+  }
+}
+
+function escR(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Toggle done ──
+function remToggle(id){
+  var r=_rems.find(function(x){return x.id===id;});
+  if(!r)return;
+  r.done=!r.done;
+  r.completedAt=r.done?new Date().toISOString():null;
+  remSave();
+  // Animate complete
+  var li=document.querySelector('.rem-item[data-id="'+id+'"]');
+  if(li){
+    li.classList.toggle('done',r.done);
+    if(r.done) setTimeout(remRender,350); else remRender();
+  }
+}
+
+// ── Delete ──
+function remDel(id){
+  _rems=_rems.filter(function(r){return r.id!==id;});
+  remSave(); remRender();
+}
+
+// ── Inline editing of existing items ──
+function remEditSave(el,id){
+  var text=(el.textContent||'').trim();
+  var r=_rems.find(function(x){return x.id===id;});
+  if(!r)return;
+  if(!text){ remDel(id); return; }
+  r.text=text;
+  remSave();
+}
+function remEditKey(e,id){
+  if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); remAddNew(); }
+  if(e.key==='Backspace'&&(e.target.textContent||'')===''){
+    e.preventDefault(); remDel(id);
+  }
+}
+
+// ── New inline input ──
+function remShowDetailBar(){
+  var db=document.getElementById('rem-detail-bar');
+  if(db)db.style.display='flex';
+  var di=document.getElementById('rem-date-input');
+  if(di&&!di.value){
+    var nd=new Date();
+    di.value=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
+  }
+}
+
+function remAddNew(){
+  var inp=document.getElementById('rem-inline-input');
+  var db=document.getElementById('rem-detail-bar');
+  if(!inp)return;
+  if(db)db.style.display='flex';
+  inp.focus();
+  // Set today as default date
+  var di=document.getElementById('rem-date-input');
+  if(di&&!di.value){
+    var nd=new Date();
+    di.value=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
+  }
+}
+
+function remInlineKey(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    remCommitInline();
+    // Stay focused for next entry
+    setTimeout(function(){
+      var inp=document.getElementById('rem-inline-input');
+      if(inp)inp.focus();
+    },30);
+  }
+  if(e.key==='Escape'){
+    e.target.value='';
+    var db=document.getElementById('rem-detail-bar');
+    if(db)db.style.display='none';
+    e.target.blur();
+  }
+}
+
+function remInlineBlur(){
+  // Small delay to allow clicking detail bar without losing content
+  setTimeout(function(){
+    var inp=document.getElementById('rem-inline-input');
+    if(inp&&inp.value.trim()) remCommitInline();
+    var db=document.getElementById('rem-detail-bar');
+    if(db&&document.activeElement&&!db.contains(document.activeElement)) db.style.display='none';
+  },200);
+}
+
+function remCommitInline(){
+  var inp=document.getElementById('rem-inline-input');
+  var text=(inp?inp.value:'').trim();
+  if(!text)return;
+  var di=document.getElementById('rem-date-input');
+  var ti=document.getElementById('rem-time-input');
+  var pi=document.getElementById('rem-pri-select');
+  var dateVal=di&&di.value?di.value:null;
+  var timeVal=ti&&ti.value?ti.value:null;
+  var fullDate=dateVal?(dateVal+(timeVal?'T'+timeVal+':00':'')):null;
+  var rem={
+    id:'r'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    text:text, date:fullDate, time:timeVal,
+    priority:pi?pi.value:'none', done:false,
+    createdAt:new Date().toISOString()
+  };
+  _rems.unshift(rem);
+  remSave(); remRender();
+  if(inp)inp.value='';
+  // Reset detail bar inputs
+  if(di)di.value=new Date().toISOString().slice(0,10);
+  if(ti)ti.value='';
+  if(pi)pi.value='none';
+  // Schedule notification
+  remScheduleOne(rem);
+}
+
+// ── Cat can add reminders ──
+window.remAddFromCat=function(text,dateStr,timeStr,priority){
+  var fullDate=dateStr?(dateStr+(timeStr?'T'+timeStr+':00':'')):null;
+  var rem={
+    id:'r'+Date.now()+'_cat',
+    text:text, date:fullDate, time:timeStr||null,
+    priority:priority||'none', done:false,
+    createdAt:new Date().toISOString()
+  };
+  _rems.unshift(rem);
+  remSave(); remRender(); remScheduleOne(rem);
+  return rem;
+};
+
+// ── Notifications ──
+function remScheduleOne(r){
+  if(!r.date||r.done)return;
+  var dt=new Date(r.date);
+  if(isNaN(dt.getTime()))return;
+  var ms=dt.getTime()-Date.now();
+  if(ms<=0||ms>7*24*3600000)return;
+  if(_remNotifTimers[r.id])clearTimeout(_remNotifTimers[r.id]);
+  _remNotifTimers[r.id]=setTimeout(function(){
+    var n=document.createElement('div');
+    n.style.cssText='position:fixed;top:76px;right:22px;z-index:99999;background:var(--navy-card);border:1px solid rgba(239,73,60,.3);border-radius:14px;padding:.9rem 1.1rem;max-width:290px;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:remIn .3s ease;';
+    n.innerHTML='<div style="display:flex;gap:.7rem;align-items:center;"><span style="font-size:1.2rem;">🔔</span><div><div style="font-size:.8rem;font-weight:700;color:var(--text-primary);">Reminder</div><div style="font-size:.73rem;color:var(--text-muted);margin-top:2px;">'+escR(r.text)+'</div></div></div>';
+    document.body.appendChild(n);
+    setTimeout(function(){n.style.opacity='0';n.style.transition='opacity .3s';setTimeout(function(){if(n.parentNode)n.parentNode.removeChild(n);},300);},5000);
+    if(window.Notification&&Notification.permission==='granted') new Notification('K7 Reminder',{body:r.text});
+  },ms);
+}
+function remScheduleAll(){ _rems.forEach(function(r){if(!r.done)remScheduleOne(r);}); }
+if(window.Notification&&Notification.permission==='default') setTimeout(function(){Notification.requestPermission();},3000);
+</script>
 <!-- ══ GRAND OPENING OVERLAY ══ -->
 <div id="grand-overlay" style="display:none;position:fixed;inset:0;z-index:999999;pointer-events:none;">
   <canvas id="grand-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
