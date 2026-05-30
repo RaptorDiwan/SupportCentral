@@ -2324,11 +2324,11 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
     // ── EmailJS Config — paste your values here ──
-    window.EMAILJS_SERVICE_ID  = 'service_i4qp00s';   // e.g. service_xxxxxx
-    window.EMAILJS_TEMPLATE_ID = 'template_mqiwadb';  // e.g. template_xxxxxx
-    window.EMAILJS_PUBLIC_KEY  = 'aHyC0d7vVexOoEb1c';   // e.g. aBcDeFgHiJkL
+    window.EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // e.g. service_xxxxxx
+    window.EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // e.g. template_xxxxxx
+    window.EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // e.g. aBcDeFgHiJkL
     // Initialize EmailJS
-    if(window.EMAILJS_PUBLIC_KEY !== 'aHyC0d7vVexOoEb1c'){
+    if(window.EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
       emailjs.init({ publicKey: window.EMAILJS_PUBLIC_KEY });
       console.log('[EmailJS] Initialized');
     }
@@ -4634,6 +4634,42 @@ const BREAK_LABELS = { breakfast:'Breakfast', lunch:'Lunch', beverage:'Beverage'
 const BREAK_EMOJIS = { breakfast:'🍳', lunch:'🍽️', beverage:'☕', shortbreak:'🧘' };
 
 var _breakState = {}; // { type: { start, elapsed, done, interval } }
+
+// ── Topbar break button functions ──
+function tbBreakToggle(e){
+  if(e) e.stopPropagation();
+  var btn=document.getElementById('tb-break-btn');
+  var menu=document.getElementById('tb-break-menu');
+  if(!btn||!menu)return;
+  var isOpen=menu.classList.contains('open');
+  if(isOpen){
+    menu.classList.remove('open');
+    btn.classList.remove('open');
+  } else {
+    menu.classList.add('open');
+    btn.classList.add('open');
+    // Close when clicking outside
+    setTimeout(function(){
+      document.addEventListener('click',function closeTbMenu(ev){
+        var wrap=document.getElementById('tb-break-wrap');
+        if(wrap&&!wrap.contains(ev.target)){
+          menu.classList.remove('open');
+          btn.classList.remove('open');
+        }
+        document.removeEventListener('click',closeTbMenu);
+      });
+    },50);
+  }
+}
+function tbBreakPick(type){
+  // Close the dropdown
+  var menu=document.getElementById('tb-break-menu');
+  var btn=document.getElementById('tb-break-btn');
+  if(menu)menu.classList.remove('open');
+  if(btn)btn.classList.remove('open');
+  // Call the real break toggle
+  toggleBreak(type);
+}
 var _todayAttendance = null;
 var _loginClockInterval = null;
 
@@ -12912,130 +12948,6 @@ function remScheduleOne(r){
 }
 function remScheduleAll(){ _rems.forEach(function(r){if(!r.done)remScheduleOne(r);}); }
 if(window.Notification&&Notification.permission==='default') setTimeout(function(){Notification.requestPermission();},3000);
-</script>
-        try{
-          var startIdx=html.indexOf('const ARTICLES=');
-          if(startIdx>-1){
-            var arrStr=html.slice(startIdx+15,html.indexOf('
-];',startIdx)+3);
-            var arr=(new Function('return '+arrStr))();
-            if(arr&&arr.length){window._kbArticles=arr;console.log('[Cat] KB loaded: '+arr.length+' articles');}
-          }
-        }catch(e){console.warn('[Cat] KB load failed:',e.message);}
-      }).catch(function(){});
-    }
-  },2000);
-
-  // Preload current + next month roster for cat
-  setTimeout(function(){
-    try{
-      var MKEYS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      var now=new Date();
-      var curKey=MKEYS[now.getMonth()];
-      var nextKey=MKEYS[now.getMonth()+1];
-      var monthsToLoad=[curKey,nextKey].filter(Boolean);
-      monthsToLoad.forEach(function(mk){
-        if(!window.ROSTER_MONTHS||!window.ROSTER_MONTHS[mk])return;
-        var cfg=window.ROSTER_MONTHS[mk];
-        // Also check Supabase for custom URL
-        if(typeof sbQuery==='function'){
-          sbQuery('settings','key=eq.roster_url_'+mk.toLowerCase()+'&select=value').then(function(rows){
-            if(rows&&rows.length&&rows[0].value) cfg.customUrl=rows[0].value;
-            var url=cfg.customUrl||(typeof getRosterMonthUrl==='function'?getRosterMonthUrl(cfg.gid):'');
-            if(!url)return;
-            if(window._rosterDataCache&&window._rosterDataCache[url])return; // already cached
-            fetch(url+'&cacheBust='+Date.now()).then(function(r){return r.text();}).then(function(csv){
-              if(!csv)return;
-              var parsed=typeof parseCsv==='function'?parseCsv(csv):null;
-              if(!parsed)return;
-              if(!window._rosterDataCache)window._rosterDataCache={};
-              window._rosterDataCache[url]={rows:parsed,timestamp:Date.now()};
-              if(mk===curKey){window._rosterAllRows=parsed;window._rosterCsvUrl=url;}
-              console.log('[Cat] Roster '+mk+' cached: '+parsed.length+' rows');
-            }).catch(function(){});
-          }).catch(function(){
-            // No custom URL — use GID-based
-            var url=typeof getRosterMonthUrl==='function'?getRosterMonthUrl(cfg.gid):'';
-            if(!url||!url.includes('gid='))return;
-            if(window._rosterDataCache&&window._rosterDataCache[url])return;
-            fetch(url+'&cacheBust='+Date.now()).then(function(r){return r.text();}).then(function(csv){
-              if(!csv)return;
-              var parsed=typeof parseCsv==='function'?parseCsv(csv):null;
-              if(!parsed)return;
-              if(!window._rosterDataCache)window._rosterDataCache={};
-              window._rosterDataCache[url]={rows:parsed,timestamp:Date.now()};
-              if(mk===curKey){window._rosterAllRows=parsed;window._rosterCsvUrl=url;}
-            }).catch(function(){});
-          });
-        }
-      });
-    }catch(e){}
-  },1800);
-
-  // Background roster cache — silent, fast
-  setTimeout(function(){
-    try{
-      // Find and trigger the active roster URL load
-      if(typeof sbQuery==='function'&&!getRosterRows()){
-        sbQuery('settings','key=like.roster_url%&select=key,value').then(function(rows){
-          if(!rows||!rows.length)return;
-          // Find current month's URL
-          var now=new Date();
-          var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-          var mon=monthNames[now.getMonth()];
-          var urlRow=rows.find(function(r){return r.key&&r.key.includes(mon);})||rows[rows.length-1];
-          if(!urlRow||!urlRow.value)return;
-          var url=urlRow.value.trim();
-          window._rosterCsvUrl=url;
-          // Fetch and parse CSV into roster rows
-          fetch(url).then(function(r){return r.text();}).then(function(csv){
-            if(!csv)return;
-            var lines=csv.split('\n').filter(function(l){return l.trim();});
-            var parsed=lines.map(function(line){
-              var cols=[];var cur='';var inQ=false;
-              for(var i=0;i<line.length;i++){
-                if(line[i]==='"'){inQ=!inQ;}
-                else if(line[i]===','&&!inQ){cols.push(cur.trim());cur='';}
-                else{cur+=line[i];}
-              }
-              cols.push(cur.trim());
-              return cols;
-            });
-            window._rosterAllRows=parsed;
-            console.log('[Cat] Roster cached: '+parsed.length+' rows');
-          }).catch(function(){});
-        }).catch(function(){});
-      }
-    }catch(e){}
-  },1500);
-  setTimeout(function(){speak('Click me to wake up! 😸',3500);},2200);
-};
-window.catHideWidget=function(){
-  document.getElementById('catw').classList.remove('on');
-  catClose();
-  catGreeted=false;catHist=[];catQCount=0;_aiCfg=null;
-  try{localStorage.removeItem(_catHistKey);}catch(e){} // clear on logout
-  _pendingIntent=null;_reminders.forEach(clearTimeout);_reminders=[];
-  _sessionCtx={lastMentionedAgent:null,lastAction:null,lastTopic:null,agentCache:{},recentTopics:[]};
-  setState('sleep');
-};
-
-// Hover speech
-document.getElementById('cat-fab').addEventListener('mouseenter',function(){
-  if(catState==='sleep')speak('Click me to wake up! 😸',2500);
-});
-
-// Escape key — close cat panel or modals
-document.addEventListener('keydown',function(e){
-  if(e.key!=='Escape')return;
-  var modal=document.getElementById('cat-settings-modal');
-  if(modal&&modal.classList.contains('on')){modal.classList.remove('on');return;}
-  if(catOpen_){catClose();}
-});
-
-setState('sleep');
-
-})();
 </script>
 
 <!-- ══ GRAND OPENING OVERLAY ══ -->
