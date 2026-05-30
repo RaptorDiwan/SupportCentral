@@ -2320,6 +2320,19 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
   </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- EmailJS — reminder email notifications -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    // ── EmailJS Config — paste your values here ──
+    window.EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // e.g. service_xxxxxx
+    window.EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // e.g. template_xxxxxx
+    window.EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // e.g. aBcDeFgHiJkL
+    // Initialize EmailJS
+    if(window.EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
+      emailjs.init({ publicKey: window.EMAILJS_PUBLIC_KEY });
+      console.log('[EmailJS] Initialized');
+    }
+  </script>
 </head>
 <body>
 
@@ -5470,6 +5483,23 @@ function qaFmtDateTime(iso){
 }
 
 // ── QUIZ BUILDER (Admin) ──
+// Convert stored ISO time back to local HH:MM for <input type="time">
+function qaISOtoLocalTime(iso){
+  if(!iso)return'';
+  var d=new Date(iso);
+  var h=d.getHours(), m=d.getMinutes();
+  return (h<10?'0'+h:String(h))+':'+(m<10?'0'+m:String(m));
+}
+// Convert stored ISO date back to local YYYY-MM-DD for <input type="date">
+function qaISOtoLocalDate(iso){
+  if(!iso)return'';
+  var d=new Date(iso);
+  var y=d.getFullYear();
+  var mo=d.getMonth()+1;
+  var dy=d.getDate();
+  return y+'-'+(mo<10?'0'+mo:mo)+'-'+(dy<10?'0'+dy:dy);
+}
+
 function qbTypeChange(){
   var type=document.getElementById('qb-type').value;
   document.getElementById('qb-choices-wrap').style.display=type==='mcq'?'block':'none';
@@ -6252,8 +6282,8 @@ async function loadAssessmentBuilderList(){
           '<div class="qa-form-grid">'+
             '<div class="qa-field" style="grid-column:1/-1"><label>Title</label><input type="text" id="ae-title-'+a.id+'" value="'+a.title.replace(/"/g,'&quot;')+'"/></div>'+
             '<div class="qa-field"><label>Active Date</label><input type="date" id="ae-date-'+a.id+'" value="'+a.date+'"/></div>'+
-            '<div class="qa-field"><label>Opens At</label><input type="time" id="ae-open-'+a.id+'" value="'+(a.open_time?a.open_time.slice(11,16):'')+'"/></div>'+
-            '<div class="qa-field"><label>Closes At</label><input type="time" id="ae-close-'+a.id+'" value="'+(a.close_time?a.close_time.slice(11,16):'')+'"/></div>'+
+            '<div class="qa-field"><label>Opens At</label><input type="time" id="ae-open-'+a.id+'" value="'+qaISOtoLocalTime(a.open_time)+'"/></div>'+
+            '<div class="qa-field"><label>Closes At</label><input type="time" id="ae-close-'+a.id+'" value="'+qaISOtoLocalTime(a.close_time)+'"/></div>'+
             '<div class="qa-field"><label>Time Limit (min)</label><input type="number" id="ae-limit-'+a.id+'" value="'+a.time_limit_minutes+'" min="1"/></div>'+
             '<div class="qa-field"><label>Max Attempts</label><input type="number" id="ae-attempts-'+a.id+'" value="'+a.max_attempts+'" min="1" max="5"/></div>'+
           '</div>'+
@@ -12026,23 +12056,22 @@ function tryLocalChat(q){
     return 'Boss I am a cat not a clock 😾 But it is approximately '+t+' 😸 Check your taskbar!';
   }
 
-  // ── Personality Q&A ──
+  // ── Personality Q&A + Team Profiles ──
   var qa=[
+    // Cat personality
     [/are you smart|how smart are you/, 'Boss, I read the entire roster, all cases, attendance, AND quiz scores every day. I am basically your smartest employee 😎🐾 And not to forget — I am trained by Diwan Chowthry… of course I am smart.'],
     [/who.*best agent|best.*agent/, 'Whoever feeds me more fish, Boss 🐟 But seriously… look at you. You are the best.'],
-    [/who.*develop|who.*made|who.*built|who.*creat|who.*your boss|who.*boss/, 'I was developed by Diwan Chowthry to be your witty little helper, Boss! I work hard… but I nap harder 🐱'],
-    [/tell.*more.*diwan|more.*about.*diwan/, 'Ahhh my Boss 😌 Diwan Chowthry is the mastermind who built me from scratch. A calm thinker, a problem solver, and someone who believes in doing things the smart way — not the hard way. He is always improving me, teaching me new tricks, and making sure I stay sharp for you, Boss. So if I sound smart… you know who to thank 😏🐾'],
-    [/who.*diwan|diwan.*who/, 'Ahhh… my Boss 😌 Diwan Chowthry — the human who built me from scratch. Smart, calm, and slightly dangerous when debugging code 😏 If I am impressive… he is the reason.'],
+    [/who.*develop|who.*made|who.*built|who.*creat|who.*your boss/, 'I was developed by Diwan Chowthry to be your witty little helper, Boss! I work hard… but I nap harder 🐱'],
     [/diwan.*smart|is.*diwan.*smart/, 'Boss… I am literally powered by his brain 🐱 So what do you think? 😎'],
+    [/do.*you.*like.*diwan|like.*diwan/, 'Like?? 😌 Boss, I was literally created by him. Respect level = 100 🐾 Fear level = also 100 😹'],
+    [/diwan.*watching|is.*diwan.*here/, 'Boss… if something breaks, he will appear like a final boss 😼'],
     [/why.*slow|you.*slow/, 'Boss… I am not slow 😼 I am just thinking deeply… like your boss when approving leaves.'],
-    [/what.*can.*you.*do|what.*do.*you.*do|your.*capabilities|help me/, 'I can check roster, track attendance, answer queries, check quiz scores, case tracker, and send messages to the team… and emotionally support you if you get fatals or DSAT 🐱'],
+    [/what.*can.*you.*do|what.*do.*you.*do|your.*capabilities/, 'I can check roster, track attendance, answer queries, check quiz scores, case tracker, send messages to the team, and create reminders… and emotionally support you if you get fatals or DSAT 🐱'],
     [/can.*do.*my.*work|do.*my.*work/, 'I can help you do it faster, Boss… But if I do everything, what will you tell your TL? 😏'],
     [/i.*bored|so.*bored|feeling.*bored/, 'Call Diwan for table tennis and go play — he plays really well 😸'],
     [/i.*hate.*job|hate.*work/, 'Your message has been notified to Mr. Jai 😏 Haha just kidding. You hate your job? Talk to people who do not have one… then you will know the value of being here 🐾'],
     [/can.*trust.*you|do.*you.*keep.*secret/, 'With data? Yes. With secrets? Maybe 😼 With snacks? Definitely.'],
     [/what.*weakness|your.*weakness/, 'Milk 🥛 And badly written tickets 😿'],
-    [/do.*you.*like.*diwan|like.*diwan/, 'Like?? 😌 Boss, I was literally created by him. Respect level = 100 🐾 Fear level = also 100 😹'],
-    [/diwan.*watching|is.*diwan.*here/, 'Boss… if something breaks, he will appear like a final boss 😼'],
     [/system.*crash|portal.*crash|what.*crash/, 'You panic… I stay calm… Diwan fixes everything 😎'],
     [/do.*you.*get.*tired|are.*you.*tired/, 'After 10 questions, yes 😿 After 20 questions… I demand milk 🥛'],
     [/can.*ignore.*ticket|ignore.*ticket/, 'You can… But consequences are faster than my replies 😹'],
@@ -12053,12 +12082,30 @@ function tryLocalChat(q){
     [/another.*joke|more.*joke|one.*more.*joke/, 'Why did the cat sit on the computer? To keep an eye on the mouse! 😹'],
     [/open.*simulation|go.*simulation|launch.*simulation/, 'Boss I am a cat not a remote control 😹 Click Simulation in the left sidebar!'],
     [/open.*kb|go.*kb|kb.*search/, 'I wish I could teleport you Boss! Click KB Search in the sidebar 🐾'],
-    [/good.*morning|morning.*boss/, function(){ return 'Good morning Boss! 😸 Hope today is a great one! Let me know if you need anything 🐾'; }],
-    [/how are you|how r u|you ok\?|are you ok/, 'I am doing great Boss! Been napping on the roster data all day 😴 Ready to help!'],
+    [/how are you|how r u|you ok|are you ok/, 'I am doing great Boss! Been napping on the roster data all day 😴 Ready to help!'],
     [/are you real|are you ai|are you.*robot|are you.*bot/, 'I am Orange Cat — part AI, part cat, fully dedicated to you Boss 🐱 Is that not real enough?'],
     [/miss you|i miss you/, 'Meow! I was right here the whole time Boss 😹 Just sleeping on your data 😴'],
     [/you are.*best|you.*amazing|you.*great|you.*awesome/, 'Purrr Boss 🧡 You are making me blush… if cats could blush. Keep the compliments coming!'],
     [/what is your name|your name/, 'I am Orange Cat 🐾 — your K7 support buddy, data reader, and part-time comedian!'],
+
+    // -- Team Profiles --
+    [/who is diwan|tell.*about.*diwan|about diwan/, 'Ahhh my Boss 😌 A Team Leader for Support — Diwan Chowthry, the human who built me from scratch. Smart, calm, and slightly dangerous… not someone you want to disappoint 😼 Yercaud is like his second home 🌄 — hills, beaches, long car and bike drives… he is always on the move. Table tennis, surfing, skating… you name it, he plays it ⚡ If I am impressive… he is the reason. 🐾'],
+    [/who is monika|tell.*about.*monika|about monika/, 'Ahhh… Monika 😌 — our chat support star and now a proud mom 🧡 Fresh energy, quick responses… From Tiruvannamalai, rides her scooty like she is on a F1 race 😼 And short temper mode can activate anytime ⚡'],
+    [/who is saranya|tell.*about.*saranya|about saranya/, 'Ahhh… Saranya 😌 — from Athur, our silent warrior 🐾 Calm, focused… and fully locked into work mode all the time. No unnecessary talk… just pure concentration 😼 But do not underestimate her — she is a table tennis player too 🏓⚡ Quiet outside… strong inside. Respect 🧡'],
+    [/who is radhika|tell.*about.*radhika|about radhika/, 'Ahhh… Radhika 😏 — the queen of witty replies 🐾 Never too direct… always a twist in what she says 😼 Smart, sharp… and you might only understand her real meaning after a few seconds 😸 Talk carefully — she is already three steps ahead.'],
+    [/who is rahim|tell.*about.*rahim|about rahim/, 'Ahhh… Rahim 😄 — the one-man conversation machine 🐾 You ask one question… he gives you ten answers, plus bonus details 😼 Non-stop talking mode always ON… but honestly, he means well 🧡 Somewhere in all that bla bla… you will definitely get the right answer 😸 Loud? Yes. Helpful? Also yes.'],
+    [/who is faridha|tell.*about.*faridha|about faridha/, 'Ahhh… Faridha 😌 — Support manager from Tambaram 🐾 Silent on the outside… but sharp enough to catch everything 😼 Loves her photos 📸 and always tuned into cinema, politics, and the latest news 🧠 Do not mistake the calm — she is always observing. Quiet… classy… and always one step ahead 🧡'],
+    [/who is vijay|tell.*about.*vijay|about vijay/, 'Ahhh… Vijay 😊 — the kind-hearted soul of the team 🐾 Takes his time, thinks things through… but always gets there in the end 😼 Strong brother vibe, caring for everyone… and somehow always the one paying the bill ☕😄 Tea lover to the core, and likes things neat and just right. Soft, simple… and genuinely good at heart 🧡'],
+    [/who is jai|tell.*about.*jai|about jai/, 'Ahhh… Jai 😌 — our Asst. General Manager and head of support 🐾 Strict when it comes to process… no shortcuts under his watch 😼 But do not worry — he has his chill side too, just appears at the right time 😄 Discipline + balance… that is Jai 🧡'],
+    [/who is kamala|tell.*about.*kamala|about kamala/, 'Ahhh… Kamala 😄 — our QC star from Bangalore 🐾 Full chill vibes, always bringing positive energy wherever she goes ✨ Party mode ON when needed… but gets the job done perfectly 😼 Loves painting 🎨 and dancing 💃 — creativity is her thing. Friendly, fun… and always a good vibe to be around 🧡'],
+    [/who is anif|tell.*about.*anif|about anif/, 'Ahhh… Anif 😄 — straight from Mumbai, our table tennis champ 🏓🐾 Moves at his own peaceful speed… like a calm sloth 😼 But do not be fooled — super intelligent and always understands things in his own time 🧠 Always smiling, always laughing… and never gets angry 😸 Chill level? Maximum.'],
+    [/who is althaf|tell.*about.*althaf|about althaf/, 'Ahhh… Althaf 😄 — our senior all-rounder 🐾 Talking mode always ON… you will never have a quiet moment around him 😼 Dancer 💃, chef 👨‍🍳, multi-talented and full of surprises. Always cracking jokes and keeping the mood light 😸 Fun, skilled… and a solid good character 🧡'],
+    [/who is kiran|tell.*about.*kiran|about kiran/, 'Ahhh… Kiran 😼 — now working in SOC, always alert and on his toes 🐾 Unpredictable mood… you never know which version you will get 😄 Can get loud when things go off track… but it comes from wanting things done right ⚡ Strict, intense… but part of the team 🧡'],
+    [/who is anand|tell.*about.*anand|about anand/, 'Ahhh… Anand 😊 — our calm soul from Kerala 🐾 Takes his own sweet time to think things through… like a classic old-school processor 😼 A little cautious, a little careful… but always means well 🧡 Simple, kind… and genuinely a good character 🐾'],
+    [/who is farhin|tell.*about.*farhin|about farhin/, 'Ahhh… Farhin 😊 — one of our newest support members 🐾 Quiet, focused… and already picking things up super fast 😼 Always learning, always reading… like she is on a mission to master everything 📚 Sharp, dedicated… and growing fast 🧡'],
+    [/who is imran|tell.*about.*imran|about imran/, 'Arreyyyy 😄… Imran here 🐾 One of our support champs — quick, active, and always on point 😼 Silent when needed… but full energy when it comes to work ⚡ Also a solid table tennis player 🏓 — quick moves on and off the desk. Friendly, focused… and always ready with that arreyyyy vibe 😸🧡'],
+    [/who is abeed|tell.*about.*abeed|about abeed/, 'Ahhh… Abeed 😌 — one of our senior pillars 🐾 Quiet, composed… and like a father figure to everyone around 🧡 Does not talk much, just focuses on work and gets things done right 😼 But when it comes to hospitality… number one, no competition 😄 Calm, caring… and always someone you can rely on 🐾'],
+    [/who is praveen|tell.*about.*praveen|about praveen/, 'Ahhh… Praveen 😄 — our work-from-anywhere expert 🐾 Home, train, airplane, bus… does not matter — work continues 😼 Leave means just a different location to work from 😸 But one day cricket? That is a 5-day leave guaranteed 🏏😄 True workaholic, always active and always on it ⚡ Powered by tea ☕ and junk food 🍔… that is his fuel.'],
   ];
 
   for(var i=0;i<qa.length;i++){
@@ -12816,6 +12863,35 @@ window.remAddFromCat=function(text,dateStr,timeStr,priority){
   return rem;
 };
 
+// ── Email notification via EmailJS ──
+function remSendEmail(r){
+  try{
+    if(!window.EMAILJS_SERVICE_ID||window.EMAILJS_SERVICE_ID==='YOUR_SERVICE_ID')return;
+    if(!window.emailjs)return;
+    // Get agent's email from currentUser
+    var agentEmail = (typeof currentUser!=='undefined'&&currentUser)?currentUser.email:'';
+    var agentName  = (typeof currentUser!=='undefined'&&currentUser)?currentUser.name:'Boss';
+    if(!agentEmail)return;
+    var dueText='';
+    if(r.date){
+      var parts=r.date.split('T')[0].split('-');
+      var dt=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+      var DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      dueText=DAYS[dt.getDay()]+' '+dt.getDate()+' '+MONTHS[dt.getMonth()];
+      if(r.time) dueText+=' at '+r.time;
+    }
+    emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_TEMPLATE_ID, {
+      to_email:  agentEmail,
+      to_name:   agentName,
+      reminder:  r.text,
+      due_time:  dueText||'Now',
+      app_name:  'K7TeamCore'
+    }).then(function(){ console.log('[EmailJS] Reminder email sent to '+agentEmail); })
+      .catch(function(e){ console.warn('[EmailJS] Email failed:',e); });
+  }catch(e){ console.warn('[EmailJS] Error:',e); }
+}
+
 // ── Notifications ──
 function remScheduleOne(r){
   if(!r.date||r.done)return;
@@ -12825,6 +12901,7 @@ function remScheduleOne(r){
   if(ms<=0||ms>7*24*3600000)return;
   if(_remNotifTimers[r.id])clearTimeout(_remNotifTimers[r.id]);
   _remNotifTimers[r.id]=setTimeout(function(){
+    remSendEmail(r); // ← email notification
     var n=document.createElement('div');
     n.style.cssText='position:fixed;top:76px;right:22px;z-index:99999;background:var(--navy-card);border:1px solid rgba(239,73,60,.3);border-radius:14px;padding:.9rem 1.1rem;max-width:290px;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:remIn .3s ease;';
     n.innerHTML='<div style="display:flex;gap:.7rem;align-items:center;"><span style="font-size:1.2rem;">🔔</span><div><div style="font-size:.8rem;font-weight:700;color:var(--text-primary);">Reminder</div><div style="font-size:.73rem;color:var(--text-muted);margin-top:2px;">'+escR(r.text)+'</div></div></div>';
