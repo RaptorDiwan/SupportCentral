@@ -7343,8 +7343,8 @@ function renderWhosActive(users,att,onBreakSet){
       isRecentlySeen = lastSeenMs < 12*60*1000;
     }
     var manualOffline = u.presence==='offline';
-    // Online = active work session + recent heartbeat (or no last_seen yet = just started)
-    var isOnline = hasActiveSession && !manualOffline && (isRecentlySeen || !attRec.last_seen);
+    // Online = active work session + recent heartbeat only
+    var isOnline = hasActiveSession && !manualOffline && isRecentlySeen;
     var sc, sl;
     if(manualOffline){sc='out';sl='Offline';}
     else if(isBreak && isOnline){sc='onbreak';sl='On Break';}
