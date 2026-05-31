@@ -7415,7 +7415,7 @@ async function loadLiveDashboard(){
     animateCount('stat-val-total',total);
 
     var today=todayStr();
-    var att=await sbQuery('attendance','date=eq.'+today+'&select=user_id,login_time,logout_time&order=login_time.asc');
+    var att=await sbQuery('attendance','date=eq.'+today+'&select=user_id,login_time,logout_time,last_seen&order=login_time.asc');
 
     // DEDUPLICATE — one entry per user (latest login)
     var attMap={};
@@ -7474,23 +7474,15 @@ function renderWhosActive(users,att,onBreakSet){
       var lastSeenMs = Date.now() - new Date(attRec.last_seen).getTime();
       isRecentlySeen = lastSeenMs < 12*60*1000;
     }
-    var manualOffline = u.presence==='offline';
-    // Online = active work session + recent heartbeat (or no last_seen yet = just started)
     // Online = active work session + recent heartbeat only
-    var isOnline = hasActiveSession && !manualOffline && isRecentlySeen;
+    var isOnline = hasActiveSession && isRecentlySeen;
     var sc, sl;
-    if(manualOffline){sc='out';sl='Offline';}
-    else if(isBreak && isOnline){sc='onbreak';sl='On Break';}
+    if(isBreak && isOnline){sc='onbreak';sl='On Break';}
     else if(isOnline){sc='active';sl='Active';}
     else if(hasActiveSession && !isRecentlySeen && attRec.last_seen){sc='out';sl='Away';}
     else{sc='out';sl='Not In';}
 
-    // Myself gets a toggle button
     var toggleBtn='';
-    if(isMyself(u)){
-      var isCurrentlyOffline=manualOffline;
-      toggleBtn='<button onclick="togglePresence(\''+u.id+'\',\''+( isCurrentlyOffline?'auto':'offline')+'\')" style="margin-left:.5rem;padding:.15rem .55rem;font-size:.62rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:20px;cursor:pointer;color:var(--text-muted);font-family:\'DM Sans\',sans-serif;" title="'+(isCurrentlyOffline?'Go online':'Go offline')+'">'+(isCurrentlyOffline?'Go Online':'Go Offline')+'</button>';
-    }
 
     var bg=chatColor?chatColor(u.name):'#EF493C';
     return {
@@ -7500,7 +7492,7 @@ function renderWhosActive(users,att,onBreakSet){
         '<span class="wa-status '+sc+'">'+sl+'</span>'+
         toggleBtn+
       '</div>',
-      order:manualOffline?3:isBreak?1:isOnline?0:2
+      order:isBreak?1:isOnline?0:2
     };
   });
 
