@@ -2697,6 +2697,26 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           </div>
         </div>
 
+        <!-- End Work Confirmation Modal -->
+        <div id="end-work-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.65);backdrop-filter:blur(4px);z-index:9200;align-items:center;justify-content:center;">
+          <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:380px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.25);">
+            <div style="width:52px;height:52px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">End Your Shift?</div>
+            <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:.4rem;">You are about to <strong style="color:var(--accent-red);">end your work session</strong> for today.</div>
+            <div style="font-size:.82rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:8px;padding:.65rem 1rem;color:var(--accent-red);font-weight:600;margin-bottom:1.4rem;">
+              ☕ If you want a break — click Cancel and use the Break button instead.
+            </div>
+            <div style="display:flex;gap:.75rem;justify-content:center;">
+              <button onclick="closeEndWorkModal()" style="padding:.6rem 1.4rem;background:transparent;border:1px solid var(--navy-border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--text-muted);">Cancel</button>
+              <button id="end-work-confirm-btn" onclick="confirmEndWork()" disabled style="padding:.6rem 1.4rem;background:rgba(239,73,60,.25);border:1px solid rgba(239,73,60,.3);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:not-allowed;color:#ff7f75;opacity:.5;" id="end-work-confirm-btn">
+                End Shift (2s)
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="home-two-col">
           <div style="display:flex;flex-direction:column;gap:1rem;">
             <div class="my-shift-card" id="my-shift-card" style="display:none;">
@@ -4044,6 +4064,13 @@ function enterDashboard(){
   setTimeout(loadAnnouncements,600);
   setTimeout(checkWorkClockOnLoad,500);
   setTimeout(xcSyncCfg, 800);
+  // Admin/TL: immediately mark active on login + keep heartbeat running (they never click Start Work)
+  if(currentUser && (currentUser.role==='admin' || currentUser.role==='tl')){
+    startAdminHeartbeat();
+  }
+  // Auto-refresh live dashboard every 60 seconds so all agents see updated data without manual refresh
+  if(window._dashAutoRefreshInterval) clearInterval(window._dashAutoRefreshInterval);
+  window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 30 * 1000);
   // Cabin announcement audio on login
   setTimeout(function(){ playLoginAnnouncement(currentUser.name.split(' ')[0]); }, 1200);
 }
@@ -4779,14 +4806,18 @@ function _processRosterRows(rows){
   var dc = dr.findIndex(function(c,i){ return i>=2&&String(Number(c))===day; });
   if(dc<0){ renderRosterPage(rows, false); return; }
   var s={absent:[],wfh:[],halfDay:[]};
+  var _absentDetails=[];
   rows.slice(rows.indexOf(dr)+2).forEach(function(row){
     var ei=String(row[0]||'').trim(),n=String(row[1]||'').trim();
     if(!ei||!n||!/^K\d+/i.test(ei))return;
     var p=statusParts(row[dc]);
-    if(p.some(function(x){return NOT_PRESENT_CODES.has(x);}))s.absent.push(n);
+    var rawCode=String(row[dc]||'').trim();
+    if(p.some(function(x){return NOT_PRESENT_CODES.has(x);})){s.absent.push(n);_absentDetails.push({name:n,code:rawCode});}
     if(p.indexOf('WFH')>-1)s.wfh.push(n);
     if(p.indexOf('HL')>-1)s.halfDay.push(n);
   });
+  // Store for absent modal
+  window._rosterAbsent = _absentDetails;
   updateRosterBanner(s);
   renderRosterPage(rows, dc);
   loadMyShift(rows);
@@ -4999,7 +5030,7 @@ function tbBreakPick(type){
     clearInterval(state.interval);
     var elapsed=Math.floor((Date.now()-new Date(state.start).getTime())/1000);
     var limit=BREAK_LIMITS[type]*60;
-    var overBy=Math.max(0,elapsed-limit);
+    var overBy=Math.max(0,elapsed-(limit+60)); // exceeded only after full extra minute
     _breakState[type].active=false;
     _breakState[type].done=true;
     try{localStorage.removeItem('tc_break_'+currentUser.id+'_'+type);}catch(e){}
@@ -5061,7 +5092,7 @@ function tbBreakPick(type){
     var elapsed=Math.floor((Date.now()-new Date(_breakState[type].start).getTime())/1000);
     var limit=BREAK_LIMITS[type]*60;
     if(tbmTimer)tbmTimer.textContent=fmtSec(elapsed);
-    if(elapsed>limit){
+    if(elapsed>=limit+60){
       if(tbmTimer)tbmTimer.classList.add('warning');
       if(tbmBtn)tbmBtn.classList.add('over');
       if(mainBtn)mainBtn.classList.add('over');
@@ -5147,7 +5178,7 @@ async function toggleBreak(type){
       var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
       var limit = BREAK_LIMITS[type] * 60;
       timerEl.textContent = fmtSec(elapsed);
-      if(elapsed > limit){
+      if(elapsed >= limit+60){
         timerEl.classList.add('warning');
         btn.classList.add('over');
       }
@@ -5158,7 +5189,7 @@ async function toggleBreak(type){
     clearInterval(_breakState[type].interval);
     var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
     var limit = BREAK_LIMITS[type] * 60;
-    var overBy = Math.max(0, elapsed - limit);
+    var overBy = Math.max(0, elapsed - (limit + 60)); // exceeded only after full extra minute
     _breakState[type].active = false;
     _breakState[type].done = true;
 
@@ -5294,6 +5325,24 @@ async function checkLiveSettings(){
     await checkVHGlobal();
   }catch(e){ /* silent — don't disrupt UX */ }
 }
+// Admin/TL heartbeat — only updates users.last_seen, not attendance
+var _adminHeartbeatInterval = null;
+function startAdminHeartbeat(){
+  stopAdminHeartbeat();
+  adminHeartbeatPing(); // immediate ping on login
+  _adminHeartbeatInterval = setInterval(adminHeartbeatPing, 10 * 60 * 1000);
+}
+function stopAdminHeartbeat(){
+  if(_adminHeartbeatInterval){ clearInterval(_adminHeartbeatInterval); _adminHeartbeatInterval=null; }
+}
+async function adminHeartbeatPing(){
+  if(!currentUser) return;
+  try{
+    await sbUpdate('users','id',currentUser.id,{ last_seen: new Date().toISOString() });
+  }catch(e){ /* silent — run: ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ DEFAULT NULL; */ }
+}
+
+// Agent heartbeat — only runs after Start Work, updates attendance.last_seen
 async function heartbeatPing(){
   if(!currentUser||!_todayAttendance) return;
   try{
@@ -5411,14 +5460,14 @@ async function restoreBreakState(){
         var elapsedNow = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
         var limit = BREAK_LIMITS[type] * 60;
         timerEl.textContent = fmtSec(elapsedNow);
-        if(elapsedNow > limit){ timerEl.classList.add('warning'); btn.classList.add('over'); }
+        if(elapsedNow >= limit+60){ timerEl.classList.add('warning'); btn.classList.add('over'); }
 
         // Start ticking
         _breakState[type].interval = setInterval(function(){
           if(!_breakState[type] || !_breakState[type].active) return;
           var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
           timerEl.textContent = fmtSec(elapsed);
-          if(elapsed > limit){ timerEl.classList.add('warning'); btn.classList.add('over'); }
+          if(elapsed >= limit+60){ timerEl.classList.add("warning"); btn.classList.add("over"); }
         }, 1000);
 
       } else if(closedRow){
@@ -5455,12 +5504,12 @@ async function restoreBreakState(){
       var elapsedNow = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
       var limit = BREAK_LIMITS[type] * 60;
       timerEl.textContent = fmtSec(elapsedNow);
-      if(elapsedNow > limit){ timerEl.classList.add('warning'); btn.classList.add('over'); }
+      if(elapsedNow >= limit+60){ timerEl.classList.add('warning'); btn.classList.add('over'); }
       _breakState[type].interval = setInterval(function(){
         if(!_breakState[type] || !_breakState[type].active) return;
         var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
         timerEl.textContent = fmtSec(elapsed);
-        if(elapsed > limit){ timerEl.classList.add('warning'); btn.classList.add('over'); }
+        if(elapsed >= limit+60){ timerEl.classList.add("warning"); btn.classList.add("over"); }
       }, 1000);
     });
   }
@@ -5498,8 +5547,34 @@ async function loadReport(){
   output.innerHTML='<div style="color:var(--text-dim);padding:2rem;text-align:center;">Loading...</div>';
 
   try {
+    // Ensure roster is loaded before rendering attendance report (needed for On Time/Late calculation)
+    if(type === 'attendance' && !window.rosterCache){
+      try{
+        var rosterUrl = window._rosterCsvUrl || ROSTER_CSV_URL;
+        try{
+          var mnNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          var curMn=mnNames[new Date().getMonth()];
+          var rSettings=await sbQuery('settings','key=ilike.roster_url*&select=key,value');
+          if(rSettings&&rSettings.length){
+            var mRow=rSettings.find(function(r){return r.key==='roster_url_'+curMn.toLowerCase();});
+            var gRow=rSettings.find(function(r){return r.key==='roster_url';});
+            var best=mRow||gRow;
+            if(best&&best.value){rosterUrl=best.value;window._rosterCsvUrl=best.value;}
+          }
+        }catch(e2){}
+        var rResp=await fetch(rosterUrl+'&cacheBust='+Date.now());
+        if(rResp.ok){
+          var rRows=parseCsv(await rResp.text());
+          window.rosterCache=rRows;
+          window._rosterAllRows=rRows;
+          if(!window._rosterDataCache)window._rosterDataCache={};
+          window._rosterDataCache[rosterUrl]={rows:rRows,timestamp:Date.now()};
+        }
+      }catch(re){ /* silent — roster unavailable, status will show No Roster */ }
+    }
+
     if(type === 'attendance'){
-      var filters = 'date=gte.'+from+'&date=lte.'+to+'&order=date.asc,user_name.asc';
+      var filters = 'date=gte.'+from+'&date=lte.'+to+'&order=date.asc,user_name.asc&select=id,user_id,user_name,date,login_time,logout_time,last_seen,attendance_status';
       if(agent) filters += '&user_id=eq.'+agent;
       var rows = await sbQuery('attendance', filters);
       _reportData = rows || [];
@@ -5508,7 +5583,7 @@ async function loadReport(){
 
     } else {
       // Break report — grouped by date then agent (like your Excel format)
-      var filters2 = 'date=gte.'+from+'&date=lte.'+to+'&order=date.asc,user_name.asc';
+      var filters2 = 'date=gte.'+from+'&date=lte.'+to+'&order=date.asc,user_name.asc,start_time.asc&select=id,user_id,user_name,date,break_type,start_time,end_time,duration_seconds,over_limit,over_by_seconds';
       if(agent) filters2 += '&user_id=eq.'+agent;
       var breaks = await sbQuery('breaks', filters2);
       _reportData = breaks || [];
@@ -5539,20 +5614,14 @@ function fmtDateHeader(dateStr){
 
 function renderBreakReport(breaks, from, to){
   var output = document.getElementById('report-output');
-  // Group by date
+
+  // Group by date → agent → array of break rows (preserve individual entries for times)
   var byDate = {};
   breaks.forEach(function(b){
     if(!byDate[b.date]) byDate[b.date] = {};
     var nm = b.user_name || 'Unknown';
-    if(!byDate[b.date][nm]) byDate[b.date][nm] = {
-      breakfast:{secs:0,over:false}, lunch:{secs:0,over:false},
-      beverage:{secs:0,over:false}, shortbreak:{secs:0,over:false}
-    };
-    var bt = b.break_type;
-    if(byDate[b.date][nm][bt] !== undefined){
-      byDate[b.date][nm][bt].secs += (b.duration_seconds||0);
-      byDate[b.date][nm][bt].over = byDate[b.date][nm][bt].secs > (BREAK_LIMITS[bt]||0)*60;
-    }
+    if(!byDate[b.date][nm]) byDate[b.date][nm] = [];
+    byDate[b.date][nm].push(b);
   });
 
   var dates = Object.keys(byDate).sort();
@@ -5562,10 +5631,31 @@ function renderBreakReport(breaks, from, to){
     var agentMap = byDate[date];
     var agents = Object.keys(agentMap).sort();
 
-    html += '<table class="reports-table" style="margin-bottom:2rem;">';
-    // Date header
+    // ── Summary table (same layout as before) ──
+    // Re-aggregate for summary row
+    var summaryMap = {};
+    agents.forEach(function(name){
+      summaryMap[name] = {
+        breakfast:{secs:0,over:false}, lunch:{secs:0,over:false},
+        beverage:{secs:0,over:false}, shortbreak:{secs:0,over:false}
+      };
+      agentMap[name].forEach(function(b){
+        var bt = b.break_type;
+        if(summaryMap[name][bt] !== undefined){
+          // For in-progress breaks (no end_time), calculate live elapsed
+          var secs = b.duration_seconds || 0;
+          if(!b.end_time && b.start_time){
+            secs = Math.floor((Date.now() - new Date(b.start_time).getTime()) / 1000);
+          }
+          summaryMap[name][bt].secs += secs;
+          summaryMap[name][bt].over = summaryMap[name][bt].secs >= (BREAK_LIMITS[bt]||0)*60+60; // exceeded only after full extra minute
+          if(!b.end_time) summaryMap[name][bt].live = true; // flag live
+        }
+      });
+    });
+
+    html += '<table class="reports-table" style="margin-bottom:.75rem;">';
     html += '<thead><tr><th colspan="7" style="text-align:center;background:#E8B84B;color:#1a1000;font-size:0.95rem;font-weight:700;padding:0.8rem;letter-spacing:0.04em;">'+fmtDateHeader(date)+'</th></tr>';
-    // Column headers
     html += '<tr style="background:#C5D5E8;">' +
       '<th style="color:#1a2a4a;">Username</th>' +
       '<th style="color:#1a2a4a;">Breakfast<br><span style="font-weight:400;font-size:0.65rem;opacity:0.7;">Limit: 20 Min</span></th>' +
@@ -5577,7 +5667,7 @@ function renderBreakReport(breaks, from, to){
       '</tr></thead><tbody>';
 
     agents.forEach(function(name){
-      var ag = agentMap[name];
+      var ag = summaryMap[name];
       var bf=ag.breakfast, lu=ag.lunch, bv=ag.beverage, sb=ag.shortbreak;
       var totalSec = bf.secs+lu.secs+bv.secs+sb.secs;
       var exceeded = [];
@@ -5585,16 +5675,59 @@ function renderBreakReport(breaks, from, to){
       if(lu.over) exceeded.push('Lunch');
       if(bv.over) exceeded.push('Beverage');
       if(sb.over) exceeded.push('Short Break');
-      var os = function(b){ return b.over?' style="background:rgba(232,150,75,0.35);font-weight:600;"':''; };
+      var os = function(b){
+        var s = b.over?' background:rgba(232,150,75,0.35);font-weight:600;':'';
+        var live = b.live?' color:#E8B84B;':'';
+        return (s||live)?' style="'+s+live+'"':'';
+      };
+      var liveTag = function(b){ return b.live?'<span style="font-size:.62rem;color:#E8B84B;font-weight:700;margin-left:3px;">●LIVE</span>':''; };
       html += '<tr>' +
         '<td style="font-weight:500;">'+name+'</td>' +
-        '<td'+os(bf)+'>'+(bf.secs>0?fmtDurMin(bf.secs):'-')+'</td>' +
-        '<td'+os(lu)+'>'+(lu.secs>0?fmtDurMin(lu.secs):'-')+'</td>' +
-        '<td'+os(bv)+'>'+(bv.secs>0?fmtDurMin(bv.secs):'-')+'</td>' +
-        '<td'+os(sb)+'>'+(sb.secs>0?fmtDurMin(sb.secs):'-')+'</td>' +
+        '<td'+os(bf)+'>'+(bf.secs>0?fmtDurMin(bf.secs):'-')+liveTag(bf)+'</td>' +
+        '<td'+os(lu)+'>'+(lu.secs>0?fmtDurMin(lu.secs):'-')+liveTag(lu)+'</td>' +
+        '<td'+os(bv)+'>'+(bv.secs>0?fmtDurMin(bv.secs):'-')+liveTag(bv)+'</td>' +
+        '<td'+os(sb)+'>'+(sb.secs>0?fmtDurMin(sb.secs):'-')+liveTag(sb)+'</td>' +
         '<td style="font-weight:600;">'+(totalSec>0?fmtDurMin(totalSec):'-')+'</td>' +
         '<td style="color:'+(exceeded.length?'var(--accent-red)':'var(--text-dim)')+';">'+(exceeded.length?exceeded.join(', '):'-')+'</td>' +
         '</tr>';
+    });
+
+    html += '</tbody></table>';
+
+    // ── Detail table: individual break entries with Start / End times ──
+    html += '<table class="reports-table" style="margin-bottom:2rem;font-size:.82rem;">';
+    html += '<thead><tr>' +
+      '<th style="background:#d4e4f7;color:#1a2a4a;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;">Agent</th>' +
+      '<th style="background:#d4e4f7;color:#1a2a4a;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;">Break Type</th>' +
+      '<th style="background:#d4e4f7;color:#1a2a4a;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;">Start Time</th>' +
+      '<th style="background:#d4e4f7;color:#1a2a4a;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;">End Time</th>' +
+      '<th style="background:#d4e4f7;color:#1a2a4a;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;">Duration</th>' +
+      '<th style="background:#d4e4f7;color:#1a2a4a;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;">Status</th>' +
+      '</tr></thead><tbody>';
+
+    agents.forEach(function(name){
+      var rows = agentMap[name].slice().sort(function(a,b){ return (a.start_time||'').localeCompare(b.start_time||''); });
+      rows.forEach(function(b, idx){
+        var isLive = !b.end_time;
+        var secs = b.duration_seconds || 0;
+        if(isLive && b.start_time) secs = Math.floor((Date.now() - new Date(b.start_time).getTime()) / 1000);
+        var limit = (BREAK_LIMITS[b.break_type]||0)*60;
+        var over = secs >= limit+60; // exceeded only after full extra minute
+        var rowBg = isLive ? 'background:rgba(232,184,75,.09);' : (over ? 'background:rgba(239,73,60,.06);' : '');
+        var statusHtml = isLive
+          ? '<span style="background:rgba(232,184,75,.2);color:#c9860a;border:1px solid rgba(232,184,75,.4);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">● In Progress</span>'
+          : (over
+            ? '<span style="background:rgba(239,73,60,.12);color:#EF493C;border:1px solid rgba(239,73,60,.3);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">Exceeded</span>'
+            : '<span style="background:rgba(46,197,111,.12);color:#2EC56F;border:1px solid rgba(46,197,111,.3);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">Done</span>');
+        html += '<tr style="'+rowBg+'">' +
+          '<td style="font-weight:500;color:var(--text-primary);">'+(idx===0?name:'')+'</td>' +
+          '<td>'+(BREAK_EMOJIS[b.break_type]||'')+'&nbsp;'+(BREAK_LABELS[b.break_type]||b.break_type||'-')+'</td>' +
+          '<td style="font-variant-numeric:tabular-nums;font-weight:600;">'+(b.start_time?fmtTime(b.start_time):'-')+'</td>' +
+          '<td style="font-variant-numeric:tabular-nums;font-weight:600;">'+(isLive?'<span style="color:#E8B84B;">—</span>':fmtTime(b.end_time))+'</td>' +
+          '<td style="font-variant-numeric:tabular-nums;'+(over?'color:var(--accent-red);font-weight:600;':'')+'">'+fmtDurMin(secs)+(isLive?'<span style="font-size:.65rem;color:#E8B84B;"> (live)</span>':'')+'</td>' +
+          '<td>'+statusHtml+'</td>' +
+          '</tr>';
+      });
     });
 
     html += '</tbody></table>';
@@ -5605,8 +5738,45 @@ function renderBreakReport(breaks, from, to){
   output.innerHTML = html;
 }
 
+// ─── Punctuality helpers (defined here so they're available when renderAttendanceReport runs) ───
+// Safe wrappers that don't depend on OFF_C / LEAVE_C being defined yet at call time
+function _punctIsOff(code){
+  var p = String(code||'').toUpperCase().split(/[^A-Z]+/).filter(Boolean);
+  var offSet = new Set(['L','CO','W','OFF','WO','SL','CL','EL']);
+  return p.some(function(x){ return offSet.has(x); });
+}
+function _getShiftStartMins(agentName, dateStr){
+  try{
+    if(typeof getRowsAndColForDate !== 'function') return null;
+    var d = new Date(dateStr + 'T00:00:00');
+    var rc = getRowsAndColForDate(d);
+    if(!rc || !rc.rows || rc.col < 0) return null;
+    if(typeof findAgent !== 'function') return null;
+    var agentRow = findAgent(rc.rows, agentName);
+    if(!agentRow) return null;
+    var code = String(agentRow[rc.col] || '').trim();
+    if(!code || _punctIsOff(code)) return null;
+    var m = code.match(/(\d{1,2})(?::(\d{2}))?\s*[-]\s*(\d{1,2})(?::(\d{2}))?/);
+    if(m){ return parseInt(m[1])*60 + (m[2]?parseInt(m[2]):0); }
+    return null;
+  }catch(e){ return null; }
+}
+function computePunctuality(agentName, dateStr, loginTimeIso){
+  if(!loginTimeIso) return 'No Roster';
+  var shiftMins = _getShiftStartMins(agentName, dateStr);
+  if(shiftMins === null) return 'No Roster';
+  // Convert loginTime ISO → IST minutes-from-midnight
+  var d = new Date(loginTimeIso);
+  var istMs = d.getTime() + 5.5 * 60 * 60 * 1000;
+  var istDate = new Date(istMs);
+  var loginMins = istDate.getUTCHours() * 60 + istDate.getUTCMinutes();
+  return loginMins <= shiftMins ? 'On Time' : 'Late';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function renderAttendanceReport(rows){
   var output = document.getElementById('report-output');
+  var isAdmin = typeof isAdminUser === 'function' ? isAdminUser() : false;
   // Group by date
   var byDate = {};
   rows.forEach(function(r){ if(!byDate[r.date]) byDate[r.date]=[]; byDate[r.date].push(r); });
@@ -5615,9 +5785,17 @@ function renderAttendanceReport(rows){
 
   dates.forEach(function(date){
     var agents = byDate[date];
+    var colCount = isAdmin ? 6 : 5;
     html += '<table class="reports-table" style="margin-bottom:2rem;">';
-    html += '<thead><tr><th colspan="4" style="text-align:center;background:#E8B84B;color:#1a1000;font-size:0.95rem;font-weight:700;padding:0.8rem;">'+fmtDateHeader(date)+'</th></tr>';
-    html += '<tr style="background:#C5D5E8;"><th style="color:#1a2a4a;">Username</th><th style="color:#1a2a4a;">Login Time</th><th style="color:#1a2a4a;">Logout Time</th><th style="color:#1a2a4a;">Total Hours</th></tr></thead><tbody>';
+    html += '<thead><tr><th colspan="'+colCount+'" style="text-align:center;background:#E8B84B;color:#1a1000;font-size:0.95rem;font-weight:700;padding:0.8rem;">'+fmtDateHeader(date)+'</th></tr>';
+    html += '<tr style="background:#C5D5E8;">'+
+      '<th style="color:#1a2a4a;">Username</th>'+
+      '<th style="color:#1a2a4a;">Login Time</th>'+
+      '<th style="color:#1a2a4a;">Logout Time</th>'+
+      '<th style="color:#1a2a4a;">Total Hours</th>'+
+      '<th style="color:#1a2a4a;">Status</th>'+
+      (isAdmin ? '<th style="color:#1a2a4a;">Override</th>' : '')+
+      '</tr></thead><tbody>';
 
     agents.forEach(function(r){
       var dur = '-';
@@ -5627,11 +5805,51 @@ function renderAttendanceReport(rows){
         dur = h+' Hr(s) '+m+' Min';
       }
       var stillIn = r.login_time && !r.logout_time;
+      var agentName = r.user_name || (currentUser ? currentUser.name : 'Agent');
+
+      // Determine status: manual override wins, else roster-based, else No Roster
+      var status = r.attendance_status || computePunctuality(agentName, r.date, r.login_time);
+      var statusColor = status==='On Time' ? '#2EC56F' : status==='Late' ? '#EF493C' : status==='Permission' ? '#E8B84B' : '#94A3B8';
+      var statusBg   = status==='On Time' ? 'rgba(46,197,111,.12)' : status==='Late' ? 'rgba(239,73,60,.12)' : status==='Permission' ? 'rgba(232,184,75,.14)' : 'rgba(148,163,184,.1)';
+      var statusHtml = '<span style="background:'+statusBg+';color:'+statusColor+';border:1px solid '+statusColor+'40;border-radius:4px;padding:2px 9px;font-size:.72rem;font-weight:700;">'+status+'</span>';
+
+      var overrideHtml = '';
+      if(isAdmin){
+        var selId = 'att-status-'+r.id;
+        var inlineId = 'att-inline-'+r.id;
+        overrideHtml = '<td>'+
+          '<button onclick="attShowOverride(\''+r.id+'\')" title="Override status" '+
+            'style="background:none;border:1px solid var(--navy-border);border-radius:5px;padding:.2rem .5rem;cursor:pointer;color:var(--text-dim);font-size:.75rem;">'+
+            '&#9998;'+
+          '</button>'+
+          '<div id="'+inlineId+'" style="display:none;margin-top:.35rem;">'+
+            '<div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;">'+
+              '<select id="'+selId+'" style="padding:.25rem .5rem;border:1px solid var(--navy-border);border-radius:5px;background:var(--navy-card);color:var(--text-primary);font-family:DM Sans,sans-serif;font-size:.76rem;">'+
+                '<option value=""'+((!r.attendance_status||r.attendance_status==='')?'selected':'')+'>Auto</option>'+
+                '<option value="On Time"'+(r.attendance_status==='On Time'?' selected':'')+'>On Time</option>'+
+                '<option value="Late"'+(r.attendance_status==='Late'?' selected':'')+'>Late</option>'+
+                '<option value="Permission"'+(r.attendance_status==='Permission'?' selected':'')+'>Permission</option>'+
+              '</select>'+
+              '<button onclick="attSaveStatus(\''+r.id+'\',\''+selId+'\',\''+inlineId+'\',this)" '+
+                'style="padding:.25rem .6rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-size:.73rem;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;">'+
+                'Save'+
+              '</button>'+
+              '<button onclick="document.getElementById(\''+inlineId+'\').style.display=\'none\'" '+
+                'style="padding:.25rem .45rem;background:transparent;border:1px solid var(--navy-border);border-radius:5px;font-size:.73rem;cursor:pointer;color:var(--text-muted);">'+
+                '&#10005;'+
+              '</button>'+
+            '</div>'+
+          '</div>'+
+        '</td>';
+      }
+
       html += '<tr>'+
-        '<td style="font-weight:500;">'+(r.user_name||currentUser.name||'Agent')+'</td>'+
+        '<td style="font-weight:500;">'+agentName+'</td>'+
         '<td>'+fmtTime(r.login_time)+'</td>'+
         '<td>'+(stillIn?'<span style="color:var(--gold);font-weight:500;">Still in</span>':fmtTime(r.logout_time))+'</td>'+
         '<td style="font-weight:600;">'+dur+'</td>'+
+        '<td id="att-status-cell-'+r.id+'">'+statusHtml+'</td>'+
+        overrideHtml+
         '</tr>';
     });
     html += '</tbody></table>';
@@ -5642,16 +5860,60 @@ function renderAttendanceReport(rows){
   output.innerHTML = html;
 }
 
+function attShowOverride(rowId){
+  var inlineId = 'att-inline-'+rowId;
+  var el = document.getElementById(inlineId);
+  if(el) el.style.display = el.style.display==='none' ? 'block' : 'none';
+}
+
+async function attSaveStatus(rowId, selId, inlineId, btn){
+  var sel = document.getElementById(selId);
+  if(!sel) return;
+  var val = sel.value; // '' means auto/clear
+  var orig = btn.textContent;
+  btn.textContent = '...'; btn.disabled = true;
+  try {
+    await sbUpdate('attendance', 'id', rowId, { attendance_status: val || null });
+    // Refresh the status badge cell
+    var cell = document.getElementById('att-status-cell-'+rowId);
+    if(cell){
+      // If cleared to Auto, the badge will refresh next time report is pulled — just show a refresh note
+      var status = val || null;
+      if(status){
+        var statusColor = status==='On Time'?'#2EC56F':status==='Late'?'#EF493C':status==='Permission'?'#E8B84B':'#94A3B8';
+        var statusBg = status==='On Time'?'rgba(46,197,111,.12)':status==='Late'?'rgba(239,73,60,.12)':status==='Permission'?'rgba(232,184,75,.14)':'rgba(148,163,184,.1)';
+        cell.innerHTML = '<span style="background:'+statusBg+';color:'+statusColor+';border:1px solid '+statusColor+'40;border-radius:4px;padding:2px 9px;font-size:.72rem;font-weight:700;">'+status+'</span>';
+      } else {
+        cell.innerHTML = '<span style="color:var(--text-dim);font-size:.72rem;font-style:italic;">Auto (pull report to refresh)</span>';
+      }
+    }
+    btn.textContent = '✓'; btn.style.background='#2EC56F';
+    // Hide the inline dropdown after successful save
+    var inlineEl = document.getElementById(inlineId);
+    if(inlineEl) setTimeout(function(){ inlineEl.style.display='none'; }, 800);
+    setTimeout(function(){ btn.textContent=orig; btn.style.background=''; btn.disabled=false; }, 1800);
+  } catch(e){
+    if(e.message && e.message.includes('attendance_status')){
+      alert('Please run this SQL in Supabase first:\nALTER TABLE attendance ADD COLUMN IF NOT EXISTS attendance_status TEXT DEFAULT NULL;\n\nThen try again.');
+    } else {
+      alert('Save failed: '+e.message);
+    }
+    btn.textContent = orig; btn.disabled = false;
+  }
+}
+
 function exportReportCSV(){
   if(!_reportData.length){ alert('Pull a report first.'); return; }
   var type = document.getElementById('report-type').value;
   var headers, rows;
   if(type==='attendance'){
-    headers = ['Date','Agent','Login Time','Logout Time','Total Hours'];
+    headers = ['Date','Agent','Login Time','Logout Time','Total Hours','Status'];
     rows = _reportData.map(function(r){
       var dur='-';
       if(r.login_time&&r.logout_time){var diff=Math.floor((new Date(r.logout_time)-new Date(r.login_time))/1000);dur=Math.floor(diff/3600)+'h '+Math.floor((diff%3600)/60)+'m';}
-      return [r.date,r.user_name,fmtTime(r.login_time),r.logout_time?fmtTime(r.logout_time):'Still in',dur];
+      var agentName = r.user_name || '';
+      var status = r.attendance_status || computePunctuality(agentName, r.date, r.login_time);
+      return [r.date,agentName,fmtTime(r.login_time),r.logout_time?fmtTime(r.logout_time):'Still in',dur,status];
     });
   } else {
     // Group by date+agent for Excel-style export
@@ -5669,7 +5931,7 @@ function exportReportCSV(){
       if(byDateAgent[key][bt]!==undefined){
         byDateAgent[key][bt].secs += (b.duration_seconds||0);
         // Over-limit: true if total exceeds limit for that type
-        byDateAgent[key][bt].over = byDateAgent[key][bt].secs > (BREAK_LIMITS[bt]||0)*60;
+        byDateAgent[key][bt].over = byDateAgent[key][bt].secs >= (BREAK_LIMITS[bt]||0)*60+60; // exceeded only after full extra minute
       }
     });
     rows = Object.values(byDateAgent).sort(function(a,b){return a.date.localeCompare(b.date)||a.name.localeCompare(b.name);}).map(function(ag){
@@ -5778,7 +6040,10 @@ async function xcFetchAtt(){
         '<div><label class="xc-label">'+esc(r.user_name)+'</label><span style="font-size:.72rem;color:var(--text-dim);">ID: '+esc(r.id.toString().slice(0,8))+'…</span></div>' +
         '<div><label class="xc-label">Login Time (HH:MM)</label><input type="time" id="'+lid+'" class="xc-input" value="'+loginVal+'"/></div>' +
         '<div><label class="xc-label">Logout Time (HH:MM)</label><input type="time" id="'+loid+'" class="xc-input" value="'+logoutVal+'"/></div>' +
-        '<button class="xc-btn-sm" onclick="xcWriteAtt(\''+r.id+'\',\''+date+'\',\''+lid+'\',\''+loid+'\')">Save</button>' +
+        '<div style="display:flex;gap:.4rem;">'+
+          '<button class="xc-btn-sm" onclick="xcWriteAtt(\''+r.id+'\',\''+date+'\',\''+lid+'\',\''+loid+'\')">Save</button>' +
+          '<button class="xc-btn-danger" onclick="xcDeleteAtt(\''+r.id+'\')" title="Delete this entry">🗑 Delete</button>' +
+        '</div>'+
         '</div>';
     }).join('');
     out.innerHTML = html;
@@ -5811,6 +6076,20 @@ function xcLocalTime(isoStr){
   var istDate = new Date(istMs);
   var h = istDate.getUTCHours(), m = istDate.getUTCMinutes();
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
+async function xcDeleteAtt(rowId){
+  if(!confirm('Delete this attendance entry? This cannot be undone.')) return;
+  try{
+    await sbDelete('attendance','id',rowId);
+    // Remove the row from the UI immediately
+    var el = document.getElementById('xc-t1-'+rowId);
+    if(el){ var row=el.closest('.xc-row'); if(row) row.remove(); }
+    // Refresh the full list
+    xcFetchAtt();
+  }catch(e){
+    alert('Delete failed: '+e.message);
+  }
 }
 
 async function xcWriteAtt(rowId, date, loginElId, logoutElId){
@@ -7408,14 +7687,14 @@ var _liveDashData = { users:[], att:[], onBreakSet:new Set(), onBreakDetails:{} 
 
 async function loadLiveDashboard(){
   try{
-    var users=await sbQuery('users','select=id,name,role,presence&order=name.asc');
+    var users=await sbQuery('users','select=id,name,role,presence,last_seen&order=name.asc');
     // Filter out syslevel
     users=(users||[]).filter(function(u){return u.role!=='syslevel';});
     var total=users.length;
     animateCount('stat-val-total',total);
 
     var today=todayStr();
-    var att=await sbQuery('attendance','date=eq.'+today+'&select=user_id,login_time,logout_time,last_seen&order=login_time.asc');
+    var att=await sbQuery('attendance','date=eq.'+today+'&select=user_id,user_name,login_time,logout_time,last_seen&order=login_time.asc');
 
     // DEDUPLICATE — one entry per user (latest login)
     var attMap={};
@@ -7430,6 +7709,8 @@ async function loadLiveDashboard(){
       return !a.logout_time && (!user||user.presence!=='offline');
     }).length;
     animateCount('stat-val-loggedin',loggedInCount);
+
+    // Absent count is owned by the roster (updateRosterBanner) — do not overwrite here
 
     var brks=await sbQuery('breaks','date=eq.'+today+'&select=user_id,user_name,break_type,end_time');
     var onBreakSet=new Set();
@@ -7465,22 +7746,29 @@ function renderWhosActive(users,att,onBreakSet){
   var items=users.filter(function(u){return u.role!=='syslevel';}).map(function(u){
     var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
     var isBreak=onBreakSet.has(u.name);
+    var isAdminOrTl = u.role==='admin' || u.role==='tl';
     var attRec=attMap[u.id];
-    // Active = has login_time today AND no logout_time (work session open)
-    var hasActiveSession = attRec && attRec.login_time && !attRec.logout_time;
-    // Check last_seen heartbeat — if > 12 min ago, show as Away
-    var isRecentlySeen = false;
-    if(attRec && attRec.last_seen){
-      var lastSeenMs = Date.now() - new Date(attRec.last_seen).getTime();
-      isRecentlySeen = lastSeenMs < 12*60*1000;
-    }
-    // Online = active work session + recent heartbeat only
-    var isOnline = hasActiveSession && isRecentlySeen;
     var sc, sl;
-    if(isBreak && isOnline){sc='onbreak';sl='On Break';}
-    else if(isOnline){sc='active';sl='Active';}
-    else if(hasActiveSession && !isRecentlySeen && attRec.last_seen){sc='out';sl='Away';}
-    else{sc='out';sl='Not In';}
+
+    if(isAdminOrTl){
+      // Admin/TL: use users.last_seen (set on portal login, no Start Work needed)
+      var userRecentlySeen = u.last_seen && (Date.now()-new Date(u.last_seen).getTime()) < 12*60*1000;
+      if(isBreak && userRecentlySeen){sc='onbreak';sl='On Break';}
+      else if(userRecentlySeen){sc='active';sl='Active';}
+      else{sc='out';sl='Not In';}
+    } else {
+      // Agent: Active only after Start Work click (hasActiveSession + heartbeat)
+      var hasActiveSession = attRec && attRec.login_time && !attRec.logout_time;
+      var attRecentlySeen = false;
+      if(attRec && attRec.last_seen){
+        attRecentlySeen = (Date.now()-new Date(attRec.last_seen).getTime()) < 12*60*1000;
+      }
+      var isOnline = hasActiveSession && attRecentlySeen;
+      if(isBreak && isOnline){sc='onbreak';sl='On Break';}
+      else if(isOnline){sc='active';sl='Active';}
+      else if(hasActiveSession && !attRecentlySeen && attRec.last_seen){sc='out';sl='Away';}
+      else{sc='out';sl='Not In';}
+    }
 
     var toggleBtn='';
 
@@ -7738,9 +8026,35 @@ async function workClockIn(){
   }
 }
 
-async function workClockOut(){
+function workClockOut(){
   if(!_wclockAttendance){ alert('No active work session found.'); return; }
-  if(!confirm('End your work session for today?')) return;
+  // Show custom confirmation modal instead of plain confirm()
+  var overlay = document.getElementById('end-work-modal-overlay');
+  var btn = document.getElementById('end-work-confirm-btn');
+  if(overlay) overlay.style.display='flex';
+  // Disable confirm button for 2 seconds
+  if(btn){
+    btn.disabled=true; btn.style.opacity='.5'; btn.style.cursor='not-allowed';
+    btn.textContent='End Shift (2s)';
+    var t=2;
+    var countdown=setInterval(function(){
+      t--;
+      if(t>0){ btn.textContent='End Shift ('+t+'s)'; }
+      else {
+        clearInterval(countdown);
+        btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
+        btn.textContent='Yes, End Shift';
+      }
+    },1000);
+  }
+}
+function closeEndWorkModal(){
+  var overlay=document.getElementById('end-work-modal-overlay');
+  if(overlay) overlay.style.display='none';
+}
+async function confirmEndWork(){
+  closeEndWorkModal();
+  if(!_wclockAttendance){ alert('No active work session found.'); return; }
   var endBtn = document.getElementById('wclock-end-btn');
   if(endBtn){ endBtn.disabled = true; endBtn.textContent = '...'; }
   try{
@@ -7852,26 +8166,66 @@ function openStatModal(type){
     });
 
   } else if(type==='absent'){
-    var absentAgents = users.filter(function(u){ return !attIds.has(u.id); });
+    // Use roster-based absent list (L/CO/W codes) — same data shown in the dashboard banner
+    var rosterAbsent = window._rosterAbsent || [];
     title='Absent Today';
-    subtext=absentAgents.length+' agent'+(absentAgents.length!==1?'s':'')+' not in';
+    subtext=rosterAbsent.length+' agent'+(rosterAbsent.length!==1?'s':'')+' on leave / off';
     iconBg='rgba(76,118,168,.12)';
     iconSvg='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>';
-    agents = absentAgents.map(function(u){
-      return { name:u.name, badge:'Absent', badgeClass:'absent', detail:'' };
+    var leaveLabel = function(code){
+      var c=(code||'').toUpperCase().trim();
+      if(c==='L')return 'Leave';
+      if(c==='CO')return 'Comp Off';
+      if(c==='W'||c==='WO')return 'Week Off';
+      return code||'Off';
+    };
+    agents = rosterAbsent.map(function(a){
+      return { name:a.name, badge:leaveLabel(a.code), badgeClass:'absent', detail:'' };
     });
+    if(!rosterAbsent.length){
+      agents = [];
+    }
 
   } else if(type==='total'){
     title='All Agents';
     subtext=users.length+' total agent'+(users.length!==1?'s':'');
     iconBg='rgba(142,124,169,.12)';
     iconSvg='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8E7CA9" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+    // Build roster absent lookup for leave labels
+    var rosterAbsentMap = {};
+    (window._rosterAbsent||[]).forEach(function(a){ rosterAbsentMap[a.name.toLowerCase()] = a.code; });
+    var leaveLabel2 = function(code){
+      var c=(code||'').toUpperCase().trim();
+      if(c==='L') return 'On Leave';
+      if(c==='CO') return 'Comp Off';
+      if(c==='W'||c==='WO') return 'Week Off';
+      return 'Off';
+    };
     agents = users.map(function(u){
       var isBreak = onBreakSet.has(u.name);
       var isIn = attIds.has(u.id);
-      var badge = isBreak?'On Break':isIn?'Active':'Absent';
-      var cls = isBreak?'onbreak':isIn?'active':'absent';
-      var detail = isBreak ? breakLabel(onBreakDetails[u.name]) : isIn ? ('In since '+fmtTime(attMap[u.id].login_time)) : '';
+      var isAdminOrTl = u.role==='admin' || u.role==='tl';
+      var rosterCode = rosterAbsentMap[u.name.toLowerCase()];
+      var badge, cls, detail;
+
+      if(isBreak){
+        badge='On Break'; cls='onbreak';
+        detail=breakLabel(onBreakDetails[u.name]);
+      } else if(isIn){
+        badge='Active'; cls='active';
+        detail='In since '+fmtTime(attMap[u.id].login_time);
+      } else if(isAdminOrTl){
+        // Admin/TL: check users.last_seen — they don't click Start Work
+        var userRecent = u.last_seen && (Date.now()-new Date(u.last_seen).getTime()) < 12*60*1000;
+        badge = userRecent ? 'Active' : 'Not In';
+        cls = userRecent ? 'active' : 'absent';
+        detail = '';
+      } else if(rosterCode){
+        // On leave per roster
+        badge=leaveLabel2(rosterCode); cls='absent'; detail='';
+      } else {
+        badge='Not In'; cls='absent'; detail='';
+      }
       return { name:u.name, badge:badge, badgeClass:cls, detail:detail };
     }).sort(function(a,b){
       var o={active:0,onbreak:1,absent:2};
@@ -8299,8 +8653,6 @@ function pplOpenEdit(id){
         '<div class="ppl-edit-field"><label class="ppl-edit-label">Team</label><input id="pf-team" class="ppl-edit-input" value="'+v('team')+'" placeholder="e.g. Online Sales Support"/></div>'+
         '<div class="ppl-edit-field"><label class="ppl-edit-label">Email</label><input id="pf-email" class="ppl-edit-input" value="'+v('email')+'" placeholder="work email"/></div>'+
         '<div class="ppl-edit-field"><label class="ppl-edit-label">Phone</label><input id="pf-phone" class="ppl-edit-input" value="'+v('phone')+'" placeholder="contact number"/></div>'+
-        '<div class="ppl-edit-field"><label class="ppl-edit-label">Joining Date</label><input id="pf-joining" class="ppl-edit-input" value="'+v('joining_date')+'" placeholder="e.g. Jan 2020"/></div>'+
-        '<div class="ppl-edit-field"><label class="ppl-edit-label">Birthday (DD/MM)</label><input id="pf-dob" class="ppl-edit-input" value="'+v('dob')+'" placeholder="e.g. 15/08"/></div>'+
       '</div>';
 
     if(isNew){
@@ -8309,6 +8661,13 @@ function pplOpenEdit(id){
         '<select id="pf-userid" class="ppl-edit-input"><option value="">— Select agent —</option></select></div>';
     }
   }
+
+  // DOB and Joining Date — agents can edit their own, admins can edit anyone's
+  html += '<div class="ppl-edit-section">Date of Birth &amp; Joining</div>'+
+    '<div class="ppl-edit-grid">'+
+      '<div class="ppl-edit-field"><label class="ppl-edit-label">Date of Birth (DD/MM)</label><input id="pf-dob" class="ppl-edit-input" value="'+v('dob')+'" placeholder="e.g. 15/08"/></div>'+
+      '<div class="ppl-edit-field"><label class="ppl-edit-label">Date of Joining</label><input id="pf-joining" class="ppl-edit-input" value="'+v('joining_date')+'" placeholder="e.g. Jan 2020"/></div>'+
+    '</div>';
 
   // Personal fields — everyone can edit their own
   html += '<div class="ppl-edit-section">Personal</div>'+
@@ -8447,13 +8806,15 @@ async function pplSaveProfile(){
       data.team = (document.getElementById('pf-team')||{}).value||'';
       data.email = (document.getElementById('pf-email')||{}).value||'';
       data.phone = (document.getElementById('pf-phone')||{}).value||'';
-      data.joining_date = (document.getElementById('pf-joining')||{}).value||'';
-      data.dob = (document.getElementById('pf-dob')||{}).value||'';
       if(isNew){
         var uid = (document.getElementById('pf-userid')||{}).value||null;
         data.user_id = uid||null;
       }
     }
+
+    // DOB and joining date — editable by anyone editing their own profile
+    data.joining_date = (document.getElementById('pf-joining')||{}).value||'';
+    data.dob = (document.getElementById('pf-dob')||{}).value||'';
 
     if(!data.name && isNew){ msg.textContent='Name is required.'; msg.style.display='block'; btn.disabled=false; btn.textContent='Save Profile'; return; }
 
@@ -12381,6 +12742,7 @@ function shiftLabel(code){
   if(m){var sh=parseInt(m[1]),eh=parseInt(m[3]);var s12=sh>12?sh-12:(sh===0?12:sh),e12=eh>12?eh-12:(eh===0?12:eh);var sa=sh<12?'AM':'PM',ea=eh<12?'AM':'PM';return s12+(m[2]?':'+m[2]:'')+' '+sa+' - '+e12+(m[4]?':'+m[4]:'')+' '+ea;}
   return code;
 }
+
 function findAgent(rows,name){
   var agents=getAgentRows(rows),n=name.toLowerCase().trim();
   var r=null;
