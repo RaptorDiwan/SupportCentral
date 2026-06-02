@@ -2096,7 +2096,7 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   #chat-dock-icon{
     width:48px; height:48px; border-radius:50%;
     background:linear-gradient(135deg,var(--gold-dim),var(--gold));
-    border:none; cursor:pointer;
+    border:none; cursor:grab;
     display:none; align-items:center; justify-content:center;
     box-shadow:0 4px 14px rgba(239,73,60,.35);
     pointer-events:all; flex-shrink:0;
@@ -10733,6 +10733,63 @@ function initSoundIcon(){
   if(msgBtn) msgBtn.textContent = _notifSoundEnabled ? '🔔' : '🔕';
 }
 
+function toggleMsgSound(){
+  _notifSoundEnabled = !_notifSoundEnabled;
+  localStorage.setItem('tc_notif_sound', _notifSoundEnabled ? 'true' : 'false');
+  initSoundIcon();
+}
+
+function chatPlayMsgSound(){
+  if(!_notifSoundEnabled) return;
+  try{
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = 'sine';
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.frequency.setValueAtTime(800, ctx.currentTime);
+    g.gain.setValueAtTime(0.05, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    o.start();
+    o.stop(ctx.currentTime + 0.15);
+
+    setTimeout(function(){
+      try {
+        var ctx2 = new (window.AudioContext||window.webkitAudioContext)();
+        var o2 = ctx2.createOscillator();
+        var g2 = ctx2.createGain();
+        o2.type = 'sine';
+        o2.connect(g2);
+        g2.connect(ctx2.destination);
+        o2.frequency.setValueAtTime(1000, ctx2.currentTime);
+        g2.gain.setValueAtTime(0.05, ctx2.currentTime);
+        g2.gain.exponentialRampToValueAtTime(0.001, ctx2.currentTime + 0.25);
+        o2.start();
+        o2.stop(ctx2.currentTime + 0.25);
+      } catch(e){}
+    }, 80);
+  }catch(e){}
+}
+
+function playSendSound(){
+  if(!_notifSoundEnabled) return;
+  try{
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = 'sine';
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.frequency.setValueAtTime(600, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.12);
+    g.gain.setValueAtTime(0.05, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    o.start();
+    o.stop(ctx.currentTime + 0.12);
+  }catch(e){}
+}
+
 function chatColor(name){
   var c=['#EF493C','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#6366F1','#84CC16'];
   var n=0; for(var i=0;i<(name||'').length;i++) n+=name.charCodeAt(i);
@@ -10755,16 +10812,29 @@ var _dockContactsOpen = false;
 var _lastNotifTotal = 0;
 var _notifSoundEnabled = localStorage.getItem('tc_notif_sound') !== 'false';
 var _dockHidden = localStorage.getItem('tc_dock_hidden') === '1';
+var _dragBlockClick = false;
 
 function chatInit(){
   if(!currentUser||_isSysLevel()) return;
   var icon = document.getElementById('chat-dock-icon');
   if(icon) icon.classList.add('visible');
   if(_dockHidden){ dockApplyHidden(true, false); }
+
+  // Restore persisted drag coordinates
+  var savedRight = localStorage.getItem('tc_dock_right');
+  var savedBottom = localStorage.getItem('tc_dock_bottom');
+  var dock = document.getElementById('chat-dock');
+  if(savedRight !== null && savedBottom !== null && dock){
+    dock.style.right = savedRight + 'px';
+    dock.style.bottom = savedBottom + 'px';
+  }
+
   dockLoadUsers();
   chatStartPolling();
   initSoundIcon();
   msgLoadConversations();
+  makeDockDraggable();
+
   // Escape key: close topmost dock window or contacts popup
   document.addEventListener('keydown', function(e){
     if(e.key !== 'Escape') return;
@@ -10781,6 +10851,94 @@ function chatInit(){
     var wins = document.querySelectorAll('.dock-chat-window');
     if(wins.length) dockCloseChat(wins[wins.length-1].id.replace('dock-win-',''));
   });
+}
+
+function makeDockDraggable() {
+  var icon = document.getElementById('chat-dock-icon');
+  var dock = document.getElementById('chat-dock');
+  if (!icon || !dock) return;
+
+  var isDragging = false;
+  var startX, startY;
+  var startRight, startBottom;
+
+  icon.addEventListener('mousedown', dragStart);
+  icon.addEventListener('touchstart', dragStart, { passive: false });
+
+  function dragStart(e) {
+    var clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+    var clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+    startX = clientX;
+    startY = clientY;
+
+    var computed = window.getComputedStyle(dock);
+    startRight = parseInt(computed.right) || 16;
+    startBottom = parseInt(computed.bottom) || 0;
+
+    isDragging = false;
+
+    if (e.type === 'mousedown') {
+      document.addEventListener('mousemove', dragMove);
+      document.addEventListener('mouseup', dragEnd);
+    } else {
+      document.addEventListener('touchmove', dragMove, { passive: false });
+      document.addEventListener('touchend', dragEnd);
+    }
+  }
+
+  function dragMove(e) {
+    var clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    var clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+    var deltaX = startX - clientX;
+    var deltaY = startY - clientY;
+
+    if (Math.hypot(deltaX, deltaY) > 6) {
+      isDragging = true;
+      _dragBlockClick = true;
+      icon.style.cursor = 'grabbing';
+    }
+
+    if (isDragging) {
+      if (e.cancelable) e.preventDefault();
+
+      var newRight = startRight + deltaX;
+      var newBottom = startBottom + deltaY;
+
+      var maxRight = window.innerWidth - 60;
+      var maxBottom = window.innerHeight - 60;
+      if (newRight < 0) newRight = 0;
+      if (newRight > maxRight) newRight = maxRight;
+      if (newBottom < 0) newBottom = 0;
+      if (newBottom > maxBottom) newBottom = maxBottom;
+
+      dock.style.right = newRight + 'px';
+      dock.style.bottom = newBottom + 'px';
+    }
+  }
+
+  function dragEnd(e) {
+    if (e.type === 'mouseup') {
+      document.removeEventListener('mousemove', dragMove);
+      document.removeEventListener('mouseup', dragEnd);
+    } else {
+      document.removeEventListener('touchmove', dragMove);
+      document.removeEventListener('touchend', dragEnd);
+    }
+
+    icon.style.cursor = 'grab';
+
+    if (isDragging) {
+      localStorage.setItem('tc_dock_right', dock.style.right.replace('px', ''));
+      localStorage.setItem('tc_dock_bottom', dock.style.bottom.replace('px', ''));
+      setTimeout(function() {
+        _dragBlockClick = false;
+      }, 50);
+    } else {
+      _dragBlockClick = false;
+    }
+  }
 }
 
 // ── CONTACTS ──
@@ -10836,6 +10994,7 @@ function dockRenderContacts(users){
 }
 
 function dockToggleContacts(){
+  if(_dragBlockClick) return;
   if(_dockHidden){ dockRestore(); return; }
   _dockContactsOpen = !_dockContactsOpen;
   var popup = document.getElementById('chat-contacts-popup');
