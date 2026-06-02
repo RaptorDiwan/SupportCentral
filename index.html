@@ -11552,6 +11552,26 @@ async function msgDeleteById(id){
   }catch(e){alert('Could not delete message: '+e.message);}
 }
 
+async function msgClearConversation(){
+  if(!_msgActiveConv)return;
+  if(!confirm('Clear all messages in this conversation permanently? This cannot be undone.'))return;
+  try{
+    var url=SUPABASE_URL+'/rest/v1/messages';
+    if(_msgActiveConv.type==='dm'){
+      var myId=currentUser.id,theirId=_msgActiveConv.id;
+      url+='?or=(and(from_user_id.eq.'+myId+',to_user_id.eq.'+theirId+'),and(from_user_id.eq.'+theirId+',to_user_id.eq.'+myId+'))&group_id=is.null';
+    } else {
+      url+='?group_id=eq.'+_msgActiveConv.id;
+    }
+    const r=await fetch(url,{method:'DELETE',headers:sbHeaders()});
+    if(!r.ok) throw new Error('Delete failed');
+    // Refresh both views
+    if(typeof chatLoadMessages==='function'&&_chatOpen&&_chatActiveUser) await chatLoadMessages();
+    await msgLoadMessagesForConv();
+    await msgLoadConversations();
+  }catch(e){alert('Could not clear conversation: '+e.message);}
+}
+
 function msgToggleEmoji(){
   var p=document.getElementById('msg-emoji-picker');
   var g=document.getElementById('msg-gif-picker');
