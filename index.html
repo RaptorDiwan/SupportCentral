@@ -192,8 +192,10 @@
     background:
       linear-gradient(145deg, #EAF2FC 0%, #DCE7F5 46%, #C8D3E1 100%);
     color: var(--text-primary);
-    min-height: 100vh;
-    overflow-x: hidden;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   /* ─── GRID NOISE BACKGROUND ─── */
@@ -211,17 +213,17 @@
   }
 
   /* ─── VIEWS ─── */
-  .view { display: none; position: relative; z-index: 1; }
+  .view { display: none; position: relative; z-index: 1; flex: 1; min-height: 0; }
   .view.active { display: flex; }
 
   /* ══════════════════════════════
      LOGIN PAGE
   ══════════════════════════════ */
   #login-view {
-    min-height: 100vh;
     align-items: center;
     justify-content: center;
     padding: 2rem;
+    overflow-y: auto;
   }
 
   .login-box {
@@ -368,7 +370,6 @@
      DASHBOARD LAYOUT
   ══════════════════════════════ */
   #dashboard-view {
-    min-height: 100vh;
     flex-direction: column;
   }
 
@@ -454,7 +455,8 @@
   .dash-body {
     display: flex;
     flex: 1;
-    min-height: calc(100vh - 60px);
+    min-height: 0; /* critical: lets flex children shrink below content size */
+    overflow: hidden;
   }
 
   /* ─── SIDEBAR ─── */
@@ -467,6 +469,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .sidebar-section {
@@ -1478,9 +1482,9 @@
     .wclock-btn { padding: .3rem .65rem; font-size: .72rem; }
 
     /* ── LAYOUT ── */
-    .dash-body { flex-direction: column; min-height: calc(100vh - 54px); }
+    .dash-body { flex-direction: column; overflow: auto; }
     .sidebar { display: none; }
-    .main-content { padding: 1rem 1rem 7rem 1rem; }
+    .main-content { padding: 1rem 1rem 7rem 1rem; overflow-y: visible; }
 
     /* ── BOTTOM NAV ── */
     .mobile-bottom-nav { display: flex !important; }
@@ -4442,6 +4446,31 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
             </div>
           </div>
 
+          <!-- ── Section: Agent Password Reset (Admin — PIN protected) ── -->
+          <div class="cd-card" id="cd-pwreset-card">
+            <div class="cd-card-header">
+              <span class="cd-card-icon" style="background:rgba(76,118,168,.12);">🔑</span>
+              <div>
+                <div class="cd-card-title">Reset Agent Password</div>
+                <div class="cd-card-sub">Set a new password for any agent. Requires admin PIN to unlock.</div>
+              </div>
+              <div style="margin-left:auto;">
+                <button id="cd-pwreset-unlock-btn" class="cd-btn" onclick="cdPwResetUnlock()" style="font-size:.76rem;">🔒 Unlock</button>
+              </div>
+            </div>
+            <div id="cd-pwreset-locked" style="margin-top:.8rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;">
+              <input id="cd-pwreset-pin" type="password" maxlength="4" placeholder="Enter PIN" class="cd-input" style="max-width:140px;letter-spacing:.2em;font-size:.95rem;" onkeydown="if(event.key==='Enter')cdPwResetUnlock()"/>
+              <button class="cd-btn" onclick="cdPwResetUnlock()">Unlock</button>
+              <span id="cd-pwreset-pin-err" style="font-size:.78rem;color:var(--accent-red);display:none;">Wrong PIN.</span>
+            </div>
+            <div id="cd-pwreset-panel" style="display:none;margin-top:.9rem;">
+              <div id="cd-pwreset-agents" style="display:flex;flex-direction:column;gap:.5rem;">
+                <div style="color:var(--text-dim);font-size:.82rem;">Loading agents…</div>
+              </div>
+              <div id="cd-pwreset-msg" style="font-size:.78rem;margin-top:.6rem;display:none;"></div>
+            </div>
+          </div>
+
           <!-- ── CSAT Reports — loaded from csat_module_patch.js ── -->
           <div id="cd-csat-card"></div>
 
@@ -5160,7 +5189,7 @@ function showPage(id,elem){
   if(id==='moments') setTimeout(function(){_mLoadTab(_mActiveTab);},60);
   if(id==='quiz') loadAgentQuiz();
   if(id==='announcements') loadAnnouncementsAdmin();
-  if(id==='controldeck'){ cdLoadAll(); cdLoadVHAgents(); cdVHLoadGlobalStatus(); }
+  if(id==='controldeck'){ _cdPwResetUnlocked=false; var lk=document.getElementById('cd-pwreset-locked'),pk=document.getElementById('cd-pwreset-panel'),ub=document.getElementById('cd-pwreset-unlock-btn'),pi=document.getElementById('cd-pwreset-pin'); if(lk)lk.style.display='flex'; if(pk)pk.style.display='none'; if(ub)ub.style.display=''; if(pi){pi.value='';} cdLoadAll(); cdLoadVHAgents(); cdVHLoadGlobalStatus(); }
   if(id==='voicehub'){ vhPageInit(); }
   if(id==='teammeet'){ tmPageInit(); }
   if(id==='assessment') loadAgentAssessment();
@@ -10975,7 +11004,17 @@ function dockRenderContacts(users){
   var list = document.getElementById('dock-contacts-list');
   if(!list) return;
   if(!users.length){ list.innerHTML='<div style="padding:1rem;text-align:center;font-size:.8rem;color:var(--text-dim);">No contacts found</div>'; return; }
-  list.innerHTML = users.map(function(u){
+  // Sort: unread first, then by most recent message time
+  var sorted = users.slice().sort(function(a,b){
+    var ua=_chatUnreadMap[a.id]||0, ub=_chatUnreadMap[b.id]||0;
+    if(ua&&!ub) return -1;
+    if(!ua&&ub) return 1;
+    var ta=_chatLastMsgMap[a.id]?new Date(_chatLastMsgMap[a.id].time).getTime():0;
+    var tb=_chatLastMsgMap[b.id]?new Date(_chatLastMsgMap[b.id].time).getTime():0;
+    if(tb!==ta) return tb-ta;
+    return (a.name||'').localeCompare(b.name||'');
+  });
+  list.innerHTML = sorted.map(function(u){
     var bg=chatColor(u.name), ini=chatIni(u.name);
     var unread=_chatUnreadMap[u.id]||0;
     var last=_chatLastMsgMap[u.id];
@@ -11330,8 +11369,11 @@ function chatStartPolling(){
 
 // ── UNREAD + NOTIFICATIONS ──
 var _chatToastTimer=null;
+var _chatCheckUnreadRunning=false;
 async function chatCheckUnread(){
   if(!currentUser||_isSysLevel()) return;
+  if(_chatCheckUnreadRunning) return;
+  _chatCheckUnreadRunning=true;
   try{
     var rows=await sbQuery('messages','to_user_id=eq.'+currentUser.id+'&read_at=is.null&select=from_user_id,content,created_at');
     _chatUnreadMap={}; _chatLastMsgMap={};
@@ -11341,7 +11383,7 @@ async function chatCheckUnread(){
     });
     chatUpdateBadge();
     if(_dockContactsOpen) dockRenderContacts(_chatUsers);
-  }catch(e){}
+  }catch(e){}finally{_chatCheckUnreadRunning=false;}
 }
 
 function chatUpdateBadge(){
@@ -11572,7 +11614,12 @@ async function msgOpenConv(id,type){
       });
     }catch(e){}
     delete _chatUnreadMap[id];
+    // Sync unread=0 in the conversations array so the list re-renders correctly
+    var convEntry=(_msgAllConvs||[]).find(function(c){return c.id===id&&c.type==='dm';});
+    if(convEntry) convEntry.unread=0;
     chatUpdateBadge();
+    // Always re-render dock contact list so unread badge clears immediately
+    dockRenderContacts(_chatUsers);
   }
 
   await msgLoadMessagesForConv();
@@ -11832,7 +11879,7 @@ async function msgSendGif(url){
 async function msgPollMessages(){
   if(!_msgActiveConv)return;
   await msgLoadMessagesForConv();
-  await chatCheckUnread();
+  // chatCheckUnread is already called by the main poll interval — do not call it again here to prevent duplicate sounds
 }
 
 // ── New Group ──
@@ -16709,6 +16756,69 @@ async function cdLoadAnnouncements(){
 async function cdDeleteAnnouncement(id){
   if(!confirm('Delete this announcement?')) return;
   try{ await sbDelete('announcements','id',id); cdLoadAnnouncements(); }catch(e){ alert('Error: '+e.message); }
+}
+
+// ── Agent Password Reset (Admin — PIN 7070) ──
+var _cdPwResetUnlocked = false;
+function cdPwResetUnlock(){
+  if(_cdPwResetUnlocked) return;
+  var pinEl = document.getElementById('cd-pwreset-pin');
+  var errEl = document.getElementById('cd-pwreset-pin-err');
+  var pin = (pinEl ? pinEl.value : '').trim();
+  if(pin !== '7070'){
+    if(errEl){ errEl.style.display='inline'; setTimeout(function(){ errEl.style.display='none'; }, 2000); }
+    if(pinEl){ pinEl.value=''; pinEl.focus(); }
+    return;
+  }
+  _cdPwResetUnlocked = true;
+  var lockedDiv = document.getElementById('cd-pwreset-locked');
+  var panelDiv  = document.getElementById('cd-pwreset-panel');
+  var unlockBtn = document.getElementById('cd-pwreset-unlock-btn');
+  if(lockedDiv) lockedDiv.style.display = 'none';
+  if(panelDiv)  panelDiv.style.display  = 'block';
+  if(unlockBtn) unlockBtn.style.display = 'none';
+  cdPwResetLoad();
+}
+
+async function cdPwResetLoad(){
+  var container = document.getElementById('cd-pwreset-agents');
+  if(!container) return;
+  container.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;">Loading agents…</div>';
+  try{
+    var users = await sbQuery('users','select=id,name,email,role&order=name.asc');
+    if(!users||!users.length){ container.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">No agents found.</div>'; return; }
+    container.innerHTML = users.map(function(u){
+      var ni=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+      return '<div style="display:flex;align-items:center;gap:.75rem;padding:.6rem .8rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);">'+
+        '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff;flex-shrink:0;">'+ni+'</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-weight:600;font-size:.84rem;color:var(--text-primary);">'+esc(u.name)+'</div>'+
+          '<div style="font-size:.72rem;color:var(--text-muted);">'+esc(u.email)+'</div>'+
+        '</div>'+
+        '<input id="cd-pw-inp-'+u.id+'" type="text" placeholder="New password (min 6)" class="cd-input" style="max-width:180px;font-size:.8rem;" onkeydown="if(event.key===\'Enter\')cdPwResetSave(\''+u.id+'\',\''+esc(u.name)+'\')"/>'+
+        '<button class="xc-btn-sm" onclick="cdPwResetSave(\''+u.id+'\',\''+esc(u.name)+'\')">Set PW</button>'+
+      '</div>';
+    }).join('');
+  }catch(e){ container.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+e.message+'</div>'; }
+}
+
+async function cdPwResetSave(userId, name){
+  var inp = document.getElementById('cd-pw-inp-'+userId);
+  var msg = document.getElementById('cd-pwreset-msg');
+  if(!inp) return;
+  var newPw = (inp.value||'').trim();
+  if(!newPw || newPw.length < 6){
+    if(msg){ msg.style.display='block'; msg.textContent='Password must be at least 6 characters.'; msg.style.color='var(--accent-red)'; setTimeout(function(){ msg.style.display='none'; }, 3000); }
+    return;
+  }
+  try{
+    var hashed = await hashPassword(newPw);
+    await sbUpdate('users','id',userId,{password:hashed});
+    inp.value = '';
+    if(msg){ msg.style.display='block'; msg.textContent='✅ Password for '+name+' reset. New password: '+newPw; msg.style.color='var(--accent-green)'; setTimeout(function(){ msg.style.display='none'; }, 5000); }
+  }catch(e){
+    if(msg){ msg.style.display='block'; msg.textContent='Error: '+e.message; msg.style.color='var(--accent-red)'; setTimeout(function(){ msg.style.display='none'; }, 4000); }
+  }
 }
 
 // ── Celebration display (shown to agents) ──
