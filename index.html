@@ -45,7 +45,8 @@
   body.dark .comment-body { background: #1F2937; }
   body.dark .comment-input { background: #1F2937; color: #F1F5F9; }
   body.dark .ann-textarea { background: #111827; color: #F1F5F9; }
-  body.dark .qa-field input, body.dark .qa-field select, body.dark .qa-field textarea { background: #111827; color: #F1F5F9; border-color: #2D3748; }
+  body.dark .qa-field input, body.dark .qa-field select, body.dark .qa-field textarea,
+  body.dark .qa-choice-row input[type=text] { background: #1e293b; color: #F1F5F9; border-color: #2D3748; }
   body.dark .um-input { background: #111827; color: #F1F5F9; border-color: #2D3748; }
   body.dark .quiz-option { background: #1F2937; border-color: #2D3748; color: #F1F5F9; }
   body.dark .quiz-essay { background: #111827; border-color: #2D3748; color: #F1F5F9; }
@@ -1196,12 +1197,12 @@
   .qa-form-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin-bottom:1rem; }
   .qa-field { display:flex; flex-direction:column; gap:.35rem; }
   .qa-field label { font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); font-weight:500; }
-  .qa-field input, .qa-field select, .qa-field textarea { padding:.65rem .9rem; background:#F1F6FD; border:1px solid var(--navy-border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:.875rem; color:var(--text-primary); outline:none; transition:border-color .2s; }
+  .qa-field input, .qa-field select, .qa-field textarea { padding:.65rem .9rem; background:#F1F6FD; border:1px solid var(--navy-border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:.875rem; color:#0f172a; outline:none; transition:border-color .2s; }
   .qa-field input:focus, .qa-field select:focus, .qa-field textarea:focus { border-color:var(--gold-dim); box-shadow:0 0 0 3px rgba(239,73,60,.1); }
   .qa-field textarea { resize:vertical; min-height:80px; }
   .qa-choices { display:flex; flex-direction:column; gap:.5rem; margin:1rem 0; }
   .qa-choice-row { display:flex; align-items:center; gap:.6rem; }
-  .qa-choice-row input[type=text] { flex:1; padding:.55rem .8rem; background:#F1F6FD; border:1px solid var(--navy-border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:.85rem; color:var(--text-primary); outline:none; }
+  .qa-choice-row input[type=text] { flex:1; padding:.55rem .8rem; background:#F1F6FD; border:1px solid var(--navy-border); border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:.85rem; color:#0f172a; outline:none; }
   .qa-choice-row input[type=radio], .qa-choice-row input[type=checkbox] { accent-color:var(--gold); width:16px; height:16px; cursor:pointer; }
   .qa-correct-label { font-size:.7rem; color:var(--text-dim); white-space:nowrap; }
   .qa-add-choice { background:transparent; border:1px dashed var(--navy-border); color:var(--text-dim); padding:.45rem 1rem; border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-size:.8rem; cursor:pointer; transition:all .2s; width:100%; margin-top:.25rem; }
@@ -1983,7 +1984,6 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .dock-messages{
     flex:1; overflow-y:auto; padding:.6rem .75rem;
     display:flex; flex-direction:column; gap:3px;
-    scroll-behavior:smooth;
     background:var(--navy);
   }
   .dock-messages::-webkit-scrollbar{width:3px;}
@@ -2786,6 +2786,16 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
 <!-- ══════════ LOGIN VIEW ══════════ -->
 <canvas id="ambient-canvas"></canvas>
+<canvas id="eg-matrix-canvas"></canvas>
+<div id="eg-rave-overlay"></div>
+<div id="eg-diwan-splash">
+  <div class="eg-diwan-stars">✦ ✦ ✦ ✦ ✦</div>
+  <div class="eg-diwan-title">Diwan Chowthry</div>
+  <div class="eg-diwan-sub">The Architect of K7TeamCore</div>
+  <div class="eg-diwan-stars">✦ ✦ ✦ ✦ ✦</div>
+  <div class="eg-diwan-close" onclick="egDiwanClose()">— Press Escape or click to close —</div>
+</div>
+<div id="eg-hint-toast"></div>
 <div id="login-view" class="view active">
   <div class="login-box">
     <div class="login-logo">
@@ -4526,6 +4536,7 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
           </div>
 
           <!-- ── Section: Agent Password Reset (Admin — PIN protected) ── -->
+
           <div class="cd-card" id="cd-pwreset-card">
             <div class="cd-card-header">
               <span class="cd-card-icon" style="background:rgba(76,118,168,.12);">🔑</span>
@@ -10970,7 +10981,7 @@ function chatInit(){
   msgLoadConversations();
   makeDockDraggable();
 
-  // Escape key: close topmost dock window or contacts popup
+  // Escape key: minimise topmost dock window (not close), or close contacts popup
   document.addEventListener('keydown', function(e){
     if(e.key !== 'Escape') return;
     // Close any open emoji/gif pickers first
@@ -10979,12 +10990,15 @@ function chatInit(){
       if(p.style.display==='block'){ p.style.display='none'; anyPicker=true; }
     });
     if(anyPicker) return;
-    // Close contacts popup
+    // Close contacts popup if open
     var popup = document.getElementById('chat-contacts-popup');
     if(popup && !popup.classList.contains('dock-hidden')){ dockCloseContacts(); return; }
-    // Close the rightmost (last) open dock window
-    var wins = document.querySelectorAll('.dock-chat-window');
-    if(wins.length) dockCloseChat(wins[wins.length-1].id.replace('dock-win-',''));
+    // Minimise (not close) the rightmost open dock window
+    var wins = document.querySelectorAll('.dock-chat-window:not(.minimised)');
+    if(wins.length){
+      var lastWin = wins[wins.length-1];
+      dockToggleMinimise(lastWin.id.replace('dock-win-',''));
+    }
   });
 }
 
@@ -11273,11 +11287,14 @@ async function dockLoadMsgs(userId){
       'or=(and(from_user_id.eq.'+myId+',to_user_id.eq.'+userId+'),and(from_user_id.eq.'+userId+',to_user_id.eq.'+myId+'))'+
       '&order=created_at.asc&limit=80&select=id,from_user_id,from_name,content,created_at,read_at,expires_at'
     );
-    dockRenderMsgs(out, rows||[], userId);
+    // Remember scroll position before re-render so polls don't yank the view
+    var wasAtBottom = (out.scrollHeight - out.scrollTop - out.clientHeight) < 60;
+    var isFirstLoad = out.innerHTML === '' || out.innerHTML.indexOf('Loading') > -1;
+    dockRenderMsgs(out, rows||[], userId, wasAtBottom || isFirstLoad);
   }catch(e){}
 }
 
-function dockRenderMsgs(out, rows, userId){
+function dockRenderMsgs(out, rows, userId, scrollToBottom){
   if(!rows.length){
     out.innerHTML='<div style="text-align:center;padding:1.5rem;font-size:.75rem;color:var(--text-dim);">🔒 Start a conversation</div>';
     return;
@@ -11301,7 +11318,11 @@ function dockRenderMsgs(out, rows, userId){
     '</div>';
   }
   out.innerHTML=html;
-  out.scrollTop=out.scrollHeight;
+  // Only scroll to bottom on first open or when already near the bottom — not on background polls
+  if(scrollToBottom !== false){
+    // rAF ensures the browser has painted the new content before we measure scrollHeight
+    requestAnimationFrame(function(){ out.scrollTop = out.scrollHeight; });
+  }
 }
 
 async function dockSend(userId, userName, bg){
@@ -11318,6 +11339,9 @@ async function dockSend(userId, userName, bg){
       content:content, created_at:now.toISOString(),
       expires_at:new Date(now.getTime()+24*3600000).toISOString()
     });
+    // Immediately update last-msg map so this contact moves to top of the list
+    _chatLastMsgMap[userId]={content:content,time:now.toISOString(),sent:true};
+    if(_dockContactsOpen) dockRenderContacts(_chatUsers);
     dockLoadMsgs(userId);
   }catch(e){ alert('Send failed: '+e.message); }
 }
@@ -11482,15 +11506,27 @@ async function chatCheckUnread(){
   if(_chatCheckUnreadRunning) return;
   _chatCheckUnreadRunning=true;
   try{
+    // Received unread messages
     var rows=await sbQuery('messages','to_user_id=eq.'+currentUser.id+'&read_at=is.null&select=from_user_id,content,created_at');
     _chatUnreadMap={}; _chatLastMsgMap={};
     (rows||[]).forEach(function(m){
       _chatUnreadMap[m.from_user_id]=(_chatUnreadMap[m.from_user_id]||0)+1;
-      // Keep only the newest message per sender
       if(!_chatLastMsgMap[m.from_user_id]||m.created_at>_chatLastMsgMap[m.from_user_id].time){
         _chatLastMsgMap[m.from_user_id]={content:m.content,time:m.created_at};
       }
     });
+
+    // Also pull most recent SENT message per contact so contacts you messaged last bubble to top
+    try{
+      var sent=await sbQuery('messages','from_user_id=eq.'+currentUser.id+'&group_id=is.null&select=to_user_id,content,created_at&order=created_at.desc&limit=100');
+      (sent||[]).forEach(function(m){
+        if(!m.to_user_id) return;
+        if(!_chatLastMsgMap[m.to_user_id]||m.created_at>_chatLastMsgMap[m.to_user_id].time){
+          _chatLastMsgMap[m.to_user_id]={content:m.content,time:m.created_at,sent:true};
+        }
+      });
+    }catch(e){}
+
     // On first run: silently seed the timestamp so pre-existing unreads don't fire sound
     if(_chatCheckUnreadFirstRun){
       _chatCheckUnreadFirstRun=false;
@@ -14215,6 +14251,119 @@ function pplCloseLightbox(){
   }
   .amb-btn.off.active{ border-color:rgba(239,73,60,.4);background:rgba(239,73,60,.08);color:var(--accent-red); }
   .amb-btn-icon{ font-size:1.4rem;line-height:1; }
+  /* ══ EASTER EGG SYSTEM ══ */
+
+  /* Gravity */
+  .eg-gravity-el {
+    position: fixed !important;
+    transition: none !important;
+    z-index: 8000;
+    cursor: grab;
+  }
+  .eg-gravity-el:active { cursor: grabbing; }
+
+  /* Barrel roll */
+  @keyframes eg-barrel-roll {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .eg-barrel { animation: eg-barrel-roll 1s ease-in-out; }
+
+  /* Tilt */
+  .eg-tilted { transform: rotate(2.5deg) !important; transition: transform .6s ease !important; transform-origin: center center; }
+
+  /* Matrix canvas */
+  #eg-matrix-canvas {
+    position: fixed; inset: 0; z-index: 9500;
+    pointer-events: none; opacity: 0;
+    transition: opacity .5s;
+  }
+  #eg-matrix-canvas.active { opacity: 1; }
+
+  /* Rave */
+  #eg-rave-overlay {
+    position: fixed; inset: 0; z-index: 9400;
+    pointer-events: none; opacity: 0;
+    mix-blend-mode: screen;
+    transition: opacity .1s;
+  }
+
+  /* Thanos dust */
+  .eg-dust-particle {
+    position: fixed; pointer-events: none;
+    z-index: 9300; border-radius: 50%;
+    animation: eg-dust-fly var(--dur,1.2s) ease forwards;
+  }
+  @keyframes eg-dust-fly {
+    0%   { opacity:1; transform: translate(0,0) scale(1); }
+    100% { opacity:0; transform: translate(var(--tx,40px), var(--ty,-60px)) scale(0); }
+  }
+
+  /* k7diwan splash */
+  #eg-diwan-splash {
+    position: fixed; inset: 0; z-index: 9600;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 1rem;
+    background: radial-gradient(ellipse at center, rgba(10,15,40,0.97) 0%, rgba(5,8,25,0.99) 100%);
+    opacity: 0; pointer-events: none;
+    transition: opacity .6s;
+  }
+  #eg-diwan-splash.active { display: flex; opacity: 1; pointer-events: all; }
+  #eg-diwan-splash .eg-diwan-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6, #06b6d4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-size: 300% 300%;
+    animation: eg-diwan-gradient 3s ease infinite;
+    text-align: center; letter-spacing: .06em;
+  }
+  @keyframes eg-diwan-gradient {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  #eg-diwan-splash .eg-diwan-sub {
+    font-size: 1rem; color: rgba(200,210,230,0.7);
+    letter-spacing: .25em; text-transform: uppercase;
+    font-family: 'DM Sans', sans-serif;
+  }
+  #eg-diwan-splash .eg-diwan-stars {
+    font-size: 1.8rem; letter-spacing: .5rem;
+    animation: eg-star-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes eg-star-pulse {
+    0%,100% { opacity:.4; transform: scale(0.95); }
+    50%     { opacity:1;  transform: scale(1.05); }
+  }
+  #eg-diwan-splash .eg-diwan-close {
+    margin-top: 1.5rem; font-size: .78rem; color: rgba(255,255,255,.3);
+    cursor: pointer; letter-spacing: .15em; font-family: 'DM Sans', sans-serif;
+  }
+  #eg-diwan-splash .eg-diwan-close:hover { color: rgba(255,255,255,.6); }
+  .eg-confetti {
+    position: fixed; pointer-events: none; z-index: 9550;
+    width: 8px; height: 8px; border-radius: 2px;
+    animation: eg-confetti-fall var(--dur,3s) ease-in forwards;
+  }
+  @keyframes eg-confetti-fall {
+    0%   { opacity:1; transform: translateY(var(--sy,0px)) rotate(0deg) translateX(0); }
+    100% { opacity:0; transform: translateY(var(--ey,600px)) rotate(var(--r,720deg)) translateX(var(--ex,80px)); }
+  }
+
+  /* Easter egg toast hint */
+  #eg-hint-toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(15,20,45,0.92); color: rgba(200,215,240,0.9);
+    font-size: .72rem; padding: .45rem 1.1rem; border-radius: 20px;
+    border: 1px solid rgba(100,130,200,0.2); z-index: 9700;
+    font-family: 'DM Sans', sans-serif; letter-spacing: .08em;
+    opacity: 0; pointer-events: none; transition: opacity .3s;
+    white-space: nowrap;
+  }
+  #eg-hint-toast.show { opacity: 1; }
 </style>
 
 <!-- ══ Widget Root ══ -->
@@ -16903,7 +17052,8 @@ async function cdDeleteAnnouncement(id){
   try{ await sbDelete('announcements','id',id); cdLoadAnnouncements(); }catch(e){ alert('Error: '+e.message); }
 }
 
-// ══════════════════════════════════════════════════════════
+
+
 //  AMBIENT THEME ENGINE
 //  Key stored in settings table: ambient_theme
 //  Values: 'off' | 'rain' | 'snow' | 'wind' | 'fog' | 'sunny' | 'night' | 'autumn'
@@ -19805,6 +19955,445 @@ async function tmHandleSignal(sig){
       break;
   }
 }
+
+// ══════════════════════════════════════════════════════════
+//  EASTER EGG SYSTEM
+//  Triggers (outside input fields only):
+//    Konami code  ↑↑↓↓←→←→BA  → Gravity
+//    k7magic      → Barrel roll
+//    k7matrix     → Matrix rain
+//    k7rave       → Rave party
+//    k7thanos     → Thanos snap
+//    k7tilt       → Tilt page  (k7straight to restore)
+//    k7diwan      → Special tribute splash
+// ══════════════════════════════════════════════════════════
+
+(function(){
+
+  // ── Key sequence tracker ──
+  var _egBuffer = '';
+  var _egKonami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  var _egKonamiPos = 0;
+  var _egActive = {};   // which effects are currently running
+
+  function egInInput(){
+    var t = document.activeElement;
+    if(!t) return false;
+    var tag = t.tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return true;
+    if(t.isContentEditable) return true;
+    return false; // divs, body, buttons etc are fine
+  }
+
+  // Debug: expose buffer so you can check in console
+  Object.defineProperty(window, '_egDebug', { get: function(){ return { buffer: _egBuffer, konamiPos: _egKonamiPos, active: _egActive }; } });
+
+  function egHint(msg){
+    var el = document.getElementById('eg-hint-toast');
+    if(!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._ht);
+    el._ht = setTimeout(function(){ el.classList.remove('show'); }, 2800);
+  }
+
+  document.addEventListener('keydown', function(e){
+    // Konami code check (works even in inputs for arrow keys to not block normal use)
+    var expected = _egKonami[_egKonamiPos];
+    var key = e.key;
+    if(key === expected){
+      _egKonamiPos++;
+      if(_egKonamiPos === _egKonami.length){
+        _egKonamiPos = 0;
+        egGravity();
+      }
+    } else {
+      _egKonamiPos = (key === _egKonami[0]) ? 1 : 0;
+    }
+
+    // Text sequences — only outside inputs
+    if(egInInput()) return;
+    if(e.key === 'Escape'){
+      egEscapeAll();
+      return;
+    }
+    if(e.key.length === 1){
+      _egBuffer += e.key.toLowerCase();
+      if(_egBuffer.length > 20) _egBuffer = _egBuffer.slice(-20);
+      egCheckBuffer();
+    }
+  });
+
+  function egCheckBuffer(){
+    var b = _egBuffer;
+    if(b.endsWith('k7magic'))   { _egBuffer=''; egBarrelRoll(); }
+    else if(b.endsWith('k7matrix'))  { _egBuffer=''; egMatrix(); }
+    else if(b.endsWith('k7rave'))    { _egBuffer=''; egRave(); }
+    else if(b.endsWith('k7thanos'))  { _egBuffer=''; egThanos(); }
+    else if(b.endsWith('k7tilt'))    { _egBuffer=''; egTilt(); }
+    else if(b.endsWith('k7straight')){ _egBuffer=''; egUnTilt(); }
+    else if(b.endsWith('k7diwan'))   { _egBuffer=''; egDiwan(); }
+  }
+
+  function egEscapeAll(){
+    egGravityStop();
+    egMatrixStop();
+    egRaveStop();
+    egDiwanClose();
+    egUnTilt();
+    _egActive = {};
+  }
+
+  // ════════════════════════════
+  //  GRAVITY
+  // ════════════════════════════
+  var _egGravityBodies = [];
+  var _egGravityRAF = null;
+
+  function egGravity(){
+    if(_egActive.gravity){ egGravityStop(); return; }
+    _egActive.gravity = true;
+    egHint('🌍 Gravity activated! Click elements to throw them. Konami again to restore.');
+
+    // Grab all meaningful elements
+    var sel = '.sidebar-item, .cd-card, .main-content > div > div, .home-card, .stat-card, .topbar-msg-btn, .work-clock-wrap';
+    var els = document.querySelectorAll(sel);
+    var W = window.innerWidth, H = window.innerHeight;
+
+    els.forEach(function(el){
+      var r = el.getBoundingClientRect();
+      if(r.width < 10 || r.height < 10) return;
+
+      // Save original styles
+      var orig = {
+        position: el.style.position, left: el.style.left, top: el.style.top,
+        width: el.style.width, zIndex: el.style.zIndex,
+        transform: el.style.transform, margin: el.style.margin,
+        transition: el.style.transition
+      };
+
+      // Fix dimensions and position
+      el.style.position = 'fixed';
+      el.style.left     = r.left + 'px';
+      el.style.top      = r.top  + 'px';
+      el.style.width    = r.width + 'px';
+      el.style.zIndex   = '8000';
+      el.style.margin   = '0';
+      el.style.transition = 'none';
+      el.classList.add('eg-gravity-el');
+
+      var body = {
+        el: el, orig: orig,
+        x: r.left, y: r.top,
+        vx: (Math.random()-0.5)*2,
+        vy: -(Math.random()*1.5),
+        rot: 0, rotV: (Math.random()-0.5)*4,
+        w: r.width, h: r.height,
+        mass: Math.max(0.4, Math.min(2.0, (r.width*r.height)/40000)),
+        bounces: 0
+      };
+
+      el.addEventListener('click', function(ev){
+        if(!_egActive.gravity) return;
+        ev.stopPropagation();
+        body.vy = -(8 + Math.random()*6);
+        body.vx = (Math.random()-0.5)*10;
+        body.rotV = (Math.random()-0.5)*12;
+      }, true);
+
+      _egGravityBodies.push(body);
+    });
+
+    _egGravityRAF = requestAnimationFrame(egGravityTick);
+  }
+
+  function egGravityTick(){
+    if(!_egActive.gravity){ _egGravityRAF=null; return; }
+    var H = window.innerHeight;
+    var W = window.innerWidth;
+    var gravity = 0.45;
+
+    _egGravityBodies.forEach(function(b){
+      b.vy += gravity * b.mass;
+      b.x  += b.vx;
+      b.y  += b.vy;
+      b.rot += b.rotV;
+
+      // Floor bounce
+      if(b.y + b.h >= H){
+        b.y  = H - b.h;
+        b.vy = -(b.vy * 0.42);
+        b.vx *=  0.78;
+        b.rotV *= 0.7;
+        b.bounces++;
+        if(Math.abs(b.vy) < 0.8) b.vy = 0;
+        if(Math.abs(b.vx) < 0.2) b.vx = 0;
+      }
+      // Side walls
+      if(b.x < 0){ b.x=0; b.vx=Math.abs(b.vx)*0.5; }
+      if(b.x + b.w > W){ b.x=W-b.w; b.vx=-Math.abs(b.vx)*0.5; }
+
+      b.el.style.left      = b.x + 'px';
+      b.el.style.top       = b.y + 'px';
+      b.el.style.transform = 'rotate('+b.rot+'deg)';
+    });
+
+    _egGravityRAF = requestAnimationFrame(egGravityTick);
+  }
+
+  function egGravityStop(){
+    _egActive.gravity = false;
+    if(_egGravityRAF){ cancelAnimationFrame(_egGravityRAF); _egGravityRAF=null; }
+    _egGravityBodies.forEach(function(b){
+      b.el.classList.remove('eg-gravity-el');
+      b.el.style.position   = b.orig.position;
+      b.el.style.left       = b.orig.left;
+      b.el.style.top        = b.orig.top;
+      b.el.style.width      = b.orig.width;
+      b.el.style.zIndex     = b.orig.zIndex;
+      b.el.style.transform  = b.orig.transform;
+      b.el.style.margin     = b.orig.margin;
+      b.el.style.transition = b.orig.transition;
+    });
+    _egGravityBodies = [];
+  }
+
+  // ════════════════════════════
+  //  BARREL ROLL
+  // ════════════════════════════
+  function egBarrelRoll(){
+    if(_egActive.barrel) return;
+    _egActive.barrel = true;
+    egHint('🛢️ Do a barrel roll!');
+    var root = document.getElementById('dashboard-view') || document.body;
+    root.classList.add('eg-barrel');
+    root.addEventListener('animationend', function done(){
+      root.classList.remove('eg-barrel');
+      root.removeEventListener('animationend', done);
+      _egActive.barrel = false;
+    });
+  }
+
+  // ════════════════════════════
+  //  MATRIX RAIN
+  // ════════════════════════════
+  var _egMatrixRAF = null;
+  var _egMatrixDrops = [];
+
+  function egMatrix(){
+    if(_egActive.matrix){ egMatrixStop(); return; }
+    _egActive.matrix = true;
+    egHint('💊 There is no spoon. Type k7matrix again or Escape to exit.');
+
+    var canvas = document.getElementById('eg-matrix-canvas');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.classList.add('active');
+
+    var ctx  = canvas.getContext('2d');
+    var cols = Math.floor(canvas.width / 16);
+    _egMatrixDrops = Array(cols).fill(1);
+
+    function tick(){
+      if(!_egActive.matrix){ ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#00ff41';
+      ctx.font = '14px monospace';
+      _egMatrixDrops.forEach(function(y,i){
+        var ch = String.fromCharCode(0x30A0 + Math.random()*96);
+        ctx.fillStyle = y===1 ? '#fff' : '#00ff41';
+        ctx.fillText(ch, i*16, y*16);
+        if(y*16 > canvas.height && Math.random() > 0.975) _egMatrixDrops[i] = 0;
+        _egMatrixDrops[i]++;
+      });
+      _egMatrixRAF = requestAnimationFrame(tick);
+    }
+    tick();
+
+    // Auto stop after 12 seconds
+    setTimeout(function(){ if(_egActive.matrix) egMatrixStop(); }, 12000);
+  }
+
+  function egMatrixStop(){
+    _egActive.matrix = false;
+    if(_egMatrixRAF){ cancelAnimationFrame(_egMatrixRAF); _egMatrixRAF=null; }
+    var canvas = document.getElementById('eg-matrix-canvas');
+    if(canvas){
+      canvas.classList.remove('active');
+      setTimeout(function(){ var ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }, 500);
+    }
+  }
+
+  // ════════════════════════════
+  //  RAVE
+  // ════════════════════════════
+  var _egRaveTimer = null;
+  var _egRaveInterval = null;
+
+  function egRave(){
+    if(_egActive.rave){ egRaveStop(); return; }
+    _egActive.rave = true;
+    egHint('🎉 RAVE MODE! Type k7rave again or Escape to stop.');
+
+    var overlay = document.getElementById('eg-rave-overlay');
+    var hues = [0,30,60,120,180,240,300];
+    var i = 0;
+    overlay.style.opacity = '1';
+
+    _egRaveInterval = setInterval(function(){
+      if(!_egActive.rave){ return; }
+      var h = hues[i++ % hues.length];
+      overlay.style.background = 'hsla('+h+',100%,60%,0.18)';
+      document.body.style.filter = 'hue-rotate('+h+'deg)';
+    }, 160);
+
+    // Auto stop after 8s
+    _egRaveTimer = setTimeout(function(){ if(_egActive.rave) egRaveStop(); }, 8000);
+  }
+
+  function egRaveStop(){
+    _egActive.rave = false;
+    clearInterval(_egRaveInterval);
+    clearTimeout(_egRaveTimer);
+    var overlay = document.getElementById('eg-rave-overlay');
+    if(overlay) overlay.style.opacity = '0';
+    document.body.style.filter = '';
+  }
+
+  // ════════════════════════════
+  //  THANOS SNAP
+  // ════════════════════════════
+  function egThanos(){
+    if(_egActive.thanos) return;
+    _egActive.thanos = true;
+    egHint('⚡ Perfectly balanced, as all things should be.');
+
+    var els = Array.from(document.querySelectorAll('.sidebar-item'));
+    var half = Math.floor(els.length / 2);
+    var victims = els.sort(function(){ return Math.random()-0.5; }).slice(0, half);
+
+    victims.forEach(function(el, idx){
+      setTimeout(function(){
+        var r = el.getBoundingClientRect();
+        // Spawn dust particles
+        for(var p=0; p<18; p++){
+          var d = document.createElement('div');
+          d.className = 'eg-dust-particle';
+          var hue = 20+Math.random()*40;
+          d.style.cssText =
+            'left:'+(r.left+Math.random()*r.width)+'px;'+
+            'top:'+(r.top+Math.random()*r.height)+'px;'+
+            'width:'+(3+Math.random()*5)+'px;'+
+            'height:'+(3+Math.random()*5)+'px;'+
+            'background:hsl('+hue+',80%,55%);'+
+            '--tx:'+(Math.random()-0.5)*120+'px;'+
+            '--ty:'+(-(20+Math.random()*100))+'px;'+
+            '--dur:'+(0.8+Math.random()*0.7)+'s;';
+          document.body.appendChild(d);
+          setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 1600);
+        }
+        el.style.transition = 'opacity .6s, transform .6s';
+        el.style.opacity    = '0';
+        el.style.transform  = 'scale(0.3) translateY(-20px)';
+      }, idx * 80);
+    });
+
+    setTimeout(function(){
+      egHint('🫳 Snapped. Escape to restore.');
+      _egActive.thanos = false;
+    }, victims.length*80 + 800);
+
+    // Restore after 6s
+    setTimeout(function(){
+      victims.forEach(function(el){
+        el.style.transition = 'opacity .5s, transform .5s';
+        el.style.opacity    = '';
+        el.style.transform  = '';
+      });
+    }, 6000);
+  }
+
+  // ════════════════════════════
+  //  TILT
+  // ════════════════════════════
+  var _egTilted = false;
+
+  function egTilt(){
+    if(_egTilted) return;
+    _egTilted = true;
+    egHint('↗️ Tilted! Type k7straight to fix.');
+    var root = document.getElementById('dashboard-view') || document.body;
+    root.classList.add('eg-tilted');
+  }
+
+  function egUnTilt(){
+    if(!_egTilted) return;
+    _egTilted = false;
+    var root = document.getElementById('dashboard-view') || document.body;
+    root.classList.remove('eg-tilted');
+    egHint('✅ Back to normal.');
+  }
+
+  // ════════════════════════════
+  //  K7DIWAN TRIBUTE
+  // ════════════════════════════
+  function egDiwan(){
+    if(_egActive.diwan) return;
+    _egActive.diwan = true;
+    var splash = document.getElementById('eg-diwan-splash');
+    if(!splash) return;
+    splash.style.display = 'flex';
+    splash.style.opacity = '0';
+    void splash.offsetWidth; // force reflow so transition fires
+    splash.classList.add('active');
+
+    // Confetti burst
+    var colors = ['#f59e0b','#ef4444','#8b5cf6','#06b6d4','#10b981','#f97316','#ec4899'];
+    for(var i=0; i<80; i++){
+      (function(){
+        var c = document.createElement('div');
+        c.className = 'eg-confetti';
+        c.style.cssText =
+          'left:'+(10+Math.random()*80)+'vw;'+
+          'top:-20px;'+
+          'background:'+colors[Math.floor(Math.random()*colors.length)]+';'+
+          '--dur:'+(2+Math.random()*2)+'s;'+
+          '--ey:'+(window.innerHeight+40)+'px;'+
+          '--r:'+(360+Math.random()*720)+'deg;'+
+          '--ex:'+(Math.random()-0.5)*200+'px;';
+        document.body.appendChild(c);
+        setTimeout(function(){ if(c.parentNode) c.parentNode.removeChild(c); }, 4200);
+      })();
+    }
+  }
+
+  window.egDiwanClose = function(){
+    var splash = document.getElementById('eg-diwan-splash');
+    if(splash){
+      splash.classList.remove('active');
+      splash.style.opacity = '0';
+      setTimeout(function(){ splash.style.display = 'none'; }, 650);
+    }
+    _egActive.diwan = false;
+  };
+
+  // Hook Escape to also close diwan splash
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && _egActive.diwan) egDiwanClose();
+  });
+
+  // ── Init: expose for console testing and Escape ──
+  window._egEscapeAll = egEscapeAll;
+  window.egGravity    = egGravity;
+  window.egBarrelRoll = egBarrelRoll;
+  window.egMatrix     = egMatrix;
+  window.egRave       = egRave;
+  window.egThanos     = egThanos;
+  window.egTilt       = egTilt;
+  window.egDiwan      = egDiwan;
+
+})();
 
 </script>
 
