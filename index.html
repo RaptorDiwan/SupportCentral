@@ -10756,10 +10756,15 @@ function chatRequestNotifPermission(){
 
 // ── Sound icon init ──
 function initSoundIcon(){
+  var icon = _notifSoundEnabled ? '🔔' : '🔕';
+  // Main popup header bell
   var btn = document.getElementById('dock-sound-btn');
-  if(btn) btn.textContent = _notifSoundEnabled ? '🔔' : '🔕';
+  if(btn) btn.textContent = icon;
+  // Full messages page bell (may not exist)
   var msgBtn = document.getElementById('msg-sound-toggle');
-  if(msgBtn) msgBtn.textContent = _notifSoundEnabled ? '🔔' : '🔕';
+  if(msgBtn) msgBtn.textContent = icon;
+  // All per-chat-window sound buttons
+  document.querySelectorAll('[id^="dock-snd-"]').forEach(function(b){ b.textContent = icon; });
 }
 
 function toggleMsgSound(){
@@ -10839,6 +10844,7 @@ var _chatUsers = [], _chatUnreadMap = {}, _chatLastMsgMap = {};
 var _dockWindows = {}; // { userId: { minimised } }
 var _dockContactsOpen = false;
 var _lastNotifTotal = 0;
+var _lastNotifMsgTime = null; // ISO timestamp of the newest msg we already notified about
 var _notifSoundEnabled = localStorage.getItem('tc_notif_sound') !== 'false';
 var _dockHidden = localStorage.getItem('tc_dock_hidden') === '1';
 var _dragBlockClick = false;
@@ -11038,7 +11044,7 @@ function dockToggleContacts(){
   _dockContactsOpen = !_dockContactsOpen;
   var popup = document.getElementById('chat-contacts-popup');
   if(popup) popup.classList.toggle('dock-hidden', !_dockContactsOpen);
-  if(_dockContactsOpen) dockLoadUsers();
+  if(_dockContactsOpen){ dockLoadUsers(); initSoundIcon(); }
 }
 function dockCloseContacts(){
   _dockContactsOpen = false;
@@ -11370,6 +11376,7 @@ function chatStartPolling(){
 // ── UNREAD + NOTIFICATIONS ──
 var _chatToastTimer=null;
 var _chatCheckUnreadRunning=false;
+var _chatCheckUnreadFirstRun=true;
 async function chatCheckUnread(){
   if(!currentUser||_isSysLevel()) return;
   if(_chatCheckUnreadRunning) return;
@@ -11379,8 +11386,19 @@ async function chatCheckUnread(){
     _chatUnreadMap={}; _chatLastMsgMap={};
     (rows||[]).forEach(function(m){
       _chatUnreadMap[m.from_user_id]=(_chatUnreadMap[m.from_user_id]||0)+1;
-      _chatLastMsgMap[m.from_user_id]={content:m.content,time:m.created_at};
+      // Keep only the newest message per sender
+      if(!_chatLastMsgMap[m.from_user_id]||m.created_at>_chatLastMsgMap[m.from_user_id].time){
+        _chatLastMsgMap[m.from_user_id]={content:m.content,time:m.created_at};
+      }
     });
+    // On first run: silently seed the timestamp so pre-existing unreads don't fire sound
+    if(_chatCheckUnreadFirstRun){
+      _chatCheckUnreadFirstRun=false;
+      Object.keys(_chatLastMsgMap).forEach(function(uid){
+        var t=_chatLastMsgMap[uid].time;
+        if(!_lastNotifMsgTime||t>_lastNotifMsgTime) _lastNotifMsgTime=t;
+      });
+    }
     chatUpdateBadge();
     if(_dockContactsOpen) dockRenderContacts(_chatUsers);
   }catch(e){}finally{_chatCheckUnreadRunning=false;}
@@ -11403,14 +11421,19 @@ function chatUpdateBadge(){
     var badge=document.getElementById('dock-win-badge-'+uid);
     if(badge){badge.textContent=_chatUnreadMap[uid];badge.style.display='flex';}
   });
+  _lastNotifTotal=total;
 
-  if(total>_lastNotifTotal){
+  // Find the newest unread message timestamp across all senders
+  var newestTime=null, newestSender=null, newestMsg=null;
+  Object.keys(_chatLastMsgMap).forEach(function(uid){
+    var m=_chatLastMsgMap[uid];
+    if(!newestTime||m.time>newestTime){newestTime=m.time;newestSender=uid;newestMsg=m.content;}
+  });
+
+  // Only fire sound + toast if this message is genuinely newer than anything we've notified about
+  if(newestTime && (_lastNotifMsgTime===null || newestTime > _lastNotifMsgTime)){
+    _lastNotifMsgTime=newestTime;
     chatPlayMsgSound();
-    var newestSender=null,newestMsg=null,newestTime=null;
-    Object.keys(_chatLastMsgMap).forEach(function(uid){
-      var m=_chatLastMsgMap[uid];
-      if(!newestTime||m.time>newestTime){newestTime=m.time;newestSender=uid;newestMsg=m.content;}
-    });
     if(newestSender){
       var sender=(_chatUsers||[]).find(function(u){return u.id===newestSender;});
       var senderName=sender?sender.name:'Someone';
@@ -11421,7 +11444,6 @@ function chatUpdateBadge(){
       if(!winOpen) dockShowToast(newestSender,senderName,newestMsg||'',sender?chatColor(senderName):'var(--gold)');
     }
   }
-  _lastNotifTotal=total;
 }
 
 function dockShowToast(senderId,senderName,message,bg){
