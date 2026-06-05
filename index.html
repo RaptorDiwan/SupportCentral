@@ -20034,7 +20034,7 @@ async function tmHandleSignal(sig){
       egEscapeAll();
       return;
     }
-    if(e.key.length === 1){
+    if(e.key && e.key.length === 1){
       _egBuffer += e.key.toLowerCase();
       if(_egBuffer.length > 20) _egBuffer = _egBuffer.slice(-20);
       egCheckBuffer();
