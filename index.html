@@ -2865,10 +2865,10 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
   <!-- EmailJS — reminder email notifications -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
-    // ── EmailJS Config — paste your values here ──
-    window.EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // e.g. service_xxxxxx
-    window.EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // e.g. template_xxxxxx
-    window.EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // e.g. aBcDeFgHiJkL
+    // ── EmailJS Config ──
+    window.EMAILJS_SERVICE_ID  = 'service_i4qp00s';
+    window.EMAILJS_TEMPLATE_ID = 'template_nwhvqjk';
+    window.EMAILJS_PUBLIC_KEY  = 'aHyC0d7vVexOoEb1c';
     // Initialize EmailJS
     if(window.EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
       emailjs.init({ publicKey: window.EMAILJS_PUBLIC_KEY });
@@ -17578,9 +17578,8 @@ function remSendEmail(r){
   try{
     if(!window.EMAILJS_SERVICE_ID||window.EMAILJS_SERVICE_ID==='YOUR_SERVICE_ID')return;
     if(!window.emailjs)return;
-    // Get agent's email from currentUser
-    var agentEmail = (typeof currentUser!=='undefined'&&currentUser)?currentUser.email:'';
-    var agentName  = (typeof currentUser!=='undefined'&&currentUser)?currentUser.name:'Boss';
+    var agentEmail=(typeof currentUser!=='undefined'&&currentUser)?currentUser.email:'';
+    var agentName=(typeof currentUser!=='undefined'&&currentUser)?currentUser.name:'Boss';
     if(!agentEmail)return;
     var dueText='';
     if(r.date){
@@ -17592,36 +17591,54 @@ function remSendEmail(r){
       if(r.time) dueText+=' at '+r.time;
     }
     emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_TEMPLATE_ID, {
-      to_email:  agentEmail,
+      email:     agentEmail,
       to_name:   agentName,
       reminder:  r.text,
       due_time:  dueText||'Now',
       app_name:  'K7TeamCore'
-    }).then(function(){ console.log('[EmailJS] Reminder email sent to '+agentEmail); })
-      .catch(function(e){ console.warn('[EmailJS] Email failed:',e); });
+    }).then(function(){ console.log('[EmailJS] Reminder sent to '+agentEmail); })
+      .catch(function(e){ console.warn('[EmailJS] Send failed:',e); });
   }catch(e){ console.warn('[EmailJS] Error:',e); }
 }
 
-// ── Notifications ──
-function remScheduleOne(r){
-  if(!r.date||r.done)return;
-  var dt=new Date(r.date);
-  if(isNaN(dt.getTime()))return;
-  var ms=dt.getTime()-Date.now();
-  if(ms<=0||ms>7*24*3600000)return;
-  if(_remNotifTimers[r.id])clearTimeout(_remNotifTimers[r.id]);
-  _remNotifTimers[r.id]=setTimeout(function(){
-    remSendEmail(r); // ← email notification
-    var n=document.createElement('div');
-    n.style.cssText='position:fixed;top:76px;right:22px;z-index:99999;background:var(--navy-card);border:1px solid rgba(239,73,60,.3);border-radius:14px;padding:.9rem 1.1rem;max-width:290px;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:remIn .3s ease;';
-    n.innerHTML='<div style="display:flex;gap:.7rem;align-items:center;"><span style="font-size:1.2rem;">🔔</span><div><div style="font-size:.8rem;font-weight:700;color:var(--text-primary);">Reminder</div><div style="font-size:.73rem;color:var(--text-muted);margin-top:2px;">'+escR(r.text)+'</div></div></div>';
-    document.body.appendChild(n);
-    setTimeout(function(){n.style.opacity='0';n.style.transition='opacity .3s';setTimeout(function(){if(n.parentNode)n.parentNode.removeChild(n);},300);},5000);
-    if(window.Notification&&Notification.permission==='granted') new Notification('K7 Reminder',{body:r.text});
-  },ms);
+// ── Sticky popup ──
+function remShowPopup(r){
+  var old=document.getElementById('rem-notif-popup');
+  if(old) old.remove();
+  var n=document.createElement('div');
+  n.id='rem-notif-popup';
+  n.style.cssText='position:fixed;top:72px;right:22px;z-index:99999;background:var(--navy-card);border:1px solid rgba(239,73,60,.4);border-radius:14px;padding:1rem 1rem 1rem 1rem;max-width:300px;box-shadow:0 12px 40px rgba(0,0,0,.45);animation:remIn .3s ease;';
+  n.innerHTML=
+    '<div style="display:flex;gap:.65rem;align-items:flex-start;">'+
+      '<span style="font-size:1.3rem;flex-shrink:0;margin-top:1px;">🔔</span>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:.82rem;font-weight:700;color:var(--text-primary);margin-bottom:.25rem;">Reminder</div>'+
+        '<div style="font-size:.8rem;color:var(--text-muted);line-height:1.5;word-break:break-word;">'+escR(r.text)+'</div>'+
+        (r.time?'<div style="font-size:.72rem;color:var(--accent-red);margin-top:.35rem;font-weight:600;">⏰ '+escR(r.time)+'</div>':'')+
+      '</div>'+
+      '<button onclick="document.getElementById(\'rem-notif-popup\').remove()" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:1rem;padding:0 0 0 .4rem;flex-shrink:0;line-height:1;" title="Dismiss">✕</button>'+
+    '</div>'+
+    '<div style="display:flex;gap:.5rem;margin-top:.75rem;justify-content:flex-end;">'+
+      '<button onclick="document.getElementById(\'rem-notif-popup\').remove()" style="padding:.3rem .9rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;">Got it</button>'+
+    '</div>';
+  document.body.appendChild(n);
+  if(window.Notification&&Notification.permission==='granted') new Notification('K7 Reminder',{body:r.text});
 }
-function remScheduleAll(){ _rems.forEach(function(r){if(!r.done)remScheduleOne(r);}); }
-if(window.Notification&&Notification.permission==='default') setTimeout(function(){Notification.requestPermission();},3000);
+
+// ── Schedule one reminder ──
+function remScheduleOne(r){
+  if(!r.date||r.done) return;
+  var dt=new Date(r.date);
+  if(isNaN(dt.getTime())) return;
+  var ms=dt.getTime()-Date.now();
+  // Missed by ≤30 min (tab was closed) — fire immediately
+  if(ms<=0&&ms>=-30*60*1000){ remSendEmail(r); remShowPopup(r); return; }
+  if(ms<=0||ms>7*24*3600000) return;
+  if(_remNotifTimers[r.id]) clearTimeout(_remNotifTimers[r.id]);
+  _remNotifTimers[r.id]=setTimeout(function(){ remSendEmail(r); remShowPopup(r); },ms);
+}
+function remScheduleAll(){ _rems.forEach(function(r){ if(!r.done) remScheduleOne(r); }); }
+if(window.Notification&&Notification.permission==='default') setTimeout(function(){ Notification.requestPermission(); },3000);
 </script>
 
 <!-- ══ GRAND OPENING OVERLAY ══ -->
