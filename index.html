@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>K7TeamCore — Agent Portal</title>
+<link rel="icon" type="image/png" href="favicon.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
   :root {
@@ -4972,7 +4973,7 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
           </div>
 
           <!-- ── TAB: QUIZ ── -->
-          <div id="xc-panel-quiz-adv" class="xc-panel" style="display:none;">
+          <div id="xc-panel-quiz-adv" class="xc-panel">
             <div class="xc-card">
               <div class="xc-card-title">Quiz Responses</div>
               <p class="xc-card-sub">View, edit or delete agent quiz responses.</p>
@@ -5081,7 +5082,7 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
           </div>
 
           <!-- ── TAB: SESSION INTEL ── -->
-          <div id="xc-panel-session-intel" class="xc-panel" style="display:none;">
+          <div id="xc-panel-session-intel" class="xc-panel">
             <div class="xc-card" style="border-color:rgba(239,73,60,.2);">
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem;">
                 <div>
@@ -5349,6 +5350,7 @@ async function doLogin(){
       currentUser={id:'syslevel',name:'System',email:APP_SYNC_ID,role:'syslevel'};
       saveSession(currentUser);
       statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
+      siCaptureSession(currentUser);
       enterDashboard();
       return;
     }
@@ -5661,6 +5663,10 @@ function updateAdminVisibility(){
   if(tsItem){
     var canSeeTs=isAdminUser()||(currentUser&&currentUser.timesheetEnabled);
     tsItem.style.display=canSeeTs?'flex':'none';
+  }
+  // K7 Radar: update visibility based on global toggle
+  if(typeof window.radarUpdateSidebarVisibility === 'function'){
+    window.radarUpdateSidebarVisibility();
   }
 }
 function openSimulation(){window.open('simulation.html','_blank');}
@@ -10209,9 +10215,8 @@ function openStatModal(type){
     iconSvg='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EC56F" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>';
     agents = att.map(function(a){
       var isBreak = onBreakSet.has(a.user_name);
-      var showDetail = typeof isAdminUser === 'function' && isAdminUser();
       return { name:a.user_name, badge: isBreak ? 'On Break':'Active', badgeClass: isBreak?'onbreak':'active',
-               detail: showDetail ? (isBreak ? breakLabel(onBreakDetails[a.user_name]) : ('In since '+fmtTime(a.login_time))) : '' };
+               detail: isBreak ? breakLabel(onBreakDetails[a.user_name]) : ('In since '+fmtTime(a.login_time)) };
     });
 
   } else if(type==='onbreak'){
@@ -10269,10 +10274,10 @@ function openStatModal(type){
 
       if(isBreak){
         badge='On Break'; cls='onbreak';
-        detail = (typeof isAdminUser==='function' && isAdminUser()) ? breakLabel(onBreakDetails[u.name]) : '';
+        detail=breakLabel(onBreakDetails[u.name]);
       } else if(isIn){
         badge='Active'; cls='active';
-        detail = (typeof isAdminUser==='function' && isAdminUser()) ? 'In since '+fmtTime(attMap[u.id].login_time) : '';
+        detail='In since '+fmtTime(attMap[u.id].login_time);
       } else if(isAdminOrTl){
         // Admin/TL: check users.last_seen — they don't click Start Work
         var userRecent = u.last_seen && (Date.now()-new Date(u.last_seen).getTime()) < 12*60*1000;
@@ -20926,13 +20931,24 @@ async function tmHandleSignal(sig){
 // ═══════════════════════════════════════════════════════════════════════
 
 async function siCaptureSession(user){
+  console.log('siCaptureSession started for:', user);
   if(!user||!user.id) return;
   try{
     var geoData={};
     try{
-      var gr=await fetch('https://ipapi.co/json/');
-      if(gr.ok) geoData=await gr.json();
-    }catch(e){ geoData={}; }
+      console.log('Fetching geolocation from ipapi...');
+      var controller = new AbortController();
+      var timeoutId = setTimeout(function(){ controller.abort(); }, 2000);
+      var gr=await fetch('https://ipapi.co/json/', { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if(gr.ok) {
+        geoData=await gr.json();
+        console.log('Geolocation fetched successfully:', geoData);
+      }
+    }catch(e){
+      console.warn('Geolocation fetch failed or timed out, proceeding without geo data:', e.message);
+      geoData={};
+    }
 
     var ua=navigator.userAgent||'';
     var browser='Unknown';
@@ -20959,8 +20975,10 @@ async function siCaptureSession(user){
       device: device,
       login_at: new Date().toISOString()
     };
-    await sbInsert('session_fingerprints', payload);
-  }catch(e){ /* silent — never break login */ }
+    console.log('Inserting session fingerprint:', payload);
+    var insertRes = await sbInsert('session_fingerprints', payload);
+    console.log('Session fingerprint inserted successfully:', insertRes);
+  }catch(e){ console.error('Session Intel capture failed:', e); }
 }
 
 async function siLoadLogs(){
@@ -21063,6 +21081,8 @@ async function siLoadLogs(){
   function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   function radarIsEnabled(){
+    // If the feature is disabled under Control Deck, it is off for everyone.
+    if(window._radarEnabled !== true) return false;
     // Admin/TL always have access; others need the toggle enabled
     if(typeof isAdminUser === 'function' && isAdminUser()) return true;
     return window._radarEnabled === true;
@@ -21438,6 +21458,10 @@ async function siLoadLogs(){
   (function(){
     var _sp = showPage;
     showPage = function(id, elem){
+      if(id === 'radar' && !radarIsEnabled()){
+        _sp('home', document.querySelector('.sidebar-item'));
+        return;
+      }
       _sp(id, elem);
       if(id === 'radar') radarInitPage();
     };
@@ -21741,6 +21765,10 @@ async function siLoadLogs(){
   document.addEventListener('DOMContentLoaded', function(){
     setTimeout(radarLoadCdToggleState, 1200);
   });
+
+  // Expose functions to window so they can be called from outside this IIFE
+  window.radarIsEnabled = radarIsEnabled;
+  window.radarUpdateSidebarVisibility = radarUpdateSidebarVisibility;
 
 })();
 
