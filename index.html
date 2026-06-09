@@ -4583,6 +4583,39 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
             <div id="cd-amb-msg" class="cd-msg" style="display:none;margin-top:.6rem;"></div>
           </div>
 
+          <!-- ── Section: Break Block System ── -->
+          <div class="cd-card">
+            <div class="cd-card-header">
+              <span class="cd-card-icon" style="background:rgba(239,73,60,.12);">🚫</span>
+              <div>
+                <div class="cd-card-title">Break Block System</div>
+                <div class="cd-card-sub">Automatically block agents who exceed break limits 10 times in a month.</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:.8rem;margin-left:auto;">
+                <span id="cd-bb-status" style="font-size:.8rem;color:var(--text-muted);">Loading…</span>
+                <label class="cat-toggle-wrap"><input type="checkbox" id="cd-bb-toggle" onchange="cdBbToggle(this.checked)"/><span class="cat-toggle-slider"></span></label>
+              </div>
+            </div>
+            <div id="cd-bb-msg" class="cd-msg" style="display:none;"></div>
+          </div>
+
+          <!-- ── Section: Break Unblock PIN ── -->
+          <div class="cd-card">
+            <div class="cd-card-header">
+              <span class="cd-card-icon" style="background:rgba(46,197,111,.12);">🔓</span>
+              <div>
+                <div class="cd-card-title">Break Unblock PIN</div>
+                <div class="cd-card-sub">Set a 4-digit PIN agents can use to self-unblock after a break violation block.</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.7rem;margin-top:.8rem;flex-wrap:wrap;">
+              <input id="cd-bb-pin-input" type="password" maxlength="4" placeholder="New 4-digit PIN" class="cd-input" style="max-width:160px;letter-spacing:.2em;font-size:.95rem;" onkeydown="if(event.key==='Enter')bbSavePin()"/>
+              <button class="cd-btn" onclick="bbSavePin()">Save PIN</button>
+              <span id="cd-bb-pin-msg" style="font-size:.78rem;display:none;"></span>
+            </div>
+            <div style="margin-top:.5rem;font-size:.74rem;color:var(--text-dim);line-height:1.55;">PIN is hashed before storage. Share it verbally with blocked agents — they enter it on the block screen to regain access without your intervention.</div>
+          </div>
+
           <!-- ── Section: Agent Password Reset (Admin — PIN protected) ── -->
 
           <div class="cd-card" id="cd-pwreset-card">
@@ -5332,6 +5365,91 @@ function saveSession(u){try{localStorage.setItem(SESSION_KEY,JSON.stringify(u));
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
 function loadSession(){try{const s=localStorage.getItem(SESSION_KEY);return s?JSON.parse(s):null;}catch(e){return null;}}
 
+// ═══════════════════════════════════════════════════════════════
+//  LOGIN RATE LIMITING
+//  5 failed attempts → 15 minute lockout on this browser
+//  Failed attempts are logged to session_fingerprints for audit
+// ═══════════════════════════════════════════════════════════════
+var _RL_KEY        = 'tc_login_rl';
+var _RL_MAX        = 5;
+var _RL_WINDOW_MS  = 15 * 60 * 1000; // 15 minutes
+var _rlCountdownT  = null;
+
+function rlGetState(){
+  try{ var s=localStorage.getItem(_RL_KEY); return s?JSON.parse(s):{count:0,lockedUntil:0}; }catch(e){ return {count:0,lockedUntil:0}; }
+}
+function rlSaveState(s){ try{ localStorage.setItem(_RL_KEY,JSON.stringify(s)); }catch(e){} }
+function rlClear(){ try{ localStorage.removeItem(_RL_KEY); }catch(e){} if(_rlCountdownT){ clearInterval(_rlCountdownT); _rlCountdownT=null; } }
+
+function rlIsLocked(){
+  var s=rlGetState();
+  return s.lockedUntil && Date.now() < s.lockedUntil;
+}
+
+function rlRecordFailure(){
+  var s=rlGetState();
+  s.count=(s.count||0)+1;
+  if(s.count>=_RL_MAX){ s.lockedUntil=Date.now()+_RL_WINDOW_MS; }
+  rlSaveState(s);
+  return s;
+}
+
+function rlShowLockout(){
+  var btn=document.getElementById('login-btn');
+  var errEl=document.getElementById('login-error');
+  if(btn){ btn.disabled=true; btn.textContent='Sign In'; }
+  if(_rlCountdownT){ clearInterval(_rlCountdownT); _rlCountdownT=null; }
+  function tick(){
+    var s=rlGetState();
+    var remaining=Math.max(0,Math.ceil((s.lockedUntil-Date.now())/1000));
+    if(remaining<=0){
+      rlClear();
+      if(btn){ btn.disabled=false; btn.textContent='Sign In'; }
+      if(errEl){ errEl.textContent='You can try again now.'; errEl.style.display='block'; errEl.style.color='var(--text-muted)'; }
+      return;
+    }
+    var m=Math.floor(remaining/60), sc=remaining%60;
+    var timeStr=m+'m '+(sc<10?'0':'')+sc+'s';
+    if(errEl){ errEl.textContent='Too many failed attempts. Try again in '+timeStr+'.'; errEl.style.display='block'; errEl.style.color='var(--accent-red)'; }
+    _rlCountdownT=setTimeout(tick,1000);
+  }
+  tick();
+}
+
+// Log failed attempt to session_fingerprints for audit trail in Session Intel
+async function rlLogFailedAttempt(emailTried){
+  try{
+    var geoData={};
+    try{
+      var ctrl=new AbortController(); var tid=setTimeout(function(){ctrl.abort();},2000);
+      var gr=await fetch('https://ipapi.co/json/',{signal:ctrl.signal}); clearTimeout(tid);
+      if(gr.ok) geoData=await gr.json();
+    }catch(e){}
+    var ua=navigator.userAgent||'';
+    var browser='Unknown';
+    if(/Edg\//.test(ua)) browser='Edge';
+    else if(/OPR\/|Opera/.test(ua)) browser='Opera';
+    else if(/Chrome\//.test(ua)&&!/Chromium/.test(ua)) browser='Chrome';
+    else if(/Firefox\//.test(ua)) browser='Firefox';
+    else if(/Safari\//.test(ua)&&!/Chrome/.test(ua)) browser='Safari';
+    var device='Desktop'; if(/Mobile|Android|iPhone|iPad/.test(ua)) device=/iPad/.test(ua)?'Tablet':'Mobile';
+    await sbInsert('session_fingerprints',{
+      user_id: 'failed_attempt',
+      user_name: 'FAILED: '+(emailTried||'unknown'),
+      ip: geoData.ip||'Unknown',
+      city: geoData.city||'Unknown',
+      region: geoData.region||'',
+      isp: geoData.org||'Unknown',
+      country: geoData.country_name||'',
+      country_code: geoData.country_code||'',
+      user_agent: ua.substring(0,300),
+      browser: browser,
+      device: device,
+      login_at: new Date().toISOString()
+    });
+  }catch(e){ /* silent — logging failure must never affect UX */ }
+}
+
 async function doLogin(){
   const email=(document.getElementById('username').value||'').trim().toLowerCase();
   const pwd=document.getElementById('password').value||'';
@@ -5339,6 +5457,8 @@ async function doLogin(){
   const statusEl=document.getElementById('login-status');
   const btn=document.getElementById('login-btn');
   errEl.style.display='none';
+  // ── Rate limit check ──
+  if(rlIsLocked()){ rlShowLockout(); return; }
   if(!email||!pwd){errEl.textContent='Please enter your email and password.';errEl.style.display='block';return;}
   btn.disabled=true;btn.textContent='Signing in...';statusEl.style.display='flex';
   try{
@@ -5356,19 +5476,46 @@ async function doLogin(){
     }
 
     console.log('Attempting login for:',email);
-    const rows=await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id,name,email,role,password,timesheet_enabled,photo_url');
+    const rows=await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id,name,email,role,password,timesheet_enabled,photo_url,is_blocked,block_reason');
     console.log('Rows returned:',rows?rows.length:0);
     if(!rows||rows.length===0||rows[0].password!==hashed)throw new Error('invalid');
     const u=rows[0];
+    // ── Block check ──
+    if(u.is_blocked){
+      statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
+      // Re-count violations dynamically to show accurate number in modal
+      var now=new Date();
+      var from=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'-01';
+      var lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+      var to=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'-'+lastDay;
+      var vcount=0;
+      try{ var vrows=await sbQuery('breaks','user_id=eq.'+u.id+'&over_limit=eq.true&date=gte.'+from+'&date=lte.'+to+'&select=id'); vcount=vrows?vrows.length:10; }catch(e){ vcount=10; }
+      // Set currentUser temporarily so bbShowModal can reference it, then it clears itself
+      currentUser={id:u.id,name:u.name,email:u.email,role:u.role};
+      bbShowModal(vcount);
+      return;
+    }
     currentUser={id:u.id,name:u.name,email:u.email,role:u.role,timesheetEnabled:u.timesheet_enabled?true:false,photo_url:u.photo_url||null};
     saveSession(currentUser);
+    rlClear(); // successful login — reset failure counter
     statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
     siCaptureSession(currentUser);
     enterDashboard();
   }catch(e){
     console.error('Login failed:',e.message);
     statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
-    if(e.message==='invalid')errEl.textContent='Invalid email or password.';
+    if(e.message==='invalid'){
+      // Record failure and log it
+      var rlState=rlRecordFailure();
+      rlLogFailedAttempt(email);
+      var remaining=_RL_MAX-rlState.count;
+      if(rlState.lockedUntil){
+        rlShowLockout();
+        return;
+      } else {
+        errEl.textContent='Invalid email or password.'+(remaining>0?' ('+remaining+' attempt'+(remaining!==1?'s':'')+' remaining)':'');
+      }
+    }
     else if(e.message==='DB_401')errEl.textContent='API key error (401). Check Supabase key.';
     else if(e.message==='DB_403')errEl.textContent='Access denied (403). Run RLS policies in Supabase SQL Editor.';
     else if(e.message==='DB_404')errEl.textContent='Table not found (404). Check Supabase table name is "users".';
@@ -5377,7 +5524,109 @@ async function doLogin(){
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  INACTIVITY AUTO-LOGOUT
+//  60 min idle → warning modal → 60 sec countdown → force logout
+//  Any mousemove/keydown/click/scroll resets the timer.
+//  If agent is on an active break, timer resets silently.
+// ═══════════════════════════════════════════════════════════════
+var _inactivityTimer        = null;
+var _inactivityWarningTimer = null;
+var _inactivityWarningUp    = false;
+var INACTIVITY_LIMIT_MS     = 60 * 60 * 1000; // 60 minutes
+
+function _inactIsOnBreak(){
+  try{ for(var t in _breakState){ if(_breakState[t]&&_breakState[t].active) return true; } }catch(e){}
+  return false;
+}
+
+function _inactShowWarning(){
+  if(_inactivityWarningUp) return;
+  _inactivityWarningUp = true;
+  var el = document.createElement('div');
+  el.id = 'inactivity-warning-overlay';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(7,13,45,.72);backdrop-filter:blur(5px);z-index:9995;display:flex;align-items:center;justify-content:center;';
+  el.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:360px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.35);"><div style="width:52px;height:52px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div style="font-family:Cormorant Garamond,serif;font-size:1.25rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">Still there?</div><div style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.2rem;">You have been inactive for 60 minutes. You will be signed out in <strong id="inact-countdown" style="color:var(--accent-red);">60</strong> seconds.</div><button onclick="inactStayLoggedIn()" style="padding:.6rem 1.8rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Stay Logged In</button></div>';
+  document.body.appendChild(el);
+  var secs = 60;
+  _inactivityWarningTimer = setInterval(function(){
+    secs--;
+    var cd = document.getElementById('inact-countdown');
+    if(cd) cd.textContent = secs;
+    if(secs <= 0){
+      clearInterval(_inactivityWarningTimer);
+      _inactivityWarningTimer = null;
+      _inactDismissWarning();
+      _inactForceLogout();
+    }
+  }, 1000);
+}
+
+function _inactDismissWarning(){
+  _inactivityWarningUp = false;
+  var el = document.getElementById('inactivity-warning-overlay');
+  if(el) el.remove();
+  if(_inactivityWarningTimer){ clearInterval(_inactivityWarningTimer); _inactivityWarningTimer = null; }
+}
+
+function inactStayLoggedIn(){
+  _inactDismissWarning();
+  inactResetTimer();
+}
+
+function _inactForceLogout(){
+  _inactStopAll();
+  try{
+    if(_loginClockInterval) clearInterval(_loginClockInterval);
+    if(typeof catHideWidget === 'function') catHideWidget();
+    try{ document.querySelectorAll('.dock-chat-window').forEach(function(w){ w.remove(); }); }catch(e){}
+    currentUser = null;
+    clearSession();
+    document.body.classList.remove('logged-in');
+    document.getElementById('dashboard-view').classList.remove('active');
+    document.getElementById('login-view').classList.add('active');
+    var bb = document.getElementById('break-bar'); if(bb) bb.style.display = 'none';
+    var tbw = document.getElementById('tb-break-wrap'); if(tbw) tbw.style.display = 'none';
+    var ab = document.getElementById('attendance-badge'); if(ab) ab.style.display = 'none';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    var err = document.getElementById('login-error');
+    if(err){ err.textContent = 'You were signed out due to inactivity. Please sign in again.'; err.style.display = 'block'; err.style.color = 'var(--text-muted)'; }
+  }catch(e){ console.warn('Inactivity force-logout:', e.message); }
+}
+
+function _inactStopAll(){
+  if(_inactivityTimer){ clearTimeout(_inactivityTimer); _inactivityTimer = null; }
+  _inactDismissWarning();
+}
+
+function inactResetTimer(){
+  if(!currentUser) return;
+  if(_inactivityWarningUp) return;
+  if(_inactivityTimer){ clearTimeout(_inactivityTimer); _inactivityTimer = null; }
+  _inactivityTimer = setTimeout(function(){
+    if(_inactIsOnBreak()){ inactResetTimer(); return; }
+    _inactShowWarning();
+  }, INACTIVITY_LIMIT_MS);
+}
+
+function inactStartWatching(){
+  _inactStopAll();
+  ['mousemove','keydown','click','scroll'].forEach(function(ev){
+    document.addEventListener(ev, inactResetTimer, { passive: true });
+  });
+  inactResetTimer();
+}
+
+function inactStopWatching(){
+  _inactStopAll();
+  ['mousemove','keydown','click','scroll'].forEach(function(ev){
+    document.removeEventListener(ev, inactResetTimer);
+  });
+}
+
 function doLogout(){
+  inactStopWatching(); // always clear inactivity timers first
   document.body.classList.remove('logged-in');
   // Check if agent has unhandled reassigned cases — wrapped in try/catch so it NEVER blocks logout
   try {
@@ -5490,9 +5739,9 @@ function enterDashboard(){
   if(window._dashAutoRefreshInterval) clearInterval(window._dashAutoRefreshInterval);
   window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 30 * 1000);
   // Start ambient theme poll
-  setTimeout(ambStartPoll, 2000);
-  // Start ambient theme poll
   ambStartPoll();
+  // Start inactivity watchdog — 60 min idle triggers logout warning
+  inactStartWatching();
 }
 
 window.addEventListener('DOMContentLoaded',function(){
@@ -5759,19 +6008,23 @@ async function loadUsersPage(){
   var listEl=document.getElementById('um-user-list');
   listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>';
   try{
-    var users=await sbQuery('users','select=id,name,email,role,timesheet_enabled&order=name.asc');
+    var users=await sbQuery('users','select=id,name,email,role,timesheet_enabled,is_blocked&order=name.asc');
     if(!users||!users.length){listEl.innerHTML='<div class="um-empty">No agents added yet.</div>';return;}
     listEl.innerHTML=users.map(function(u){
       var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
       var rc=u.role==='admin'?'admin':u.role==='tl'?'tl':'';
       var rl=u.role==='tl'?'Team Lead':(u.role||'agent');
       var tsOn=u.timesheet_enabled?true:false;
-      return '<div class="um-user-card">'+
-        '<div class="um-user-avatar">'+ini+'</div>'+
+      var isBlocked=u.is_blocked?true:false;
+      var blockedBadge=isBlocked?'<span style="font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(239,73,60,.15);color:var(--accent-red);text-transform:uppercase;letter-spacing:.08em;margin-left:.5rem;">Blocked</span>':'';
+      var unblockBtn=isBlocked?'<button onclick="bbAdminUnblock(\''+u.id+'\',\''+esc(u.name)+'\')" style="padding:.32rem .85rem;background:rgba(46,197,111,.1);border:1px solid rgba(46,197,111,.3);color:#1a7a45;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;">🔓 Unblock</button>':'';
+      return '<div class="um-user-card">'+(isBlocked?'<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent-red);border-radius:var(--radius) 0 0 var(--radius);"></div>':'')+
+        '<div class="um-user-avatar" style="'+(isBlocked?'background:linear-gradient(135deg,rgba(239,73,60,.6),rgba(239,73,60,.9));':'')+'">'+(isBlocked?'🔒':ini)+'</div>'+
         '<div class="um-user-info">'+
-          '<div class="um-user-name">'+esc(u.name)+' <span class="um-role-badge '+rc+'">'+rl+'</span></div>'+
+          '<div class="um-user-name">'+esc(u.name)+' <span class="um-role-badge '+rc+'">'+rl+'</span>'+blockedBadge+'</div>'+
           '<div class="um-user-email">'+esc(u.email)+'</div>'+
         '</div>'+
+        unblockBtn+
         '<div class="um-ts-toggle" title="Timesheet access">'+
           '<span class="um-ts-label">Timesheet</span>'+
           '<label class="ts-switch">'+
@@ -6414,6 +6667,203 @@ function submitComment(){var input=document.getElementById('comment-input');var 
 // ===================================================
 //  ATTENDANCE & BREAK TRACKER
 // ===================================================
+// ═══════════════════════════════════════════════════════════════
+//  BREAK BLOCK SYSTEM
+//  On the 10th over-limit break in a calendar month →
+//  account is blocked, session force-ended, block modal shown.
+//  Admin can unblock via Manage Users page.
+//  Agent can self-unblock with the admin-set unblock PIN.
+// ═══════════════════════════════════════════════════════════════
+var _BB_PIN_KEY = 'break_unblock_pin'; // settings table key
+
+// ── Count this user's over-limit breaks for the current month ──
+async function bbGetMonthlyViolations(){
+  if(!currentUser) return 0;
+  var now = new Date();
+  var from = now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'-01';
+  var lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  var to   = now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'-'+lastDay;
+  try{
+    var rows = await sbQuery('breaks',
+      'user_id=eq.'+currentUser.id+'&over_limit=eq.true&date=gte.'+from+'&date=lte.'+to+'&select=id');
+    return rows ? rows.length : 0;
+  }catch(e){ return 0; }
+}
+
+// ── Check after every over-limit break end ──
+async function bbCheckAfterBreak(){
+  if(!currentUser || isAdminUser()) return; // admins immune
+  // Check if break block system is enabled
+  try{
+    var cfg = await sbQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=value');
+    var enabled = cfg&&cfg.length ? cfg[0].value !== 'false' : true; // default ON
+    if(!enabled) return;
+  }catch(e){ return; } // if settings unreachable, fail safe (don't block)
+  var count = await bbGetMonthlyViolations();
+  if(count >= 10){
+    // Block in DB
+    try{
+      await sbUpdate('users','id',currentUser.id,{
+        is_blocked: true,
+        block_reason: 'Break limit exceeded '+count+' times in '+new Date().toLocaleString('default',{month:'long',year:'numeric'})
+      });
+    }catch(e){ console.warn('Block write failed:',e.message); }
+    bbShowModal(count);
+  }
+}
+
+// ── Show block modal ──
+function bbShowModal(count){
+  var existing = document.getElementById('bb-modal-overlay');
+  if(existing) existing.remove();
+  var el = document.createElement('div');
+  el.id = 'bb-modal-overlay';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(7,13,45,.78);backdrop-filter:blur(5px);z-index:9998;display:flex;align-items:center;justify-content:center;';
+  el.innerHTML =
+    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:420px;width:90%;padding:2rem 2rem 1.5rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.4);">'+
+      '<div style="width:56px;height:56px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;">'+
+        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>'+
+      '</div>'+
+      '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:600;color:var(--text-primary);margin-bottom:.25rem;">Account Blocked</div>'+
+      '<div style="font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1.25rem;">Break limit exceeded</div>'+
+      '<div style="background:rgba(239,73,60,.06);border:1px solid rgba(239,73,60,.15);border-radius:var(--radius-sm);padding:1rem 1.2rem;text-align:left;margin-bottom:1.25rem;">'+
+        '<p style="font-size:.875rem;color:var(--text-primary);line-height:1.7;margin:0 0 .65rem;">Your account has been temporarily blocked as you have exceeded the break time limit <strong style="color:var(--accent-red);">'+count+' times</strong> this month.</p>'+
+        '<p style="font-size:.875rem;color:var(--text-primary);line-height:1.7;margin:0 0 .65rem;">Further violations may result in continued blocking of your account.</p>'+
+        '<p style="font-size:.875rem;color:var(--text-primary);line-height:1.7;margin:0;">Please contact your administrator to unlock your account, or enter the unblock PIN below to regain access.</p>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:.6rem;">'+
+        '<input id="bb-pin-input" type="password" maxlength="4" placeholder="Enter PIN" style="flex:1;text-align:center;letter-spacing:.25em;font-size:1rem;padding:.6rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:DM Sans,sans-serif;outline:none;" onkeydown="if(event.key===\'Enter\')bbSubmitPin()"/>'+
+        '<button onclick="bbSubmitPin()" style="padding:.6rem 1.3rem;background:var(--gold);color:#fff;border:none;border-radius:var(--radius-sm);font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Unlock</button>'+
+      '</div>'+
+      '<div id="bb-pin-err" style="font-size:.78rem;color:var(--accent-red);display:none;margin-bottom:.6rem;">Incorrect PIN. Please try again.</div>'+
+      '<div style="border-top:1px solid var(--navy-border);padding-top:1rem;margin-top:.4rem;">'+
+        '<button onclick="bbGoToLogin()" style="font-size:.8rem;color:var(--text-muted);background:none;border:none;cursor:pointer;font-family:DM Sans,sans-serif;">Sign in as a different user</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(el);
+  // Force logout session — they must re-authenticate or use PIN
+  _inactStopAll();
+  if(_loginClockInterval) clearInterval(_loginClockInterval);
+  currentUser = null;
+  clearSession();
+}
+
+function bbGoToLogin(){
+  var el = document.getElementById('bb-modal-overlay');
+  if(el) el.remove();
+  document.body.classList.remove('logged-in');
+  document.getElementById('dashboard-view').classList.remove('active');
+  document.getElementById('login-view').classList.add('active');
+  var bb=document.getElementById('break-bar');if(bb)bb.style.display='none';
+  var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';
+  var ab=document.getElementById('attendance-badge');if(ab)ab.style.display='none';
+  document.getElementById('username').value='';
+  document.getElementById('password').value='';
+  document.getElementById('login-error').style.display='none';
+}
+
+async function bbSubmitPin(){
+  var pinEl = document.getElementById('bb-pin-input');
+  var errEl = document.getElementById('bb-pin-err');
+  var pin = (pinEl ? pinEl.value : '').trim();
+  if(!pin){ if(pinEl) pinEl.focus(); return; }
+  try{
+    var rows = await sbQuery('settings','key=eq.'+_BB_PIN_KEY+'&select=value');
+    if(!rows||!rows.length){ if(errEl){errEl.textContent='No unblock PIN has been set. Contact your administrator.';errEl.style.display='block';} return; }
+    var stored = rows[0].value;
+    var hashed = await hashPassword(pin);
+    if(hashed !== stored){
+      if(errEl){ errEl.style.display='block'; }
+      if(pinEl){ pinEl.value=''; pinEl.focus(); }
+      return;
+    }
+    // PIN correct — unblock
+    // We need to re-fetch the user by email from login field or session
+    // At this point currentUser is null (we cleared it in bbShowModal)
+    // so we unblock by matching the last email attempted in the login field
+    var emailEl = document.getElementById('username');
+    var email = emailEl ? emailEl.value.trim().toLowerCase() : '';
+    if(email){
+      var urows = await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id');
+      if(urows&&urows.length){
+        await sbUpdate('users','id',urows[0].id,{is_blocked:false,block_reason:null});
+      }
+    }
+    var overlay = document.getElementById('bb-modal-overlay');
+    if(overlay) overlay.remove();
+    // Send them to login screen with success message
+    document.body.classList.remove('logged-in');
+    document.getElementById('dashboard-view').classList.remove('active');
+    document.getElementById('login-view').classList.add('active');
+    var bb=document.getElementById('break-bar');if(bb)bb.style.display='none';
+    var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';
+    var ab=document.getElementById('attendance-badge');if(ab)ab.style.display='none';
+    document.getElementById('username').value='';
+    document.getElementById('password').value='';
+    var err=document.getElementById('login-error');
+    if(err){ err.textContent='Account unlocked. Please sign in again.'; err.style.display='block'; err.style.color='var(--accent-green)'; }
+  }catch(e){
+    if(errEl){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
+  }
+}
+
+// ── Admin unblock from Manage Users ──
+async function bbAdminUnblock(userId, userName){
+  if(!confirm('Unlock '+userName+'\'s account? They will be able to log in again.')) return;
+  try{
+    await sbUpdate('users','id',userId,{is_blocked:false,block_reason:null});
+    loadUsersPage();
+  }catch(e){ alert('Could not unblock: '+e.message); }
+}
+
+// ── Control Deck: Save unblock PIN ──
+async function bbSavePin(){
+  var pinEl = document.getElementById('cd-bb-pin-input');
+  var msgEl = document.getElementById('cd-bb-pin-msg');
+  var pin = (pinEl ? pinEl.value : '').trim();
+  if(pin.length !== 4 || !/^\d{4}$/.test(pin)){
+    if(msgEl){ msgEl.textContent='PIN must be exactly 4 digits.'; msgEl.style.color='var(--accent-red)'; msgEl.style.display='block'; }
+    return;
+  }
+  try{
+    var hashed = await hashPassword(pin);
+    var existing = await sbQuery('settings','key=eq.'+_BB_PIN_KEY+'&select=key');
+    if(existing&&existing.length){ await sbUpdate('settings','key',_BB_PIN_KEY,{value:hashed}); }
+    else { await sbInsert('settings',{key:_BB_PIN_KEY,value:hashed}); }
+    if(msgEl){ msgEl.textContent='Unblock PIN saved.'; msgEl.style.color='var(--accent-green)'; msgEl.style.display='block'; setTimeout(function(){ msgEl.style.display='none'; },3000); }
+    if(pinEl) pinEl.value='';
+  }catch(e){
+    if(msgEl){ msgEl.textContent='Save failed: '+e.message; msgEl.style.color='var(--accent-red)'; msgEl.style.display='block'; }
+  }
+}
+
+var _BB_ENABLED_KEY = 'break_block_enabled';
+
+async function bbLoadToggleState(){
+  try{
+    var rows = await sbQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=value');
+    var enabled = rows&&rows.length ? rows[0].value !== 'false' : true; // default ON
+    var chk = document.getElementById('cd-bb-toggle');
+    var st  = document.getElementById('cd-bb-status');
+    if(chk) chk.checked = enabled;
+    if(st){ st.textContent = enabled ? '✅ ON' : '🔴 OFF'; st.style.color = enabled ? '#2ec56f' : '#ef493c'; }
+  }catch(e){}
+}
+
+async function cdBbToggle(enabled){
+  var msg = document.getElementById('cd-bb-msg');
+  var st  = document.getElementById('cd-bb-status');
+  if(msg){ msg.style.display='block'; msg.textContent='Saving…'; msg.style.color='var(--text-muted)'; }
+  try{
+    var val = enabled ? 'true' : 'false';
+    var ex = await sbQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=key');
+    if(ex&&ex.length){ await sbUpdate('settings','key',_BB_ENABLED_KEY,{value:val}); }
+    else{ await sbInsert('settings',{key:_BB_ENABLED_KEY,value:val}); }
+    if(st){ st.textContent = enabled ? '✅ ON' : '🔴 OFF'; st.style.color = enabled ? '#2ec56f' : '#ef493c'; }
+    if(msg){ msg.textContent = enabled ? 'Break block system enabled.' : 'Break block system disabled. No agents will be auto-blocked.'; setTimeout(function(){ msg.style.display='none'; },3000); }
+  }catch(e){ if(msg){ msg.textContent='Error: '+e.message; msg.style.color='var(--accent-red)'; } }
+}
+
 const BREAK_LIMITS = { breakfast:20, lunch:45, beverage:20, shortbreak:10 };
 const BREAK_LABELS = { breakfast:'Breakfast', lunch:'Lunch', beverage:'Beverage', shortbreak:'Short Break' };
 const BREAK_EMOJIS = { breakfast:'🍳', lunch:'🍽️', beverage:'☕', shortbreak:'🧘' };
@@ -6486,7 +6936,7 @@ function tbBreakPick(type){
             duration_seconds:elapsed,over_limit:overBy>0,over_by_seconds:overBy
           });
         }
-      }).then(function(){ showBreakToast(type,overBy,elapsed); })
+      }).then(function(){ showBreakToast(type,overBy,elapsed); if(overBy>0) bbCheckAfterBreak(); })
         .catch(function(e){ console.warn('Break end save failed:',e.message); });
     return;
   }
@@ -6657,6 +7107,7 @@ async function toggleBreak(type){
     } catch(e){ console.warn('Break save failed:', e.message); }
 
     showBreakToast(type, overBy, elapsed);
+    if(overBy > 0) bbCheckAfterBreak();
   }
 }
 
@@ -17278,6 +17729,7 @@ async function cdLoadAll(){
   cdLoadAgents();
   cdLoadTm();
   cdAmbLoadAndRender();
+  bbLoadToggleState();
 }
 
 // ── Team Meet: agent create toggle ──
