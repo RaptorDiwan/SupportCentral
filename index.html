@@ -1811,6 +1811,95 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .cat-toggle-wrap input:checked + .cat-toggle-slider{background:var(--gold);}
   .cat-toggle-wrap input:checked + .cat-toggle-slider:before{transform:translateX(20px);}
 
+  /* ── K7 Radar ── */
+  .radar-root{width:100%;padding:2rem 2.5rem;display:flex;flex-direction:column;gap:0;box-sizing:border-box;overflow-y:auto;}
+  
+  /* Page header */
+  .radar-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.6rem;flex-wrap:wrap;gap:1rem;}
+  .radar-page-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;box-shadow:0 4px 14px rgba(239,73,60,.25);}
+  .radar-page-title{font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:700;color:var(--text-primary);line-height:1.1;}
+  .radar-page-sub{font-size:.75rem;color:var(--text-muted);margin-top:2px;}
+  .radar-month-sel{background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:8px;padding:.42rem .8rem;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none;cursor:pointer;}
+
+  /* Tab bar */
+  .radar-tabbar{display:flex;gap:.35rem;border-bottom:2px solid var(--navy-border);padding-bottom:0;margin-bottom:1.4rem;}
+  .radar-tab{display:flex;align-items:center;gap:.4rem;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;padding:.55rem 1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .18s;border-radius:6px 6px 0 0;}
+  .radar-tab:hover{color:var(--text-primary);background:var(--navy-hover);}
+  .radar-tab.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:700;background:rgba(239,73,60,.05);}
+
+  .radar-panel{animation:fadeIn .2s ease;width:100%;}
+  .radar-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.4rem 1.8rem;width:100%;box-sizing:border-box;}
+  .radar-card-header{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.2rem;}
+  .radar-card-title{font-size:.95rem;font-weight:700;color:var(--text-primary);}
+  .radar-card-sub{font-size:.75rem;color:var(--text-muted);margin-top:2px;}
+
+  /* Form elements */
+  .radar-form-row{display:flex;gap:1rem;flex-wrap:wrap;}
+  .radar-field{flex:1;min-width:160px;display:flex;flex-direction:column;}
+  .radar-label{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.38rem;}
+  .radar-optional{font-size:.68rem;font-weight:400;letter-spacing:0;text-transform:none;color:var(--text-dim);margin-left:.3rem;}
+  .radar-section-label{font-size:.78rem;font-weight:600;color:var(--text-primary);margin-bottom:.9rem;}
+  .radar-input{width:100%;padding:.52rem .85rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:8px;color:var(--text-primary);font-family:'DM Sans',sans-serif;font-size:.84rem;outline:none;box-sizing:border-box;transition:border-color .18s,box-shadow .18s;}
+  .radar-input:focus{border-color:rgba(239,73,60,.45);box-shadow:0 0 0 3px rgba(239,73,60,.08);}
+  .radar-textarea{resize:none;height:60px;line-height:1.5;}
+
+  /* Flag groups */
+  .radar-flags-container{display:flex;flex-direction:column;gap:0;border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;}
+  .radar-flag-group{padding:.85rem 1rem;border-bottom:1px solid var(--navy-border);}
+  .radar-flag-group:last-child{border-bottom:none;}
+  .radar-flag-group-title{display:flex;align-items:center;gap:.5rem;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:.6rem;}
+  .radar-flag-group-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .radar-flag-row{display:flex;flex-wrap:wrap;gap:.4rem;}
+
+  /* Flag chips — redesigned */
+  .radar-flag-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.32rem .75rem;border-radius:20px;font-size:.76rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .15s;user-select:none;border:1.5px solid var(--navy-border);background:var(--navy-card);}
+  .radar-flag-chip input{display:none;}
+  .rfc-icon{font-size:.72rem;}
+  .rfc-pts{font-size:.68rem;font-weight:700;opacity:.5;margin-left:.1rem;}
+  .radar-flag-chip:hover{border-color:rgba(239,73,60,.3);color:var(--text-primary);background:var(--navy-hover);}
+  /* Selected states by severity */
+  .radar-flag-chip.selected.rfg-neutral{background:rgba(46,197,111,.1);border-color:rgba(46,197,111,.4);color:#1a7a45;}
+  .radar-flag-chip.selected.rfg-neutral .rfc-pts{opacity:1;color:#1a7a45;}
+  .radar-flag-chip.selected.rfg-warn{background:rgba(239,149,30,.1);border-color:rgba(239,149,30,.45);color:#b5690d;}
+  .radar-flag-chip.selected.rfg-warn .rfc-pts{opacity:1;color:#b5690d;}
+  .radar-flag-chip.selected.rfg-bad{background:rgba(239,73,60,.1);border-color:rgba(239,73,60,.4);color:#c0291e;}
+  .radar-flag-chip.selected.rfg-bad .rfc-pts{opacity:1;color:#c0291e;}
+
+  /* Deduction bar */
+  .radar-entry-footer{margin-top:1.2rem;display:flex;flex-direction:column;gap:.85rem;padding-top:1.1rem;border-top:1px solid var(--navy-border);}
+  .radar-deduction-bar{display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:8px;}
+  .radar-deduction-val{font-size:1rem;font-weight:800;color:var(--text-dim);transition:color .2s;}
+  .radar-deduction-val.has-deduction{color:var(--accent-red);}
+
+  /* Buttons */
+  .radar-btn-primary{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.25rem;background:var(--gold);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:opacity .18s,transform .1s;white-space:nowrap;}
+  .radar-btn-primary:hover{opacity:.88;}
+  .radar-btn-primary:active{transform:scale(.97);}
+  .radar-btn-ghost{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;background:transparent;color:var(--text-muted);border:1px solid var(--navy-border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  .radar-btn-ghost:hover{background:var(--navy-hover);color:var(--text-primary);}
+  .radar-submit-row{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;}
+
+  /* Tables */
+  .radar-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+  .radar-table th{font-size:.67rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;padding:.5rem .8rem;border-bottom:2px solid var(--navy-border);text-align:left;white-space:nowrap;}
+  .radar-table td{padding:.6rem .8rem;border-bottom:1px solid rgba(0,0,0,.04);color:var(--text-primary);vertical-align:middle;}
+  body.dark .radar-table td{border-bottom-color:rgba(255,255,255,.04);}
+  .radar-table tr:last-child td{border-bottom:none;}
+  .radar-table tbody tr:hover td{background:var(--navy-hover);}
+
+  /* Rating badges */
+  .radar-badge{display:inline-flex;align-items:center;padding:.22rem .65rem;border-radius:20px;font-size:.72rem;font-weight:700;white-space:nowrap;}
+  .radar-badge.excellent{background:rgba(46,197,111,.12);color:#1a7a45;}
+  .radar-badge.good{background:rgba(239,149,30,.12);color:#b5690d;}
+  .radar-badge.average{background:rgba(239,73,60,.1);color:#c0291e;}
+  .radar-badge.poor{background:rgba(239,73,60,.2);color:#9b1a12;}
+
+  /* Score ring */
+  .radar-score-ring{width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;border:3px solid var(--navy-border);flex-shrink:0;}
+
+  /* Empty state */
+  .radar-empty{color:var(--text-dim);font-size:.82rem;padding:.4rem 0;}
+
   /* ═══════════════════════════════════════
      REMINDERS (Apple iCloud style)
   ═══════════════════════════════════════ */
@@ -1820,6 +1909,7 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .rem-sidebar{width:200px;flex-shrink:0;background:var(--navy-sidebar,var(--navy-card));border-right:1px solid var(--navy-border);padding:1rem 0 1.4rem;display:flex;flex-direction:column;gap:1px;}
   .rem-sidebar-section{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);padding:.8rem 1rem .4rem;}
   .rem-sidebar-item{display:flex;align-items:center;gap:.75rem;padding:.58rem 1rem;cursor:pointer;border-radius:10px;margin:0 .4rem;transition:background .15s;font-size:.83rem;font-weight:500;color:var(--text-muted);}
+
   .rem-sidebar-item:hover{background:var(--navy-hover,rgba(255,255,255,.05));}
   .rem-list-active{background:rgba(239,73,60,.1)!important;color:var(--text-primary)!important;}
   .rem-sidebar-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -2047,21 +2137,21 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   }
   /* Call controls bar */
   .dock-call-controls{
-    padding:.5rem .6rem; border-top:1px solid var(--navy-border);
-    display:flex; align-items:center; justify-content:center; gap:.5rem;
+    padding:.75rem .6rem; border-top:1px solid var(--navy-border);
+    display:flex; align-items:center; justify-content:center; gap:.9rem;
     background:var(--navy-card); flex-shrink:0;
   }
   .dock-call-ctrl-btn{
-    width:34px; height:34px; border-radius:50%; border:none; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; font-size:.85rem;
-    transition:all .15s; flex-shrink:0;
+    width:40px; height:40px; border-radius:50%; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .18s; flex-shrink:0; outline:none;
   }
-  .dock-call-ctrl-btn.mute-off{ background:rgba(76,118,168,.2); color:var(--accent-blue); }
-  .dock-call-ctrl-btn.mute-on { background:rgba(239,73,60,.15); color:#ef493c; }
-  .dock-call-ctrl-btn.cam-off { background:rgba(76,118,168,.2); color:var(--accent-blue); }
-  .dock-call-ctrl-btn.cam-on  { background:rgba(239,73,60,.15); color:#ef493c; }
-  .dock-call-ctrl-btn.end-btn { background:#ef493c; color:#fff; width:38px; height:38px; }
-  .dock-call-ctrl-btn:hover{ filter:brightness(1.2); transform:scale(1.08); }
+  .dock-call-ctrl-btn.mute-off{ background:rgba(76,118,168,.15); color:var(--accent-blue); box-shadow:0 2px 8px rgba(76,118,168,.15); }
+  .dock-call-ctrl-btn.mute-on { background:rgba(239,73,60,.15); color:#ef493c; box-shadow:0 2px 8px rgba(239,73,60,.15); }
+  .dock-call-ctrl-btn.cam-off { background:rgba(76,118,168,.15); color:var(--accent-blue); box-shadow:0 2px 8px rgba(76,118,168,.15); }
+  .dock-call-ctrl-btn.cam-on  { background:rgba(239,73,60,.15); color:#ef493c; box-shadow:0 2px 8px rgba(239,73,60,.15); }
+  .dock-call-ctrl-btn.end-btn { background:linear-gradient(135deg,#ef493c,#d43226); color:#fff; width:44px; height:44px; box-shadow:0 4px 14px rgba(239,73,60,.4); }
+  .dock-call-ctrl-btn:hover{ filter:brightness(1.12); transform:scale(1.1); }
   /* Ringing / calling state */
   .dock-call-ringing{
     flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -3042,6 +3132,15 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         <span class="sidebar-badge" id="ct-alert-badge" style="display:none;background:#EF493C;color:#fff;margin-left:auto;">!</span>
       </div>
 
+      <div class="sidebar-item" id="sidebar-radar" onclick="showPage('radar', this)" style="display:none;">
+        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+          <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+        </svg>
+        K7 Radar
+      </div>
+
       <div class="sidebar-item" id="sidebar-ts" onclick="showPage('timesheet', this)" style="display:none;">
         <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
@@ -3058,6 +3157,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         Reminders
         <span class="sidebar-badge" id="rem-badge" style="display:none;background:var(--gold);color:#fff;margin-left:auto;">0</span>
       </div>
+
 
       <div class="sidebar-section">Account</div>
 
@@ -3942,6 +4042,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
               Completed
               <span class="rem-sidebar-count" id="rem-done-count">0</span>
             </div>
+            <button id="rem-clear-done-btn" onclick="remClearDone()" style="display:none;margin:.35rem .5rem 0;width:calc(100% - 1rem);padding:.42rem .75rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.22);border-radius:8px;color:#EF493C;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:background .15s;" onmouseover="this.style.background='rgba(239,73,60,.16)'" onmouseout="this.style.background='rgba(239,73,60,.08)'">🗑 Clear Completed</button>
             <button class="rem-addlist-btn" onclick="remAddNew()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               Add Reminder
@@ -3988,80 +4089,6 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
             <ul class="rem-ul" id="rem-ul"></ul>
           </div>
         </div>
-      </div>
-
-      <!-- ── CHANGE PASSWORD PAGE ── -->
-      <div class="page" id="page-changepass">
-        <div class="cp-wrap">
-          <h2 class="um-title">Change Password</h2>
-          <p class="um-sub" style="margin-bottom:1.8rem;">Update your login password. You'll need your current password to confirm.</p>
-          <div class="field-group">
-            <label>Current Password</label>
-            <input id="cp-current" type="password" placeholder="••••••••" class="um-input" style="max-width:400px;"/>
-          </div>
-          <div class="field-group">
-            <label>New Password</label>
-            <input id="cp-new" type="password" placeholder="min 6 characters" class="um-input" style="max-width:400px;"/>
-          </div>
-          <div class="field-group">
-            <label>Confirm New Password</label>
-            <input id="cp-confirm" type="password" placeholder="repeat new password" class="um-input" style="max-width:400px;"/>
-          </div>
-          <div id="cp-error" style="color:var(--accent-red);font-size:0.82rem;margin-bottom:0.8rem;display:none;"></div>
-          <div id="cp-success" style="color:#1a7a45;background:rgba(46,197,111,0.08);border:1px solid rgba(46,197,111,0.25);border-radius:8px;padding:0.7rem 1rem;font-size:0.82rem;margin-bottom:0.8rem;max-width:400px;display:none;">
-            ✅ Password updated successfully!
-          </div>
-          <button class="um-save-btn" onclick="doChangePassword()">Update Password</button>
-        </div>
-      </div>
-
-      <div class="page" id="page-users">
-        <div class="um-header">
-          <div>
-            <h2 class="um-title">Manage Users</h2>
-            <p class="um-sub">Add agents below. They log in with email &amp; password; their display name shows inside the portal.</p>
-          </div>
-          <button class="um-add-btn" onclick="toggleAddUser()">+ Add Agent</button>
-        </div>
-
-
-
-        <div class="um-add-form" id="um-add-form" style="display:none;">
-          <div class="um-form-row">
-            <div class="field-group" style="flex:1;margin-bottom:0;">
-              <label>Display Name</label>
-              <input id="new-name" type="text" placeholder="e.g. Ravi Kumar" class="um-input"/>
-            </div>
-            <div class="field-group" style="flex:1;margin-bottom:0;">
-              <label>Email</label>
-              <input id="new-email" type="email" placeholder="agent@company.com" class="um-input"/>
-            </div>
-            <div class="field-group" style="flex:1;margin-bottom:0;">
-              <label>Temp Password</label>
-              <input id="new-pass" type="text" placeholder="min 6 chars" class="um-input"/>
-            </div>
-            <div class="field-group" style="flex:0 0 130px;margin-bottom:0;">
-              <label>Role</label>
-              <select id="new-role" class="um-input">
-                <option value="agent">Agent</option>
-                <option value="tl">Team Lead</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-          </div>
-          <div id="um-add-error" style="color:var(--accent-red);font-size:0.82rem;margin-top:0.6rem;display:none;"></div>
-          <div id="um-add-success" style="color:#1a7a45;background:rgba(46,197,111,0.08);border:1px solid rgba(46,197,111,0.25);border-radius:8px;padding:0.7rem 1rem;font-size:0.82rem;margin-top:0.6rem;display:none;"></div>
-          <div style="margin-top:1rem;display:flex;gap:0.75rem;">
-            <button class="um-save-btn" onclick="addUser()">Save Agent</button>
-            <button class="um-cancel-btn" onclick="toggleAddUser()">Cancel</button>
-          </div>
-        </div>
-
-        <div id="um-user-list" style="margin-top:1.5rem;">
-          <div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading agents…</div>
-        </div>
-
-        <!-- Cat AI Settings moved to Control Deck -->
       </div>
 
       <!-- ══ VOICE HUB PAGE ══ -->
@@ -4269,6 +4296,7 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
               <p class="cd-sub">Manage team features, celebrations and announcements.</p>
             </div>
           </div>
+
 
           <!-- ── Section 1: Orange Cat AI ── -->
           <div class="cd-card">
@@ -4580,8 +4608,296 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
             </div>
           </div>
 
+          <!-- ── Section: K7 Radar ── -->
+          <div class="cd-card">
+            <div class="cd-card-header">
+              <span class="cd-card-icon" style="background:rgba(239,73,60,.12);">🎯</span>
+              <div>
+                <div class="cd-card-title">K7 Radar</div>
+                <div class="cd-card-sub">Enable L1 performance logging for admins and selected users</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:.8rem;margin-left:auto;">
+                <span id="cd-radar-status" style="font-size:.8rem;color:var(--text-muted);">Loading…</span>
+                <label class="cat-toggle-wrap"><input type="checkbox" id="cd-radar-toggle" onchange="cdRadarToggle(this.checked)"/><span class="cat-toggle-slider"></span></label>
+              </div>
+            </div>
+            <div id="cd-radar-msg" class="cd-msg" style="display:none;"></div>
+            <div style="margin-top:.6rem;font-size:.75rem;color:var(--text-dim);line-height:1.55;">When enabled, admins and TLs can log performance entries against L1 agents. Agents see their own rating only. Full reports visible to admin.</div>
+          </div>
+
           <!-- ── CSAT Reports — loaded from csat_module_patch.js ── -->
           <div id="cd-csat-card"></div>
+
+        </div>
+      </div>
+
+      <!-- ══ K7 RADAR PAGE ══ -->
+      <div class="page" id="page-radar">
+        <div class="radar-root">
+
+          <!-- ── Page Header ── -->
+          <div class="radar-page-header">
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <div class="radar-page-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="22" height="22">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                  <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+                  <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+                </svg>
+              </div>
+              <div>
+                <div class="radar-page-title">K7 Radar</div>
+                <div class="radar-page-sub">L1 Engineer Performance Tracking</div>
+              </div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:.7rem;">
+              <select id="radar-month-filter" class="radar-month-sel" onchange="radarRefreshAll()"><!-- filled by JS --></select>
+            </div>
+          </div>
+
+          <!-- ── Tab Bar ── -->
+          <div class="radar-tabbar" id="radar-tabs">
+            <button class="radar-tab active" id="radar-tab-log" onclick="radarTab('log')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Log Entry
+            </button>
+            <button class="radar-tab" id="radar-tab-report" onclick="radarTab('report')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              Global Report
+            </button>
+            <button class="radar-tab" id="radar-tab-mine" onclick="radarTab('mine')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              My Rating
+            </button>
+            <button class="radar-tab" id="radar-tab-data" onclick="radarTab('data')" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              Data
+            </button>
+          </div>
+
+          <!-- ══ TAB: LOG ENTRY ══ -->
+          <div id="radar-panel-log" class="radar-panel">
+
+            <div class="radar-card">
+              <!-- Agent + Ticket row -->
+              <div class="radar-form-row">
+                <div class="radar-field">
+                  <label class="radar-label">Agent</label>
+                  <select id="radar-agent-sel" class="radar-input"></select>
+                </div>
+                <div class="radar-field">
+                  <label class="radar-label">Ticket ID <span class="radar-optional">optional</span></label>
+                  <input type="text" id="radar-ticket-id" class="radar-input" placeholder="e.g. #45231"/>
+                </div>
+              </div>
+
+              <!-- Flags section -->
+              <div style="margin-top:1.4rem;">
+                <div class="radar-section-label">Select Flags <span class="radar-optional">all that apply — multiple allowed</span></div>
+
+                <div id="radar-flags-wrap" class="radar-flags-container">
+
+                  <div class="radar-flag-group">
+                    <div class="radar-flag-group-title">
+                      <span class="radar-flag-group-dot" style="background:rgba(76,118,168,.6);"></span>
+                      Escalation
+                    </div>
+                    <div class="radar-flag-row">
+                      <label class="radar-flag-chip rfg-neutral" data-pts="0"><input type="checkbox" value="valid_escalation" data-pts="0"><span class="rfc-icon">✅</span> Valid Escalation <span class="rfc-pts">+0</span></label>
+                      <label class="radar-flag-chip rfg-warn" data-pts="-1"><input type="checkbox" value="partial_miss" data-pts="-1"><span class="rfc-icon">⚠️</span> Partial Miss <span class="rfc-pts">−1</span></label>
+                      <label class="radar-flag-chip rfg-bad" data-pts="-3"><input type="checkbox" value="avoidable_escalation" data-pts="-3"><span class="rfc-icon">❌</span> Avoidable Escalation <span class="rfc-pts">−3</span></label>
+                    </div>
+                  </div>
+
+                  <div class="radar-flag-group">
+                    <div class="radar-flag-group-title">
+                      <span class="radar-flag-group-dot" style="background:rgba(239,73,60,.7);"></span>
+                      Technical Competency
+                    </div>
+                    <div class="radar-flag-row">
+                      <label class="radar-flag-chip rfg-bad" data-pts="-2"><input type="checkbox" value="should_have_known" data-pts="-2"><span class="rfc-icon">❌</span> Should Have Known <span class="rfc-pts">−2</span></label>
+                      <label class="radar-flag-chip rfg-bad" data-pts="-2"><input type="checkbox" value="no_proactive_thinking" data-pts="-2"><span class="rfc-icon">❌</span> No Proactive Thinking <span class="rfc-pts">−2</span></label>
+                      <label class="radar-flag-chip rfg-bad" data-pts="-2"><input type="checkbox" value="missed_obvious_step" data-pts="-2"><span class="rfc-icon">❌</span> Missed Obvious Step <span class="rfc-pts">−2</span></label>
+                      <label class="radar-flag-chip rfg-bad" data-pts="-2"><input type="checkbox" value="wrong_troubleshooting" data-pts="-2"><span class="rfc-icon">❌</span> Wrong Troubleshooting <span class="rfc-pts">−2</span></label>
+                    </div>
+                  </div>
+
+                  <div class="radar-flag-group">
+                    <div class="radar-flag-group-title">
+                      <span class="radar-flag-group-dot" style="background:rgba(239,149,30,.7);"></span>
+                      Behavior
+                    </div>
+                    <div class="radar-flag-row">
+                      <label class="radar-flag-chip rfg-warn" data-pts="-1"><input type="checkbox" value="asked_unnecessary_doubt" data-pts="-1"><span class="rfc-icon">⚠️</span> Asked Unnecessary Doubt <span class="rfc-pts">−1</span></label>
+                      <label class="radar-flag-chip rfg-warn" data-pts="-1"><input type="checkbox" value="didnt_attempt_first" data-pts="-1"><span class="rfc-icon">⚠️</span> Didn't Attempt First <span class="rfc-pts">−1</span></label>
+                      <label class="radar-flag-chip rfg-warn" data-pts="-2"><input type="checkbox" value="repeated_same_mistake" data-pts="-2"><span class="rfc-icon">⚠️</span> Repeated Same Mistake <span class="rfc-pts">−2</span></label>
+                    </div>
+                  </div>
+
+                  <div class="radar-flag-group">
+                    <div class="radar-flag-group-title">
+                      <span class="radar-flag-group-dot" style="background:rgba(239,149,30,.5);"></span>
+                      Efficiency
+                    </div>
+                    <div class="radar-flag-row">
+                      <label class="radar-flag-chip rfg-warn" data-pts="-1"><input type="checkbox" value="high_aht" data-pts="-1"><span class="rfc-icon">⚠️</span> High AHT <span class="rfc-pts">−1</span></label>
+                      <label class="radar-flag-chip rfg-warn" data-pts="-1"><input type="checkbox" value="delayed_response" data-pts="-1"><span class="rfc-icon">⚠️</span> Delayed Response <span class="rfc-pts">−1</span></label>
+                    </div>
+                  </div>
+
+                  <div class="radar-flag-group">
+                    <div class="radar-flag-group-title">
+                      <span class="radar-flag-group-dot" style="background:rgba(239,73,60,.5);"></span>
+                      Process
+                    </div>
+                    <div class="radar-flag-row">
+                      <label class="radar-flag-chip rfg-bad" data-pts="-2"><input type="checkbox" value="didnt_follow_sop" data-pts="-2"><span class="rfc-icon">❌</span> Didn't Follow SOP <span class="rfc-pts">−2</span></label>
+                      <label class="radar-flag-chip rfg-bad" data-pts="-3"><input type="checkbox" value="wrong_info_to_customer" data-pts="-3"><span class="rfc-icon">❌</span> Wrong Info to Customer <span class="rfc-pts">−3</span></label>
+                      <label class="radar-flag-chip rfg-bad" data-pts="-1"><input type="checkbox" value="escalated_without_notes" data-pts="-1"><span class="rfc-icon">❌</span> Escalated Without Notes <span class="rfc-pts">−1</span></label>
+                    </div>
+                  </div>
+
+                  <div class="radar-flag-group">
+                    <div class="radar-flag-group-title">
+                      <span class="radar-flag-group-dot" style="background:rgba(76,118,168,.5);"></span>
+                      Communication Quality
+                    </div>
+                    <div class="radar-flag-row">
+                      <label class="radar-flag-chip rfg-warn" data-pts="-1"><input type="checkbox" value="template_without_modification" data-pts="-1"><span class="rfc-icon">⚠️</span> Template Without Modification <span class="rfc-pts">−1</span></label>
+                      <label class="radar-flag-chip rfg-bad" data-pts="-2"><input type="checkbox" value="robotic_ai_text" data-pts="-2"><span class="rfc-icon">❌</span> Robotic / AI Text <span class="rfc-pts">−2</span></label>
+                      <label class="radar-flag-chip rfg-warn" data-pts="-1"><input type="checkbox" value="unprofessional_tone" data-pts="-1"><span class="rfc-icon">⚠️</span> Unprofessional Tone <span class="rfc-pts">−1</span></label>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Deduction bar + Notes + Submit -->
+              <div class="radar-entry-footer">
+                <div class="radar-deduction-bar">
+                  <div style="display:flex;align-items:center;gap:.6rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--text-dim);flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span style="font-size:.8rem;color:var(--text-muted);">Deduction for this entry</span>
+                  </div>
+                  <span id="radar-deduction-preview" class="radar-deduction-val">0 pts</span>
+                </div>
+
+                <div class="radar-field" style="margin-top:.3rem;">
+                  <label class="radar-label">Notes <span class="radar-optional">optional</span></label>
+                  <textarea id="radar-notes" class="radar-input radar-textarea" placeholder="Brief context about this entry…"></textarea>
+                </div>
+
+                <div class="radar-submit-row">
+                  <button class="radar-btn-primary" onclick="radarSubmitEntry()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+                    Submit Entry
+                  </button>
+                  <button class="radar-btn-ghost" onclick="radarClearForm()">Clear</button>
+                  <span id="radar-entry-msg" style="font-size:.8rem;display:none;margin-left:.2rem;"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══ TAB: GLOBAL REPORT ══ -->
+          <div id="radar-panel-report" class="radar-panel" style="display:none;">
+
+            <div class="radar-card">
+              <div class="radar-card-header">
+                <div class="radar-card-title">Team Overview</div>
+                <button class="radar-btn-ghost" onclick="radarLoadReport()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                  Refresh
+                </button>
+              </div>
+              <div id="radar-global-table" style="overflow-x:auto;margin-top:.2rem;">
+                <div class="radar-empty">Loading…</div>
+              </div>
+            </div>
+
+            <div class="radar-card" style="margin-top:.9rem;">
+              <div class="radar-card-header">
+                <div class="radar-card-title">Agent Drilldown</div>
+              </div>
+              <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin:.8rem 0;">
+                <select id="radar-drill-agent" class="radar-input" style="flex:1;min-width:180px;"></select>
+                <button class="radar-btn-primary" onclick="radarLoadDrilldown()">View Full Log</button>
+              </div>
+              <div id="radar-drilldown-wrap">
+                <div class="radar-empty">Select an agent above to view their full log.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ══ TAB: MY RATING ══ -->
+          <div id="radar-panel-mine" class="radar-panel" style="display:none;">
+            <div class="radar-card" id="radar-mine-card">
+              <div class="radar-empty">Loading your rating…</div>
+            </div>
+          </div>
+
+          <!-- ══ TAB: DATA MANAGEMENT ══ -->
+          <div id="radar-panel-data" class="radar-panel" style="display:none;">
+
+            <div class="radar-card">
+              <div class="radar-card-header">
+                <div>
+                  <div class="radar-card-title">Export Backup</div>
+                  <div class="radar-card-sub">Download as Excel — all 14 columns, nothing missed</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:.7rem;align-items:flex-end;flex-wrap:wrap;margin-top:1rem;">
+                <div style="flex:1;min-width:160px;">
+                  <label class="radar-label">Month</label>
+                  <select id="radar-export-month" class="radar-input"></select>
+                </div>
+                <button class="radar-btn-primary" onclick="radarExportMonth()">⬇ Download Month</button>
+                <button class="radar-btn-ghost" onclick="radarExportAll()">⬇ All Data</button>
+              </div>
+              <div id="radar-export-msg" style="font-size:.78rem;margin-top:.6rem;display:none;"></div>
+            </div>
+
+            <div class="radar-card" style="margin-top:.9rem;">
+              <div class="radar-card-header">
+                <div>
+                  <div class="radar-card-title">Delete Records</div>
+                  <div class="radar-card-sub">Free up database space — export a backup first</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:.7rem;align-items:flex-end;flex-wrap:wrap;margin-top:1rem;">
+                <div style="flex:1;min-width:160px;">
+                  <label class="radar-label">Month to Delete</label>
+                  <select id="radar-delete-month" class="radar-input"></select>
+                </div>
+                <button class="cd-btn-danger" onclick="radarDeleteMonth()" style="white-space:nowrap;flex-shrink:0;">🗑 Delete Month</button>
+              </div>
+              <div style="margin-top:.9rem;padding:.85rem 1rem;background:rgba(239,73,60,.05);border:1px solid rgba(239,73,60,.18);border-radius:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.7rem;">
+                <div>
+                  <div style="font-size:.82rem;font-weight:700;color:#ef493c;">⚠ Delete All Records</div>
+                  <div style="font-size:.74rem;color:var(--text-dim);margin-top:3px;">Permanently wipes every entry across all months. Cannot be undone.</div>
+                </div>
+                <button class="cd-btn-danger" onclick="radarDeleteAll()" style="white-space:nowrap;flex-shrink:0;">🗑 Delete All</button>
+              </div>
+              <div id="radar-delete-msg" style="font-size:.78rem;margin-top:.6rem;display:none;"></div>
+            </div>
+
+            <div class="radar-card" style="margin-top:.9rem;">
+              <div class="radar-card-header">
+                <div>
+                  <div class="radar-card-title">Storage Summary</div>
+                  <div class="radar-card-sub">Record counts by month</div>
+                </div>
+                <button class="radar-btn-ghost" onclick="radarLoadStorageSummary()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                  Refresh
+                </button>
+              </div>
+              <div id="radar-storage-summary" style="margin-top:.8rem;">
+                <div class="radar-empty">Loading…</div>
+              </div>
+            </div>
+
+          </div>
 
         </div>
       </div>
@@ -4630,6 +4946,7 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
             <button class="xc-tab" id="xc-tab-c" onclick="xcTabSwitch('limits',this)">&#9632; Config</button>
             <button class="xc-tab" id="xc-tab-d" onclick="xcTabSwitch('users-adv',this)">&#9632; Users</button>
             <button class="xc-tab" id="xc-tab-e" onclick="xcTabSwitch('quiz-adv',this)">&#9632; Quiz</button>
+            <button class="xc-tab" id="xc-tab-f" onclick="xcTabSwitch('session-intel',this)" style="border-color:rgba(239,73,60,.25);color:#EF493C;">&#9632; Session Intel</button>
           </div>
 
           <!-- ── TAB: ATTENDANCE ── -->
@@ -4759,6 +5076,27 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
               <p class="xc-card-sub">Manage user records.</p>
               <div id="xc-ul" style="margin-top:1rem;">
                 <div style="color:var(--text-dim);font-size:.875rem;">Loading...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── TAB: SESSION INTEL ── -->
+          <div id="xc-panel-session-intel" class="xc-panel" style="display:none;">
+            <div class="xc-card" style="border-color:rgba(239,73,60,.2);">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem;">
+                <div>
+                  <div class="xc-card-title" style="color:#EF493C;">&#128275; Session Intel</div>
+                  <p class="xc-card-sub">Live fingerprint log — IP, location, device for every login. Syslevel eyes only.</p>
+                </div>
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                  <select id="si-filter-user" class="xc-input" style="width:160px;font-size:.78rem;" onchange="siLoadLogs()"><option value="">— All agents —</option></select>
+                  <button class="xc-btn" onclick="siLoadLogs()" style="font-size:.78rem;">&#8635; Refresh</button>
+                  <button class="xc-btn-danger" onclick="siClearAll()" style="font-size:.78rem;">&#128465; Clear All</button>
+                </div>
+              </div>
+              <div id="si-stats" style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;"></div>
+              <div id="si-table-wrap" style="overflow-x:auto;">
+                <div style="color:var(--text-dim);font-size:.85rem;padding:.5rem 0;">Loading session records...</div>
               </div>
             </div>
           </div>
@@ -5023,6 +5361,7 @@ async function doLogin(){
     currentUser={id:u.id,name:u.name,email:u.email,role:u.role,timesheetEnabled:u.timesheet_enabled?true:false,photo_url:u.photo_url||null};
     saveSession(currentUser);
     statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
+    siCaptureSession(currentUser);
     enterDashboard();
   }catch(e){
     console.error('Login failed:',e.message);
@@ -5263,7 +5602,7 @@ function showPage(id,elem){
   if(id==='moments') setTimeout(function(){_mLoadTab(_mActiveTab);},60);
   if(id==='quiz') loadAgentQuiz();
   if(id==='announcements') loadAnnouncementsAdmin();
-  if(id==='controldeck'){ _cdPwResetUnlocked=false; var lk=document.getElementById('cd-pwreset-locked'),pk=document.getElementById('cd-pwreset-panel'),ub=document.getElementById('cd-pwreset-unlock-btn'),pi=document.getElementById('cd-pwreset-pin'); if(lk)lk.style.display='flex'; if(pk)pk.style.display='none'; if(ub)ub.style.display=''; if(pi){pi.value='';} cdLoadAll(); cdLoadVHAgents(); cdVHLoadGlobalStatus(); }
+  if(id==='controldeck'){ _cdPwResetUnlocked=false; var lk=document.getElementById('cd-pwreset-locked'),pk=document.getElementById('cd-pwreset-panel'),ub=document.getElementById('cd-pwreset-unlock-btn'),pi=document.getElementById('cd-pwreset-pin'); if(lk)lk.style.display='flex'; if(pk)pk.style.display='none'; if(ub)ub.style.display=''; if(pi){pi.value='';} cdLoadAll(); cdLoadVHAgents(); cdVHLoadGlobalStatus(); if(typeof radarLoadCdToggleState==='function') radarLoadCdToggleState(); }
   if(id==='voicehub'){ vhPageInit(); }
   if(id==='teammeet'){ tmPageInit(); }
   if(id==='assessment') loadAgentAssessment();
@@ -7119,6 +7458,7 @@ function xcTabSwitch(name, btn){
   if(name === 'limits'){ xcReadCfg(); setTimeout(catToggleRefresh, 200); }
   if(name === 'users-adv') xcFetchUsr();
   if(name === 'quiz-adv') xcInitQuizSelectors();
+  if(name === 'session-intel') siLoadLogs();
   // Pre-populate agent dropdowns
   xcInitSelectors();
 }
@@ -8896,6 +9236,7 @@ async function loadAssessmentBuilderList(){
             '<button class="qa-toggle-btn" onclick="editAssessmentDetails(\''+a.id+'\')">&#9998; Edit</button>'+
             '<button class="qa-toggle-btn'+(a.review_enabled?' on':'')+'" onclick="toggleAssessmentReview(\''+a.id+'\','+a.review_enabled+')" >&#128065; Review '+(a.review_enabled?'ON':'OFF')+'</button>'+
             '<button class="qa-toggle-btn" onclick="showAssessmentQuestions(\''+a.id+'\',\''+a.title.replace(/'/g,"\\'")+'\')">&#10010; Questions</button>'+
+            '<button class="qa-toggle-btn" onclick="showAssessmentResponses(\''+a.id+'\')">&#128202; Responses</button>'+
             '<button class="qa-del-btn" onclick="deleteAssessment(\''+a.id+'\')">Delete</button>'+
           '</div>'+
         '</div>'+
@@ -8916,6 +9257,7 @@ async function loadAssessmentBuilderList(){
           '</div>'+
         '</div>'+
         '<div id="aq-panel-'+a.id+'" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--navy-border);"></div>'+
+        '<div id="ar-panel-'+a.id+'" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--navy-border);"></div>'+
       '</div>';
     }).join('');
   }catch(e){list.innerHTML='<div style="color:var(--accent-red);padding:1rem;">Error: '+e.message+'</div>';}
@@ -8962,6 +9304,36 @@ async function deleteAssessment(id){
     await sbDelete('assessments','id',id);
     loadAssessmentBuilderList();
   }catch(e){alert('Delete failed.');}
+}
+
+async function showAssessmentResponses(id){
+  var panel=document.getElementById('ar-panel-'+id);
+  if(!panel)return;
+  if(panel.style.display==='block'){panel.style.display='none';return;}
+  panel.style.display='block';
+  panel.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">Loading responses...</div>';
+  try{
+    var responses=await sbQuery('assessment_responses',
+      'assessment_id=eq.'+id+'&order=submitted_at.asc&select=id,user_name,score,total_questions,submitted_at,malpractice');
+    if(!responses||!responses.length){
+      panel.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">No submissions yet.</div>';
+      return;
+    }
+    var html='<div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;margin-bottom:.6rem;">SUBMISSIONS</div>'+
+      responses.map(function(r){
+        var pct=r.total_questions>0?Math.round((r.score||0)/r.total_questions*100):0;
+        var isMalp=r.malpractice===true||r.malpractice==='true';
+        var scoreColor=pct>=80?'var(--accent-green)':pct>=50?'var(--gold)':'var(--accent-red)';
+        var time=r.submitted_at?new Date(r.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—';
+        return '<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;margin-bottom:.3rem;'+(isMalp?'border-left:3px solid var(--accent-red);':'')+'">'+
+          '<div style="flex:1;font-size:.82rem;font-weight:600;color:var(--text-primary);">'+esc(r.user_name)+'</div>'+
+          '<div style="font-size:.78rem;font-weight:700;color:'+scoreColor+';">'+( r.score!==null?(r.score+'/'+r.total_questions+' ('+pct+'%)'):'Essay')+'</div>'+
+          '<div style="font-size:.72rem;color:var(--text-dim);">'+time+'</div>'+
+          (isMalp?'<span style="font-size:.68rem;font-weight:700;background:rgba(239,73,60,.12);color:var(--accent-red);padding:2px 8px;border-radius:20px;flex-shrink:0;">🚫 Malpractice</span>':'')+
+        '</div>';
+      }).join('');
+    panel.innerHTML=html;
+  }catch(e){panel.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+e.message+'</div>';}
 }
 
 async function showAssessmentQuestions(id, title){
@@ -9062,6 +9434,10 @@ async function deleteAssessmentQuestion(qId, assessmentId, title){
 
 // ── AGENT ASSESSMENT VIEW ──
 var _assData=null, _assQuestions=[], _assAnswers={}, _assCurrentQ=0, _assTimerInterval=null, _assSecondsLeft=0;
+// ── Proctoring state ──
+var _assProctoring=false;   // true only while an assessment is in progress
+var _assViolations=0;       // count of tab-switch / blur events
+var _assBlurTimer=null;     // grace-period timer to avoid false positives
 
 async function loadAgentAssessment(){
   var content=document.getElementById('assessment-agent-content');
@@ -9104,7 +9480,7 @@ async function renderAgentAssessment(){
   }
 
   // Check attempts
-  var attempts=await sbQuery('assessment_responses','assessment_id=eq.'+_assData.id+'&user_id=eq.'+currentUser.id+'&select=id,answers,submitted_at,score');
+  var attempts=await sbQuery('assessment_responses','assessment_id=eq.'+_assData.id+'&user_id=eq.'+currentUser.id+'&select=id,answers,submitted_at,score,malpractice');
   var attemptCount=attempts?attempts.length:0;
   var lastAttempt=attempts&&attempts.length?attempts[attempts.length-1]:null;
 
@@ -9130,6 +9506,8 @@ async function renderAgentAssessment(){
       '<div class="quiz-result-banner '+(lastAttempt?'pass':'review')+'">'+
         (lastAttempt?'&#9989; Submitted'+(score!==null?' — Score: '+score+'/'+_assQuestions.length:''):'&#128274; Not attempted')+
       '</div>'+
+      (lastAttempt&&(lastAttempt.malpractice===true||lastAttempt.malpractice==='true')?
+        '<div style="margin:.75rem 0;padding:.65rem 1rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.25);border-radius:8px;font-size:.82rem;color:var(--accent-red);font-weight:600;">🚫 This submission was flagged for malpractice. Please speak to your Team Leader.</div>':'')+ 
       (reviewHtml||(!lastAttempt?'':(lastAttempt&&!_assData.review_enabled?'<div class="quiz-review-note">Review will be available when your admin enables it.</div>':'')))+
     '</div>';
     return;
@@ -9138,6 +9516,8 @@ async function renderAgentAssessment(){
   // Start assessment
   _assAnswers={}; _assCurrentQ=0;
   _assSecondsLeft=(_assData.time_limit_minutes||30)*60;
+  _assViolations=0;
+  _assProctoring=true;
   renderAssessmentQuestion();
   startAssessmentTimer();
 }
@@ -9233,8 +9613,93 @@ function selectAssessmentOption(val,qId){
 function jumpAssessmentQ(i){ _assCurrentQ=i; }
 function navAssessmentQ(dir){ _assCurrentQ=Math.max(0,Math.min(_assQuestions.length-1,_assCurrentQ+dir)); }
 
-async function submitAssessment(autoSubmit){
-  if(!autoSubmit){
+// ════════════════════════════════════════════════════════
+//  ASSESSMENT PROCTORING — tab/window switch detection
+// ════════════════════════════════════════════════════════
+function assHandleViolation(reason){
+  if(!_assProctoring) return;
+  _assViolations++;
+  if(_assViolations===1){
+    // First violation — show warning overlay, give chance to continue
+    assShowWarning(reason);
+  } else {
+    // Second violation — terminate immediately
+    assTerminate(reason);
+  }
+}
+
+function assShowWarning(reason){
+  // Remove any existing warning
+  var old=document.getElementById('ass-proctor-warn');
+  if(old) old.remove();
+
+  var overlay=document.createElement('div');
+  overlay.id='ass-proctor-warn';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.82);z-index:9950;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);';
+  overlay.innerHTML=
+    '<div style="background:var(--navy-card);border:1.5px solid rgba(239,73,60,.4);border-radius:var(--radius);max-width:400px;width:92%;padding:2rem;text-align:center;box-shadow:0 24px 72px rgba(0,0,0,.4);">'+
+      '<div style="font-size:2.2rem;margin-bottom:.6rem;">⚠️</div>'+
+      '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.2rem;font-weight:700;color:var(--accent-red);margin-bottom:.5rem;">Warning — Malpractice Detected</div>'+
+      '<div style="font-size:.85rem;color:var(--text-muted);line-height:1.7;margin-bottom:.4rem;">'+
+        'You switched away from the assessment window.<br>'+
+        '<strong style="color:var(--text-primary);">This is your first and only warning.</strong>'+
+      '</div>'+
+      '<div style="font-size:.82rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:8px;padding:.65rem 1rem;color:var(--accent-red);font-weight:600;margin-bottom:1.4rem;">'+
+        '🚫 A second violation will auto-submit and flag your assessment.'+
+      '</div>'+
+      '<button onclick="assWarnDismiss()" style="padding:.65rem 2rem;background:var(--gold);border:none;border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:.9rem;font-weight:700;color:#fff;cursor:pointer;">I Understand — Continue</button>'+
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
+function assWarnDismiss(){
+  var w=document.getElementById('ass-proctor-warn');
+  if(w) w.remove();
+}
+
+function assTerminate(reason){
+  _assProctoring=false;
+  clearTimeout(_assBlurTimer);
+  var w=document.getElementById('ass-proctor-warn');
+  if(w) w.remove();
+  submitAssessment(true, true); // auto-submit with malpractice=true
+}
+
+// ── Visibility change (tab switch, minimise) ──
+document.addEventListener('visibilitychange', function(){
+  if(!_assProctoring) return;
+  if(document.visibilityState==='hidden'){
+    // Small grace period — some browsers fire this on popups, print dialogs etc.
+    _assBlurTimer=setTimeout(function(){
+      assHandleViolation('tab_hidden');
+    }, 400);
+  } else {
+    // Returned — cancel grace period if they came back fast
+    clearTimeout(_assBlurTimer);
+  }
+});
+
+// ── Window blur (Alt+Tab, clicking another app) ──
+window.addEventListener('blur', function(){
+  if(!_assProctoring) return;
+  // Longer grace period for blur — browser devtools, OS notifications etc.
+  _assBlurTimer=setTimeout(function(){
+    // Double-check visibility — if tab is still visible, this was a minor focus loss
+    if(document.visibilityState==='visible'){
+      assHandleViolation('window_blur');
+    }
+  }, 600);
+});
+
+window.addEventListener('focus', function(){
+  // Cancel pending blur violation if they returned fast enough
+  clearTimeout(_assBlurTimer);
+});
+
+async function submitAssessment(autoSubmit, malpractice){
+  _assProctoring=false; // stop proctoring regardless
+  clearTimeout(_assBlurTimer);
+  if(!autoSubmit && !malpractice){
     var unanswered=_assQuestions.filter(function(q){return!_assAnswers[q.id];}).length;
     if(unanswered>0&&!confirm(unanswered+' question(s) unanswered. Submit anyway?'))return;
   }
@@ -9244,9 +9709,27 @@ async function submitAssessment(autoSubmit){
     await sbInsert('assessment_responses',{
       assessment_id:_assData.id, user_id:currentUser.id, user_name:currentUser.name,
       answers:JSON.stringify(_assAnswers), score:score,
-      total_questions:_assQuestions.length, submitted_at:new Date().toISOString(), date:todayStr()
+      total_questions:_assQuestions.length, submitted_at:new Date().toISOString(), date:todayStr(),
+      malpractice: malpractice ? true : false
     });
-    renderAgentAssessment();
+    if(malpractice){
+      // Show lockout screen — don't call renderAgentAssessment (would reload)
+      var content=document.getElementById('assessment-agent-content');
+      if(content){
+        content.innerHTML=
+          '<div class="quiz-lock-screen" style="padding:2.5rem 2rem;">'+
+            '<div style="font-size:3rem;margin-bottom:.75rem;">🚫</div>'+
+            '<div class="quiz-lock-title" style="color:var(--accent-red);font-size:1.15rem;">Assessment Terminated</div>'+
+            '<div class="quiz-lock-sub" style="margin-top:.6rem;line-height:1.7;max-width:360px;color:var(--text-muted);">'+
+              'Malpractice detected — you navigated away from the assessment window '+_assViolations+' time'+(+_assViolations!==1?'s':'')+'.'+
+              '<br><br>Your answers have been auto-submitted and flagged for admin review.'+
+              '<br><br>Please contact your Team Leader if you believe this was a mistake.'+
+            '</div>'+
+          '</div>';
+      }
+    } else {
+      renderAgentAssessment();
+    }
   }catch(e){alert('Submit failed: '+e.message);}
 }
 
@@ -9616,26 +10099,10 @@ async function workClockIn(){
 
 function workClockOut(){
   if(!_wclockAttendance){ alert('No active work session found.'); return; }
-  // Show custom confirmation modal instead of plain confirm()
   var overlay = document.getElementById('end-work-modal-overlay');
-  var btn = document.getElementById('end-work-confirm-btn');
-  if(overlay) overlay.style.display='flex';
-  // Disable confirm button for 2 seconds
-  if(btn){
-    btn.disabled=true; btn.style.opacity='.5'; btn.style.cursor='not-allowed';
-    btn.textContent='End Shift (2s)';
-    var t=2;
-    var countdown=setInterval(function(){
-      t--;
-      if(t>0){ btn.textContent='End Shift ('+t+'s)'; }
-      else {
-        clearInterval(countdown);
-        btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
-        btn.textContent='Yes, End Shift';
-      }
-    },1000);
-  }
+  if(overlay) overlay.style.display = 'flex';
 }
+
 function closeEndWorkModal(){
   var overlay=document.getElementById('end-work-modal-overlay');
   if(overlay) overlay.style.display='none';
@@ -9742,8 +10209,9 @@ function openStatModal(type){
     iconSvg='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EC56F" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>';
     agents = att.map(function(a){
       var isBreak = onBreakSet.has(a.user_name);
+      var showDetail = typeof isAdminUser === 'function' && isAdminUser();
       return { name:a.user_name, badge: isBreak ? 'On Break':'Active', badgeClass: isBreak?'onbreak':'active',
-               detail: isBreak ? breakLabel(onBreakDetails[a.user_name]) : ('In since '+fmtTime(a.login_time)) };
+               detail: showDetail ? (isBreak ? breakLabel(onBreakDetails[a.user_name]) : ('In since '+fmtTime(a.login_time))) : '' };
     });
 
   } else if(type==='onbreak'){
@@ -9801,10 +10269,10 @@ function openStatModal(type){
 
       if(isBreak){
         badge='On Break'; cls='onbreak';
-        detail=breakLabel(onBreakDetails[u.name]);
+        detail = (typeof isAdminUser==='function' && isAdminUser()) ? breakLabel(onBreakDetails[u.name]) : '';
       } else if(isIn){
         badge='Active'; cls='active';
-        detail='In since '+fmtTime(attMap[u.id].login_time);
+        detail = (typeof isAdminUser==='function' && isAdminUser()) ? 'In since '+fmtTime(attMap[u.id].login_time) : '';
       } else if(isAdminOrTl){
         // Admin/TL: check users.last_seen — they don't click Start Work
         var userRecent = u.last_seen && (Date.now()-new Date(u.last_seen).getTime()) < 12*60*1000;
@@ -10925,6 +11393,8 @@ var _dragBlockClick = false;
 
 function chatInit(){
   if(!currentUser||_isSysLevel()) return;
+  if(window._chatInitDone) return; // prevent double-init
+  window._chatInitDone = true;
   var icon = document.getElementById('chat-dock-icon');
   if(icon) icon.classList.add('visible');
   if(_dockHidden){ dockApplyHidden(true, false); }
@@ -10969,6 +11439,8 @@ function makeDockDraggable() {
   var icon = document.getElementById('chat-dock-icon');
   var dock = document.getElementById('chat-dock');
   if (!icon || !dock) return;
+  if (icon._dragBound) return; // already bound — don't double-attach
+  icon._dragBound = true;
 
   var isDragging = false;
   var startX, startY;
@@ -16353,9 +16825,21 @@ async function remLoadCloud(){
 }
 
 // ── Init ──
+function remPruneOld(){
+  var cutoff=Date.now()-24*3600*1000;
+  var before=_rems.length;
+  _rems=_rems.filter(function(r){
+    if(!r.done) return true;
+    var ts=r.completedAt||r.doneAt||r.updatedAt||r.createdAt||0;
+    if(!ts) return false;
+    return new Date(ts).getTime()>cutoff;
+  });
+  if(_rems.length!==before) remSave();
+}
 function remInit(){
   remLoad();
-  remLoadCloud().then(function(){ remRender(); remScheduleAll(); });
+  remPruneOld();
+  remLoadCloud().then(function(){ remPruneOld(); remRender(); remScheduleAll(); });
   remRender();
 }
 // Hook showPage
@@ -16394,6 +16878,10 @@ function remRender(){
   sc('rem-today-count', todayR.length||'');
   sc('rem-sched-count', sched.length||'');
   sc('rem-done-count',  done.length||'');
+
+  // Show clear button only when there are completed items
+  var clearBtn=document.getElementById('rem-clear-done-btn');
+  if(clearBtn) clearBtn.style.display=done.length>0?'block':'none';
 
   // Badge on sidebar
   var badge=document.getElementById('rem-badge');
@@ -16465,6 +16953,15 @@ function remToggle(id){
 // ── Delete ──
 function remDel(id){
   _rems=_rems.filter(function(r){return r.id!==id;});
+  remSave(); remRender();
+}
+
+// ── Clear all completed ──
+function remClearDone(){
+  var count=_rems.filter(function(r){return r.done;}).length;
+  if(!count) return;
+  if(!confirm('Clear all '+count+' completed reminder'+(count!==1?'s':'')+' permanently?')) return;
+  _rems=_rems.filter(function(r){return!r.done;});
   remSave(); remRender();
 }
 
@@ -19248,9 +19745,9 @@ async function dcDeclineCall(fromId){
 
 // ── Show active call UI ──
 function dcShowActiveCallPanel(peerId, isVideo){
-  var muteIcon = '<svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>';
-  var camIcon  = '<svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
-  var endIcon  = '<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.12 1.19 2 2 0 012.12.01h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/></svg>';
+  var muteIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>';
+  var camIcon  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
+  var endIcon  = '<svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>';
 
   var videoArea = '';
   if(isVideo){
@@ -20034,7 +20531,7 @@ async function tmHandleSignal(sig){
       egEscapeAll();
       return;
     }
-    if(e.key && e.key.length === 1){
+    if(e.key.length === 1){
       _egBuffer += e.key.toLowerCase();
       if(_egBuffer.length > 20) _egBuffer = _egBuffer.slice(-20);
       egCheckBuffer();
@@ -20421,5 +20918,852 @@ async function tmHandleSignal(sig){
 ═══════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="csat_styles.css"/>
 <script src="csat_module_patch.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// SESSION INTEL — IP / Device Fingerprint Collection + God Mode Viewer
+// Invisible to all roles except syslevel. Zero UI footprint on login.
+// ═══════════════════════════════════════════════════════════════════════
+
+async function siCaptureSession(user){
+  if(!user||!user.id) return;
+  try{
+    var geoData={};
+    try{
+      var gr=await fetch('https://ipapi.co/json/');
+      if(gr.ok) geoData=await gr.json();
+    }catch(e){ geoData={}; }
+
+    var ua=navigator.userAgent||'';
+    var browser='Unknown';
+    var device='Desktop';
+    if(/Edg\//.test(ua)) browser='Edge';
+    else if(/OPR\/|Opera/.test(ua)) browser='Opera';
+    else if(/Chrome\//.test(ua)&&!/Chromium/.test(ua)) browser='Chrome';
+    else if(/Firefox\//.test(ua)) browser='Firefox';
+    else if(/Safari\//.test(ua)&&!/Chrome/.test(ua)) browser='Safari';
+    else if(/MSIE|Trident/.test(ua)) browser='IE';
+    if(/Mobile|Android|iPhone|iPad/.test(ua)) device=/iPad/.test(ua)?'Tablet':'Mobile';
+
+    var payload={
+      user_id: user.id,
+      user_name: user.name,
+      ip: geoData.ip||'Unknown',
+      city: geoData.city||'Unknown',
+      region: geoData.region||'',
+      isp: geoData.org||'Unknown',
+      country: geoData.country_name||'',
+      country_code: geoData.country_code||'',
+      user_agent: ua.substring(0,300),
+      browser: browser,
+      device: device,
+      login_at: new Date().toISOString()
+    };
+    await sbInsert('session_fingerprints', payload);
+  }catch(e){ /* silent — never break login */ }
+}
+
+async function siLoadLogs(){
+  if(!_isSysLevel()) return;
+  var wrap=document.getElementById('si-table-wrap');
+  var stats=document.getElementById('si-stats');
+  if(!wrap) return;
+  wrap.innerHTML='<div style="color:var(--text-dim);font-size:.85rem;padding:.5rem 0;">Loading...</div>';
+  try{
+    var filterSel=document.getElementById('si-filter-user');
+    if(filterSel&&filterSel.options.length<=1){
+      var users=await sbQuery('users','role=neq.syslevel&select=id,name&order=name.asc');
+      (users||[]).forEach(function(u){
+        var o=document.createElement('option');
+        o.value=u.id; o.textContent=u.name;
+        filterSel.appendChild(o);
+      });
+    }
+    var filterUser=filterSel?filterSel.value:'';
+    var q='order=login_at.desc&limit=200';
+    if(filterUser) q='user_id=eq.'+filterUser+'&'+q;
+    var rows=await sbQuery('session_fingerprints',q);
+    if(!rows||rows.length===0){
+      wrap.innerHTML='<div style="color:var(--text-dim);font-size:.85rem;padding:1rem 0;">No session records found. Create the table in Supabase first — SQL is in the setup notes.</div>';
+      if(stats) stats.innerHTML='';
+      return;
+    }
+    var uniqueIPs=new Set(rows.map(function(r){return r.ip;})).size;
+    var uniqueUsers=new Set(rows.map(function(r){return r.user_id;})).size;
+    var mobiles=rows.filter(function(r){return r.device==='Mobile';}).length;
+    if(stats) stats.innerHTML=
+      siStatBadge(rows.length,'Total Logins','#EF493C')+
+      siStatBadge(uniqueUsers,'Unique Agents','var(--accent-green)')+
+      siStatBadge(uniqueIPs,'Unique IPs','#4C76A8')+
+      siStatBadge(mobiles,'Mobile Logins','#a67c52');
+
+    var html='<table style="width:100%;border-collapse:collapse;font-size:.78rem;">';
+    html+='<thead><tr style="border-bottom:1px solid var(--navy-border);">';
+    ['Agent','IP Address','Location','ISP / Org','Browser','Device','Login Time'].forEach(function(h){
+      html+='<th style="text-align:left;padding:.45rem .6rem;color:var(--text-muted);font-weight:600;white-space:nowrap;">'+h+'</th>';
+    });
+    html+='</tr></thead><tbody>';
+    rows.forEach(function(r,i){
+      var bg=i%2===0?'transparent':'rgba(255,255,255,.02)';
+      var dt=r.login_at?new Date(r.login_at):null;
+      var dtStr=dt?dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—';
+      var loc=[r.city,r.region,r.country_code].filter(Boolean).join(', ')||'Unknown';
+      var devIcon=r.device==='Mobile'?'📱':r.device==='Tablet'?'📟':'🖥️';
+      html+='<tr style="background:'+bg+';border-bottom:.5px solid rgba(255,255,255,.04);">';
+      html+='<td style="padding:.45rem .6rem;color:var(--text-primary);font-weight:600;">'+esc(r.user_name||'—')+'</td>';
+      html+='<td style="padding:.45rem .6rem;font-family:monospace;color:#EF493C;">'+esc(r.ip||'—')+'</td>';
+      html+='<td style="padding:.45rem .6rem;color:var(--text-muted);">'+esc(loc)+'</td>';
+      html+='<td style="padding:.45rem .6rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.isp||'')+'">'+esc((r.isp||'—').substring(0,30))+'</td>';
+      html+='<td style="padding:.45rem .6rem;color:var(--text-muted);">'+esc(r.browser||'—')+'</td>';
+      html+='<td style="padding:.45rem .6rem;">'+devIcon+' '+esc(r.device||'—')+'</td>';
+      html+='<td style="padding:.45rem .6rem;color:var(--text-dim);white-space:nowrap;">'+dtStr+'</td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    wrap.innerHTML=html;
+  }catch(e){
+    wrap.innerHTML='<div style="color:var(--accent-red,#EF493C);font-size:.82rem;padding:.5rem 0;">Error: '+esc(e.message)+'<br><br><b>Run this SQL in Supabase to create the table:</b><pre style="margin-top:.5rem;font-size:.72rem;background:rgba(0,0,0,.3);padding:.75rem;border-radius:6px;overflow-x:auto;white-space:pre-wrap;">create table session_fingerprints (\n  id uuid default gen_random_uuid() primary key,\n  user_id text,\n  user_name text,\n  ip text,\n  city text,\n  region text,\n  isp text,\n  country text,\n  country_code text,\n  user_agent text,\n  browser text,\n  device text,\n  login_at timestamp default now()\n);</pre></div>';
+  }
+}
+
+
+// ══════════════════════════════════════════════════════
+//  K7 RADAR — L1 Performance Tracking Module
+// ══════════════════════════════════════════════════════
+
+(function(){
+
+  // ── Flag definitions (value → label + deduction) ──
+  var RADAR_FLAGS = {
+    valid_escalation:          { label:'✅ Valid Escalation',               pts: 0  },
+    partial_miss:              { label:'⚠️ Partial Miss',                   pts: -1 },
+    avoidable_escalation:      { label:'❌ Avoidable Escalation',           pts: -3 },
+    should_have_known:         { label:'❌ Should Have Known',              pts: -2 },
+    no_proactive_thinking:     { label:'❌ No Proactive Thinking',          pts: -2 },
+    missed_obvious_step:       { label:'❌ Missed Obvious Step',            pts: -2 },
+    wrong_troubleshooting:     { label:'❌ Wrong Troubleshooting',          pts: -2 },
+    asked_unnecessary_doubt:   { label:'⚠️ Asked Unnecessary Doubt',        pts: -1 },
+    didnt_attempt_first:       { label:'⚠️ Didn\'t Attempt First',          pts: -1 },
+    repeated_same_mistake:     { label:'⚠️ Repeated Same Mistake',          pts: -2 },
+    high_aht:                  { label:'⚠️ High AHT',                       pts: -1 },
+    delayed_response:          { label:'⚠️ Delayed Response',               pts: -1 },
+    didnt_follow_sop:          { label:'❌ Didn\'t Follow SOP',             pts: -2 },
+    wrong_info_to_customer:    { label:'❌ Wrong Info Given to Customer',   pts: -3 },
+    escalated_without_notes:   { label:'❌ Escalated Without Proper Notes', pts: -1 },
+    template_without_modification:{ label:'⚠️ Used Template Without Modification', pts: -1 },
+    robotic_ai_text:           { label:'❌ Robotic / AI Generated Text',    pts: -2 },
+    unprofessional_tone:       { label:'⚠️ Unprofessional Tone',            pts: -1 }
+  };
+
+  // Escalation-related flag keys for counting
+  var ESCALATION_FLAGS = ['valid_escalation','partial_miss','avoidable_escalation'];
+  var UNWANTED_FLAGS   = ['avoidable_escalation','partial_miss'];
+
+  // ── Helpers ──
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function radarIsEnabled(){
+    // Admin/TL always have access; others need the toggle enabled
+    if(typeof isAdminUser === 'function' && isAdminUser()) return true;
+    return window._radarEnabled === true;
+  }
+
+  function radarCanLog(){
+    return typeof isAdminUser === 'function' && isAdminUser();
+  }
+
+  function radarRating(score){
+    if(score >= 90) return { label:'⭐ Excellent', cls:'excellent' };
+    if(score >= 75) return { label:'👍 Good',      cls:'good'      };
+    if(score >= 60) return { label:'⚠️ Average',   cls:'average'   };
+    return                  { label:'❌ Needs Training', cls:'poor' };
+  }
+
+  function radarScoreColor(score){
+    if(score >= 90) return '#2ec56f';
+    if(score >= 75) return '#ef951e';
+    if(score >= 60) return '#ef951e';
+    return '#ef493c';
+  }
+
+  // ── Month filter init ──
+  function radarInitMonthFilter(){
+    var sel = document.getElementById('radar-month-filter');
+    if(!sel) return;
+    var now = new Date();
+    var html = '';
+    for(var i = 0; i < 6; i++){
+      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      var m = d.getMonth() + 1;
+      var y = d.getFullYear();
+      var label = d.toLocaleString('default',{month:'long'}) + ' ' + y;
+      var selected = (i === 0) ? 'selected' : '';
+      html += '<option value="'+m+'-'+y+'" '+selected+'>'+label+'</option>';
+    }
+    sel.innerHTML = html;
+  }
+
+  function radarGetMonthYear(){
+    var sel = document.getElementById('radar-month-filter');
+    if(!sel || !sel.value) { var n=new Date(); return {m:n.getMonth()+1, y:n.getFullYear()}; }
+    var parts = sel.value.split('-');
+    return { m: parseInt(parts[0]), y: parseInt(parts[1]) };
+  }
+
+  // ── Tab switching ──
+  window.radarTab = function(tab){
+    ['log','report','mine','data'].forEach(function(t){
+      var panel = document.getElementById('radar-panel-'+t);
+      var btn   = document.getElementById('radar-tab-'+t);
+      if(panel) panel.style.display = (t === tab) ? '' : 'none';
+      if(btn)   btn.classList.toggle('active', t === tab);
+    });
+    if(tab === 'report'){ radarLoadReport(); radarLoadAgents(); }
+    if(tab === 'mine')   radarLoadMine();
+    if(tab === 'data')   radarInitDataTab();
+  };
+
+  window.radarRefreshAll = function(){
+    var active = document.querySelector('.radar-tab.active');
+    if(!active) return;
+    var tab = active.id.replace('radar-tab-','');
+    if(tab === 'report') radarLoadReport();
+    if(tab === 'mine')   radarLoadMine();
+  };
+
+  // ── Populate agent dropdowns ──
+  async function radarLoadAgents(){
+    try{
+      // Load all non-syslevel users so no one gets missed
+      var rows = await sbQuery('users','role=neq.syslevel&select=id,name,role&order=name.asc');
+      var sel  = document.getElementById('radar-agent-sel');
+      var dril = document.getElementById('radar-drill-agent');
+      var opts = '<option value="">— Select Agent —</option>';
+      // Show agents and TLs (L1s could be either role in some setups)
+      (rows||[]).filter(function(u){ return u.role !== 'admin' && u.role !== 'syslevel'; }).forEach(function(u){
+        opts += '<option value="'+esc(u.id)+'">'+esc(u.name)+'</option>';
+      });
+      if(sel)  sel.innerHTML  = opts;
+      if(dril) dril.innerHTML = opts;
+    }catch(e){ console.warn('K7 Radar: agent load error',e); }
+  }
+
+  // ── Flag chip interaction ──
+  function radarInitChips(){
+    document.querySelectorAll('.radar-flag-chip').forEach(function(chip){
+      chip.addEventListener('click', function(){
+        var cb = chip.querySelector('input[type=checkbox]');
+        if(!cb) return;
+        cb.checked = !cb.checked;
+        chip.classList.toggle('selected', cb.checked);
+        radarUpdateDeductionPreview();
+      });
+    });
+  }
+
+  function radarUpdateDeductionPreview(){
+    var total = 0;
+    document.querySelectorAll('#radar-flags-wrap input[type=checkbox]:checked').forEach(function(cb){
+      var pts = parseInt(cb.getAttribute('data-pts')||'0');
+      total += pts;
+    });
+    var el = document.getElementById('radar-deduction-preview');
+    if(!el) return;
+    el.textContent = total === 0 ? '0 pts' : total + ' pts';
+    el.classList.toggle('has-deduction', total < 0);
+  }
+
+  // ── Submit entry ──
+  window.radarSubmitEntry = async function(){
+    if(!radarCanLog()){ alert('You do not have permission to log entries.'); return; }
+    var agentSel = document.getElementById('radar-agent-sel');
+    var ticketEl = document.getElementById('radar-ticket-id');
+    var notesEl  = document.getElementById('radar-notes');
+    var msgEl    = document.getElementById('radar-entry-msg');
+
+    var agentId   = agentSel ? agentSel.value : '';
+    var agentName = agentSel ? agentSel.options[agentSel.selectedIndex].text : '';
+    if(!agentId){ msgEl.textContent='Please select an agent.'; msgEl.style.color='#ef493c'; msgEl.style.display=''; setTimeout(function(){msgEl.style.display='none';},3000); return; }
+
+    var flags = [];
+    var deduction = 0;
+    document.querySelectorAll('#radar-flags-wrap input[type=checkbox]:checked').forEach(function(cb){
+      flags.push(cb.value);
+      deduction += parseInt(cb.getAttribute('data-pts')||'0');
+    });
+    if(!flags.length){ msgEl.textContent='Please select at least one flag.'; msgEl.style.color='#ef493c'; msgEl.style.display=''; setTimeout(function(){msgEl.style.display='none';},3000); return; }
+
+    var now = new Date();
+    var payload = {
+      agent_id:      agentId,
+      agent_name:    agentName,
+      logged_by_id:  currentUser.id,
+      logged_by_name:currentUser.name,
+      ticket_id:     ticketEl ? ticketEl.value.trim() : '',
+      flags:         '{'+flags.map(function(f){return '"'+f+'"';}).join(',')+'}',
+      deduction:     deduction,
+      notes:         notesEl ? notesEl.value.trim() : '',
+      month:         now.getMonth()+1,
+      year:          now.getFullYear()
+    };
+
+    try{
+      msgEl.textContent = 'Saving…'; msgEl.style.color='var(--text-muted)'; msgEl.style.display='';
+      await sbInsert('l1_radar_log', payload);
+      msgEl.textContent = '✓ Entry logged successfully.'; msgEl.style.color='#2ec56f';
+      radarClearForm();
+      setTimeout(function(){ msgEl.style.display='none'; }, 3500);
+    }catch(e){
+      msgEl.textContent = 'Error: '+e.message; msgEl.style.color='#ef493c'; msgEl.style.display='';
+    }
+  };
+
+  window.radarClearForm = function(){
+    var agentSel = document.getElementById('radar-agent-sel');
+    var ticketEl = document.getElementById('radar-ticket-id');
+    var notesEl  = document.getElementById('radar-notes');
+    if(agentSel) agentSel.value = '';
+    if(ticketEl) ticketEl.value = '';
+    if(notesEl)  notesEl.value  = '';
+    document.querySelectorAll('#radar-flags-wrap input[type=checkbox]').forEach(function(cb){ cb.checked = false; });
+    document.querySelectorAll('.radar-flag-chip').forEach(function(c){ c.classList.remove('selected'); });
+    radarUpdateDeductionPreview();
+  };
+
+  // ── Global Report ──
+  window.radarLoadReport = async function(){
+    var wrap = document.getElementById('radar-global-table');
+    if(!wrap) return;
+    wrap.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;">Loading…</div>';
+    var my = radarGetMonthYear();
+    try{
+      var rows = await sbQuery('l1_radar_log','month=eq.'+my.m+'&year=eq.'+my.y+'&select=agent_id,agent_name,flags,deduction');
+      // Group by agent
+      var agents = {};
+      (rows||[]).forEach(function(r){
+        if(!agents[r.agent_id]) agents[r.agent_id] = { name: r.agent_name, entries:0, totalDed:0, escalations:0, unwanted:0 };
+        var a = agents[r.agent_id];
+        a.entries++;
+        a.totalDed += (r.deduction||0);
+        // Parse flags array from postgres format
+        var flagsArr = [];
+        if(Array.isArray(r.flags)) flagsArr = r.flags;
+        else if(typeof r.flags === 'string') flagsArr = r.flags.replace(/[{}"]/g,'').split(',').filter(Boolean);
+        flagsArr.forEach(function(f){
+          if(ESCALATION_FLAGS.indexOf(f) > -1) a.escalations++;
+          if(UNWANTED_FLAGS.indexOf(f) > -1)   a.unwanted++;
+        });
+      });
+
+      if(!Object.keys(agents).length){
+        wrap.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">No entries found for this month.</div>';
+        return;
+      }
+
+      var html = '<table class="radar-table"><thead><tr>'+
+        '<th>Agent</th><th>Entries</th><th>Escalations</th><th>Unwanted</th><th>Score</th><th>Rating</th>'+
+        '</tr></thead><tbody>';
+
+      Object.keys(agents).forEach(function(id){
+        var a = agents[id];
+        var score = Math.max(0, 100 + a.totalDed);
+        var r = radarRating(score);
+        html += '<tr>'+
+          '<td style="font-weight:600;">'+esc(a.name)+'</td>'+
+          '<td>'+a.entries+'</td>'+
+          '<td>'+a.escalations+'</td>'+
+          '<td style="color:'+(a.unwanted>0?'#ef493c':'var(--text-primary)')+';">'+a.unwanted+'</td>'+
+          '<td><span style="font-weight:700;color:'+radarScoreColor(score)+';">'+score+'</span><span style="color:var(--text-dim);font-size:.72rem;">/100</span></td>'+
+          '<td><span class="radar-badge '+r.cls+'">'+r.label+'</span></td>'+
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+
+      // Populate drilldown dropdown from users table (not just from entries — shows all agents always)
+      radarLoadAgents();
+    }catch(e){
+      wrap.innerHTML = '<div style="color:#ef493c;font-size:.82rem;">Error: '+esc(e.message)+'</div>';
+    }
+  };
+
+  // ── Agent Drilldown ──
+  window.radarLoadDrilldown = async function(){
+    var agentId = document.getElementById('radar-drill-agent').value;
+    var wrap    = document.getElementById('radar-drilldown-wrap');
+    if(!agentId){ wrap.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">Select an agent above.</div>'; return; }
+    wrap.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;">Loading…</div>';
+    var my = radarGetMonthYear();
+    try{
+      var rows = await sbQuery('l1_radar_log',
+        'agent_id=eq.'+encodeURIComponent(agentId)+'&month=eq.'+my.m+'&year=eq.'+my.y+'&order=created_at.desc');
+      if(!rows||!rows.length){
+        wrap.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">No entries for this agent this month.</div>';
+        return;
+      }
+      var agentName = rows[0].agent_name;
+      var totalDed  = rows.reduce(function(s,r){ return s+(r.deduction||0); },0);
+      var score     = Math.max(0,100+totalDed);
+      var rating    = radarRating(score);
+
+      var html = '<div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1rem;flex-wrap:wrap;">'+
+        '<div class="radar-score-ring" style="border-color:'+radarScoreColor(score)+';">'+
+          '<span style="font-size:1.4rem;font-weight:800;color:'+radarScoreColor(score)+';">'+score+'</span>'+
+          '<span style="font-size:.62rem;color:var(--text-dim);">/ 100</span>'+
+        '</div>'+
+        '<div>'+
+          '<div style="font-size:1rem;font-weight:700;color:var(--text-primary);">'+esc(agentName)+'</div>'+
+          '<div style="margin-top:.3rem;"><span class="radar-badge '+rating.cls+'">'+rating.label+'</span></div>'+
+          '<div style="font-size:.75rem;color:var(--text-dim);margin-top:.3rem;">'+rows.length+' entries · Total deduction: '+totalDed+' pts</div>'+
+        '</div>'+
+      '</div>';
+
+      html += '<table class="radar-table"><thead><tr>'+
+        '<th>Date</th><th>Ticket</th><th>Flags</th><th>Impact</th><th>Logged By</th><th>Notes</th>'+
+        '</tr></thead><tbody>';
+
+      rows.forEach(function(r){
+        var flagsArr = [];
+        if(Array.isArray(r.flags)) flagsArr = r.flags;
+        else if(typeof r.flags === 'string') flagsArr = r.flags.replace(/[{}"]/g,'').split(',').filter(Boolean);
+        var flagLabels = flagsArr.map(function(f){ return RADAR_FLAGS[f] ? RADAR_FLAGS[f].label : f; }).join('<br>');
+        var dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '—';
+        html += '<tr>'+
+          '<td style="white-space:nowrap;">'+dateStr+'</td>'+
+          '<td style="color:var(--text-dim);">'+esc(r.ticket_id||'—')+'</td>'+
+          '<td style="font-size:.75rem;line-height:1.6;">'+flagLabels+'</td>'+
+          '<td style="font-weight:700;color:'+(r.deduction<0?'#ef493c':'#2ec56f')+';">'+(r.deduction||0)+' pts</td>'+
+          '<td style="color:var(--text-dim);font-size:.78rem;">'+esc(r.logged_by_name||'—')+'</td>'+
+          '<td style="color:var(--text-dim);font-size:.76rem;">'+esc(r.notes||'—')+'</td>'+
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }catch(e){
+      wrap.innerHTML = '<div style="color:#ef493c;font-size:.82rem;">Error: '+esc(e.message)+'</div>';
+    }
+  };
+
+  // ── My Rating (Agent Self View) ──
+  window.radarLoadMine = async function(){
+    var card = document.getElementById('radar-mine-card');
+    if(!card||!currentUser) return;
+    card.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;">Loading your rating…</div>';
+    var my = radarGetMonthYear();
+    try{
+      var rows = await sbQuery('l1_radar_log',
+        'agent_id=eq.'+encodeURIComponent(currentUser.id)+'&month=eq.'+my.m+'&year=eq.'+my.y);
+      var totalDed = (rows||[]).reduce(function(s,r){ return s+(r.deduction||0); },0);
+      var score    = Math.max(0,100+totalDed);
+      var rating   = radarRating(score);
+
+      // Count flag types for agent view (no ticket IDs, no notes, no who logged)
+      var flagCounts = {};
+      (rows||[]).forEach(function(r){
+        var flagsArr = [];
+        if(Array.isArray(r.flags)) flagsArr = r.flags;
+        else if(typeof r.flags === 'string') flagsArr = r.flags.replace(/[{}"]/g,'').split(',').filter(Boolean);
+        flagsArr.forEach(function(f){ flagCounts[f] = (flagCounts[f]||0)+1; });
+      });
+
+      var html = '<div style="text-align:center;padding:1rem 0 .5rem;">'+
+        '<div class="radar-score-ring" style="margin:0 auto;border-color:'+radarScoreColor(score)+';width:100px;height:100px;">'+
+          '<span style="font-size:1.8rem;font-weight:800;color:'+radarScoreColor(score)+';">'+score+'</span>'+
+          '<span style="font-size:.65rem;color:var(--text-dim);">/ 100</span>'+
+        '</div>'+
+        '<div style="margin-top:.8rem;"><span class="radar-badge '+rating.cls+'" style="font-size:.85rem;padding:.3rem .9rem;">'+rating.label+'</span></div>'+
+        '<div style="font-size:.75rem;color:var(--text-dim);margin-top:.4rem;">Your rating for '+new Date(my.y,my.m-1,1).toLocaleString('default',{month:'long'})+' '+my.y+'</div>'+
+      '</div>';
+
+      if(rows && rows.length){
+        html += '<div style="margin-top:1rem;border-top:1px solid var(--navy-border);padding-top:.9rem;">'+
+          '<div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;margin-bottom:.6rem;">ENTRIES THIS MONTH ('+rows.length+')</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:.4rem;">';
+        Object.keys(flagCounts).forEach(function(f){
+          var def = RADAR_FLAGS[f];
+          if(!def) return;
+          html += '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:20px;padding:.25rem .7rem;font-size:.74rem;color:var(--text-muted);">'+
+            esc(def.label)+' <span style="font-weight:700;color:var(--text-primary);">×'+flagCounts[f]+'</span></div>';
+        });
+        html += '</div>'+
+          '<div style="margin-top:.8rem;font-size:.75rem;color:var(--text-dim);font-style:italic;">Details will be discussed in your 1:1 session.</div>'+
+        '</div>';
+      } else {
+        html += '<div style="text-align:center;font-size:.8rem;color:#2ec56f;margin-top:.8rem;">✓ No entries logged this month. Keep it up!</div>';
+      }
+      card.innerHTML = html;
+    }catch(e){
+      card.innerHTML = '<div style="color:#ef493c;font-size:.82rem;">Error: '+esc(e.message)+'</div>';
+    }
+  };
+
+  // ── Control Deck toggle ──
+  window.cdRadarToggle = async function(val){
+    var msgEl = document.getElementById('cd-radar-msg');
+    var statEl= document.getElementById('cd-radar-status');
+    try{
+      var ex = await sbQuery('settings','key=eq.radar_enabled&select=key');
+      if(ex && ex.length){ await sbUpdate('settings','key','radar_enabled',{value:val?'true':'false'}); }
+      else { await sbInsert('settings',{key:'radar_enabled',value:val?'true':'false'}); }
+      window._radarEnabled = val;
+      if(statEl) statEl.textContent = val ? 'Enabled' : 'Disabled';
+      if(msgEl){ msgEl.textContent = val ? '✓ K7 Radar enabled.' : '✓ K7 Radar disabled.'; msgEl.style.display=''; setTimeout(function(){msgEl.style.display='none';},2500); }
+      radarUpdateSidebarVisibility();
+    }catch(e){
+      if(msgEl){ msgEl.textContent='Error: '+e.message; msgEl.style.display=''; }
+    }
+  };
+
+  async function radarLoadCdToggleState(){
+    try{
+      var rows = await sbQuery('settings','key=eq.radar_enabled&select=value');
+      var enabled = rows && rows[0] && rows[0].value === 'true';
+      window._radarEnabled = enabled;
+      var tog  = document.getElementById('cd-radar-toggle');
+      var stat = document.getElementById('cd-radar-status');
+      if(tog)  tog.checked = enabled;
+      if(stat) stat.textContent = enabled ? 'Enabled' : 'Disabled';
+      radarUpdateSidebarVisibility();
+    }catch(e){ console.warn('K7 Radar: cd toggle state error',e); }
+  }
+
+  function radarUpdateSidebarVisibility(){
+    var sidebarItem = document.getElementById('sidebar-radar');
+    if(!sidebarItem) return;
+    var show = radarIsEnabled();
+    sidebarItem.style.display = show ? 'flex' : 'none';
+  }
+
+  // ── showPage hook ──
+  (function(){
+    var _sp = showPage;
+    showPage = function(id, elem){
+      _sp(id, elem);
+      if(id === 'radar') radarInitPage();
+    };
+  })();
+
+  function radarInitPage(){
+    radarInitMonthFilter();
+    radarInitChips();
+    radarLoadAgents();
+    // Show/hide tabs based on role
+    var logTab    = document.getElementById('radar-tab-log');
+    var reportTab = document.getElementById('radar-tab-report');
+    var dataTab   = document.getElementById('radar-tab-data');
+    var logPanel  = document.getElementById('radar-panel-log');
+    var isAdmin   = typeof isAdminUser === 'function' && isAdminUser();
+    if(logTab)    logTab.style.display    = isAdmin ? '' : 'none';
+    if(reportTab) reportTab.style.display = isAdmin ? '' : 'none';
+    if(dataTab)   dataTab.style.display   = isAdmin ? '' : 'none';
+    if(logPanel)  logPanel.style.display  = isAdmin ? '' : 'none';
+    if(!isAdmin){
+      radarTab('mine');
+      if(document.getElementById('radar-tab-mine')) document.getElementById('radar-tab-mine').classList.add('active');
+    }
+    radarUpdateDeductionPreview();
+  }
+
+  // ── Data tab month dropdowns ──
+  function radarInitDataDropdowns(){
+    var now = new Date();
+    var html = '';
+    for(var i = 0; i < 12; i++){
+      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      var m = d.getMonth()+1;
+      var y = d.getFullYear();
+      var label = d.toLocaleString('default',{month:'long'})+' '+y;
+      html += '<option value="'+m+'-'+y+'">'+label+'</option>';
+    }
+    var expSel = document.getElementById('radar-export-month');
+    var delSel = document.getElementById('radar-delete-month');
+    if(expSel) expSel.innerHTML = html;
+    if(delSel) delSel.innerHTML = html;
+  }
+
+  function radarInitDataTab(){
+    radarInitDataDropdowns();
+    radarLoadStorageSummary();
+  }
+
+  // ── Fetch all rows helper ──
+  async function radarFetchRows(extraFilter){
+    var filter = 'order=created_at.desc';
+    if(extraFilter) filter = extraFilter + '&' + filter;
+    var rows = await sbQuery('l1_radar_log', filter + '&select=id,created_at,month,year,agent_id,agent_name,logged_by_id,logged_by_name,ticket_id,flags,deduction,notes');
+    return rows || [];
+  }
+
+  // ── Compute per-agent monthly scores for export ──
+  function radarComputeScores(rows){
+    // key: agentId-month-year → totalDed
+    var map = {};
+    rows.forEach(function(r){
+      var key = r.agent_id+'-'+r.month+'-'+r.year;
+      if(!map[key]) map[key] = 0;
+      map[key] += (r.deduction||0);
+    });
+    return map;
+  }
+
+  // ── Build Excel via SheetJS ──
+  function radarBuildExcel(rows, filename){
+    if(!rows.length){ return false; }
+    var scoreMap = radarComputeScores(rows);
+
+    var headers = [
+      'Entry ID','Date & Time','Month','Year',
+      'Agent Name','Agent ID',
+      'Ticket ID',
+      'Flags',
+      'Total Deduction (pts)',
+      'Notes',
+      'Logged By','Logged By ID',
+      'Agent Monthly Score','Agent Monthly Rating'
+    ];
+
+    var data = [headers];
+    rows.forEach(function(r){
+      var flagsArr = [];
+      if(Array.isArray(r.flags)) flagsArr = r.flags;
+      else if(typeof r.flags === 'string') flagsArr = r.flags.replace(/[{}"]/g,'').split(',').filter(Boolean);
+      var flagLabels = flagsArr.map(function(f){ return RADAR_FLAGS[f] ? RADAR_FLAGS[f].label : f; }).join(', ');
+      var key = r.agent_id+'-'+r.month+'-'+r.year;
+      var monthScore = Math.max(0, 100 + (scoreMap[key]||0));
+      var rating = radarRating(monthScore);
+      var dateStr = r.created_at ? new Date(r.created_at).toLocaleString('en-IN') : '';
+      data.push([
+        r.id||'',
+        dateStr,
+        r.month||'',
+        r.year||'',
+        r.agent_name||'',
+        r.agent_id||'',
+        r.ticket_id||'',
+        flagLabels,
+        r.deduction||0,
+        r.notes||'',
+        r.logged_by_name||'',
+        r.logged_by_id||'',
+        monthScore,
+        rating.label.replace(/[⭐👍⚠️❌]/g,'').trim()
+      ]);
+    });
+
+    // Use SheetJS if available, else CSV fallback
+    if(typeof XLSX !== 'undefined'){
+      var wb = XLSX.utils.book_new();
+      var ws = XLSX.utils.aoa_to_sheet(data);
+      // Column widths
+      ws['!cols'] = [
+        {wch:36},{wch:20},{wch:8},{wch:6},
+        {wch:18},{wch:36},
+        {wch:14},{wch:60},{wch:12},
+        {wch:30},{wch:18},{wch:36},
+        {wch:14},{wch:18}
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, 'K7 Radar');
+      XLSX.writeFile(wb, filename+'.xlsx');
+    } else {
+      // CSV fallback
+      var csv = data.map(function(row){
+        return row.map(function(cell){
+          var s = String(cell||'').replace(/"/g,'""');
+          return '"'+s+'"';
+        }).join(',');
+      }).join('\n');
+      var blob = new Blob([csv], {type:'text/csv'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename+'.csv';
+      a.click();
+    }
+    return true;
+  }
+
+  // ── Export month ──
+  window.radarExportMonth = async function(){
+    var sel = document.getElementById('radar-export-month');
+    var msg = document.getElementById('radar-export-msg');
+    if(!sel) return;
+    var parts = sel.value.split('-');
+    var m = parseInt(parts[0]), y = parseInt(parts[1]);
+    var label = sel.options[sel.selectedIndex].text;
+    msg.textContent = 'Fetching data…'; msg.style.color='var(--text-muted)'; msg.style.display='';
+    try{
+      // Load SheetJS if not loaded
+      await radarEnsureXLSX();
+      var rows = await radarFetchRows('month=eq.'+m+'&year=eq.'+y);
+      if(!rows.length){ msg.textContent='No entries found for '+label+'.'; msg.style.color='#ef493c'; return; }
+      var ok = radarBuildExcel(rows, 'K7_Radar_'+label.replace(' ','_'));
+      if(ok){ msg.textContent='✓ Downloaded '+rows.length+' entries for '+label+'.'; msg.style.color='#2ec56f'; }
+    }catch(e){ msg.textContent='Error: '+e.message; msg.style.color='#ef493c'; }
+    setTimeout(function(){ msg.style.display='none'; }, 4000);
+  };
+
+  // ── Export all ──
+  window.radarExportAll = async function(){
+    var msg = document.getElementById('radar-export-msg');
+    msg.textContent = 'Fetching all data…'; msg.style.color='var(--text-muted)'; msg.style.display='';
+    try{
+      await radarEnsureXLSX();
+      var rows = await radarFetchRows(null);
+      if(!rows.length){ msg.textContent='No entries found.'; msg.style.color='#ef493c'; return; }
+      var ok = radarBuildExcel(rows, 'K7_Radar_Full_Backup_'+new Date().toISOString().slice(0,10));
+      if(ok){ msg.textContent='✓ Downloaded all '+rows.length+' entries.'; msg.style.color='#2ec56f'; }
+    }catch(e){ msg.textContent='Error: '+e.message; msg.style.color='#ef493c'; }
+    setTimeout(function(){ msg.style.display='none'; }, 4000);
+  };
+
+  // ── Delete month ──
+  window.radarDeleteMonth = async function(){
+    var sel = document.getElementById('radar-delete-month');
+    var msg = document.getElementById('radar-delete-msg');
+    if(!sel) return;
+    var parts = sel.value.split('-');
+    var m = parseInt(parts[0]), y = parseInt(parts[1]);
+    var label = sel.options[sel.selectedIndex].text;
+    if(!confirm('Delete ALL K7 Radar entries for '+label+'?\n\nThis cannot be undone. Make sure you have downloaded a backup first.')) return;
+    msg.textContent = 'Deleting…'; msg.style.color='var(--text-muted)'; msg.style.display='';
+    try{
+      var r = await fetch(SUPABASE_URL+'/rest/v1/l1_radar_log?month=eq.'+m+'&year=eq.'+y,
+        {method:'DELETE', headers:sbHeaders({})});
+      if(!r.ok){ var t=await r.text(); throw new Error(t); }
+      msg.textContent='✓ All entries for '+label+' deleted.'; msg.style.color='#2ec56f';
+      radarLoadStorageSummary();
+    }catch(e){ msg.textContent='Error: '+e.message; msg.style.color='#ef493c'; }
+    setTimeout(function(){ msg.style.display='none'; }, 4000);
+  };
+
+  // ── Delete all ──
+  window.radarDeleteAll = async function(){
+    var msg = document.getElementById('radar-delete-msg');
+    if(!confirm('⚠️ DELETE ALL K7 Radar records?\n\nThis will permanently remove every entry across all months and cannot be undone.\n\nAre you absolutely sure?')) return;
+    msg.textContent = 'Deleting all records…'; msg.style.color='var(--text-muted)'; msg.style.display='';
+    try{
+      var r = await fetch(SUPABASE_URL+'/rest/v1/l1_radar_log?id=neq.00000000-0000-0000-0000-000000000000',
+        {method:'DELETE', headers:sbHeaders({})});
+      if(!r.ok){ var t=await r.text(); throw new Error(t); }
+      msg.textContent='✓ All K7 Radar records deleted.'; msg.style.color='#2ec56f';
+      radarLoadStorageSummary();
+    }catch(e){ msg.textContent='Error: '+e.message; msg.style.color='#ef493c'; }
+    setTimeout(function(){ msg.style.display='none'; }, 4000);
+  };
+
+  // ── Storage Summary ──
+  window.radarLoadStorageSummary = async function(){
+    var wrap = document.getElementById('radar-storage-summary');
+    if(!wrap) return;
+    wrap.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;">Loading…</div>';
+    try{
+      var rows = await sbQuery('l1_radar_log','select=month,year');
+      if(!rows||!rows.length){ wrap.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">No records found.</div>'; return; }
+      // Group by month-year
+      var counts = {};
+      rows.forEach(function(r){
+        var key = r.year+'-'+(r.month<10?'0':'')+r.month;
+        var label = new Date(r.year, r.month-1, 1).toLocaleString('default',{month:'long'})+' '+r.year;
+        if(!counts[key]) counts[key] = {label:label, count:0};
+        counts[key].count++;
+      });
+      var keys = Object.keys(counts).sort().reverse();
+      var html = '<table class="radar-table"><thead><tr><th>Month</th><th>Entries</th><th>Actions</th></tr></thead><tbody>';
+      keys.forEach(function(k){
+        var c = counts[k];
+        var parts = k.split('-');
+        var y = parts[0], m = parseInt(parts[1]);
+        html += '<tr>'+
+          '<td style="font-weight:600;">'+esc(c.label)+'</td>'+
+          '<td>'+c.count+' entries</td>'+
+          '<td><button class="cd-btn-sec" style="font-size:.72rem;padding:.22rem .6rem;" onclick="radarQuickExport('+m+','+y+',\''+esc(c.label)+'\')">⬇️ Export</button> '+
+          '<button class="cd-btn-danger" style="font-size:.72rem;padding:.22rem .6rem;" onclick="radarQuickDelete('+m+','+y+',\''+esc(c.label)+'\')">🗑️ Delete</button></td>'+
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      html += '<div style="margin-top:.6rem;font-size:.75rem;color:var(--text-dim);">Total: <strong style="color:var(--text-primary);">'+rows.length+' entries</strong> across '+keys.length+' month(s)</div>';
+      wrap.innerHTML = html;
+    }catch(e){
+      wrap.innerHTML='<div style="color:#ef493c;font-size:.82rem;">Error: '+esc(e.message)+'</div>';
+    }
+  };
+
+  // ── Quick export from summary table ──
+  window.radarQuickExport = async function(m, y, label){
+    var msg = document.getElementById('radar-delete-msg');
+    msg.textContent='Fetching…'; msg.style.color='var(--text-muted)'; msg.style.display='';
+    try{
+      await radarEnsureXLSX();
+      var rows = await radarFetchRows('month=eq.'+m+'&year=eq.'+y);
+      radarBuildExcel(rows, 'K7_Radar_'+label.replace(' ','_'));
+      msg.textContent='✓ Exported '+rows.length+' entries for '+label; msg.style.color='#2ec56f';
+    }catch(e){ msg.textContent='Error: '+e.message; msg.style.color='#ef493c'; }
+    setTimeout(function(){ msg.style.display='none'; },3500);
+  };
+
+  // ── Quick delete from summary table ──
+  window.radarQuickDelete = async function(m, y, label){
+    var msg = document.getElementById('radar-delete-msg');
+    if(!confirm('Delete all entries for '+label+'? Cannot be undone.')) return;
+    msg.textContent='Deleting…'; msg.style.color='var(--text-muted)'; msg.style.display='';
+    try{
+      var r = await fetch(SUPABASE_URL+'/rest/v1/l1_radar_log?month=eq.'+m+'&year=eq.'+y,
+        {method:'DELETE',headers:sbHeaders({})});
+      if(!r.ok){ var t=await r.text(); throw new Error(t); }
+      msg.textContent='✓ Entries for '+label+' deleted.'; msg.style.color='#2ec56f';
+      radarLoadStorageSummary();
+    }catch(e){ msg.textContent='Error: '+e.message; msg.style.color='#ef493c'; }
+    setTimeout(function(){ msg.style.display='none'; },3500);
+  };
+
+  // ── Lazy load SheetJS ──
+  function radarEnsureXLSX(){
+    return new Promise(function(resolve, reject){
+      if(typeof XLSX !== 'undefined'){ resolve(); return; }
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = resolve;
+      s.onerror = function(){ reject(new Error('Failed to load Excel library. Check your internet connection.')); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // ── sbUpsert helper (if not already defined) ──
+  if(typeof sbUpsert === 'undefined'){
+    window.sbUpsert = async function(table, data, onConflict){
+      var url = SUPABASE_URL+'/rest/v1/'+table+(onConflict?'?on_conflict='+onConflict:'');
+      var r = await fetch(url,{method:'POST',headers:sbHeaders({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'}),body:JSON.stringify(data)});
+      if(!r.ok){ var t=await r.text(); throw new Error(t); }
+      return r.json();
+    };
+  }
+
+  // ── Init on load ──
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(radarLoadCdToggleState, 1200);
+  });
+
+})();
+
+function siStatBadge(val,label,color){
+  return '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:8px;padding:.5rem .9rem;min-width:90px;">'+
+    '<div style="font-size:1.2rem;font-weight:700;color:'+color+';">'+val+'</div>'+
+    '<div style="font-size:.7rem;color:var(--text-dim);margin-top:1px;">'+label+'</div>'+
+  '</div>';
+}
+
+async function siClearAll(){
+  if(!_isSysLevel()) return;
+  var filterSel=document.getElementById('si-filter-user');
+  var filterUser=filterSel?filterSel.value:'';
+  var target=filterUser?'records for selected agent':'ALL session fingerprint records';
+  if(!confirm('Permanently delete '+target+'? This cannot be undone.')) return;
+  try{
+    var q=filterUser?'user_id=eq.'+filterUser:'id=neq.00000000-0000-0000-0000-000000000000';
+    await fetch(SUPABASE_URL+'/rest/v1/session_fingerprints?'+q,{method:'DELETE',headers:sbHeaders({})});
+    siLoadLogs();
+  }catch(e){ alert('Error: '+e.message); }
+}
+</script>
+
 
 
