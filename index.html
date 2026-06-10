@@ -3946,6 +3946,50 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
       </div>
 
 
+      <!-- ── CHANGE PASSWORD PAGE ── -->
+      <div class="page" id="page-changepass" style="padding:2.5rem 3rem;max-width:520px;">
+
+        <div style="margin-bottom:1.8rem;">
+          <div style="display:flex;align-items:center;gap:.9rem;margin-bottom:.4rem;">
+            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <div>
+              <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary);">Change Password</div>
+              <div style="font-size:.75rem;color:var(--text-muted);">Update your login password</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.6rem 1.8rem;display:flex;flex-direction:column;gap:1.1rem;">
+
+          <div>
+            <label class="xc-label">Current Password</label>
+            <input id="cp-current" type="password" class="xc-input" placeholder="Enter current password" autocomplete="current-password"/>
+          </div>
+
+          <div>
+            <label class="xc-label">New Password</label>
+            <input id="cp-new" type="password" class="xc-input" placeholder="Min. 6 characters" autocomplete="new-password"/>
+          </div>
+
+          <div>
+            <label class="xc-label">Confirm New Password</label>
+            <input id="cp-confirm" type="password" class="xc-input" placeholder="Repeat new password" autocomplete="new-password"
+              onkeydown="if(event.key==='Enter')doChangePassword()"/>
+          </div>
+
+          <div id="cp-error" style="display:none;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.25);border-radius:var(--radius-sm);padding:.6rem .9rem;font-size:.8rem;color:var(--accent-red);"></div>
+          <div id="cp-success" style="display:none;background:rgba(46,197,111,.08);border:1px solid rgba(46,197,111,.25);border-radius:var(--radius-sm);padding:.6rem .9rem;font-size:.8rem;color:var(--accent-green);">✅ Password changed successfully.</div>
+
+          <div style="display:flex;gap:.7rem;padding-top:.3rem;">
+            <button class="xc-btn" onclick="doChangePassword()">Update Password</button>
+            <button class="xc-btn-sec" onclick="resetChangePasswordForm()">Clear</button>
+          </div>
+
+        </div>
+      </div>
+
       <!-- ── ABOUT PAGE ── -->
       <div class="page" id="page-about" style="padding:2.5rem 3rem;gap:1.5rem;overflow-y:auto;">
 
@@ -4614,6 +4658,22 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
               <span id="cd-bb-pin-msg" style="font-size:.78rem;display:none;"></span>
             </div>
             <div style="margin-top:.5rem;font-size:.74rem;color:var(--text-dim);line-height:1.55;">PIN is hashed before storage. Share it verbally with blocked agents — they enter it on the block screen to regain access without your intervention.</div>
+          </div>
+
+          <!-- ── Section: Unblock All Agents ── -->
+          <div class="cd-card">
+            <div class="cd-card-header">
+              <span class="cd-card-icon" style="background:rgba(46,197,111,.12);">🔓</span>
+              <div>
+                <div class="cd-card-title">Unblock All Agents</div>
+                <div class="cd-card-sub">Instantly unblock all agents currently locked out due to break violations.</div>
+              </div>
+              <div style="margin-left:auto;">
+                <button class="cd-btn" onclick="bbUnblockAll()" id="cd-bb-unblockall-btn">Unblock All</button>
+              </div>
+            </div>
+            <div id="cd-bb-unblockall-status" style="margin-top:.6rem;font-size:.78rem;display:none;"></div>
+            <div id="cd-bb-blocked-list" style="margin-top:.8rem;display:none;"></div>
           </div>
 
           <!-- ── Section: Agent Password Reset (Admin — PIN protected) ── -->
@@ -6813,7 +6873,74 @@ async function bbAdminUnblock(userId, userName){
   try{
     await sbUpdate('users','id',userId,{is_blocked:false,block_reason:null});
     loadUsersPage();
+    bbLoadBlockedList();
   }catch(e){ alert('Could not unblock: '+e.message); }
+}
+
+// ── Control Deck: Unblock ALL blocked agents ──
+async function bbUnblockAll(){
+  var btn = document.getElementById('cd-bb-unblockall-btn');
+  var statusEl = document.getElementById('cd-bb-unblockall-status');
+  var listEl = document.getElementById('cd-bb-blocked-list');
+  try{
+    // Fetch all blocked agents
+    var rows = await sbQuery('users','is_blocked=eq.true&select=id,name,email');
+    if(!rows || rows.length === 0){
+      if(statusEl){ statusEl.textContent='✅ No agents are currently blocked.'; statusEl.style.color='var(--accent-green)'; statusEl.style.display='block'; }
+      if(listEl) listEl.style.display='none';
+      setTimeout(function(){ if(statusEl) statusEl.style.display='none'; }, 3500);
+      return;
+    }
+    // Show who will be unblocked and confirm
+    var names = rows.map(function(r){ return r.name; }).join(', ');
+    if(!confirm('Unblock all ' + rows.length + ' blocked agent(s)?\n\n' + names)) return;
+    if(btn){ btn.textContent='Unblocking…'; btn.disabled=true; }
+    // Unblock each one
+    var failed = [];
+    for(var i=0; i<rows.length; i++){
+      try{ await sbUpdate('users','id',rows[i].id,{is_blocked:false,block_reason:null}); }
+      catch(e){ failed.push(rows[i].name); }
+    }
+    if(btn){ btn.textContent='Unblock All'; btn.disabled=false; }
+    if(failed.length === 0){
+      if(statusEl){ statusEl.textContent='✅ ' + rows.length + ' agent(s) unblocked successfully.'; statusEl.style.color='var(--accent-green)'; statusEl.style.display='block'; }
+      if(listEl) listEl.style.display='none';
+      setTimeout(function(){ if(statusEl) statusEl.style.display='none'; }, 4000);
+    } else {
+      if(statusEl){ statusEl.textContent='⚠️ Unblocked ' + (rows.length - failed.length) + '/' + rows.length + '. Failed: ' + failed.join(', '); statusEl.style.color='#e6a817'; statusEl.style.display='block'; }
+    }
+    // Refresh users page if open
+    if(document.getElementById('page-users') && document.getElementById('page-users').classList.contains('active')) loadUsersPage();
+  }catch(e){
+    if(btn){ btn.textContent='Unblock All'; btn.disabled=false; }
+    if(statusEl){ statusEl.textContent='Error: ' + (e.message||'Could not unblock agents.'); statusEl.style.color='var(--accent-red)'; statusEl.style.display='block'; }
+  }
+}
+
+// ── Control Deck: Load & show currently blocked agents ──
+async function bbLoadBlockedList(){
+  var listEl = document.getElementById('cd-bb-blocked-list');
+  var statusEl = document.getElementById('cd-bb-unblockall-status');
+  if(!listEl) return;
+  try{
+    var rows = await sbQuery('users','is_blocked=eq.true&select=id,name,email,block_reason');
+    if(!rows || rows.length === 0){
+      listEl.style.display='none';
+      return;
+    }
+    var html = '<div style="font-size:.74rem;color:var(--text-dim);margin-bottom:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;">'+ rows.length +' agent(s) currently blocked</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:.4rem;">';
+    rows.forEach(function(u){
+      html += '<div style="display:flex;align-items:center;gap:.7rem;padding:.45rem .7rem;background:rgba(239,73,60,.05);border:1px solid rgba(239,73,60,.15);border-radius:8px;">'
+        + '<span style="font-size:.82rem;font-weight:600;color:var(--text-primary);flex:1;">'+ esc(u.name) +'</span>'
+        + '<span style="font-size:.72rem;color:var(--text-dim);flex:1;">'+ esc(u.email) +'</span>'
+        + '<button onclick="bbAdminUnblock(\''+ u.id +'\',\''+ esc(u.name) +'\')" style="padding:.28rem .75rem;background:rgba(46,197,111,.1);border:1px solid rgba(46,197,111,.3);color:#1a7a45;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;">🔓 Unblock</button>'
+        + '</div>';
+    });
+    html += '</div>';
+    listEl.innerHTML = html;
+    listEl.style.display = 'block';
+  }catch(e){ listEl.style.display='none'; }
 }
 
 // ── Control Deck: Save unblock PIN ──
@@ -17747,6 +17874,7 @@ async function cdLoadAll(){
   cdLoadTm();
   cdAmbLoadAndRender();
   bbLoadToggleState();
+  bbLoadBlockedList();
 }
 
 // ── Team Meet: agent create toggle ──
