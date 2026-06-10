@@ -5723,6 +5723,7 @@ function doLogout(){
   }catch(e){ console.warn('Dock cleanup on logout:', e); }
   // NOTE: recordLogout intentionally NOT called here.
   if(_loginClockInterval)clearInterval(_loginClockInterval);
+  if(window._breakStatInterval){ clearInterval(window._breakStatInterval); window._breakStatInterval=null; }
   if(typeof catHideWidget==='function') catHideWidget();
   currentUser=null;clearSession();
   document.getElementById('dashboard-view').classList.remove('active');
@@ -5793,9 +5794,13 @@ function enterDashboard(){
   if(currentUser && (currentUser.role==='admin' || currentUser.role==='tl')){
     startAdminHeartbeat();
   }
-  // Auto-refresh live dashboard every 60 seconds so all agents see updated data without manual refresh
+  // Auto-refresh live dashboard every 30 seconds so all agents see updated data without manual refresh
   if(window._dashAutoRefreshInterval) clearInterval(window._dashAutoRefreshInterval);
   window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 30 * 1000);
+  // Break stat refreshes on its own slower 4-minute cycle
+  if(window._breakStatInterval) clearInterval(window._breakStatInterval);
+  setTimeout(loadBreakStat, 600); // initial load shortly after dashboard
+  window._breakStatInterval = setInterval(function(){ loadBreakStat(); }, 4 * 60 * 1000);
   // Start ambient theme poll
   ambStartPoll();
   // Start inactivity watchdog — 60 min idle triggers logout warning
@@ -8312,7 +8317,7 @@ async function xcFetchUsr(){
         '<select class="xc-role-select" id="xc-ur-'+u.id+'">'+roleOpts+'</select>' +
         '<button class="xc-btn-sm" onclick="xcWriteUsr(\''+u.id+'\',\'xc-ur-'+u.id+'\')">Save Role</button>' +
         '<button class="xc-btn-sm" onclick="xcResetPassword(\''+u.id+'\',\''+esc(u.name)+'\')" style="background:rgba(76,118,168,.15);border-color:rgba(76,118,168,.3);">🔑 Reset PW</button>' +
-        '<button class="xc-btn-danger" onclick="xcPurgeRec(\''+u.id+'\',\''+esc(u.name)+'\')">Wipe Today</button>' +
+        '<button class="xc-btn-sm" onclick="xcEditName(\''+u.id+'\',\''+esc(u.name)+'\')" style="background:rgba(46,197,111,.12);border-color:rgba(46,197,111,.3);">✏️ Name</button>' +
         '<span class="xc-save-note" id="xc-us-'+u.id+'">✓ Saved</span>' +
         '</div>';
     }).join('');
@@ -8329,6 +8334,19 @@ async function xcWriteUsr(userId, selId){
     var note = document.getElementById('xc-us-'+userId);
     if(note){ note.style.display='inline'; setTimeout(function(){ note.style.display='none'; },2000); }
   } catch(e){ alert('Role update failed: '+e.message); }
+}
+
+async function xcEditName(userId, currentName){
+  var newName = prompt('Edit name for this user:\n\nCurrent: '+currentName+'\n\nEnter correct name:', currentName);
+  if(newName === null) return; // cancelled
+  newName = newName.trim();
+  if(!newName){ alert('Name cannot be empty.'); return; }
+  if(newName === currentName){ alert('Name is the same — no change made.'); return; }
+  try{
+    await sbUpdate('users','id',userId,{name:newName});
+    alert('✅ Name updated to "'+newName+'" successfully.\n\nThey will see the new name on their next login.');
+    xcFetchUsr(); // refresh the list
+  }catch(e){ alert('Name update failed: '+e.message); }
 }
 
 async function xcResetPassword(userId, name){
@@ -10383,16 +10401,10 @@ async function loadLiveDashboard(){
 
     // Absent count is owned by the roster (updateRosterBanner) — do not overwrite here
 
-    var brks=await sbQuery('breaks','date=eq.'+today+'&select=user_id,user_name,break_type,end_time');
-    var onBreakSet=new Set();
-    var onBreakDetails={};
-    if(brks)brks.forEach(function(b){
-      if(!b.end_time){
-        onBreakSet.add(b.user_name);
-        onBreakDetails[b.user_name]=b.break_type;
-      }
-    });
-    animateCount('stat-val-onbreak',onBreakSet.size);
+    // Break data is refreshed separately every 4 minutes via loadBreakStat()
+    // Use cached values if available, otherwise init empty
+    var onBreakSet = (window._cachedOnBreakSet) ? window._cachedOnBreakSet : new Set();
+    var onBreakDetails = (window._cachedOnBreakDetails) ? window._cachedOnBreakDetails : {};
 
     _liveDashData={users:users,att:attDeduped,onBreakSet:onBreakSet,onBreakDetails:onBreakDetails};
     window._liveAttMap={};
@@ -10402,6 +10414,32 @@ async function loadLiveDashboard(){
   }catch(e){
     console.warn('Dashboard load failed:',e.message);
   }
+}
+
+// ── Break stat — refreshes independently every 4 minutes ──
+async function loadBreakStat(){
+  try{
+    var today=todayStr();
+    var brks=await sbQuery('breaks','date=eq.'+today+'&select=user_id,user_name,break_type,end_time');
+    var onBreakSet=new Set();
+    var onBreakDetails={};
+    if(brks)brks.forEach(function(b){
+      if(!b.end_time){
+        onBreakSet.add(b.user_name);
+        onBreakDetails[b.user_name]=b.break_type;
+      }
+    });
+    // Cache for main dashboard to use
+    window._cachedOnBreakSet=onBreakSet;
+    window._cachedOnBreakDetails=onBreakDetails;
+    animateCount('stat-val-onbreak',onBreakSet.size);
+    // Re-render who's active list with fresh break data if dashboard data exists
+    if(_liveDashData&&_liveDashData.users&&_liveDashData.att){
+      _liveDashData.onBreakSet=onBreakSet;
+      _liveDashData.onBreakDetails=onBreakDetails;
+      renderWhosActive(_liveDashData.users,_liveDashData.att,onBreakSet);
+    }
+  }catch(e){ console.warn('Break stat refresh failed:',e.message); }
 }
 
 function renderWhosActive(users,att,onBreakSet){
