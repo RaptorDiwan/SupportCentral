@@ -3051,22 +3051,12 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
       <div class="sidebar-section">Team</div>
 
-      <div class="sidebar-item" id="sidebar-voicehub" onclick="showPage('voicehub', this)">
+      <div class="sidebar-item" id="sidebar-intercom" onclick="showPage('intercom', this)">
         <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
-          <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+          <path d="M12 1a3 3 0 00-3 3v4a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+          <path d="M19 9v1a7 7 0 01-14 0V9M12 17v4M8 21h8"/>
         </svg>
-        <span>Voice Hub</span>
-      </div>
-
-      <div class="sidebar-item" id="sidebar-teammeet" onclick="showPage('teammeet', this)">
-        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-          <path d="M16 3.13a4 4 0 010 7.75"/>
-        </svg>
-        <span>Team Meet</span>
+        <span>K7 Intercom</span>
       </div>
 
       <div class="sidebar-item" onclick="showPage('roster', this)">
@@ -3872,6 +3862,13 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
               <div class="qa-field"><label>Time Limit (minutes)</label><input type="number" id="ab-timelimit" value="30" min="1"/></div>
               <div class="qa-field"><label>Max Attempts</label><input type="number" id="ab-attempts" value="1" min="1" max="5"/></div>
             </div>
+            <div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem;padding:.65rem .9rem;background:rgba(76,118,168,.07);border:1px solid rgba(76,118,168,.18);border-radius:var(--radius-sm);">
+              <label class="cat-toggle-wrap" style="flex-shrink:0;"><input type="checkbox" id="ab-shuffle"/><span class="cat-toggle-slider"></span></label>
+              <div>
+                <div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">Shuffle Questions &amp; Choices</div>
+                <div style="font-size:.74rem;color:var(--text-muted);margin-top:1px;">Each agent sees questions and MCQ choices in a different random order</div>
+              </div>
+            </div>
             <div id="ab-msg" style="font-size:.82rem;margin:.5rem 0;display:none;"></div>
             <div style="display:flex;gap:.75rem;margin-top:1rem;"><button class="qa-save-btn" onclick="saveAssessment()">Create Assessment</button><button class="qa-cancel-btn" onclick="resetAssessmentBuilder()">Clear</button></div>
           </div>
@@ -4136,201 +4133,71 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         </div>
       </div>
 
-      <!-- ══ VOICE HUB PAGE ══ -->
-      <div class="page" id="page-voicehub" style="padding:2rem 2.5rem;overflow-y:auto;">
-        <div style="max-width:860px;margin:0 auto;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem;">
-            <div>
-              <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--text-primary);margin:0;">🎙️ Voice Hub</h2>
-              <p style="font-size:.82rem;color:var(--text-muted);margin:.25rem 0 0;">Walkie-talkie calls & group voice rooms</p>
-            </div>
-            <div id="vh-my-status-wrap" style="display:flex;align-items:center;gap:.75rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:30px;padding:.4rem .5rem .4rem 1rem;">
-              <span style="font-size:.78rem;font-weight:600;color:var(--text-muted);">My Walkie Talkie</span>
-              <label class="cat-toggle-wrap"><input type="checkbox" id="vh-my-wt-toggle" onchange="vhToggleMyWT(this.checked)"/><span class="cat-toggle-slider"></span></label>
-              <span id="vh-my-wt-label" style="font-size:.74rem;color:var(--text-dim);">OFF</span>
-            </div>
-          </div>
-          <!-- Setup warning — shown if tables missing -->
-          <div id="vh-setup-warn" style="display:none;margin-bottom:1rem;padding:.85rem 1rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.25);border-radius:var(--radius-sm);">
-            <div style="font-size:.82rem;font-weight:700;color:#ef493c;margin-bottom:.4rem;">⚠️ Database setup required</div>
-            <div style="font-size:.76rem;color:var(--text-muted);line-height:1.6;">Run this SQL in your Supabase SQL editor to enable calling:</div>
-            <pre style="font-size:.7rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:6px;padding:.6rem .8rem;margin:.5rem 0 0;overflow-x:auto;color:var(--text-primary);line-height:1.5;">CREATE TABLE IF NOT EXISTS voice_signals (
-  id bigserial PRIMARY KEY, from_id text, from_name text,
-  to_id text, to_room text, type text, payload text,
-  created_at timestamptz DEFAULT now()
-);
-CREATE TABLE IF NOT EXISTS voice_wt_status (
-  user_id text PRIMARY KEY, user_name text,
-  wt_on boolean DEFAULT false, updated_at timestamptz DEFAULT now()
-);
-CREATE TABLE IF NOT EXISTS voice_rooms (
-  id bigserial PRIMARY KEY, name text, created_by text,
-  members text DEFAULT '[]', created_at timestamptz DEFAULT now()
-);</pre>
-          </div>
-
-          <div style="display:flex;gap:.5rem;margin-bottom:1.2rem;">
-            <button class="xc-tab active" id="vh-tab-wt" onclick="vhSwitchTab('wt')">📻 Walkie Talkie</button>
-            <button class="xc-tab" id="vh-tab-rooms" onclick="vhSwitchTab('rooms')">👥 Group Rooms</button>
-          </div>
-          <div id="vh-panel-wt">
-            <div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:.7rem;">AVAILABLE AGENTS</div>
-            <div id="vh-agents-list" style="display:flex;flex-direction:column;gap:.5rem;">
-              <div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">Loading…</div>
-            </div>
-          </div>
-          <div id="vh-panel-rooms" style="display:none;">
-            <div style="display:flex;gap:.6rem;margin-bottom:1rem;align-items:center;">
-              <input id="vh-room-name-input" class="xc-input" placeholder="Room name…" style="max-width:240px;" onkeydown="if(event.key==='Enter')vhCreateRoom()"/>
-              <button class="xc-btn" onclick="vhCreateRoom()">+ Create Room</button>
-            </div>
-            <div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:.7rem;">ACTIVE ROOMS</div>
-            <div id="vh-rooms-list" style="display:flex;flex-direction:column;gap:.5rem;">
-              <div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">Loading…</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Incoming call overlay -->
-      <div id="vh-call-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9900;align-items:center;justify-content:center;">
-        <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:20px;padding:2rem 2.5rem;text-align:center;width:300px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-          <div style="font-size:2.5rem;margin-bottom:.5rem;">📻</div>
-          <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:.25rem;" id="vh-caller-name">Someone</div>
-          <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:1.5rem;">is calling you…</div>
-          <div style="display:flex;gap:.75rem;justify-content:center;">
-            <button onclick="vhAcceptCall()" style="background:#2ec56f;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:1.3rem;cursor:pointer;">✅</button>
-            <button onclick="vhRejectCall()" style="background:#ef493c;color:#fff;border:none;border-radius:50%;width:52px;height:52px;font-size:1.3rem;cursor:pointer;">❌</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Active 1-to-1 call widget -->
-      <div id="vh-active-call" style="display:none;position:fixed;bottom:90px;right:24px;z-index:9800;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:16px;padding:1rem 1.2rem;box-shadow:0 8px 32px rgba(0,0,0,.2);min-width:220px;">
-        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;">
-          <div style="width:8px;height:8px;border-radius:50%;background:#2ec56f;"></div>
-          <span style="font-size:.8rem;font-weight:700;color:var(--text-primary);" id="vh-call-with-name">Call</span>
-          <span style="font-size:.72rem;color:var(--text-dim);" id="vh-call-timer">0:00</span>
-        </div>
-        <button id="vh-mute-btn" onclick="vhToggleMute()"
-          style="width:100%;padding:.65rem;background:rgba(46,197,111,.15);border:2px solid rgba(46,197,111,.4);border-radius:10px;color:#2ec56f;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s;">
-          🎙 Mic On — Click to Mute
-        </button>
-        <button onclick="vhEndCall()" style="width:100%;margin-top:.6rem;padding:.45rem;background:rgba(239,73,60,.1);border:1px solid rgba(239,73,60,.25);border-radius:8px;color:#ef493c;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;">End Call</button>
-      </div>
-
-      <!-- Active group room widget -->
-      <div id="vh-room-widget" style="display:none;position:fixed;bottom:90px;right:24px;z-index:9800;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:16px;padding:1rem 1.2rem;box-shadow:0 8px 32px rgba(0,0,0,.2);min-width:240px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
-          <div>
-            <div style="font-size:.8rem;font-weight:700;color:var(--text-primary);" id="vh-room-widget-name">Room</div>
-            <div style="font-size:.7rem;color:var(--text-dim);" id="vh-room-widget-members">0 members</div>
-          </div>
-          <span style="font-size:.7rem;font-weight:700;color:#2ec56f;background:rgba(46,197,111,.1);padding:2px 8px;border-radius:20px;">LIVE</span>
-        </div>
-        <div id="vh-room-speakers" style="display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.75rem;min-height:28px;"></div>
-        <button id="vh-room-mute-btn" onclick="vhRoomToggleMute()"
-          style="width:100%;padding:.55rem;background:rgba(76,118,168,.15);border:2px solid var(--navy-border);border-radius:10px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s;">
-          🎙 Muted — Click to Speak
-        </button>
-        <button onclick="vhLeaveRoom()" style="width:100%;margin-top:.6rem;padding:.45rem;background:rgba(239,73,60,.1);border:1px solid rgba(239,73,60,.25);border-radius:8px;color:#ef493c;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;">Leave Room</button>
-      </div>
-
-      <!-- ══ TEAM MEET PAGE ══ -->
-      <div class="page" id="page-teammeet" style="padding:2rem 2.5rem;overflow-y:auto;">
+      <!-- ══ K7 INTERCOM PAGE ══ -->
+      <div class="page" id="page-intercom" style="padding:2rem 2.5rem;overflow-y:auto;">
         <div style="max-width:900px;margin:0 auto;">
-
           <!-- Header -->
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem;">
             <div>
-              <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--text-primary);margin:0;">Team Meet</h2>
-              <p style="font-size:.82rem;color:var(--text-muted);margin:.25rem 0 0;">Live huddle room with voice &amp; chat — works from anywhere</p>
-            </div>
-            <div id="tm-admin-create-wrap" style="display:none;">
-              <button class="xc-btn" onclick="tmShowCreateRoom()" id="tm-create-btn">+ Start a Room</button>
+              <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--text-primary);margin:0;">📡 K7 Intercom</h2>
+              <p style="font-size:.82rem;color:var(--text-muted);margin:.25rem 0 0;">Direct calls &amp; floor channel — voice for your whole team</p>
             </div>
           </div>
 
-          <!-- No active room state -->
-          <div id="tm-no-room" style="text-align:center;padding:3rem 1rem;">
-            <div style="font-size:3rem;margin-bottom:.75rem;">🎧</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:.4rem;">No active room right now</div>
-            <div id="tm-no-room-sub" style="font-size:.82rem;color:var(--text-muted);">Ask your admin or TL to start a room, or join using a room code.</div>
-            <div style="margin-top:1.25rem;display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
-              <div style="display:flex;gap:.5rem;align-items:center;">
-                <input id="tm-join-code-input" class="xc-input" placeholder="Enter room code…" style="width:180px;" onkeydown="if(event.key==='Enter')tmJoinByCode()"/>
-                <button class="xc-btn" onclick="tmJoinByCode()">Join</button>
-              </div>
+          <!-- Floor Channel Bar -->
+          <div id="ic-floor-bar" style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div style="width:42px;height:42px;border-radius:50%;background:rgba(46,197,111,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2ec56f" stroke-width="1.8" style="width:22px;height:22px;"><path d="M12 1a3 3 0 00-3 3v4a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 9v1a7 7 0 01-14 0V9M12 17v4M8 21h8"/></svg>
             </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:.88rem;font-weight:600;color:var(--text-primary);">Floor Channel</div>
+              <div style="font-size:.76rem;color:var(--text-muted);margin-top:2px;">Open voice — anyone can join and speak</div>
+              <div id="ic-floor-members" style="font-size:.74rem;color:var(--text-dim);margin-top:3px;">Loading...</div>
+            </div>
+            <button id="ic-floor-btn" onclick="icFloorToggle()" style="background:rgba(46,197,111,.15);border:1px solid rgba(46,197,111,.35);border-radius:8px;padding:.5rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;color:#2ec56f;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M12 1a3 3 0 00-3 3v4a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg>
+              Join Floor
+            </button>
           </div>
 
-          <!-- Create room panel (admin/TL only) -->
-          <div id="tm-create-panel" style="display:none;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:1.25rem;">
-            <div style="font-size:.88rem;font-weight:700;color:var(--text-primary);margin-bottom:.9rem;">Start a New Room</div>
-            <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end;">
-              <div style="flex:1;min-width:200px;">
-                <label class="xc-label">Room Name</label>
-                <input type="text" id="tm-room-name-inp" class="xc-input" placeholder="e.g. Morning Huddle, Team Sync…" onkeydown="if(event.key==='Enter')tmCreateRoom()"/>
-              </div>
-              <button class="xc-btn" onclick="tmCreateRoom()">Create &amp; Join</button>
-              <button class="xc-btn" style="background:transparent;border-color:var(--navy-border);color:var(--text-muted);" onclick="tmHideCreateRoom()">Cancel</button>
+          <!-- Incoming call banner (hidden by default) -->
+          <div id="ic-incoming-banner" style="display:none;background:var(--navy-card);border:1.5px solid rgba(46,197,111,.4);border-radius:var(--radius);padding:.9rem 1.25rem;margin-bottom:1rem;display:none;align-items:center;gap:.75rem;flex-wrap:wrap;">
+            <div style="width:38px;height:38px;border-radius:50%;background:rgba(46,197,111,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2ec56f" stroke-width="2" style="width:18px;height:18px;"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 012.08 4.18 2 2 0 014 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
             </div>
-            <div id="tm-create-msg" style="font-size:.78rem;color:var(--accent-red);margin-top:.5rem;display:none;"></div>
+            <div style="flex:1;">
+              <div id="ic-incoming-name" style="font-size:.88rem;font-weight:600;color:var(--text-primary);">Incoming call</div>
+              <div id="ic-incoming-role" style="font-size:.74rem;color:var(--text-muted);margin-top:1px;"></div>
+            </div>
+            <button onclick="icAnswerCall()" style="background:#2ec56f;color:#fff;border:none;border-radius:8px;padding:.45rem 1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 012.08 4.18 2 2 0 014 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+              Answer
+            </button>
+            <button onclick="icDeclineCall()" style="background:transparent;color:var(--text-muted);border:1px solid var(--navy-border);border-radius:8px;padding:.45rem 1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;">Decline</button>
           </div>
 
-          <!-- Active room view -->
-          <div id="tm-active-room" style="display:none;">
-
-            <!-- Room info bar -->
-            <div style="background:var(--navy-card);border:1px solid rgba(46,197,111,.3);border-radius:var(--radius);padding:1rem 1.4rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;">
-              <div style="display:flex;align-items:center;gap:.75rem;">
-                <span style="width:10px;height:10px;border-radius:50%;background:#2ec56f;display:inline-block;box-shadow:0 0 0 3px rgba(46,197,111,.2);"></span>
-                <div>
-                  <div style="font-size:.95rem;font-weight:700;color:var(--text-primary);" id="tm-room-name-display">Room</div>
-                  <div style="font-size:.72rem;color:var(--text-muted);margin-top:1px;" id="tm-room-meta">0 participants</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
-                <div style="font-size:.72rem;color:var(--text-dim);background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:6px;padding:.3rem .7rem;display:flex;align-items:center;gap:.4rem;">
-                  <span>Code:</span><strong id="tm-room-code-display" style="color:var(--gold);letter-spacing:.08em;"></strong>
-                  <button onclick="tmCopyInvite()" style="background:none;border:none;cursor:pointer;color:var(--accent-blue);font-size:.72rem;padding:0 0 0 .3rem;">📋 Copy Link</button>
-                </div>
-                <button id="tm-mute-btn" onclick="tmToggleMute()" style="padding:.4rem 1rem;background:rgba(46,197,111,.15);border:2px solid rgba(46,197,111,.4);border-radius:8px;color:#2ec56f;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .15s;">🎙 Mic On</button>
-                <button onclick="tmLeaveRoom()" style="padding:.4rem 1rem;background:rgba(239,73,60,.1);border:1px solid rgba(239,73,60,.25);border-radius:8px;color:#ef493c;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;">Leave</button>
-                <button id="tm-end-btn" onclick="tmEndRoom()" style="display:none;padding:.4rem 1rem;background:rgba(239,73,60,.2);border:1px solid rgba(239,73,60,.4);border-radius:8px;color:#ef493c;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;">End Room</button>
-              </div>
+          <!-- Active call bar (hidden by default) -->
+          <div id="ic-active-bar" style="display:none;background:var(--navy-card);border:1.5px solid rgba(76,118,168,.4);border-radius:var(--radius);padding:.9rem 1.25rem;margin-bottom:1rem;align-items:center;gap:.75rem;flex-wrap:wrap;">
+            <div style="width:38px;height:38px;border-radius:50%;background:rgba(76,118,168,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2" style="width:18px;height:18px;"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 012.08 4.18 2 2 0 014 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
             </div>
-
-            <!-- Two-column: participants + chat -->
-            <div style="display:grid;grid-template-columns:260px 1fr;gap:1rem;height:480px;">
-
-              <!-- Participants panel -->
-              <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;">
-                <div style="padding:.75rem 1rem;border-bottom:1px solid var(--navy-border);font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;">PARTICIPANTS</div>
-                <div id="tm-participants-list" style="flex:1;overflow-y:auto;padding:.5rem .75rem;display:flex;flex-direction:column;gap:.4rem;">
-                  <!-- populated by JS -->
-                </div>
-              </div>
-
-              <!-- Chat panel -->
-              <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;">
-                <div style="padding:.75rem 1rem;border-bottom:1px solid var(--navy-border);font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;">CHAT</div>
-                <div id="tm-chat-msgs" style="flex:1;overflow-y:auto;padding:.75rem 1rem;display:flex;flex-direction:column;gap:.5rem;">
-                  <div style="text-align:center;font-size:.76rem;color:var(--text-dim);padding:.5rem 0;">Say hello! 👋</div>
-                </div>
-                <div style="padding:.6rem .75rem;border-top:1px solid var(--navy-border);display:flex;gap:.5rem;">
-                  <input type="text" id="tm-chat-input" class="xc-input" placeholder="Type a message…" style="flex:1;" onkeydown="if(event.key==='Enter')tmSendChat()"/>
-                  <button class="xc-btn" onclick="tmSendChat()" style="padding:.4rem .9rem;">Send</button>
-                </div>
-              </div>
-
+            <div style="flex:1;">
+              <div style="font-size:.82rem;color:var(--text-muted);">In call with</div>
+              <div id="ic-active-name" style="font-size:.92rem;font-weight:600;color:var(--text-primary);"></div>
             </div>
+            <div id="ic-active-timer" style="font-size:.85rem;font-weight:600;color:var(--accent-blue);font-variant-numeric:tabular-nums;min-width:48px;">0:00</div>
+            <button onclick="icEndCall()" style="background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);border-radius:8px;padding:.45rem 1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;color:#ef493c;cursor:pointer;">End Call</button>
           </div>
 
+          <!-- Agents grid -->
+          <div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.65rem;">Team</div>
+          <div id="ic-agents-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:.75rem;">
+            <div style="color:var(--text-dim);font-size:.82rem;padding:1rem;">Loading team...</div>
+          </div>
         </div>
       </div>
 
-      <!-- ══ CONTROL DECK PAGE ══ -->
+            <!-- ══ CONTROL DECK PAGE ══ -->
       <div class="page" id="page-controldeck">
         <div class="cd-wrap">
 
@@ -4394,13 +4261,13 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
           </div>
 
 
-          <!-- ── Section: Voice Hub ── -->
+          <!-- ── Section: K7 Intercom ── -->
           <div class="cd-card">
             <div class="cd-card-header">
-              <span class="cd-card-icon" style="background:rgba(76,118,168,.12);">🎙️</span>
+              <span class="cd-card-icon" style="background:rgba(46,197,111,.12);">📡</span>
               <div>
-                <div class="cd-card-title">Voice Hub</div>
-                <div class="cd-card-sub">Global switch hides Voice Hub from all agents</div>
+                <div class="cd-card-title">K7 Intercom</div>
+                <div class="cd-card-sub">Global switch — hide K7 Intercom from all agents</div>
               </div>
               <div style="display:flex;align-items:center;gap:.8rem;margin-left:auto;">
                 <span id="cd-vh-status" style="font-size:.8rem;color:var(--text-muted);">Loading…</span>
@@ -4408,68 +4275,9 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
               </div>
             </div>
             <div id="cd-vh-msg" class="cd-msg" style="display:none;"></div>
-            <div style="margin-top:.9rem;border-top:1px solid var(--navy-border);padding-top:.9rem;">
-              <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;" onclick="cdToggleAgentList('cd-vh-agents-wrap','cd-vh-agents-arrow')">
-                <div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;">PER AGENT — WALKIE TALKIE ACCESS</div>
-                <div style="display:flex;align-items:center;gap:.5rem;">
-                  <span id="cd-vh-agents-count" style="font-size:.72rem;color:var(--text-dim);"></span>
-                  <span id="cd-vh-agents-arrow" style="font-size:.7rem;color:var(--gold);transition:transform .2s;transform:rotate(-90deg);">▼</span>
-                </div>
-              </div>
-              <div id="cd-vh-agents-wrap" style="display:none;margin-top:.65rem;">
-                <div id="cd-vh-agents" style="display:flex;flex-direction:column;gap:.35rem;">
-                  <div style="color:var(--text-dim);font-size:.8rem;">Loading agents…</div>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <!-- ── Section: Team Meet ── -->
-          <div class="cd-card">
-            <div class="cd-card-header">
-              <span class="cd-card-icon" style="background:rgba(76,118,168,.12);">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:18px;height:18px;display:block;">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-                </svg>
-              </span>
-              <div>
-                <div class="cd-card-title">Team Meet</div>
-                <div class="cd-card-sub">Allow agents to create huddle rooms (ON = anyone can start a room)</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:.8rem;margin-left:auto;">
-                <span id="cd-tm-status" style="font-size:.8rem;color:var(--text-muted);">Loading…</span>
-                <label class="cat-toggle-wrap"><input type="checkbox" id="cd-tm-toggle" onchange="cdTmAgentCreateToggle(this.checked)"/><span class="cat-toggle-slider"></span></label>
-              </div>
-            </div>
-            <div id="cd-tm-msg" class="cd-msg" style="display:none;"></div>
 
-            <!-- Active rooms panel -->
-            <div style="margin-top:.9rem;border-top:1px solid var(--navy-border);padding-top:.85rem;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
-                <div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;">🟢 ACTIVE ROOMS</div>
-                <button class="cd-btn" onclick="cdTmLoadRooms()" style="font-size:.72rem;padding:.28rem .7rem;">↺ Refresh</button>
-              </div>
-              <div id="cd-tm-rooms-list"><div style="font-size:.78rem;color:var(--text-dim);">Loading rooms…</div></div>
-              <div id="cd-tm-rooms-msg" style="font-size:.76rem;margin-top:.5rem;display:none;"></div>
-            </div>
-          </div>
-
-          <!-- ── Section 3: What's New / Grand Opening ── -->
-          <div class="cd-card">
-            <div class="cd-card-header">
-              <span class="cd-card-icon" style="background:rgba(46,197,111,.12);">🎊</span>
-              <div>
-                <div class="cd-card-title">What's New Banner</div>
-                <div class="cd-card-sub">The grand opening fireworks shown to new users on first login</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:.8rem;margin-left:auto;">
-                <span id="cd-wo-status" style="font-size:.8rem;color:var(--text-muted);">-</span>
-                <button class="cd-btn" onclick="cdWoReset()" title="Reset so all agents see it again on next login">↺ Re-launch for All</button>
-              </div>
-            </div>
-            <div id="cd-wo-msg" class="cd-msg" style="display:none;"></div>
-          </div>
 
           <!-- ── Section 4: Celebrations ── -->
           <div class="cd-card">
@@ -4633,7 +4441,7 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
               <span class="cd-card-icon" style="background:rgba(239,73,60,.12);">🚫</span>
               <div>
                 <div class="cd-card-title">Break Block System</div>
-                <div class="cd-card-sub">Automatically block agents who exceed break limits 10 times in a month.</div>
+                <div class="cd-card-sub">Automatically block agents the moment they exceed any break limit.</div>
               </div>
               <div style="display:flex;align-items:center;gap:.8rem;margin-left:auto;">
                 <span id="cd-bb-status" style="font-size:.8rem;color:var(--text-muted);">Loading…</span>
@@ -5379,6 +5187,27 @@ CREATE TABLE IF NOT EXISTS voice_rooms (
 const SUPABASE_URL='https://sodvlpcjpnepohpoqicf.supabase.co';
 const SUPABASE_KEY='sb_publishable_nEbzsiR9Qhb31ZMc-Pg-cA_tJEzkmAf';
 
+// ── Supabase Realtime client — used by K7 Intercom for instant signaling ──
+(function(){
+  try{
+    // Use Supabase Realtime JS v2 from CDN
+    var s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/@supabase/realtime-js@2.10.2/dist/main.umd.js';
+    s.onload=function(){
+      try{
+        window.supabaseRealtime=new window.Realtime.RealtimeClient(
+          'wss://sodvlpcjpnepohpoqicf.supabase.co/realtime/v1',
+          {params:{apikey:SUPABASE_KEY},heartbeatIntervalMs:20000,reconnectAfterMs:function(n){return Math.min(1000*Math.pow(2,n),30000);}}
+        );
+        window.supabaseRealtime.connect();
+        console.log('K7 Intercom: Realtime connected');
+      }catch(e){console.warn('K7 Intercom: Realtime init failed',e.message);}
+    };
+    s.onerror=function(){console.warn('K7 Intercom: Realtime CDN load failed, using fallback polling');};
+    document.head.appendChild(s);
+  }catch(e){}
+})();
+
 // ── Cloudflare TURN credentials — fill in your own below ──
 const CF_TURN_TOKEN_ID  = '8c1147a2b9ce301812a67174735d15be';
 const CF_TURN_API_TOKEN = 'df8223b259d761e0a85719db4602e94370a02b02d78bcc714377c33c0a4e3ca4';
@@ -5746,21 +5575,7 @@ function enterDashboard(){
   setTimeout(function(){
     if(typeof catShowWidget==='function') catShowWidget();
   }, 500);
-  // Grand Opening — fires only once per user, ever
-  setTimeout(async function(){
-    // Check DB for whats_new_key — allows admin to re-launch for all
-    try{
-      var rows = typeof sbQuery==='function' ? await sbQuery('settings','key=eq.whats_new_key&select=value') : [];
-      var dbKey = (rows&&rows.length) ? rows[0].value : 'k7tc_grand_open_v1';
-      if(!localStorage.getItem(dbKey)){
-        localStorage.setItem(dbKey,'1');
-        if(typeof showGrandOpening==='function') showGrandOpening();
-      }
-    }catch(e){
-      var key='k7tc_grand_open_v1';
-      if(!localStorage.getItem(key)){ localStorage.setItem(key,'1'); if(typeof showGrandOpening==='function') showGrandOpening(); }
-    }
-  }, 1200);
+
 // sys level
   if(_isSysLevel()){
     document.getElementById('agent-display').textContent='System';
@@ -5916,9 +5731,13 @@ function showPage(id,elem){
   if(id==='moments') setTimeout(function(){_mLoadTab(_mActiveTab);},60);
   if(id==='quiz') loadAgentQuiz();
   if(id==='announcements') loadAnnouncementsAdmin();
-  if(id==='controldeck'){ _cdPwResetUnlocked=false; var lk=document.getElementById('cd-pwreset-locked'),pk=document.getElementById('cd-pwreset-panel'),ub=document.getElementById('cd-pwreset-unlock-btn'),pi=document.getElementById('cd-pwreset-pin'); if(lk)lk.style.display='flex'; if(pk)pk.style.display='none'; if(ub)ub.style.display=''; if(pi){pi.value='';} cdLoadAll(); cdLoadVHAgents(); cdVHLoadGlobalStatus(); if(typeof radarLoadCdToggleState==='function') radarLoadCdToggleState(); }
-  if(id==='voicehub'){ vhPageInit(); }
-  if(id==='teammeet'){ tmPageInit(); }
+  if(id==='controldeck'){ _cdPwResetUnlocked=false; var lk=document.getElementById('cd-pwreset-locked'),pk=document.getElementById('cd-pwreset-panel'),ub=document.getElementById('cd-pwreset-unlock-btn'),pi=document.getElementById('cd-pwreset-pin'); if(lk)lk.style.display='flex'; if(pk)pk.style.display='none'; if(ub)ub.style.display=''; if(pi){pi.value='';} cdLoadAll(); checkVHGlobalToggle(); if(typeof radarLoadCdToggleState==='function') radarLoadCdToggleState(); }
+  if(id==='intercom'){ icPageInit(); }
+
+  // Clear proctoring state whenever navigating away from assessment/quiz pages
+  if(id!=='assessment'){ _assProctoring=false; clearTimeout(_assBlurTimer); _assViolations=0; }
+  if(id!=='quiz'){ _quizProctoring=false; clearTimeout(_quizBlurTimer); }
+
   if(id==='assessment') loadAgentAssessment();
   if(id==='quiz-admin'){ loadQuizBuilderList(); var d=document.getElementById('qb-date'); if(d&&!d.value){ var n=new Date(); d.value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); qbUpdateFolderHint(); } if(!document.getElementById('qb-open').value) document.getElementById('qb-open').value='09:00'; if(!document.getElementById('qb-close').value) document.getElementById('qb-close').value='17:00'; }
   if(id==='assessment-admin') loadAssessmentBuilderList();
@@ -7112,16 +6931,25 @@ function tbBreakPick(type){
   if(tbmTimer){tbmTimer.style.display='inline';tbmTimer.textContent='00:00';}
   if(mainBtn){mainBtn.classList.add('has-active');mainBtn.innerHTML='🟠 On Break <span class="tb-break-arrow">▼</span>';}
 
-  // Start timer on topbar
+  // Start timer — updates BOTH topbar dropdown timer AND break-page timer
   _breakState[type].interval=setInterval(function(){
     if(!_breakState[type]||!_breakState[type].active)return;
     var elapsed=Math.floor((Date.now()-new Date(_breakState[type].start).getTime())/1000);
     var limit=BREAK_LIMITS[type]*60;
-    if(tbmTimer)tbmTimer.textContent=fmtSec(elapsed);
+    var formatted=fmtSec(elapsed);
+    // topbar dropdown timer
+    var tbmT=document.getElementById('tbmt-'+type);
+    if(tbmT)tbmT.textContent=formatted;
+    // break page timer
+    var pgT=document.getElementById('bt-'+type);
+    if(pgT){pgT.textContent=formatted;pgT.style.display='inline';}
     if(elapsed>=limit+60){
-      if(tbmTimer)tbmTimer.classList.add('warning');
-      if(tbmBtn)tbmBtn.classList.add('over');
-      if(mainBtn)mainBtn.classList.add('over');
+      if(tbmT)tbmT.classList.add('warning');
+      if(pgT)pgT.classList.add('warning');
+      var tbmB=document.getElementById('tbm-'+type);
+      if(tbmB)tbmB.classList.add('over');
+      var mainB=document.getElementById('tb-break-btn');
+      if(mainB)mainB.classList.add('over');
     }
   },1000);
 }
@@ -7349,7 +7177,7 @@ async function checkLiveSettings(){
     // 4. Check timesheet global toggle
     await checkTsGlobal();
     // 5. Check voice hub global toggle
-    await checkVHGlobal();
+    await checkVHGlobalToggle();
   }catch(e){ /* silent — don't disrupt UX */ }
 }
 // Admin/TL heartbeat — only updates users.last_seen, not attendance
@@ -7489,12 +7317,24 @@ async function restoreBreakState(){
         timerEl.textContent = fmtSec(elapsedNow);
         if(elapsedNow >= limit+60){ timerEl.classList.add('warning'); btn.classList.add('over'); }
 
-        // Start ticking
+        // Start ticking — update BOTH break-page timer and topbar dropdown timer
         _breakState[type].interval = setInterval(function(){
           if(!_breakState[type] || !_breakState[type].active) return;
           var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
-          timerEl.textContent = fmtSec(elapsed);
-          if(elapsed >= limit+60){ timerEl.classList.add("warning"); btn.classList.add("over"); }
+          var formatted = fmtSec(elapsed);
+          // break page timer
+          timerEl.textContent = formatted;
+          timerEl.style.display = 'inline';
+          // topbar dropdown timer
+          var tbmT = document.getElementById('tbmt-'+type);
+          if(tbmT){ tbmT.textContent = formatted; tbmT.style.display = 'inline'; }
+          if(elapsed >= limit+60){
+            timerEl.classList.add('warning');
+            btn.classList.add('over');
+            if(tbmT) tbmT.classList.add('warning');
+            var tbmB = document.getElementById('tbm-'+type);
+            if(tbmB) tbmB.classList.add('over');
+          }
         }, 1000);
 
       } else if(closedRow){
@@ -9607,6 +9447,8 @@ async function deleteQuiz(id){
 
 // ── AGENT QUIZ VIEW ──
 var _quizData=null, _quizAnswer=null, _quizSubmitted=false, _quizCountdownTimer=null;
+var _quizProctoring=false;  // true while quiz question is actively being answered
+var _quizBlurTimer=null;
 
 async function loadAgentQuiz(){
   var content=document.getElementById('quiz-agent-content');
@@ -9687,8 +9529,8 @@ async function renderAgentQuiz(){
     return;
   }
 
-  // Render the quiz question
-  _quizAnswer=null; _quizSubmitted=false;
+  // Render the quiz question — start proctoring
+  _quizAnswer=null; _quizSubmitted=false; _quizProctoring=true;
   var choicesHtml='';
   if(_quizData.type==='mcq'||_quizData.type==='truefalse'){
     choicesHtml='<div class="quiz-options">'+
@@ -9770,7 +9612,41 @@ async function updateQuizBadge(){
   }catch(e){ /* silent */ }
 }
 
+// ── Quiz malpractice terminate (instant, no warning) ──
+async function quizTerminate(){
+  if(!_quizProctoring) return;
+  _quizProctoring=false;
+  clearTimeout(_quizBlurTimer);
+  var content=document.getElementById('quiz-agent-content');
+  if(content){
+    content.innerHTML=
+      '<div style="position:relative;min-height:220px;display:flex;align-items:center;justify-content:center;">'+
+      '<div style="background:var(--navy-card);border:1.5px solid rgba(239,73,60,.4);border-radius:var(--radius);max-width:400px;width:92%;padding:2rem;text-align:center;">'+
+        '<div style="font-size:2.2rem;margin-bottom:.6rem;">🚫</div>'+
+        '<div style="font-family:var(--font-serif, serif);font-size:1.2rem;font-weight:700;color:var(--accent-red);margin-bottom:.5rem;">Malpractice Detected</div>'+
+        '<div style="font-size:.85rem;color:var(--text-muted);line-height:1.7;margin-bottom:1rem;">You left the quiz window.<br>Your attempt has been flagged and submitted.</div>'+
+        '<div style="font-size:.82rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:8px;padding:.65rem 1rem;color:var(--accent-red);font-weight:600;">'+
+          'Please speak to your Team Leader.'+
+        '</div>'+
+      '</div></div>';
+  }
+  // Auto-submit with malpractice flag — blank answer, consumes the attempt
+  if(_quizData){
+    try{
+      await sbInsert('quiz_responses',{
+        quiz_id:_quizData.id, user_id:currentUser.id, user_name:currentUser.name,
+        answer:'[malpractice - no answer]', date:todayStr(),
+        submitted_at:new Date().toISOString(),
+        is_correct:false, malpractice:true
+      });
+      updateQuizBadge();
+    }catch(e){ console.warn('Quiz malpractice submit failed:',e.message); }
+  }
+}
+
 async function submitQuiz(){
+  _quizProctoring=false; // turn off proctoring on normal submit
+  clearTimeout(_quizBlurTimer);
   if(!_quizAnswer&&_quizData.type!=='essay'){alert('Please select an answer.');return;}
   if(_quizData.type==='essay'){
     var ta=document.getElementById('quiz-essay-input');
@@ -9804,6 +9680,7 @@ function resetAssessmentBuilder(){
   document.getElementById('ab-close').value='';
   document.getElementById('ab-timelimit').value='30';
   document.getElementById('ab-attempts').value='1';
+  document.getElementById('ab-shuffle').checked=false;
   qaMsg('ab-msg','',false);
   _editingAssessmentId=null;
 }
@@ -9815,6 +9692,7 @@ async function saveAssessment(){
   var close=document.getElementById('ab-close').value;
   var timelimit=parseInt(document.getElementById('ab-timelimit').value)||30;
   var attempts=parseInt(document.getElementById('ab-attempts').value)||1;
+  var shuffle=document.getElementById('ab-shuffle').checked;
   if(!title||!date||!open||!close){qaMsg('ab-msg','Please fill all fields.',true);return;}
   try{
     await sbInsert('assessments',{
@@ -9822,6 +9700,7 @@ async function saveAssessment(){
       open_time:qaDateTimeToISO(date,open),
       close_time:qaDateTimeToISO(date,close),
       time_limit_minutes:timelimit, max_attempts:attempts,
+      shuffle_questions:shuffle,
       review_enabled:false, created_by:currentUser.name
     });
     qaMsg('ab-msg','Assessment created!',false);
@@ -9830,11 +9709,13 @@ async function saveAssessment(){
   }catch(e){qaMsg('ab-msg','Error: '+e.message,true);}
 }
 
+var _openAssQPanels = new Set(); // track which question panels are open
+
 async function loadAssessmentBuilderList(){
   var list=document.getElementById('ab-list');
   if(!list)return;
   try{
-    var rows=await sbQuery('assessments','select=id,title,date,open_time,close_time,time_limit_minutes,max_attempts,review_enabled&order=date.desc');
+    var rows=await sbQuery('assessments','select=id,title,date,open_time,close_time,time_limit_minutes,max_attempts,review_enabled,shuffle_questions&order=date.desc');
     if(!rows||!rows.length){list.innerHTML='<div style="color:var(--text-dim);padding:1rem;font-size:.875rem;">No assessments yet.</div>';return;}
     list.innerHTML=rows.map(function(a){
       var status=qaGetStatus(a.open_time,a.close_time);
@@ -9847,6 +9728,7 @@ async function loadAssessmentBuilderList(){
               '<span>'+qaFmtDateTime(a.open_time)+' &#8594; '+qaFmtDateTime(a.close_time)+'</span>'+
               '<span>'+a.time_limit_minutes+' min limit</span>'+
               '<span>Max '+a.max_attempts+' attempt(s)</span>'+
+              (a.shuffle_questions?'<span style="color:#4c76a8;font-weight:600;">🔀 Shuffle ON</span>':'')+
             '</div>'+
           '</div>'+
           '<div style="display:flex;align-items:center;gap:.5rem;">'+
@@ -9868,6 +9750,10 @@ async function loadAssessmentBuilderList(){
             '<div class="qa-field"><label>Time Limit (min)</label><input type="number" id="ae-limit-'+a.id+'" value="'+a.time_limit_minutes+'" min="1"/></div>'+
             '<div class="qa-field"><label>Max Attempts</label><input type="number" id="ae-attempts-'+a.id+'" value="'+a.max_attempts+'" min="1" max="5"/></div>'+
           '</div>'+
+          '<div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem;padding:.5rem .75rem;background:rgba(76,118,168,.07);border:1px solid rgba(76,118,168,.18);border-radius:var(--radius-sm);">'+
+            '<label class="cat-toggle-wrap" style="flex-shrink:0;"><input type="checkbox" id="ae-shuffle-'+a.id+'" '+(a.shuffle_questions?'checked':'')+'/><span class="cat-toggle-slider"></span></label>'+
+            '<span style="font-size:.82rem;color:var(--text-primary);">Shuffle Questions &amp; Choices</span>'+
+          '</div>'+
           '<div style="margin-top:.75rem;display:flex;gap:.6rem;align-items:center;">'+
             '<button class="qa-save-btn" onclick="saveAssessmentEdit(\''+a.id+'\')">Save changes</button>'+
             '<button class="qa-cancel-btn" onclick="document.getElementById(\'ae-panel-'+a.id+'\').style.display=\'none\'">Cancel</button>'+
@@ -9878,6 +9764,11 @@ async function loadAssessmentBuilderList(){
         '<div id="ar-panel-'+a.id+'" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--navy-border);"></div>'+
       '</div>';
     }).join('');
+    // Re-open any question panels that were open before the rebuild
+    _openAssQPanels.forEach(function(aid){
+      var p=document.getElementById('aq-panel-'+aid);
+      if(p) showAssessmentQuestions(aid,'',true);
+    });
   }catch(e){list.innerHTML='<div style="color:var(--accent-red);padding:1rem;">Error: '+e.message+'</div>';}
 }
 
@@ -9899,6 +9790,8 @@ async function saveAssessmentEdit(id){
   var close=document.getElementById('ae-close-'+id).value;
   var limit=parseInt(document.getElementById('ae-limit-'+id).value)||30;
   var attempts=parseInt(document.getElementById('ae-attempts-'+id).value)||1;
+  var shuffleEl=document.getElementById('ae-shuffle-'+id);
+  var shuffle=shuffleEl?shuffleEl.checked:false;
   var msg=document.getElementById('ae-msg-'+id);
   if(!title||!date||!open||!close){
     msg.textContent='Please fill in all fields.';msg.style.display='inline';return;
@@ -9907,9 +9800,10 @@ async function saveAssessmentEdit(id){
   try{
     await sbUpdate('assessments','id',id,{
       title:title,date:date,
-      open_time:date+'T'+open+':00',
-      close_time:date+'T'+close+':00',
-      time_limit_minutes:limit,max_attempts:attempts
+      open_time:qaDateTimeToISO(date,open),
+      close_time:qaDateTimeToISO(date,close),
+      time_limit_minutes:limit,max_attempts:attempts,
+      shuffle_questions:shuffle
     });
     loadAssessmentBuilderList();
   }catch(e){msg.textContent='Save failed: '+e.message;msg.style.display='inline';}
@@ -9954,11 +9848,16 @@ async function showAssessmentResponses(id){
   }catch(e){panel.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+e.message+'</div>';}
 }
 
-async function showAssessmentQuestions(id, title){
+async function showAssessmentQuestions(id, title, forceRefresh){
   var panel=document.getElementById('aq-panel-'+id);
   if(!panel)return;
-  if(panel.style.display==='block'){panel.style.display='none';return;}
+  if(!forceRefresh && panel.style.display==='block'){
+    panel.style.display='none';
+    if(typeof _openAssQPanels!=='undefined') _openAssQPanels.delete(id);
+    return;
+  }
   panel.style.display='block';
+  if(typeof _openAssQPanels!=='undefined') _openAssQPanels.add(id);
   panel.innerHTML='<div style="color:var(--text-dim);font-size:.85rem;">Loading questions...</div>';
   try{
     var qs=await sbQuery('assessment_questions','assessment_id=eq.'+id+'&order=created_at.asc');
@@ -10039,8 +9938,7 @@ async function addAssessmentQuestion(assessmentId){
       choices:JSON.stringify(choices), correct_answer:correctAnswer
     });
     if(msgEl){msgEl.style.color='#1a7a45';msgEl.textContent='Question added!';}
-    showAssessmentQuestions(assessmentId,'');
-    setTimeout(function(){showAssessmentQuestions(assessmentId,'');},300);
+    showAssessmentQuestions(assessmentId,'',true);
   }catch(e){if(msgEl)msgEl.textContent='Error: '+e.message;}
 }
 
@@ -10063,14 +9961,29 @@ async function loadAgentAssessment(){
   content.innerHTML='<div class="quiz-lock-screen"><div class="quiz-lock-icon">&#8987;</div><div class="quiz-lock-title">Loading...</div></div>';
   try{
     var today=todayStr();
-    var rows=await sbQuery('assessments','date=eq.'+today+'&order=open_time.asc&limit=1');
+    var rows=await sbQuery('assessments','date=eq.'+today+'&order=open_time.asc');
     if(!rows||!rows.length){
       content.innerHTML='<div class="quiz-lock-screen"><div class="quiz-lock-icon">&#128203;</div><div class="quiz-lock-title">No Assessment Today</div><div class="quiz-lock-sub">No assessment scheduled for today.</div></div>';
       return;
     }
-    _assData=rows[0];
+    // Pick the best assessment: prefer "open now", then "upcoming soonest", then "closed last"
+    var now=Date.now();
+    var best=null;
+    rows.forEach(function(r){
+      var s=qaGetStatus(r.open_time,r.close_time);
+      if(!best){best=r;return;}
+      var bs=qaGetStatus(best.open_time,best.close_time);
+      // Priority: open > upcoming > closed
+      var pri={open:3,upcoming:2,closed:1};
+      if((pri[s]||0)>(pri[bs]||0)){best=r;}
+    });
+    _assData=best;
     var qs=await sbQuery('assessment_questions','assessment_id=eq.'+_assData.id+'&order=created_at.asc');
     _assQuestions=qs||[];
+    // Apply shuffle if enabled — seeded by userId+assessmentId for consistent per-agent order
+    if(_assData.shuffle_questions && currentUser){
+      _assQuestions=assShuffleSeeded(_assQuestions, currentUser.id+_assData.id);
+    }
     renderAgentAssessment();
   }catch(e){content.innerHTML='<div class="quiz-lock-screen"><div class="quiz-lock-icon">&#9888;</div><div class="quiz-lock-title">Error</div><div class="quiz-lock-sub">'+e.message+'</div></div>';}
 }
@@ -10154,6 +10067,27 @@ function startAssessmentTimer(){
   },1000);
 }
 
+// ── Seeded shuffle (Fisher-Yates with simple LCG seed) ──
+// Same userId+assessmentId always produces same order for that agent
+function assSeededRand(seed){
+  // LCG parameters (same as glibc)
+  var s=Math.abs(parseInt(String(seed).split('').reduce(function(a,c){return(a<<5)-a+c.charCodeAt(0)|0;},0)))||1;
+  return function(){
+    s=(1664525*s+1013904223)&0xFFFFFFFF;
+    return (s>>>0)/0xFFFFFFFF;
+  };
+}
+
+function assShuffleSeeded(arr, seed){
+  var a=arr.slice();
+  var rand=assSeededRand(seed);
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(rand()*(i+1));
+    var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+  }
+  return a;
+}
+
 function renderAssessmentQuestion(){
   var content=document.getElementById('assessment-agent-content');
   if(!_assQuestions.length){content.innerHTML='<div class="quiz-lock-screen"><div class="quiz-lock-icon">&#9888;</div><div class="quiz-lock-title">No Questions</div><div class="quiz-lock-sub">This assessment has no questions yet.</div></div>';return;}
@@ -10162,6 +10096,10 @@ function renderAssessmentQuestion(){
 
   var questionsHtml=_assQuestions.map(function(q,i){
     var choices=q.choices?JSON.parse(q.choices):[];
+    // Shuffle MCQ choices per-agent (seed = userId + questionId), True/False stays fixed
+    if(_assData.shuffle_questions && currentUser && (q.type==='mcq') && choices.length>2){
+      choices=assShuffleSeeded(choices, currentUser.id+q.id);
+    }
     var curAnswer=_assAnswers[q.id]||null;
     var answerHtml='';
     if(q.type==='mcq'||q.type==='truefalse'){
@@ -10284,34 +10222,40 @@ function assTerminate(reason){
 }
 
 // ── Visibility change (tab switch, minimise) ──
+// Assessment uses ONLY visibilitychange so one tab-switch = one violation (not two)
 document.addEventListener('visibilitychange', function(){
-  if(!_assProctoring) return;
   if(document.visibilityState==='hidden'){
-    // Small grace period — some browsers fire this on popups, print dialogs etc.
-    _assBlurTimer=setTimeout(function(){
-      assHandleViolation('tab_hidden');
-    }, 400);
+    // Assessment — 1st: warning, 2nd: terminate
+    if(_assProctoring){
+      clearTimeout(_assBlurTimer);
+      _assBlurTimer=setTimeout(function(){ assHandleViolation('tab_hidden'); }, 400);
+    }
+    // Quiz — instant terminate, no warning
+    if(_quizProctoring){
+      clearTimeout(_quizBlurTimer);
+      _quizBlurTimer=setTimeout(function(){ quizTerminate(); }, 300);
+    }
   } else {
-    // Returned — cancel grace period if they came back fast
+    // Came back — cancel any pending grace timers
     clearTimeout(_assBlurTimer);
+    clearTimeout(_quizBlurTimer);
   }
 });
 
-// ── Window blur (Alt+Tab, clicking another app) ──
+// ── Window blur — quiz only (assessment handled by visibilitychange above) ──
 window.addEventListener('blur', function(){
-  if(!_assProctoring) return;
-  // Longer grace period for blur — browser devtools, OS notifications etc.
-  _assBlurTimer=setTimeout(function(){
-    // Double-check visibility — if tab is still visible, this was a minor focus loss
-    if(document.visibilityState==='visible'){
-      assHandleViolation('window_blur');
-    }
-  }, 600);
+  // Quiz proctoring — instant terminate when they Alt+Tab to another app
+  if(_quizProctoring){
+    clearTimeout(_quizBlurTimer);
+    _quizBlurTimer=setTimeout(function(){
+      if(document.visibilityState==='visible'){ quizTerminate(); }
+    }, 400);
+  }
 });
 
 window.addEventListener('focus', function(){
-  // Cancel pending blur violation if they returned fast enough
   clearTimeout(_assBlurTimer);
+  clearTimeout(_quizBlurTimer);
 });
 
 async function submitAssessment(autoSubmit, malpractice){
@@ -10339,9 +10283,9 @@ async function submitAssessment(autoSubmit, malpractice){
             '<div style="font-size:3rem;margin-bottom:.75rem;">🚫</div>'+
             '<div class="quiz-lock-title" style="color:var(--accent-red);font-size:1.15rem;">Assessment Terminated</div>'+
             '<div class="quiz-lock-sub" style="margin-top:.6rem;line-height:1.7;max-width:360px;color:var(--text-muted);">'+
-              'Malpractice detected — you navigated away from the assessment window '+_assViolations+' time'+(+_assViolations!==1?'s':'')+'.'+
+              'You were warned once and left the assessment window again.'+
               '<br><br>Your answers have been auto-submitted and flagged for admin review.'+
-              '<br><br>Please contact your Team Leader if you believe this was a mistake.'+
+              '<br><br>Please speak to your Team Leader.'+
             '</div>'+
           '</div>';
       }
@@ -13527,7 +13471,7 @@ var CT = (function(){
         var _firstName=agent.split(' ')[0];
         var _sender=currentUser?currentUser.name.split(' ')[0]:'Diwan';
         var _ticketList=cases.map(function(c){ return '• '+c['Case Number']+' - '+c['Case Title']; }).join('\n');
-        var _body='Hi '+_firstName+',\n\nPlease ensure all the below cases are followed up today.\n\n'+_ticketList+'\n\nKindly update the case status once actioned.\n\n-- '+_sender;
+        var _body='Hi,\n\nPlease look into this.\n\n'+_ticketList+'\n\n-- '+_sender+'\n\nIf the case has already been handled, please ignore this message.';
         var mailBody=encodeURIComponent(_body);
         var mailSubj=encodeURIComponent('Follow-up Reminder - Pending Cases ('+cases.length+')');
         var mailto=email?'mailto:'+email+'?subject='+mailSubj+'&body='+mailBody:'';
@@ -13583,11 +13527,18 @@ var CT = (function(){
       var cases=agentCases(agent), active=activeCases(cases);
       var bg=aC(agent), ini=aI(agent), key='ct-lv-'+agent.replace(/\W/g,'_');
       var badgeCls=active.length>0?'danger':'ok', badgeLbl=active.length===0?'Queue clear':active.length+' pending';
+      var cEmail=getEmail(agent);
+      var activeCaseList=active.map(function(c){return '  \u2022 '+c['Case Number']+' - '+(c['Case Title']||'');}).join('\n');
+      var sender=currentUser?currentUser.name.split(' ')[0]:'Diwan';
+      var bulkBody='Hi,\n\nPlease look into this and follow up your pending cases today.\n\nAs you are on leave tomorrow, please ensure all balance follow-up cases are actioned before end of day today without fail.\n\n'+activeCaseList+'\n\n-- '+sender+'\n\nIf the case has already been handled, please ignore this message.';
+      var bulkSubj='Follow-up Reminder \u2014 Pending Cases Before Your Leave ('+active.length+')';
       html+='<div class="ct-agent-card"><div class="ct-agent-row" onclick="CT.toggleEl(\''+escH(key)+'\')">';
       html+='<div class="ct-av" style="background:'+bg+';">'+ini+'</div>';
       html+='<div class="ct-ai"><div class="ct-ai-name">'+escH(agent)+'</div><div class="ct-ai-sub">'+cases.length+' case'+(cases.length!==1?'s':'')+' total</div></div>';
-      html+='<span class="ct-pill '+badgeCls+'">'+escH(badgeLbl)+'</span></div>';
-      html+='<div id="'+escH(key)+'" class="ct-case-list" style="display:none;">';
+      html+='<div style="display:flex;align-items:center;gap:.5rem;margin-left:auto;">';
+      if(active.length>0 && cEmail){ html+='<button class="ct-remind-btn" style="font-size:.7rem;padding:.28rem .65rem;" onclick="event.stopPropagation();CT.sendRemind(\''+escH(cEmail)+'\',\''+encodeURIComponent(bulkBody)+'\',\''+encodeURIComponent(bulkSubj)+'\')">1️⃣ Remind All</button>'; }
+      html+='<span class="ct-pill '+badgeCls+'">'+escH(badgeLbl)+'</span>';
+      html+='</div></div>';
       if(!cases.length){ html+='<div style="font-size:.74rem;color:var(--text-dim);padding:.3rem 0;">Queue empty ✅</div>'; }
       else { cases.forEach(function(c){
         var cn=c['Case Number']||'', cTitle=c['Case Title']||'', ow=c.Owner||'';
@@ -13642,7 +13593,20 @@ var CT = (function(){
     html+='<option value="">All</option><option value="stale"'+(_filterAction==='stale'?' selected':'')+'>No Follow-up Today</option>';
     html+='<option value="noaction"'+(_filterAction==='noaction'?' selected':'')+'>No Action Yet</option>';
     html+='<option value="handled"'+(_filterAction==='handled'?' selected':'')+'>Handled</option></select>';
-    html+='<select class="ct-fi" onchange="CT.filterVertical(this.value)"><option value="">All Verticals</option><option value="Consumer"'+(_filterVertical==='Consumer'?' selected':'')+'>📱 Consumer</option><option value="Enterprise"'+(_filterVertical==='Enterprise'?' selected':'')+'>🏢 Enterprise</option></select></div>';
+    html+='<select class="ct-fi" onchange="CT.filterVertical(this.value)"><option value="">All Verticals</option><option value="Consumer"'+(_filterVertical==='Consumer'?' selected':'')+'>📱 Consumer</option><option value="Enterprise"'+(_filterVertical==='Enterprise'?' selected':'')+'>🏢 Enterprise</option></select>';
+    // Bulk remind button — only when a specific agent is selected and has pending cases
+    if(_filterAgent){
+      var _agentEmail=getEmail(_filterAgent);
+      var _agentPending=filtered.filter(function(c){return !isHandled(c['Case Number']);});
+      if(_agentPending.length>0 && _agentEmail){
+        var _caseLines=_agentPending.map(function(c){return '  \u2022 '+(c['Case Number']||'')+' - '+(c['Case Title']||'');}).join('\n');
+        var _bSender=currentUser?currentUser.name.split(' ')[0]:'Diwan';
+        var _bBody='Hi,\n\nPlease look into this and follow up your pending cases today.\n\n'+_caseLines+'\n\n-- '+_bSender+'\n\nIf the case has already been handled, please ignore this message.';
+        var _bSubj='Follow-up Reminder \u2014 Pending Cases Today ('+_agentPending.length+')';
+        html+='<button class="ct-remind-btn" style="margin-left:auto;font-size:.75rem;padding:.35rem .85rem;white-space:nowrap;" onclick="CT.sendRemind(\''+escH(_agentEmail)+'\',\''+encodeURIComponent(_bBody)+'\',\''+encodeURIComponent(_bSubj)+'\')">📧 Remind '+escH(_filterAgent.split(' ')[0])+'</button>';
+      }
+    }
+    html+='</div>';
     if(!filtered.length){ html+='<div class="ct-all-clear"><div class="ct-ac-ico">🔍</div>No cases match filters</div></div>'; return html; }
     html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr><th>Case #</th><th>Title / Customer</th><th>Agent</th><th>Status</th><th>Vertical</th><th>Modified</th><th>Follow-up</th><th>Action</th><th></th></tr></thead><tbody>';
     filtered.forEach(function(c){
@@ -14260,9 +14224,10 @@ CT.remindRow = function(email, agentName, caseNum, caseTitle){
   var firstName=agentName.split(' ')[0];
   var sender=currentUser?currentUser.name.split(' ')[0]:'Manager';
   var body=encodeURIComponent(
-    'Hi '+firstName+',\n\nPlease ensure the below case is followed up today.\n\n'+
+    'Hi,\n\nPlease look into this.\n\n'+
     '• '+caseNum+' - '+caseTitle+'\n\n'+
-    'Kindly update the case status once actioned.\n\n-- '+sender
+    '-- '+sender+'\n\n'+
+    'If the case has already been handled, please ignore this message.'
   );
   var subj=encodeURIComponent('Follow-up Reminder - Case '+caseNum);
   window.open('mailto:'+email+'?subject='+subj+'&body='+body,'_blank');
@@ -17822,95 +17787,6 @@ function remScheduleAll(){ _rems.forEach(function(r){ if(!r.done) remScheduleOne
 if(window.Notification&&Notification.permission==='default') setTimeout(function(){ Notification.requestPermission(); },3000);
 </script>
 
-<!-- ══ GRAND OPENING OVERLAY ══ -->
-<div id="grand-overlay" style="display:none;position:fixed;inset:0;z-index:999999;pointer-events:none;">
-  <canvas id="grand-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
-  <div id="grand-modal" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-60%) scale(0);
-    background:linear-gradient(135deg,#0d1627,#1a2847);
-    border:2px solid rgba(239,73,60,.5);border-radius:24px;
-    padding:2.8rem 3.2rem;text-align:center;
-    box-shadow:0 32px 80px rgba(0,0,0,.7),0 0 60px rgba(239,73,60,.2);
-    min-width:320px;max-width:480px;width:90vw;
-    pointer-events:all;transition:transform .65s cubic-bezier(.34,1.56,.64,1);">
-    <div style="font-size:2.8rem;margin-bottom:.6rem;">&#127881;</div>
-    <div style="font-family:Cormorant Garamond,serif;font-size:1.9rem;font-weight:700;color:#ef493c;margin-bottom:.3rem;">Welcome to K7TeamCore</div>
-    <div style="font-size:.88rem;color:rgba(255,255,255,.6);margin-bottom:.2rem;">Version 5.3 is now live &#128640;</div>
-    <div style="font-size:.78rem;color:rgba(255,255,255,.38);margin-bottom:1.6rem;">Designed & built by <span style="color:#ffaa50;font-weight:600;">Diwan Chowthry</span></div>
-    <div style="display:flex;flex-direction:column;gap:.45rem;margin-bottom:1.8rem;text-align:left;padding:1rem 1.1rem;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid rgba(255,255,255,.07);">
-      <div style="font-size:.8rem;color:rgba(255,255,255,.7);">&#128049; Orange Cat AI &mdash; your new support buddy</div>
-      <div style="font-size:.8rem;color:rgba(255,255,255,.7);">&#128203; Apple-style Reminders built in</div>
-      <div style="font-size:.8rem;color:rgba(255,255,255,.7);">&#128202; Live Case Tracker with AI insights</div>
-      <div style="font-size:.8rem;color:rgba(255,255,255,.7);">&#128172; Team messaging with read receipts</div>
-    </div>
-    <button id="grand-close-btn" onclick="closeGrandOpening()" style="
-      background:linear-gradient(135deg,#ef493c,#d03020);
-      border:none;border-radius:12px;color:#fff;
-      font-family:DM Sans,sans-serif;font-size:.88rem;font-weight:700;
-      padding:.75rem 2.2rem;cursor:pointer;
-      box-shadow:0 4px 20px rgba(239,73,60,.4);
-      transition:all .18s;pointer-events:all;">
-      Let&apos;s Go! &#128062;
-    </button>
-  </div>
-</div>
-<script>
-function showGrandOpening(){
-  var ov=document.getElementById('grand-overlay');
-  var modal=document.getElementById('grand-modal');
-  var canvas=document.getElementById('grand-canvas');
-  if(!ov)return;
-  ov.style.display='block';
-  ov.style.pointerEvents='all';
-  setTimeout(function(){modal.style.transform='translate(-50%,-50%) scale(1)';},120);
-  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
-  var ctx=canvas.getContext('2d');
-  var pts=[];
-  var COLS=['#ef493c','#ffaa50','#4c76a8','#2ec56f','#ff9a5c','#ffffff','#ffd700','#ff69b4','#7c3aed'];
-  function burst(x,y){
-    for(var i=0;i<90;i++){
-      var a=Math.random()*Math.PI*2, sp=2+Math.random()*7;
-      pts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,al:1,col:COLS[Math.floor(Math.random()*COLS.length)],sz:1.5+Math.random()*3,g:0.1+Math.random()*0.1});
-    }
-  }
-  var shots=[300,600,900,1200,1500,1800,2200,2600,3000,3500,4000,4600,5200,5900,6700,7600];
-  shots.forEach(function(t){
-    setTimeout(function(){
-      burst(80+Math.random()*(window.innerWidth-160), 40+Math.random()*(window.innerHeight*0.55));
-    },t);
-  });
-  burst(window.innerWidth*0.25,window.innerHeight*0.3);
-  setTimeout(function(){burst(window.innerWidth*0.75,window.innerHeight*0.25);},200);
-  setTimeout(function(){burst(window.innerWidth*0.5,window.innerHeight*0.45);},450);
-  function draw(){
-    if(!document.getElementById('grand-overlay')||document.getElementById('grand-overlay').style.display==='none')return;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    for(var i=pts.length-1;i>=0;i--){
-      var p=pts[i];
-      p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.vx*=0.98; p.al-=0.013;
-      if(p.al<=0){pts.splice(i,1);continue;}
-      ctx.save(); ctx.globalAlpha=p.al;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);
-      ctx.fillStyle=p.col; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-p.vx*2.5,p.y-p.vy*2.5);
-      ctx.strokeStyle=p.col; ctx.lineWidth=p.sz*0.6; ctx.stroke();
-      ctx.restore();
-    }
-    requestAnimationFrame(draw);
-  }
-  draw();
-  ov.addEventListener('click',function(e){if(e.target===ov)closeGrandOpening();});
-}
-function closeGrandOpening(){
-  var ov=document.getElementById('grand-overlay');
-  var modal=document.getElementById('grand-modal');
-  if(!ov)return;
-  modal.style.transform='translate(-50%,-50%) scale(0)';
-  ov.style.opacity='0'; ov.style.transition='opacity .4s';
-  setTimeout(function(){ov.style.display='none'; ov.style.opacity='';},450);
-}
-</script>
-
-
 <script>
 // ═══════════════════════════════════════════════════════
 //  CONTROL DECK
@@ -17925,87 +17801,9 @@ async function cdLoadAll(){
   cdLoadCelStatus();
   cdLoadAnnouncements();
   cdLoadAgents();
-  cdLoadTm();
   cdAmbLoadAndRender();
   bbLoadToggleState();
   bbLoadBlockedList();
-}
-
-// ── Team Meet: agent create toggle ──
-const CD_TM_CREATE_KEY = 'tm_agent_create_enabled';
-
-async function cdLoadTm(){
-  try{
-    var rows = await sbQuery('settings','key=eq.'+CD_TM_CREATE_KEY+'&select=value');
-    var enabled = false; // default OFF — admin controls by default
-    if(rows&&rows.length) enabled = rows[0].value === 'true';
-    var chk = document.getElementById('cd-tm-toggle');
-    var st  = document.getElementById('cd-tm-status');
-    if(chk) chk.checked = enabled;
-    if(st){ st.textContent = enabled ? '✅ Agents can create' : '🔒 Admin/TL only'; st.style.color = enabled ? '#2ec56f' : 'var(--text-muted)'; }
-  }catch(e){}
-  cdTmLoadRooms();
-}
-
-async function cdTmLoadRooms(){
-  var list=document.getElementById('cd-tm-rooms-list');
-  if(!list) return;
-  list.innerHTML='<div style="font-size:.78rem;color:var(--text-dim);">Loading…</div>';
-  try{
-    var rooms=await sbQuery('huddle_rooms','is_active=eq.true&select=id,name,created_by_name,created_at&order=created_at.desc');
-    if(!rooms||!rooms.length){list.innerHTML='<div style="font-size:.78rem;color:var(--text-dim);">No active rooms right now.</div>';return;}
-    var html='';
-    for(var i=0;i<rooms.length;i++){
-      var r=rooms[i];
-      var parts=[];
-      try{parts=await sbQuery('huddle_participants','room_id=eq.'+r.id+'&select=user_name');}catch(e){}
-      var partNames=parts.map(function(p){return p.user_name;}).join(', ')||'—';
-      var since=r.created_at?new Date(r.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'';
-      html+='<div style="display:flex;flex-direction:column;gap:.35rem;padding:.65rem .8rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:8px;margin-bottom:.45rem;">'+
-        '<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;">'+
-          '<div><span style="font-weight:700;font-size:.85rem;color:var(--text-primary);">🏠 '+esc(r.name||r.id)+'</span>'+
-          '<span style="font-size:.7rem;color:var(--text-muted);margin-left:.5rem;">by '+esc(r.created_by_name||'Unknown')+' · since '+since+'</span></div>'+
-          '<button class="xc-btn-sm cd-tm-terminate-btn" data-room-id="'+esc(r.id)+'" data-room-name="'+esc(r.name||r.id)+'" style="background:rgba(239,73,60,.12);border-color:rgba(239,73,60,.3);color:var(--accent-red);white-space:nowrap;">⛔ Terminate</button>'+
-        '</div>'+
-        '<div style="font-size:.74rem;color:var(--text-muted);">👥 '+parts.length+' participant'+(parts.length===1?'':'s')+': '+esc(partNames)+'</div>'+
-      '</div>';
-    }
-    list.innerHTML=html;
-  }catch(e){list.innerHTML='<div style="font-size:.78rem;color:var(--accent-red);">Error: '+e.message+'</div>';}
-}
-
-async function cdTmTerminateRoom(roomId,roomName){
-  if(!confirm('Terminate room "'+roomName+'"?\n\nAll participants will be kicked immediately.')) return;
-  var msg=document.getElementById('cd-tm-rooms-msg');
-  try{
-    await sbUpdate('huddle_rooms','id',roomId,{is_active:false});
-    await fetch(SUPABASE_URL+'/rest/v1/huddle_participants?room_id=eq.'+roomId,{method:'DELETE',headers:sbHeaders()});
-    await sbInsert('voice_signals',{from_id:currentUser.id,from_name:currentUser.name,to_id:null,to_room:'tm:'+roomId,type:'tm_room_ended',payload:JSON.stringify({reason:'terminated_by_admin',admin:currentUser.name}),created_at:new Date().toISOString()});
-    if(msg){msg.textContent='✅ Room "'+roomName+'" terminated.';msg.style.color='var(--accent-green)';msg.style.display='block';setTimeout(function(){msg.style.display='none';},4000);}
-    setTimeout(cdTmLoadRooms,1500);
-  }catch(e){
-    if(msg){msg.textContent='Error: '+e.message;msg.style.color='var(--accent-red)';msg.style.display='block';setTimeout(function(){msg.style.display='none';},3500);}
-  }
-}
-
-document.addEventListener('click',function(e){
-  var btn=e.target.closest('.cd-tm-terminate-btn');
-  if(!btn) return;
-  cdTmTerminateRoom(btn.getAttribute('data-room-id'),btn.getAttribute('data-room-name')||btn.getAttribute('data-room-id'));
-});
-
-async function cdTmAgentCreateToggle(enabled){
-  var msg = document.getElementById('cd-tm-msg');
-  var st  = document.getElementById('cd-tm-status');
-  if(msg){ msg.style.display='block'; msg.textContent='Saving…'; msg.style.color='var(--text-muted)'; }
-  try{
-    var val = enabled ? 'true' : 'false';
-    var ex = await sbQuery('settings','key=eq.'+CD_TM_CREATE_KEY+'&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key',CD_TM_CREATE_KEY,{value:val}); }
-    else{ await sbInsert('settings',{key:CD_TM_CREATE_KEY,value:val}); }
-    if(st){ st.textContent = enabled ? '✅ Agents can create' : '🔒 Admin/TL only'; st.style.color = enabled ? '#2ec56f' : 'var(--text-muted)'; }
-    if(msg){ msg.textContent = enabled ? 'Agents can now create rooms.' : 'Only Admin/TL can create rooms.'; setTimeout(function(){ msg.style.display='none'; },2500); }
-  }catch(e){ if(msg){ msg.textContent='Error: '+e.message; msg.style.color='#ef493c'; } }
 }
 
 // ── Orange Cat ──
@@ -18128,19 +17926,7 @@ async function cdTsAgentToggle(userId, enabled){
   }catch(e){ alert('Could not update: '+e.message); }
 }
 
-// ── What's New reset ──
-async function cdWoReset(){
-  var msg = document.getElementById('cd-wo-msg');
-  if(msg){ msg.style.display='block'; msg.textContent='Resetting…'; msg.style.color='var(--text-muted)'; }
-  try{
-    // Write a new launch key to settings — agents check localStorage against this
-    var newKey = 'k7tc_grand_open_v2_'+Date.now();
-    var ex = await sbQuery('settings','key=eq.whats_new_key&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key','whats_new_key',{value:newKey}); }
-    else{ await sbInsert('settings',{key:'whats_new_key',value:newKey}); }
-    if(msg){ msg.textContent="✅ Reset! All agents will see What's New on next login."; msg.style.color='#2ec56f'; setTimeout(function(){msg.style.display='none';},3000); }
-  }catch(e){ if(msg){ msg.textContent='Error: '+e.message; msg.style.color='#ef493c'; } }
-}
+
 
 // ── Celebrations ──
 var CEL_TEMPLATES = {
@@ -19329,1835 +19115,443 @@ async function checkCelebration(){
 
 
 // ════════════════════════════════════════════════════════
-//  VOICE HUB — Walkie Talkie + Group Rooms (WebRTC)
+//  K7 INTERCOM — Direct calls + Floor Channel (WebRTC + Supabase Realtime)
 // ════════════════════════════════════════════════════════
-var VH = {
-  // State
-  wtEnabled: false,          // this user's WT toggle
-  peers: {},                 // peerId -> RTCPeerConnection
-  localStream: null,         // mic stream
-  currentCall: {             // active 1-to-1 call
-    peerId: null,
-    peerName: null,
-    isInitiator: false,
-    timerInterval: null,
-    startTime: null
-  },
-  currentRoom: null,         // active group room id
-  roomMuted: true,
+var IC = {
+  localStream: null,
+  peers: {},             // userId -> RTCPeerConnection
+  call: { peerId:null, peerName:null, peerRole:null, isInitiator:false, timerInterval:null, startTime:null },
+  floor: { active:false, members:[] },
+  floorPeers: {},
+  channel: null,         // Supabase Realtime channel
+  agents: [],
   pollInterval: null,
-  signalPollInterval: null,
-  roomPollInterval: null,
-  speakingIntervals: {},
-
-  // Supabase signaling table: voice_signals
-  // Columns: id, from_id, from_name, to_id, to_room, type, payload, created_at
-  // voice_wt_status table: user_id, user_name, wt_on, updated_at
-  // voice_rooms table: id, name, created_by, created_at, members (jsonb)
-
-  STUN: { iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' }
-  ] },
-
-  // Built at runtime from CF_TURN_TOKEN_ID / CF_TURN_API_TOKEN
   ICE: null
 };
 
-// ── Get ICE config (STUN + Cloudflare TURN) ──
-// Cloudflare TURN credentials expire after 24h, so we fetch fresh ones each session
-async function vhGetIceConfig(){
-  if(VH.ICE) return VH.ICE;
-  var freeTurn = {
-    iceServers:[
-      {urls:'stun:stun.l.google.com:19302'},
-      {urls:'stun:stun1.l.google.com:19302'},
-      {urls:'stun:stun2.l.google.com:19302'},
-      {urls:'stun:stun3.l.google.com:19302'},
-      {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
-      {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
-      {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
-    ],
-    iceCandidatePoolSize:10
-  };
-  if(CF_TURN_TOKEN_ID && CF_TURN_TOKEN_ID!=='YOUR_CF_TURN_TOKEN_ID'){
+// ── ICE config (Cloudflare TURN + OpenRelay fallback) ──
+async function icGetIce(){
+  if(IC.ICE) return IC.ICE;
+  var free={iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},
+    {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+    {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
+    {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
+  ],iceCandidatePoolSize:10};
+  if(CF_TURN_TOKEN_ID&&CF_TURN_TOKEN_ID!=='YOUR_CF_TURN_TOKEN_ID'){
     try{
       var r=await fetch('https://rtc.live.cloudflare.com/v1/turn/keys/'+CF_TURN_TOKEN_ID+'/credentials/generate',
         {method:'POST',headers:{'Authorization':'Bearer '+CF_TURN_API_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({ttl:86400})});
-      if(!r.ok) throw new Error('CF TURN '+r.status);
-      var data=await r.json();
-      VH.ICE={iceServers:[
-        {urls:'stun:stun.l.google.com:19302'},
-        {urls:'stun:stun1.l.google.com:19302'},
-        {urls:data.iceServers.urls,username:data.iceServers.username,credential:data.iceServers.credential}
-      ],iceCandidatePoolSize:10};
-      return VH.ICE;
-    }catch(e){ console.warn('VH: CF TURN failed, using OpenRelay:',e.message); }
+      if(!r.ok)throw new Error('CF TURN '+r.status);
+      var d=await r.json();
+      IC.ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:d.iceServers.urls,username:d.iceServers.username,credential:d.iceServers.credential}],iceCandidatePoolSize:10};
+      return IC.ICE;
+    }catch(e){console.warn('IC: CF TURN failed, using OpenRelay');}
   }
-  VH.ICE=freeTurn; return VH.ICE;
+  IC.ICE=free; return IC.ICE;
 }
 
-// ── Audio beeps ──
-function vhBeep(type){
+// ── Mic helper ──
+async function icGetMic(){
+  if(IC.localStream)return IC.localStream;
   try{
-    var ctx = new (window.AudioContext||window.webkitAudioContext)();
-    var o = ctx.createOscillator();
-    var g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    if(type==='call'){ o.frequency.value=880; g.gain.setValueAtTime(.3,ctx.currentTime); o.start(); o.stop(ctx.currentTime+.18); }
-    else if(type==='end'){ o.frequency.value=440; g.gain.setValueAtTime(.2,ctx.currentTime); o.start(); o.stop(ctx.currentTime+.25); }
-    else if(type==='ptt'){ o.frequency.value=1200; g.gain.setValueAtTime(.15,ctx.currentTime); o.start(); o.stop(ctx.currentTime+.08); }
-    else if(type==='incoming'){ 
-      o.frequency.value=660; g.gain.setValueAtTime(.3,ctx.currentTime);
-      o.start(); o.stop(ctx.currentTime+.12);
-      setTimeout(function(){
-        try{var c2=new (window.AudioContext||window.webkitAudioContext)();var o2=c2.createOscillator();var g2=c2.createGain();o2.connect(g2);g2.connect(c2.destination);o2.frequency.value=880;g2.gain.setValueAtTime(.3,c2.currentTime);o2.start();o2.stop(c2.currentTime+.12);}catch(e){}
-      },200);
-    }
+    IC.localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    return IC.localStream;
+  }catch(e){alert('Microphone access denied. Please allow mic access for K7 Intercom.');return null;}
+}
+
+// ── Supabase Realtime channel (replaces polling) ──
+function icInitRealtime(){
+  if(!window.supabaseRealtime) return;  // fallback: use polling if RT not available
+  try{
+    if(IC.channel){ IC.channel.unsubscribe(); IC.channel=null; }
+    IC.channel=window.supabaseRealtime.channel('k7_intercom_'+SUPABASE_URL.slice(-8))
+      .on('broadcast',{event:'signal'},function(e){ icHandleSignal(e.payload); })
+      .subscribe(function(status){ console.log('IC Realtime:',status); });
+  }catch(e){console.warn('IC Realtime init failed:',e.message);}
+}
+
+// ── Send signal via Realtime broadcast (falls back to DB if RT unavailable) ──
+async function icSend(toId,type,payload){
+  if(!currentUser)return;
+  var msg={from_id:currentUser.id,from_name:currentUser.name,from_role:currentUser.role||'',to_id:toId||null,type:type,payload:payload||{}};
+  if(IC.channel){
+    try{ IC.channel.send({type:'broadcast',event:'signal',payload:msg}); return; }catch(e){}
+  }
+  // Fallback: write to voice_signals table
+  try{
+    await sbInsert('voice_signals',{from_id:currentUser.id,from_name:currentUser.name,to_id:toId||null,to_room:null,type:type,payload:JSON.stringify(payload||{}),created_at:new Date().toISOString()});
   }catch(e){}
 }
 
-// ── Supabase signal helpers ──
-async function vhSendSignal(toId, toRoom, type, payload){
-  if(!currentUser) return;
-  try{
-    await sbInsert('voice_signals',{
-      from_id: currentUser.id,
-      from_name: currentUser.name,
-      to_id: toId||null,
-      to_room: toRoom||null,
-      type: type,
-      payload: JSON.stringify(payload||{}),
-      created_at: new Date().toISOString()
-    });
-  }catch(e){ console.warn('VH signal send failed',e); }
-}
-
-var _vhProcessedSignals = new Set();
-var _vhTableExists = null; // null=unknown, true/false
-
-async function vhPollSignals(){
-  if(!currentUser) return;
-  if(_vhTableExists === false) return; // table confirmed missing, stop polling
-  try{
-    var since = new Date(Date.now()-9000).toISOString();
-    // PostgREST OR filter: to_id matches me OR to_room matches current room
-    var roomFilter = VH.currentRoom ? ',to_room.eq.'+VH.currentRoom : '';
-    var rows = await sbQuery('voice_signals',
-      'created_at=gt.'+encodeURIComponent(since)+
-      '&or=(to_id.eq.'+currentUser.id+roomFilter+')'+
-      '&order=created_at.asc&limit=40&select=id,from_id,from_name,to_id,to_room,type,payload,created_at'
-    );
-    _vhTableExists = true;
-    if(!rows||!rows.length) return;
-    for(var i=0;i<rows.length;i++){
-      var sig = rows[i];
-      if(sig.from_id === currentUser.id) continue; // skip own
-      if(_vhProcessedSignals.has(sig.id)) continue; // dedupe
-      _vhProcessedSignals.add(sig.id);
-      // Keep set small
-      if(_vhProcessedSignals.size > 200) _vhProcessedSignals.clear();
-      await vhHandleSignal(sig);
-    }
-  }catch(e){
-    // If table doesn't exist (404/400), mark and stop spamming
-    if(e.message && (e.message.includes('does not exist') || e.message.includes('relation') || e.message.includes('404'))){
-      _vhTableExists = false;
-      console.warn('Voice Hub: voice_signals table missing. Run the SQL setup.');
-    }
-  }
-}
-
-async function vhHandleSignal(sig){
-  var payload = {};
-  try{ payload = JSON.parse(sig.payload||'{}'); }catch(e){}
-  var from = sig.from_id;
-  var fromName = sig.from_name;
-
+// ── Handle incoming signal ──
+async function icHandleSignal(sig){
+  if(!currentUser||sig.from_id===currentUser.id)return;
+  if(sig.to_id&&sig.to_id!==currentUser.id&&sig.to_id!=='floor')return;
+  var from=sig.from_id,fromName=sig.from_name,payload=sig.payload||{};
   switch(sig.type){
     case 'call_invite':
-      // Incoming 1-to-1 call
-      if(VH.currentCall.peerId || VH.currentRoom) return; // busy
-      vhShowIncomingCall(from, fromName);
+      if(IC.call.peerId||IC.floor.active)break; // busy
+      icShowIncoming(from,fromName,sig.from_role||'');
       break;
     case 'call_accept':
-      if(VH.currentCall.peerId === from) vhOnCallAccepted(from);
+      if(IC.call.peerId===from)icOnAccepted(from);
       break;
     case 'call_reject':
-      if(VH.currentCall.peerId === from) vhOnCallRejected();
+      if(IC.call.peerId===from)icOnRejected();
       break;
     case 'call_end':
-      if(VH.currentCall.peerId === from) vhCleanupCall(true);
+      if(IC.call.peerId===from)icCleanupCall(false);
       break;
     case 'offer':
-      if(VH.currentCall.peerId === from || (sig.to_room && sig.to_room === VH.currentRoom))
-        await vhHandleOffer(from, fromName, payload, !!sig.to_room);
+      if(IC.call.peerId===from||sig.to_id==='floor')
+        await icHandleOffer(from,fromName,payload,sig.to_id==='floor');
       break;
     case 'answer':
-      if(VH.currentCall.peerId === from || (sig.to_room && sig.to_room === VH.currentRoom))
-        await vhHandleAnswer(from, payload);
+      if(IC.call.peerId===from||sig.to_id==='floor')
+        await icHandleAnswer(from,payload);
       break;
     case 'ice':
-      await vhHandleICE(from, payload);
+      await icHandleICE(from,payload);
       break;
-    case 'room_join':
-      if(VH.currentRoom && sig.to_room === VH.currentRoom) vhRenderRoomWidget();
+    case 'floor_join':
+      IC.floor.members=sig.floor_members||IC.floor.members;
+      icRenderFloor();
       break;
-    case 'room_leave':
-      if(VH.currentRoom && sig.to_room === VH.currentRoom){
-        // close peer
-        if(VH.peers[from]){ VH.peers[from].close(); delete VH.peers[from]; }
-        vhRenderRoomWidget();
-      }
+    case 'floor_leave':
+      if(IC.floorPeers[from]){IC.floorPeers[from].close();delete IC.floorPeers[from];}
+      IC.floor.members=(IC.floor.members||[]).filter(function(m){return m.id!==from;});
+      icRenderFloor();
       break;
-
+    case 'presence':
+      // Refresh agent cards to show online status
+      icRenderAgents(IC.agents);
+      break;
   }
 }
 
-// ── Get mic ──
-async function vhGetMic(){
-  if(VH.localStream) return VH.localStream;
-  try{
-    VH.localStream = await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-    return VH.localStream;
-  }catch(e){
-    alert('Microphone access denied. Please allow mic access for Voice Hub.');
-    return null;
-  }
+// ── Page init ──
+async function icPageInit(){
+  if(!currentUser)return;
+  icInitRealtime();
+  icRenderAgents([]);
+  await icLoadAgents();
+  icStartPresence();
+  // Start DB polling as fallback for environments where Realtime is blocked
+  icStartFallbackPoll();
 }
 
-// ── Page: load & tab switch ──
-function vhSwitchTab(tab){
-  document.getElementById('vh-panel-wt').style.display = tab==='wt'?'block':'none';
-  document.getElementById('vh-panel-rooms').style.display = tab==='rooms'?'block':'none';
-  document.getElementById('vh-tab-wt').classList.toggle('active', tab==='wt');
-  document.getElementById('vh-tab-rooms').classList.toggle('active', tab==='rooms');
-  if(tab==='wt') vhLoadAgents();
-  if(tab==='rooms') vhLoadRooms();
-}
-
-async function vhPageInit(){
-  // Load my WT status — silently handle missing table
-  try{
-    var rows = await sbQuery('voice_wt_status','user_id=eq.'+currentUser.id+'&select=wt_on');
-    var on = rows && rows.length && rows[0].wt_on;
-    VH.wtEnabled = !!on;
-  }catch(e){ VH.wtEnabled = false; }
-  var tog = document.getElementById('vh-my-wt-toggle');
-  var lbl = document.getElementById('vh-my-wt-label');
-  if(tog) tog.checked = VH.wtEnabled;
-  if(lbl) lbl.textContent = VH.wtEnabled ? 'ON' : 'OFF';
-  vhLoadAgents();
-  vhStartSignalPoll();
-  // Check if tables exist — show setup warning if not
-  setTimeout(async function(){
-    var warn = document.getElementById('vh-setup-warn');
-    if(!warn) return;
+var _icPollProcessed=new Set();
+var _icFallbackInterval=null;
+function icStartFallbackPoll(){
+  if(_icFallbackInterval)clearInterval(_icFallbackInterval);
+  _icFallbackInterval=setInterval(async function(){
+    if(!currentUser)return;
     try{
-      await sbQuery('voice_signals','limit=1&select=id');
-      warn.style.display='none'; // tables exist
-    }catch(e){
-      warn.style.display='block'; // show SQL instructions
-    }
-  }, 1500);
+      var since=new Date(Date.now()-8000).toISOString();
+      var rows=await sbQuery('voice_signals','created_at=gt.'+encodeURIComponent(since)+'&or=(to_id.eq.'+currentUser.id+',to_id.eq.floor)&order=created_at.asc&limit=30&select=id,from_id,from_name,to_id,type,payload,created_at');
+      if(!rows||!rows.length)return;
+      rows.forEach(function(r){
+        if(_icPollProcessed.has(r.id))return;
+        _icPollProcessed.add(r.id);
+        if(_icPollProcessed.size>300)_icPollProcessed.clear();
+        if(r.from_id===currentUser.id)return;
+        var payload={};try{payload=JSON.parse(r.payload||'{}');}catch(e){}
+        icHandleSignal({from_id:r.from_id,from_name:r.from_name,to_id:r.to_id,type:r.type,payload:payload});
+      });
+    }catch(e){}
+  },3000);
 }
 
-async function vhToggleMyWT(on){
-  VH.wtEnabled = on;
-  var lbl = document.getElementById('vh-my-wt-label');
-  if(lbl) lbl.textContent = on ? 'ON' : 'OFF';
-  try{
-    var ex = await sbQuery('voice_wt_status','user_id=eq.'+currentUser.id+'&select=user_id');
-    if(ex && ex.length){
-      await sbUpdate('voice_wt_status','user_id',currentUser.id,{wt_on:on,updated_at:new Date().toISOString()});
-    } else {
-      await sbInsert('voice_wt_status',{user_id:currentUser.id,user_name:currentUser.name,wt_on:on,updated_at:new Date().toISOString()});
-    }
-  }catch(e){ console.warn('VH WT toggle save failed',e); }
-  vhLoadAgents();
+// ── Presence: broadcast "I am online" every 15s ──
+var _icPresenceInterval=null;
+function icStartPresence(){
+  if(_icPresenceInterval)clearInterval(_icPresenceInterval);
+  icSend(null,'presence',{});
+  _icPresenceInterval=setInterval(function(){ if(currentUser) icSend(null,'presence',{}); },15000);
 }
 
-async function vhLoadAgents(){
-  var list = document.getElementById('vh-agents-list');
-  if(!list) return;
-  list.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">Loading…</div>';
+// ── Load agents from users table ──
+async function icLoadAgents(){
   try{
-    // Always load from users table — works even if voice_wt_status doesn't exist yet
-    var users = await sbQuery('users','role=neq.syslevel&select=id,name,role&order=name.asc');
-    users = (users||[]).filter(function(u){ return u.id !== currentUser.id; });
-
-    // Try to get WT status — silently ignore if table missing
-    var wtMap = {};
-    try{
-      var wtRows = await sbQuery('voice_wt_status','select=user_id,wt_on');
-      (wtRows||[]).forEach(function(r){ wtMap[r.user_id] = !!r.wt_on; });
-    }catch(e){ /* table may not exist yet — all default to OFF */ }
-
-    if(!users.length){
-      list.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">No other agents found.</div>';
-      return;
-    }
-
-    list.innerHTML = users.map(function(u){
-      var ini = (u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-      var wtOn = !!wtMap[u.id];
-      var isBusy = VH.currentCall.peerId && VH.currentCall.peerId !== u.id;
-      var wtBadge = wtOn
-        ? '<span style="font-size:.7rem;background:rgba(46,197,111,.12);color:#2ec56f;padding:2px 8px;border-radius:20px;margin-right:.4rem;">WT ON</span>'
-        : '<span style="font-size:.7rem;background:var(--navy-hover);color:var(--text-dim);padding:2px 8px;border-radius:20px;margin-right:.4rem;border:1px solid var(--navy-border);">WT OFF</span>';
-      var callBtn = wtOn
-        ? (isBusy
-            ? '<span style="font-size:.75rem;color:var(--text-dim);">Busy</span>'
-            : '<button class="vh-call-btn" data-id="'+u.id+'" data-name="'+esc(u.name)+'" style="padding:.35rem .9rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:DM Sans,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;">📞 Call</button>')
-        : '<span style="font-size:.75rem;color:var(--text-dim);">Unavailable</span>';
-      return '<div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);opacity:'+(wtOn?'1':'.6')+';">'+
-        '<div style="width:32px;height:32px;border-radius:50%;background:#4c76a8;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:#fff;flex-shrink:0;">'+ini+'</div>'+
-        '<div style="flex:1;font-size:.84rem;font-weight:600;color:var(--text-primary);">'+esc(u.name)+'</div>'+
-        wtBadge+
-        callBtn+
-      '</div>';
-    }).join('');
+    var rows=await sbQuery('users','select=id,name,role&order=name.asc');
+    IC.agents=(rows||[]).filter(function(u){return u.id!==currentUser.id;});
+    icRenderAgents(IC.agents);
   }catch(e){
-    console.error('vhLoadAgents error:', e);
-    list.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;">Could not load agents: '+esc(e.message)+'</div>';
+    var g=document.getElementById('ic-agents-grid');
+    if(g)g.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:1rem;">Could not load team list.</div>';
   }
 }
 
-// ── 1-to-1 Call Flow ──
-async function vhCallAgent(peerId, peerName){
-  if(VH.currentCall.peerId){ alert('Already in a call.'); return; }
-  VH.currentCall.peerId = peerId;
-  VH.currentCall.peerName = peerName;
-  VH.currentCall.isInitiator = true;
-  vhBeep('call');
-  await vhSendSignal(peerId, null, 'call_invite', {});
-  // Show active call widget in "calling" state
-  var w = document.getElementById('vh-active-call');
-  var nameEl = document.getElementById('vh-call-with-name');
-  if(nameEl) nameEl.textContent = 'Calling ' + peerName + '…';
-  if(w) w.style.display = 'block';
+// ── Agent cards ──
+var IC_COLORS=['#ef493c','#4c76a8','#2ec56f','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#10b981'];
+function icColor(name){ var h=0; for(var i=0;i<name.length;i++)h=(h<<5)-h+name.charCodeAt(i)|0; return IC_COLORS[Math.abs(h)%IC_COLORS.length]; }
+function icInitials(name){ var p=name.trim().split(' '); return (p[0]?p[0][0]:'?')+(p[1]?p[1][0]:''); }
 
+function icCallFromBtn(btn){
+  var id=btn.getAttribute('data-icid');
+  var name=btn.getAttribute('data-icname');
+  if(id&&name) icStartCall(id,name);
 }
 
-function vhShowIncomingCall(fromId, fromName){
-  vhBeep('incoming');
-  VH.currentCall.peerId = fromId;
-  VH.currentCall.peerName = fromName;
-  VH.currentCall.isInitiator = false;
-  var overlay = document.getElementById('vh-call-overlay');
-  var callerEl = document.getElementById('vh-caller-name');
-  if(callerEl) callerEl.textContent = fromName;
-  if(overlay){ overlay.style.display = 'flex'; }
-}
-
-async function vhAcceptCall(){
-  var overlay = document.getElementById('vh-call-overlay');
-  if(overlay) overlay.style.display = 'none';
-  var peerId = VH.currentCall.peerId;
-  var peerName = VH.currentCall.peerName;
-  await vhSendSignal(peerId, null, 'call_accept', {});
-  await vhStartWebRTC(peerId, false);
-  vhShowActiveCall(peerName);
-  vhBeep('call');
-}
-
-async function vhRejectCall(){
-  var overlay = document.getElementById('vh-call-overlay');
-  if(overlay) overlay.style.display = 'none';
-  await vhSendSignal(VH.currentCall.peerId, null, 'call_reject', {});
-  VH.currentCall.peerId = null;
-  VH.currentCall.peerName = null;
-}
-
-async function vhOnCallAccepted(peerId){
-  await vhStartWebRTC(peerId, true);
-  vhShowActiveCall(VH.currentCall.peerName);
-}
-
-function vhOnCallRejected(){
-  var w = document.getElementById('vh-active-call');
-  if(w) w.style.display = 'none';
-  VH.currentCall.peerId = null;
-  VH.currentCall.peerName = null;
-  vhBeep('end');
-  alert('Call was declined.');
-}
-
-function vhShowActiveCall(peerName){
-  var w = document.getElementById('vh-active-call');
-  var nameEl = document.getElementById('vh-call-with-name');
-  var timerEl = document.getElementById('vh-call-timer');
-  if(nameEl) nameEl.textContent = peerName;
-  if(w) w.style.display = 'block';
-  _vhMuted = false;
-  if(VH.localStream) VH.localStream.getAudioTracks().forEach(function(t){ t.enabled=true; });
-  var muteBtn = document.getElementById('vh-mute-btn');
-  if(muteBtn){ muteBtn.style.background='rgba(46,197,111,.15)'; muteBtn.style.borderColor='rgba(46,197,111,.4)'; muteBtn.style.color='#2ec56f'; muteBtn.textContent='🎙 Mic On — Click to Mute'; }
-  VH.currentCall.startTime = Date.now();
-  VH.currentCall.timerInterval = setInterval(function(){
-    if(!timerEl) return;
-    var s = Math.floor((Date.now()-VH.currentCall.startTime)/1000);
-    timerEl.textContent = Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
-  }, 1000);
-}
-
-async function vhEndCall(){
-  if(VH.currentCall.peerId){
-    await vhSendSignal(VH.currentCall.peerId, null, 'call_end', {});
+function icRenderAgents(agents){
+  var grid=document.getElementById('ic-agents-grid');
+  if(!grid)return;
+  if(!agents||!agents.length){
+    grid.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:1rem;">No other team members found.</div>';
+    return;
   }
-  vhCleanupCall(false);
-}
-
-function vhCleanupCall(remote){
-  if(!remote) vhBeep('end');
-  else vhBeep('end');
-  clearInterval(VH.currentCall.timerInterval);
-  // Close peer connection
-  var pc = VH.peers[VH.currentCall.peerId];
-  if(pc){ pc.close(); delete VH.peers[VH.currentCall.peerId]; }
-  // Stop local stream tracks used for call
-  if(VH.localStream && !VH.currentRoom){
-    VH.localStream.getTracks().forEach(function(t){ t.stop(); });
-    VH.localStream = null;
-  }
-  VH.currentCall = {peerId:null,peerName:null,isInitiator:false,timerInterval:null,startTime:null};
-  var w = document.getElementById('vh-active-call');
-  if(w) w.style.display = 'none';
-  var overlay = document.getElementById('vh-call-overlay');
-  if(overlay) overlay.style.display = 'none';
-}
-
-// ── Mute toggle (full duplex) ──
-var _vhMuted = false;
-function vhToggleMute(){
-  _vhMuted = !_vhMuted;
-  if(VH.localStream) VH.localStream.getAudioTracks().forEach(function(t){ t.enabled=!_vhMuted; });
-  var btn = document.getElementById('vh-mute-btn');
-  if(_vhMuted){
-    if(btn){ btn.style.background='rgba(239,73,60,.15)'; btn.style.borderColor='rgba(239,73,60,.4)'; btn.style.color='#ef493c'; btn.textContent='🔇 Muted — Click to Unmute'; }
-  } else {
-    if(btn){ btn.style.background='rgba(46,197,111,.15)'; btn.style.borderColor='rgba(46,197,111,.4)'; btn.style.color='#2ec56f'; btn.textContent='🎙 Mic On — Click to Mute'; }
-  }
-}
-
-// ── WebRTC peer connection ──
-async function vhStartWebRTC(peerId, isInitiator){
-  var stream = await vhGetMic();
-  if(!stream) return;
-  var iceConfig = await vhGetIceConfig();
-  var pc = new RTCPeerConnection(iceConfig);
-  VH.peers[peerId] = pc;
-
-  stream.getTracks().forEach(function(t){ pc.addTrack(t, stream); });
-
-  pc.ontrack = function(e){
-    var audio = new Audio();
-    audio.srcObject = e.streams[0];
-    audio.autoplay = true;
-    document.body.appendChild(audio);
-  };
-
-  pc.onicecandidate = function(e){
-    if(e.candidate){
-      vhSendSignal(peerId, null, 'ice', {candidate: e.candidate});
-    }
-  };
-
-  if(isInitiator){
-    var offer = await pc.createOffer({offerToReceiveAudio:true});
-    await pc.setLocalDescription(offer);
-    await vhSendSignal(peerId, null, 'offer', {sdp: pc.localDescription});
-  }
-}
-
-async function vhHandleOffer(fromId, fromName, payload, isRoom){
-  var toId = isRoom ? null : fromId;
-  var toRoom = isRoom ? VH.currentRoom : null;
-
-  var pc = VH.peers[fromId];
-  if(!pc){
-    var stream = await vhGetMic();
-    if(!stream) return;
-    stream.getAudioTracks().forEach(function(t){ t.enabled = isRoom ? !VH.roomMuted : false; });
-    var iceConfig2 = await vhGetIceConfig();
-    pc = new RTCPeerConnection(iceConfig2);
-    VH.peers[fromId] = pc;
-    stream.getTracks().forEach(function(t){ pc.addTrack(t, stream); });
-    pc.ontrack = function(e){
-      var audio = new Audio();
-      audio.srcObject = e.streams[0];
-      audio.autoplay = true;
-      document.body.appendChild(audio);
-      if(isRoom) vhMarkSpeaking(fromId, fromName, e.streams[0]);
-    };
-    pc.onicecandidate = function(e){
-      if(e.candidate) vhSendSignal(toId, toRoom, 'ice', {candidate: e.candidate, for: fromId});
-    };
-  }
-  await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-  var answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  await vhSendSignal(toId, toRoom, 'answer', {sdp: pc.localDescription, for: fromId});
-}
-
-async function vhHandleAnswer(fromId, payload){
-  var pc = VH.peers[fromId];
-  if(pc && pc.signalingState !== 'stable'){
-    await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-  }
-}
-
-async function vhHandleICE(fromId, payload){
-  var pc = VH.peers[payload.for||fromId] || VH.peers[fromId];
-  if(pc && payload.candidate){
-    try{ await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); }catch(e){}
-  }
-}
-
-// ── Group Rooms ──
-async function vhLoadRooms(){
-  var list = document.getElementById('vh-rooms-list');
-  if(!list) return;
-  try{
-    var rows = await sbQuery('voice_rooms','select=id,name,created_by,members&order=created_at.desc&limit=20');
-    if(!rows||!rows.length){
-      list.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">No active rooms. Create one above.</div>';
-      return;
-    }
-    list.innerHTML = rows.map(function(r){
-      var members = [];
-      try{ members = JSON.parse(r.members||'[]'); }catch(e){}
-      var inRoom = VH.currentRoom === r.id;
-      return '<div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);">'+
-        '<div style="flex:1;">'+
-          '<div style="font-size:.84rem;font-weight:700;color:var(--text-primary);">'+esc(r.name)+'</div>'+
-          '<div style="font-size:.72rem;color:var(--text-dim);margin-top:2px;">'+members.length+' member'+(members.length!==1?'s':'')+' · by '+esc(r.created_by)+'</div>'+
-        '</div>'+
-        (inRoom
-          ? '<span style="font-size:.72rem;color:#2ec56f;font-weight:700;">● You\'re In</span>'
-          : (VH.currentCall.peerId || VH.currentRoom
-              ? '<span style="font-size:.75rem;color:var(--text-dim);">Busy</span>'
-              : '<button class="vh-join-btn" data-id="'+r.id+'" data-name="'+esc(r.name)+'" style="padding:.35rem .9rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:DM Sans,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;">Join</button>'))+
-        (isAdminUser()||r.created_by===currentUser.name ? '<button class="vh-del-room-btn" data-id="'+r.id+'" style="margin-left:.4rem;padding:.3rem .7rem;background:rgba(239,73,60,.1);color:#ef493c;border:1px solid rgba(239,73,60,.25);border-radius:6px;font-size:.72rem;cursor:pointer;">🗑</button>' : '')+
-      '</div>';
-    }).join('');
-  }catch(e){ list.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">Could not load rooms.</div>'; }
-}
-
-async function vhCreateRoom(){
-  var inp = document.getElementById('vh-room-name-input');
-  var name = (inp&&inp.value||'').trim();
-  if(!name){ alert('Please enter a room name.'); return; }
-  try{
-    var row = await sbInsert('voice_rooms',{
-      name: name,
-      created_by: currentUser.name,
-      members: JSON.stringify([{id:currentUser.id,name:currentUser.name}]),
-      created_at: new Date().toISOString()
-    });
-    if(inp) inp.value='';
-    vhLoadRooms();
-    // Auto-join
-    if(row&&row.length) vhJoinRoom(row[0].id, name);
-  }catch(e){ alert('Could not create room: '+e.message); }
-}
-
-async function vhJoinRoom(roomId, roomName){
-  if(VH.currentCall.peerId){ alert('End your current call first.'); return; }
-  if(VH.currentRoom) await vhLeaveRoom();
-  VH.currentRoom = roomId;
-  VH.roomMuted = true;
-  // Get mic
-  var stream = await vhGetMic();
-  if(!stream){ VH.currentRoom=null; return; }
-  stream.getAudioTracks().forEach(function(t){ t.enabled=false; });
-  // Update members in DB
-  try{
-    var rows = await sbQuery('voice_rooms','id=eq.'+roomId+'&select=members');
-    var members = [];
-    if(rows&&rows.length) try{ members=JSON.parse(rows[0].members||'[]'); }catch(e){}
-    if(!members.find(function(m){return m.id===currentUser.id;})){
-      members.push({id:currentUser.id,name:currentUser.name});
-      await sbUpdate('voice_rooms','id',roomId,{members:JSON.stringify(members)});
-    }
-  }catch(e){}
-  // Signal others in room
-  await vhSendSignal(null, roomId, 'room_join', {name:currentUser.name});
-  // Show widget
-  vhRenderRoomWidget(roomName);
-  vhBeep('call');
-  // Connect to existing members
-  try{
-    var rows2 = await sbQuery('voice_rooms','id=eq.'+roomId+'&select=members');
-    var members2 = [];
-    if(rows2&&rows2.length) try{ members2=JSON.parse(rows2[0].members||'[]'); }catch(e){}
-    for(var i=0;i<members2.length;i++){
-      var m = members2[i];
-      if(m.id===currentUser.id) continue;
-      await vhStartRoomWebRTC(m.id, roomId);
-    }
-  }catch(e){}
-  vhLoadRooms();
-  // Start room poll
-  VH.roomPollInterval = setInterval(vhLoadRooms, 5000);
-}
-
-async function vhStartRoomWebRTC(peerId, roomId){
-  var stream = VH.localStream;
-  if(!stream) return;
-  var iceConfig3 = await vhGetIceConfig();
-  var pc = new RTCPeerConnection(iceConfig3);
-  VH.peers[peerId] = pc;
-  stream.getTracks().forEach(function(t){ pc.addTrack(t, stream); });
-  pc.ontrack = function(e){
-    var audio = new Audio();
-    audio.srcObject = e.streams[0];
-    audio.autoplay = true;
-    document.body.appendChild(audio);
-  };
-  pc.onicecandidate = function(e){
-    if(e.candidate) vhSendSignal(null, roomId, 'ice', {candidate:e.candidate, for:peerId});
-  };
-  var offer = await pc.createOffer({offerToReceiveAudio:true});
-  await pc.setLocalDescription(offer);
-  await vhSendSignal(null, roomId, 'offer', {sdp:pc.localDescription, for:peerId});
-}
-
-async function vhLeaveRoom(){
-  if(!VH.currentRoom) return;
-  clearInterval(VH.roomPollInterval);
-  await vhSendSignal(null, VH.currentRoom, 'room_leave', {});
-  // Update members in DB
-  try{
-    var rows = await sbQuery('voice_rooms','id=eq.'+VH.currentRoom+'&select=members');
-    var members = [];
-    if(rows&&rows.length) try{ members=JSON.parse(rows[0].members||'[]'); }catch(e){}
-    members = members.filter(function(m){ return m.id!==currentUser.id; });
-    await sbUpdate('voice_rooms','id',VH.currentRoom,{members:JSON.stringify(members)});
-  }catch(e){}
-  // Close all peer connections
-  Object.keys(VH.peers).forEach(function(pid){
-    if(VH.peers[pid]){ VH.peers[pid].close(); delete VH.peers[pid]; }
-  });
-  if(VH.localStream && !VH.currentCall.peerId){
-    VH.localStream.getTracks().forEach(function(t){ t.stop(); });
-    VH.localStream = null;
-  }
-  VH.currentRoom = null;
-  VH.roomMuted = true;
-  VH.ICE = null; // reset so fresh TURN credentials fetched next session
-  document.getElementById('vh-room-widget').style.display = 'none';
-  vhBeep('end');
-  vhLoadRooms();
-}
-
-async function vhDeleteRoom(roomId){
-  if(!confirm('Delete this room?')) return;
-  try{
-    await fetch(SUPABASE_URL+'/rest/v1/voice_rooms?id=eq.'+roomId,{method:'DELETE',headers:sbHeaders()});
-    if(VH.currentRoom===roomId) await vhLeaveRoom();
-    vhLoadRooms();
-  }catch(e){ alert('Error: '+e.message); }
-}
-
-function vhRenderRoomWidget(roomName){
-  var w = document.getElementById('vh-room-widget');
-  var nameEl = document.getElementById('vh-room-widget-name');
-  var membersEl = document.getElementById('vh-room-widget-members');
-  if(roomName && nameEl) nameEl.textContent = roomName;
-  if(w) w.style.display = 'block';
-  // Refresh member count from DB
-  if(VH.currentRoom){
-    sbQuery('voice_rooms','id=eq.'+VH.currentRoom+'&select=members').then(function(rows){
-      var members = [];
-      if(rows&&rows.length) try{ members=JSON.parse(rows[0].members||'[]'); }catch(e){}
-      if(membersEl) membersEl.textContent = members.length+' member'+(members.length!==1?'s':'');
-    }).catch(function(){});
-  }
-}
-
-function vhRoomToggleMute(){
-  VH.roomMuted = !VH.roomMuted;
-  if(VH.localStream) VH.localStream.getAudioTracks().forEach(function(t){ t.enabled=!VH.roomMuted; });
-  var btn = document.getElementById('vh-room-mute-btn');
-  if(VH.roomMuted){
-    if(btn){ btn.style.background='rgba(76,118,168,.15)'; btn.style.borderColor='var(--navy-border)'; btn.style.color='var(--text-muted)'; btn.textContent='🎙 Muted — Click to Speak'; }
-  } else {
-    if(btn){ btn.style.background='rgba(239,73,60,.2)'; btn.style.borderColor='#ef493c'; btn.style.color='#ef493c'; btn.textContent='🔴 Speaking — Click to Mute'; }
-  }
-}
-
-function vhMarkSpeaking(userId, userName, stream){
-  // Simple speaking detection via AudioContext analyser
-  try{
-    var ctx = new (window.AudioContext||window.webkitAudioContext)();
-    var src = ctx.createMediaStreamSource(stream);
-    var analyser = ctx.createAnalyser();
-    src.connect(analyser);
-    var data = new Uint8Array(analyser.fftSize);
-    VH.speakingIntervals[userId] = setInterval(function(){
-      analyser.getByteTimeDomainData(data);
-      var vol = data.reduce(function(s,v){return s+Math.abs(v-128);},0)/data.length;
-      var spkEl = document.getElementById('vh-spk-'+userId);
-      if(spkEl) spkEl.style.background = vol>5 ? '#ef493c' : '#4c76a8';
-    },200);
-    // Add speaker pill
-    var speakers = document.getElementById('vh-room-speakers');
-    if(speakers && !document.getElementById('vh-spk-'+userId)){
-      var pill = document.createElement('div');
-      pill.id = 'vh-spk-'+userId;
-      pill.title = userName;
-      var ini = (userName||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-      pill.style.cssText='width:28px;height:28px;border-radius:50%;background:#4c76a8;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;transition:background .2s;';
-      pill.textContent=ini;
-      speakers.appendChild(pill);
-    }
-  }catch(e){}
-}
-
-// ── Signal polling ──
-function vhStartSignalPoll(){
-  if(VH.signalPollInterval) return;
-  VH.signalPollInterval = setInterval(vhPollSignals, 2000);
-}
-function vhStopSignalPoll(){
-  clearInterval(VH.signalPollInterval);
-  VH.signalPollInterval = null;
-}
-
-// ── Control Deck: per-agent WT access ──
-async function cdLoadVHAgents(){
-  var list = document.getElementById('cd-vh-agents');
-  if(!list) return;
-  try{
-    var users = await sbQuery('users','role=neq.syslevel&select=id,name,role&order=name.asc');
-    var wtRows = await sbQuery('voice_wt_status','select=user_id,wt_on');
-    var wtMap = {};
-    (wtRows||[]).forEach(function(r){ wtMap[r.user_id]=r.wt_on; });
-    list.innerHTML = (users||[]).map(function(u){
-      var on = !!wtMap[u.id];
-      return '<div style="display:flex;align-items:center;gap:.75rem;padding:.55rem .75rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius-sm);">'+
-        '<div style="flex:1;font-size:.82rem;font-weight:600;color:var(--text-primary);">'+esc(u.name)+'<span style="font-size:.7rem;color:var(--text-dim);margin-left:.4rem;">('+u.role+')</span></div>'+
-        '<label class="cat-toggle-wrap"><input type="checkbox" class="vh-agent-tog" data-uid="'+u.id+'" data-uname="'+esc(u.name)+'" '+(on?'checked':'')+'/><span class="cat-toggle-slider"></span></label>'+
-      '</div>';
-    }).join('');
-    var statusEl = document.getElementById('cd-vh-status');
-    var onCount = Object.values(wtMap).filter(Boolean).length;
-    if(statusEl) statusEl.textContent = onCount+' agent'+(onCount!==1?'s':'')+' active';
-    var countEl = document.getElementById('cd-vh-agents-count');
-    if(countEl) countEl.textContent = (users||[]).length+' agent'+((users||[]).length!==1?'s':'');
-  }catch(e){ list.innerHTML='<div style="color:var(--text-dim);font-size:.8rem;">Could not load.</div>'; }
-}
-
-async function cdVHAgentToggle(userId, userName, on){
-  try{
-    var ex = await sbQuery('voice_wt_status','user_id=eq.'+userId+'&select=user_id');
-    if(ex&&ex.length){
-      await sbUpdate('voice_wt_status','user_id',userId,{wt_on:on,updated_at:new Date().toISOString()});
+  var busy=IC.call.peerId;
+  grid.innerHTML=agents.map(function(a){
+    var col=icColor(a.name);
+    var isBusy=busy&&busy!==a.id;
+    var isInCall=a.id===IC.call.peerId;
+    var initials=icInitials(a.name).toUpperCase();
+    var bgCol=col+'28';
+    var callDisabled=!!(IC.call.peerId||IC.floor.active);
+    var btnHtml;
+    var btnStyle='width:100%;padding:.45rem;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;';
+    if(isInCall){
+      btnHtml='<button onclick="icEndCall()" style="'+btnStyle+'background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);color:#ef493c;">End Call</button>';
+    } else if(callDisabled){
+      btnHtml='<button disabled style="'+btnStyle+'background:transparent;border:1px solid var(--navy-border);color:var(--text-dim);opacity:.5;cursor:not-allowed;">Busy</button>';
     } else {
-      await sbInsert('voice_wt_status',{user_id:userId,user_name:userName,wt_on:on,updated_at:new Date().toISOString()});
+      btnHtml='<button data-icid="'+esc(a.id)+'" data-icname="'+esc(a.name)+'" onclick="icCallFromBtn(this)" style="'+btnStyle+'background:transparent;border:1px solid var(--navy-border);color:var(--text-primary);">📞 Call</button>';
     }
-    cdLoadVHAgents();
-  }catch(e){ alert('Error: '+e.message); }
-}
-
-// ── Hook into page show ──
-var _origShowPage = typeof showPage === 'function' ? showPage : null;
-
-
-// ════════════════════════════════════════════════════════
-//  ABOUT PAGE — Editable What's New & Coming Soon
-// ════════════════════════════════════════════════════════
-var ABOUT_WN_KEY = 'about_whats_new';
-var ABOUT_CS_KEY = 'about_coming_soon';
-
-var ABOUT_WN_DEFAULT = [
-  '🐱 Orange Cat AI Assistant — built for & by K7 Support team',
-  'Roster, attendance, quiz & cases — all readable by Cat',
-  'Send DMs & broadcasts via Cat',
-  'Reminders — Apple-style task manager',
-  'Roster multi-month & Case Tracker improvements'
-];
-var ABOUT_CS_DEFAULT = [
-  'AI-based improvements to Orange Cat',
-  'Live Dynamics 365 CRM integration',
-  'Advanced reporting with export',
-  'Vision Helpdesk live ticket sync',
-  'VICIdial real-time agent status'
-];
-
-async function aboutLoadItems(){
-  await aboutRenderList('whats_new');
-  await aboutRenderList('coming_soon');
-  // Show + Add and edit buttons only for admin
-  if(isAdminUser()){
-    var wnBtn = document.getElementById('about-wn-add-btn');
-    var csBtn = document.getElementById('about-cs-add-btn');
-    if(wnBtn) wnBtn.style.display='block';
-    if(csBtn) csBtn.style.display='block';
-  }
-}
-
-async function aboutGetItems(type){
-  var key = type==='whats_new' ? ABOUT_WN_KEY : ABOUT_CS_KEY;
-  var def = type==='whats_new' ? ABOUT_WN_DEFAULT : ABOUT_CS_DEFAULT;
-  try{
-    var rows = await sbQuery('settings','key=eq.'+key+'&select=value');
-    if(rows&&rows.length){
-      var parsed = JSON.parse(rows[0].value);
-      return Array.isArray(parsed) ? parsed : def;
-    }
-  }catch(e){}
-  return def;
-}
-
-async function aboutSaveItems(type, items){
-  var key = type==='whats_new' ? ABOUT_WN_KEY : ABOUT_CS_KEY;
-  try{
-    var ex = await sbQuery('settings','key=eq.'+key+'&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key',key,{value:JSON.stringify(items)}); }
-    else { await sbInsert('settings',{key:key,value:JSON.stringify(items)}); }
-  }catch(e){ alert('Save failed: '+e.message); }
-}
-
-async function aboutRenderList(type){
-  var listId = type==='whats_new' ? 'about-wn-list' : 'about-cs-list';
-  var dotColor = type==='whats_new' ? '#1a7a45' : 'var(--accent-blue)';
-  var list = document.getElementById(listId);
-  if(!list) return;
-  var items = await aboutGetItems(type);
-  var isAdmin = isAdminUser();
-  list.innerHTML = items.map(function(item, idx){
-    return '<div class="about-update-item" id="about-item-'+type+'-'+idx+'" style="display:flex;align-items:flex-start;gap:.5rem;justify-content:space-between;">'+
-      '<div style="display:flex;align-items:flex-start;gap:.5rem;flex:1;min-width:0;">'+
-        '<span class="about-update-dot" style="background:'+dotColor+';margin-top:.45rem;flex-shrink:0;"></span>'+
-        '<span id="about-text-'+type+'-'+idx+'" style="flex:1;">'+esc(item)+'</span>'+
+    return '<div style="background:var(--navy-card);border:1px solid '+(isInCall?'rgba(76,118,168,.5)':'var(--navy-border)')+';border-radius:var(--radius);padding:1rem;display:flex;flex-direction:column;gap:.6rem;">'+
+      '<div style="display:flex;align-items:center;gap:.6rem;">'+
+        '<div style="width:38px;height:38px;border-radius:50%;background:'+bgCol+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:'+col+';flex-shrink:0;">'+initials+'</div>'+
+        '<div style="min-width:0;"><div style="font-size:.88rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.name+'</div>'+
+        '<div style="font-size:.72rem;color:var(--text-muted);">'+( a.role||'Agent')+'</div></div>'+
       '</div>'+
-      (isAdmin ?
-        '<div style="display:flex;gap:.3rem;flex-shrink:0;margin-left:.5rem;">'+
-          '<button class="about-edit-btn" data-type="'+type+'" data-idx="'+idx+'" title="Edit" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:.8rem;padding:0 2px;opacity:.6;">✏️</button>'+
-          '<button class="about-del-btn" data-type="'+type+'" data-idx="'+idx+'" title="Delete" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:.8rem;padding:0 2px;opacity:.6;">🗑</button>'+
-        '</div>'
-      : '')+
+      btnHtml+
     '</div>';
   }).join('');
 }
 
-function aboutEditItem(type, idx){
-  var textEl = document.getElementById('about-text-'+type+'-'+idx);
-  if(!textEl) return;
-  var current = textEl.textContent;
-  var rowEl = document.getElementById('about-item-'+type+'-'+idx);
-  // Replace the text span with an input
-  textEl.style.display='none';
-  // Build inline editor
-  var editorId = 'about-editor-'+type+'-'+idx;
-  if(document.getElementById(editorId)) return; // already editing
-  var editor = document.createElement('div');
-  editor.id = editorId;
-  editor.style.cssText='display:flex;gap:.4rem;flex:1;align-items:center;';
-  editor.innerHTML =
-    '<input type="text" value="'+current.replace(/"/g,'&quot;')+'" style="flex:1;padding:.3rem .6rem;border:1px solid var(--navy-border);border-radius:6px;background:var(--navy-hover);color:var(--text-primary);font-family:DM Sans,sans-serif;font-size:.8rem;outline:none;" id="about-inp-'+type+'-'+idx+'"/>'+
-    '<button class="about-save-btn" data-type="'+type+'" data-idx="'+idx+'" style="padding:.28rem .7rem;background:var(--gold);color:#fff;border:none;border-radius:5px;font-family:DM Sans,sans-serif;font-size:.74rem;font-weight:700;cursor:pointer;">Save</button>'+
-    '<button class="about-cancel-btn" data-type="'+type+'" data-idx="'+idx+'" style="padding:.28rem .7rem;background:transparent;border:1px solid var(--navy-border);border-radius:5px;font-family:DM Sans,sans-serif;font-size:.74rem;cursor:pointer;color:var(--text-muted);">✕</button>';
-  textEl.parentNode.insertBefore(editor, textEl.nextSibling);
-  var inp = document.getElementById('about-inp-'+type+'-'+idx);
-  if(inp){ inp.focus(); inp.select();
-    inp.addEventListener('keydown',function(e){ if(e.key==='Enter') aboutSaveItem(type,idx); if(e.key==='Escape') aboutCancelEdit(type,idx); });
-  }
+// ── Start a call ──
+async function icStartCall(peerId,peerName){
+  if(IC.call.peerId){alert('You are already in a call.');return;}
+  IC.call.peerId=peerId; IC.call.peerName=peerName; IC.call.isInitiator=true;
+  icShowActiveBar(peerName);
+  await icSend(peerId,'call_invite',{});
 }
 
-function aboutCancelEdit(type, idx){
-  var textEl = document.getElementById('about-text-'+type+'-'+idx);
-  var editor = document.getElementById('about-editor-'+type+'-'+idx);
-  if(textEl) textEl.style.display='';
-  if(editor) editor.remove();
+// ── Show incoming call banner ──
+function icShowIncoming(fromId,fromName,fromRole){
+  IC.call.peerId=fromId; IC.call.peerName=fromName; IC.call.isInitiator=false;
+  var banner=document.getElementById('ic-incoming-banner');
+  var nameEl=document.getElementById('ic-incoming-name');
+  var roleEl=document.getElementById('ic-incoming-role');
+  if(nameEl)nameEl.textContent='Incoming call from '+fromName;
+  if(roleEl)roleEl.textContent=fromRole||'';
+  if(banner)banner.style.display='flex';
+  icRenderAgents(IC.agents);
+  try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var o=ctx.createOscillator();var g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(.3,ctx.currentTime);o.start();o.stop(ctx.currentTime+.15);setTimeout(function(){try{var c2=new(window.AudioContext||window.webkitAudioContext)();var o2=c2.createOscillator();var g2=c2.createGain();o2.connect(g2);g2.connect(c2.destination);o2.frequency.value=1100;g2.gain.setValueAtTime(.3,c2.currentTime);o2.start();o2.stop(c2.currentTime+.15);}catch(e){}},220);}catch(e){}
 }
 
-async function aboutSaveItem(type, idx){
-  var inp = document.getElementById('about-inp-'+type+'-'+idx);
-  if(!inp) return;
-  var newVal = inp.value.trim();
-  if(!newVal){ alert('Cannot save empty item.'); return; }
-  var items = await aboutGetItems(type);
-  items[idx] = newVal;
-  await aboutSaveItems(type, items);
-  await aboutRenderList(type);
+// ── Answer incoming call ──
+async function icAnswerCall(){
+  var banner=document.getElementById('ic-incoming-banner');
+  if(banner)banner.style.display='none';
+  await icSend(IC.call.peerId,'call_accept',{});
+  icShowActiveBar(IC.call.peerName);
+  await icSetupPeerConnection(IC.call.peerId,false);
 }
 
-async function aboutDeleteItem(type, idx){
-  if(!confirm('Delete this item?')) return;
-  var items = await aboutGetItems(type);
-  items.splice(idx, 1);
-  await aboutSaveItems(type, items);
-  await aboutRenderList(type);
+// ── Decline incoming call ──
+async function icDeclineCall(){
+  var banner=document.getElementById('ic-incoming-banner');
+  if(banner)banner.style.display='none';
+  await icSend(IC.call.peerId,'call_reject',{});
+  IC.call.peerId=null; IC.call.peerName=null;
+  icRenderAgents(IC.agents);
 }
 
-async function aboutAddItem(type){
-  var items = await aboutGetItems(type);
-  items.push('New item — click ✏️ to edit');
-  await aboutSaveItems(type, items);
-  await aboutRenderList(type);
-  // Auto-open edit on last item
-  setTimeout(function(){ aboutEditItem(type, items.length-1); }, 80);
+// ── When call is accepted by other side ──
+async function icOnAccepted(peerId){
+  await icSetupPeerConnection(peerId,true);
 }
 
-// ════════════════════════════════════════════════════════
-//  VOICE HUB — Global ON/OFF toggle (Control Deck)
-// ════════════════════════════════════════════════════════
-var CD_VH_GLOBAL_KEY = 'vh_global_enabled';
-
-async function cdVHLoadGlobalStatus(){
-  try{
-    var rows = await sbQuery('settings','key=eq.'+CD_VH_GLOBAL_KEY+'&select=value');
-    var on = !rows||!rows.length || rows[0].value !== 'false';
-    var tog = document.getElementById('cd-vh-toggle');
-    var statusEl = document.getElementById('cd-vh-status');
-    if(tog) tog.checked = on;
-    if(statusEl) statusEl.textContent = on ? 'Enabled' : 'Disabled';
-  }catch(e){}
+// ── When call is rejected ──
+function icOnRejected(){
+  icCleanupCall(false);
+  alert(IC.call.peerName+' is not available right now.');
 }
 
-async function cdVHGlobalToggle(on){
-  var statusEl = document.getElementById('cd-vh-status');
-  var msgEl = document.getElementById('cd-vh-msg');
-  if(statusEl) statusEl.textContent = on ? 'Enabled' : 'Disabled';
-  if(msgEl){ msgEl.style.display='block'; msgEl.textContent = on ? '✅ Voice Hub enabled for all agents' : '🔇 Voice Hub hidden from all agents'; setTimeout(function(){ msgEl.style.display='none'; },2500); }
-  try{
-    var val = on ? 'true' : 'false';
-    var ex = await sbQuery('settings','key=eq.'+CD_VH_GLOBAL_KEY+'&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key',CD_VH_GLOBAL_KEY,{value:val}); }
-    else { await sbInsert('settings',{key:CD_VH_GLOBAL_KEY,value:val}); }
-  }catch(e){ alert('Error: '+e.message); }
-}
-
-async function checkVHGlobal(){
-  try{
-    var rows = await sbQuery('settings','key=eq.'+CD_VH_GLOBAL_KEY+'&select=value');
-    var on = !rows||!rows.length || rows[0].value !== 'false';
-    var vhItem = document.getElementById('sidebar-voicehub');
-    if(vhItem){
-      if(!on){
-        vhItem.style.display='none';
-        // If currently on voicehub page, redirect to home
-        var vhPage = document.getElementById('page-voicehub');
-        if(vhPage && vhPage.classList.contains('active')){
-          showPage('home', document.querySelector('.sidebar-item'));
-        }
-      } else {
-        vhItem.style.display='flex';
-      }
-    }
-  }catch(e){}
-}
-
-
-// ── Event delegation for VH + About dynamic buttons ──
-document.addEventListener('click', function(e){
-  // Walkie talkie call button
-  var callBtn = e.target.closest('.vh-call-btn');
-  if(callBtn){ vhCallAgent(callBtn.dataset.id, callBtn.dataset.name); return; }
-  // Room join button
-  var joinBtn = e.target.closest('.vh-join-btn');
-  if(joinBtn){ vhJoinRoom(joinBtn.dataset.id, joinBtn.dataset.name); return; }
-  // Room delete button
-  var delBtn = e.target.closest('.vh-del-room-btn');
-  if(delBtn){ vhDeleteRoom(delBtn.dataset.id); return; }
-  // About edit button
-  var editBtn = e.target.closest('.about-edit-btn');
-  if(editBtn){ aboutEditItem(editBtn.dataset.type, parseInt(editBtn.dataset.idx)); return; }
-  // About delete button
-  var aDelBtn = e.target.closest('.about-del-btn');
-  if(aDelBtn){ aboutDeleteItem(aDelBtn.dataset.type, parseInt(aDelBtn.dataset.idx)); return; }
-  // About save button
-  var saveBtn = e.target.closest('.about-save-btn');
-  if(saveBtn){ aboutSaveItem(saveBtn.dataset.type, parseInt(saveBtn.dataset.idx)); return; }
-  // About cancel button
-  var cancelBtn = e.target.closest('.about-cancel-btn');
-  if(cancelBtn){ aboutCancelEdit(cancelBtn.dataset.type, parseInt(cancelBtn.dataset.idx)); return; }
-});
-
-// Event delegation for VH agent toggles in control deck
-document.addEventListener('change', function(e){
-  if(e.target.classList.contains('vh-agent-tog')){
-    cdVHAgentToggle(e.target.dataset.uid, e.target.dataset.uname, e.target.checked);
-  }
-});
-
-// ════════════════════════════════════════════════════════
-//  DOCK CALL — Voice & Video calls inside chat dock
-//  Reuses VH signaling (voice_signals table) + TURN config
-// ════════════════════════════════════════════════════════
-var DC = {
-  peerId: null,
-  peerName: null,
-  peerBg: null,
-  isVideo: false,
-  isInitiator: false,
-  pc: null,           // RTCPeerConnection
-  localStream: null,
-  micMuted: false,
-  camOff: false,
-  processedSigs: new Set(),
-  pollInterval: null
-};
-
-// ── Helpers ──
-function dcIni(name){ return (name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase(); }
-
-function dcGetWin(userId){ return document.getElementById('dock-win-'+userId); }
-
-function dcShowCallPanel(userId, html){
-  var body = document.getElementById('dock-body-'+userId);
-  if(!body) return;
-  // Hide messages + input, show call panel
-  var msgs = document.getElementById('dock-msgs-'+userId);
-  var inp  = document.getElementById('dock-input-'+userId);
-  var emojiBtn = body.querySelector('.dock-emoji-btn');
-  var sendBtn  = body.querySelector('.dock-send-btn');
-  var inputRow = body.querySelector('.dock-input-row');
-  if(msgs) msgs.style.display='none';
-  if(inputRow) inputRow.style.display='none';
-  // Remove old call panel if any
-  var old = document.getElementById('dc-panel-'+userId);
-  if(old) old.remove();
-  var panel = document.createElement('div');
-  panel.id = 'dc-panel-'+userId;
-  panel.className = 'dock-call-panel';
-  panel.innerHTML = html;
-  body.appendChild(panel);
-  // Expand window if minimised
-  var win = dcGetWin(userId);
-  if(win){ win.classList.remove('minimised'); win.style.height = DC.isVideo ? '460px' : '320px'; }
-}
-
-function dcRestoreChat(userId){
-  var body = document.getElementById('dock-body-'+userId);
-  if(!body) return;
-  var msgs = document.getElementById('dock-msgs-'+userId);
-  var inputRow = body.querySelector('.dock-input-row');
-  if(msgs) msgs.style.display='flex';
-  if(inputRow) inputRow.style.display='flex';
-  var panel = document.getElementById('dc-panel-'+userId);
-  if(panel) panel.remove();
-  var win = dcGetWin(userId);
-  if(win) win.style.height='380px';
-}
-
-// ── Start call (initiator) ──
-async function dcStartCall(peerId, peerName, bg, isVideo){
-  if(DC.peerId){ alert('You are already in a call. End it first.'); return; }
-  if(VH.currentCall.peerId){ alert('You have an active Voice Hub call. End it first.'); return; }
-
-  DC.peerId = peerId; DC.peerName = peerName; DC.peerBg = bg;
-  DC.isVideo = isVideo; DC.isInitiator = true;
-
-  // Show calling state
-  dcShowCallingPanel(peerId, peerName, bg, isVideo);
-
-  // Get media
-  var stream = await dcGetMedia(isVideo);
-  if(!stream){ dcCleanup(peerId); return; }
-  DC.localStream = stream;
-
-  // Send invite signal
-  await vhSendSignal(peerId, null, isVideo ? 'dc_video_invite' : 'dc_voice_invite', {name:currentUser.name});
-
-  // Start polling for answer
-  dcStartPoll();
-}
-
-function dcShowCallingPanel(peerId, peerName, bg, isVideo){
-  var ini = dcIni(peerName);
-  var html =
-    '<div class="dock-call-ringing">'+
-      '<div class="dock-ring-av" style="background:'+bg+';">'+ini+'</div>'+
-      '<div class="dock-ring-label">'+esc(peerName)+'</div>'+
-      '<div class="dock-ring-sub">'+(isVideo?'Video':'Voice')+' calling…</div>'+
-      '<div class="dock-ring-btns">'+
-        '<button class="dock-ring-decline" onclick="dcCancelCall(\''+peerId+'\')" title="Cancel">📵</button>'+
-      '</div>'+
-    '</div>';
-  dcShowCallPanel(peerId, html);
-}
-
-// ── Incoming call ──
-function dcShowIncomingPanel(fromId, fromName, fromBg, isVideo){
-  // Open chat window with this person if not open
-  if(!document.getElementById('dock-win-'+fromId)){
-    dockOpenChat(fromId, fromName, fromBg||'#4c76a8');
-    // Wait a tick for DOM
-    setTimeout(function(){ dcShowIncomingPanel(fromId, fromName, fromBg, isVideo); }, 120);
-    return;
-  }
-  var ini = dcIni(fromName);
-  var html =
-    '<div class="dock-call-ringing">'+
-      '<div class="dock-ring-av" style="background:'+(fromBg||'#4c76a8')+';">'+ini+'</div>'+
-      '<div class="dock-ring-label">'+esc(fromName)+'</div>'+
-      '<div class="dock-ring-sub">'+(isVideo?'Video':'Voice')+' calling…</div>'+
-      '<div class="dock-ring-btns">'+
-        '<button class="dock-ring-accept" onclick="dcAcceptCall(\''+fromId+'\',\''+esc(fromName)+'\','+(isVideo?'true':'false')+')" title="Accept">📞</button>'+
-        '<button class="dock-ring-decline" onclick="dcDeclineCall(\''+fromId+'\')" title="Decline">📵</button>'+
-      '</div>'+
-    '</div>';
-  DC.peerId = fromId; DC.peerName = fromName; DC.peerBg = fromBg; DC.isVideo = isVideo; DC.isInitiator = false;
-  dcShowCallPanel(fromId, html);
-  vhBeep('incoming');
-  // Expand the window
-  var win = dcGetWin(fromId);
-  if(win){ win.classList.remove('minimised'); win.style.height='320px'; }
-}
-
-// ── Accept call ──
-async function dcAcceptCall(fromId, fromName, isVideo){
-  DC.isVideo = isVideo;
-  var stream = await dcGetMedia(isVideo);
-  if(!stream){ dcDeclineCall(fromId); return; }
-  DC.localStream = stream;
-  await vhSendSignal(fromId, null, 'dc_accepted', {name:currentUser.name});
-  await dcStartWebRTC(fromId, false, isVideo);
-  dcShowActiveCallPanel(fromId, isVideo);
-  dcStartPoll();
-}
-
-// ── Cancel (initiator) / Decline (receiver) ──
-async function dcCancelCall(peerId){
-  await vhSendSignal(peerId, null, 'dc_cancelled', {});
-  dcCleanup(peerId);
-}
-
-async function dcDeclineCall(fromId){
-  await vhSendSignal(fromId, null, 'dc_declined', {});
-  dcCleanup(fromId);
-}
-
-// ── Show active call UI ──
-function dcShowActiveCallPanel(peerId, isVideo){
-  var muteIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>';
-  var camIcon  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
-  var endIcon  = '<svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>';
-
-  var videoArea = '';
-  if(isVideo){
-    videoArea =
-      '<div class="dock-video-area">'+
-        '<div class="dock-video-tile" id="dc-remote-tile-'+peerId+'">'+
-          '<div class="dock-tile-av" style="background:'+(DC.peerBg||'#4c76a8')+';">'+dcIni(DC.peerName)+'</div>'+
-          '<span class="dock-tile-label">'+esc(DC.peerName)+'</span>'+
-        '</div>'+
-        '<div class="dock-video-tile" id="dc-local-tile-'+peerId+'">'+
-          '<div class="dock-tile-av" style="background:#2ec56f;">'+dcIni(currentUser.name)+'</div>'+
-          '<span class="dock-tile-label">You</span>'+
-        '</div>'+
-      '</div>';
-  } else {
-    // Voice only — show a simple "in call" banner
-    videoArea =
-      '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem;background:var(--navy);padding:1rem;">'+
-        '<div style="width:52px;height:52px;border-radius:50%;background:'+(DC.peerBg||'#4c76a8')+';display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;box-shadow:0 0 0 8px rgba(46,197,111,.12);">'+dcIni(DC.peerName)+'</div>'+
-        '<div style="font-size:.82rem;font-weight:700;color:var(--text-primary);">'+esc(DC.peerName)+'</div>'+
-        '<div style="font-size:.72rem;color:#2ec56f;" id="dc-call-timer-'+peerId+'">0:00</div>'+
-      '</div>';
-  }
-
-  var camBtn = isVideo
-    ? '<button class="dock-call-ctrl-btn cam-off" id="dc-cam-btn-'+peerId+'" onclick="dcToggleCam(\''+peerId+'\')" title="Camera">'+camIcon+'</button>'
-    : '';
-
-  var html =
-    '<div class="dock-call-panel">'+
-      videoArea+
-      '<div class="dock-call-controls">'+
-        '<button class="dock-call-ctrl-btn mute-off" id="dc-mute-btn-'+peerId+'" onclick="dcToggleMic(\''+peerId+'\')" title="Mute">'+muteIcon+'</button>'+
-        camBtn+
-        '<button class="dock-call-ctrl-btn end-btn" onclick="dcEndCall(\''+peerId+'\')" title="End call">'+endIcon+'</button>'+
-      '</div>'+
-    '</div>';
-
-  dcShowCallPanel(peerId, html);
-
-  // Attach video streams to tiles
-  if(isVideo){
-    setTimeout(function(){
-      var localTile = document.getElementById('dc-local-tile-'+peerId);
-      if(localTile && DC.localStream){
-        var lv = document.createElement('video');
-        lv.srcObject = DC.localStream; lv.autoplay = true; lv.muted = true; lv.playsInline = true;
-        lv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:8px;';
-        localTile.appendChild(lv);
-      }
-    }, 100);
-  }
-
-  // Start call timer
-  var startTime = Date.now();
-  if(!isVideo){
-    var timerEl = document.getElementById('dc-call-timer-'+peerId);
-    DC._timerInterval = setInterval(function(){
-      if(!timerEl) return;
-      var s = Math.floor((Date.now()-startTime)/1000);
-      timerEl.textContent = Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;
-    },1000);
-  }
-}
-
-// ── Mic and Camera toggles ──
-function dcToggleMic(peerId){
-  DC.micMuted = !DC.micMuted;
-  if(DC.localStream) DC.localStream.getAudioTracks().forEach(function(t){ t.enabled=!DC.micMuted; });
-  var btn = document.getElementById('dc-mute-btn-'+peerId);
-  if(btn){
-    btn.className = DC.micMuted ? 'dock-call-ctrl-btn mute-on' : 'dock-call-ctrl-btn mute-off';
-    btn.title = DC.micMuted ? 'Unmute' : 'Mute';
-  }
-}
-
-function dcToggleCam(peerId){
-  DC.camOff = !DC.camOff;
-  if(DC.localStream) DC.localStream.getVideoTracks().forEach(function(t){ t.enabled=!DC.camOff; });
-  var btn = document.getElementById('dc-cam-btn-'+peerId);
-  if(btn) btn.className = DC.camOff ? 'dock-call-ctrl-btn cam-on' : 'dock-call-ctrl-btn cam-off';
+// ── Show active call bar ──
+function icShowActiveBar(name){
+  var bar=document.getElementById('ic-active-bar');
+  var nameEl=document.getElementById('ic-active-name');
+  if(nameEl)nameEl.textContent=name;
+  if(bar)bar.style.display='flex';
+  IC.call.startTime=Date.now();
+  if(IC.call.timerInterval)clearInterval(IC.call.timerInterval);
+  IC.call.timerInterval=setInterval(function(){
+    var el=document.getElementById('ic-active-timer');
+    if(!el)return;
+    var s=Math.floor((Date.now()-IC.call.startTime)/1000);
+    var m=Math.floor(s/60);s=s%60;
+    el.textContent=m+':'+(s<10?'0':'')+s;
+  },1000);
+  icRenderAgents(IC.agents);
 }
 
 // ── End call ──
-async function dcEndCall(peerId){
-  await vhSendSignal(peerId, null, 'dc_ended', {});
-  dcCleanup(peerId);
-  vhBeep('end');
+async function icEndCall(){
+  await icSend(IC.call.peerId,'call_end',{});
+  icCleanupCall(false);
 }
 
-function dcCleanup(peerId){
-  clearInterval(DC.pollInterval); DC.pollInterval=null;
-  clearInterval(DC._timerInterval); DC._timerInterval=null;
-  if(DC.pc){ DC.pc.close(); DC.pc=null; }
-  if(DC.localStream){ DC.localStream.getTracks().forEach(function(t){t.stop();}); DC.localStream=null; }
-  // Remove remote audio/video
-  var ra=document.getElementById('dc-remote-audio-'+peerId); if(ra) ra.remove();
-  DC.peerId=null; DC.peerName=null; DC.peerBg=null;
-  DC.isVideo=false; DC.isInitiator=false; DC.micMuted=false; DC.camOff=false;
-  DC.processedSigs.clear();
-  dcRestoreChat(peerId);
+function icCleanupCall(remote){
+  if(IC.call.timerInterval){clearInterval(IC.call.timerInterval);IC.call.timerInterval=null;}
+  var peerId=IC.call.peerId;
+  if(peerId&&IC.peers[peerId]){IC.peers[peerId].close();delete IC.peers[peerId];}
+  IC.call={peerId:null,peerName:null,peerRole:null,isInitiator:false,timerInterval:null,startTime:null};
+  var bar=document.getElementById('ic-active-bar');
+  if(bar)bar.style.display='none';
+  var banner=document.getElementById('ic-incoming-banner');
+  if(banner)banner.style.display='none';
+  icRenderAgents(IC.agents);
 }
 
-// ── WebRTC ──
-async function dcGetMedia(isVideo){
-  try{
-    return await navigator.mediaDevices.getUserMedia({
-      audio:{echoCancellation:true,noiseSuppression:true},
-      video:isVideo ? {width:{ideal:640},height:{ideal:480},frameRate:{ideal:24}} : false
-    });
-  }catch(e){
-    alert((isVideo?'Camera':'Microphone')+' access denied. Please allow access and try again.');
-    return null;
-  }
-}
-
-async function dcStartWebRTC(peerId, isInitiator, isVideo){
-  var stream = DC.localStream;
-  if(!stream) return;
-  var iceConfig = await vhGetIceConfig();
-  var pc = new RTCPeerConnection(iceConfig);
-  DC.pc = pc;
-  stream.getTracks().forEach(function(t){ pc.addTrack(t, stream); });
-
-  pc.ontrack = function(e){
-    if(e.track.kind==='audio'){
-      var audio = document.createElement('audio');
-      audio.id = 'dc-remote-audio-'+peerId;
-      audio.srcObject = e.streams[0]; audio.autoplay=true;
-      document.body.appendChild(audio);
-    }
-    if(e.track.kind==='video' && isVideo){
-      var remoteTile = document.getElementById('dc-remote-tile-'+peerId);
-      if(remoteTile){
-        var rv = remoteTile.querySelector('video');
-        if(!rv){ rv=document.createElement('video'); rv.autoplay=true; rv.playsInline=true; rv.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:8px;'; remoteTile.appendChild(rv); }
-        rv.srcObject = e.streams[0];
-      }
-    }
+// ── Setup RTCPeerConnection ──
+async function icSetupPeerConnection(peerId,isInitiator){
+  var mic=await icGetMic();
+  if(!mic)return;
+  var ice=await icGetIce();
+  var pc=new RTCPeerConnection(ice);
+  IC.peers[peerId]=pc;
+  mic.getTracks().forEach(function(t){pc.addTrack(t,mic);});
+  pc.ontrack=function(e){
+    var audio=new Audio();
+    audio.srcObject=e.streams[0];
+    audio.autoplay=true;
+    document.body.appendChild(audio);
+    pc._audioEl=audio;
   };
-
-  pc.onicecandidate = function(e){
-    if(e.candidate) vhSendSignal(peerId, null, 'dc_ice', {candidate:e.candidate});
+  pc.onicecandidate=function(e){
+    if(e.candidate) icSend(peerId,'ice',{candidate:e.candidate});
   };
-
-  pc.onconnectionstatechange = function(){
+  pc.onconnectionstatechange=function(){
     if(pc.connectionState==='failed'||pc.connectionState==='disconnected'){
-      dcCleanup(peerId);
-    }
-  };
-
-  if(isInitiator){
-    var offer = await pc.createOffer({offerToReceiveAudio:true, offerToReceiveVideo:isVideo});
-    await pc.setLocalDescription(offer);
-    await vhSendSignal(peerId, null, 'dc_offer', {sdp:pc.localDescription});
-  }
-}
-
-// ── Signal polling ──
-function dcStartPoll(){
-  if(DC.pollInterval) return;
-  DC.pollInterval = setInterval(dcPollSignals, 1500);
-}
-
-async function dcPollSignals(){
-  if(!currentUser) return;
-  try{
-    var since = new Date(Date.now()-9000).toISOString();
-    var rows = await sbQuery('voice_signals',
-      'created_at=gt.'+encodeURIComponent(since)+
-      '&to_id=eq.'+currentUser.id+
-      '&order=created_at.asc&limit=30&select=id,from_id,from_name,type,payload,created_at'
-    );
-    if(!rows||!rows.length) return;
-    for(var i=0;i<rows.length;i++){
-      var sig=rows[i];
-      if(sig.from_id===currentUser.id) continue;
-      if(DC.processedSigs.has(sig.id)) continue;
-      DC.processedSigs.add(sig.id);
-      if(DC.processedSigs.size>200) DC.processedSigs.clear();
-      await dcHandleSignal(sig);
-    }
-  }catch(e){}
-}
-
-async function dcHandleSignal(sig){
-  var payload={};
-  try{ payload=JSON.parse(sig.payload||'{}'); }catch(e){}
-  var from=sig.from_id; var fromName=sig.from_name;
-
-  // Get bg colour for this person
-  var fromUser = (_chatUsers||[]).find(function(u){return u.id===from;});
-  var fromBg = fromUser ? (fromUser._bg||'#4c76a8') : '#4c76a8';
-
-  switch(sig.type){
-    case 'dc_voice_invite':
-      if(DC.peerId) break; // busy
-      dcShowIncomingPanel(from, fromName, fromBg, false);
-      break;
-    case 'dc_video_invite':
-      if(DC.peerId) break;
-      dcShowIncomingPanel(from, fromName, fromBg, true);
-      break;
-    case 'dc_accepted':
-      if(DC.peerId!==from) break;
-      await dcStartWebRTC(from, true, DC.isVideo);
-      dcShowActiveCallPanel(from, DC.isVideo);
-      break;
-    case 'dc_cancelled':
-    case 'dc_declined':
-      if(DC.peerId===from){ dcCleanup(from); vhBeep('end'); }
-      break;
-    case 'dc_ended':
-      if(DC.peerId===from){ dcCleanup(from); vhBeep('end'); }
-      break;
-    case 'dc_offer':
-      if(DC.pc && DC.peerId===from){
-        await DC.pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-        var answer = await DC.pc.createAnswer();
-        await DC.pc.setLocalDescription(answer);
-        await vhSendSignal(from, null, 'dc_answer', {sdp:DC.pc.localDescription});
-      }
-      break;
-    case 'dc_answer':
-      if(DC.pc && DC.peerId===from && DC.pc.signalingState!=='stable'){
-        await DC.pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-      }
-      break;
-    case 'dc_ice':
-      if(DC.pc && payload.candidate){
-        try{ await DC.pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); }catch(e){}
-      }
-      break;
-  }
-}
-
-// Hook DC poll into the VH signal poll start so it runs when user logs in
-var _dcPollStarted = false;
-var _origVhStartSignalPoll = vhStartSignalPoll;
-vhStartSignalPoll = function(){
-  _origVhStartSignalPoll();
-  if(!_dcPollStarted){ _dcPollStarted=true; dcStartPoll(); }
-};
-
-async function checkTsGlobal(){
-  try{
-    var rows = await sbQuery('settings','key=eq.'+CD_TS_GLOBAL_KEY+'&select=value');
-    if(!rows||!rows.length) return;
-    var globalOn = rows[0].value !== 'false';
-    var tsItem = document.getElementById('sidebar-ts');
-    if(tsItem){
-      if(!globalOn){ tsItem.style.display='none'; }
-      else { var canSee=isAdminUser()||(currentUser&&currentUser.timesheetEnabled); tsItem.style.display=canSee?'flex':'none'; }
-    }
-  }catch(e){}
-}
-
-// ════════════════════════════════════════════════════════
-//  TEAM MEET — Live huddle room (WebRTC + Supabase)
-// ════════════════════════════════════════════════════════
-var TM = {
-  roomId: null,
-  roomCode: null,
-  roomName: null,
-  muted: true,
-  peers: {},
-  localStream: null,
-  pollInterval: null,
-  chatPollInterval: null,
-  signalPollInterval: null,
-  processedSignals: new Set(),
-  ICE: null,
-  isCreator: false
-};
-
-// ── Get ICE config (reuse VH's cached config) ──
-async function tmGetIceConfig(){
-  if(TM.ICE) return TM.ICE;
-  TM.ICE = await vhGetIceConfig();
-  return TM.ICE;
-}
-
-// ── Page init ──
-async function tmPageInit(){
-  // Check if agents are allowed to create rooms
-  var canCreate = isAdminUser(); // admin/TL always can
-  if(!canCreate){
-    try{
-      var rows = await sbQuery('settings','key=eq.tm_agent_create_enabled&select=value');
-      if(rows&&rows.length) canCreate = rows[0].value === 'true';
-    }catch(e){}
-  }
-  var createWrap = document.getElementById('tm-admin-create-wrap');
-  if(createWrap) createWrap.style.display = canCreate ? 'block' : 'none';
-  // Show contextual hint for agents who can't create
-  var sub = document.getElementById('tm-no-room-sub');
-  if(sub && !canCreate) sub.textContent = 'Ask your admin or TL to start a room, or join using a room code below.';
-  // Check URL param for auto-join
-  var params = new URLSearchParams(window.location.search);
-  var joinCode = params.get('huddle');
-  if(joinCode){
-    var inp = document.getElementById('tm-join-code-input');
-    if(inp) inp.value = joinCode;
-    await tmJoinByCode();
-    return;
-  }
-  // Load current active room if any
-  await tmRefreshRoomState();
-}
-
-async function tmRefreshRoomState(){
-  try{
-    var rows = await sbQuery('huddle_rooms','is_active=eq.true&order=created_at.desc&limit=1&select=id,name,created_by,created_by_name');
-    if(!rows||!rows.length){
-      tmShowNoRoom();
-    } else {
-      var r = rows[0];
-      // If we're already in this room, stay; else show join prompt
-      if(TM.roomId === r.id){
-        tmUpdateRoomUI();
-      } else if(!TM.roomId){
-        // Show join option with room name
-        var sub = document.getElementById('tm-no-room-sub');
-        if(sub) sub.innerHTML = 'Active room: <strong style="color:var(--gold);">'+esc(r.name)+'</strong> — enter the room code to join, or get the invite link from your admin.';
-        document.getElementById('tm-no-room').style.display='block';
-        document.getElementById('tm-active-room').style.display='none';
-      }
-    }
-  }catch(e){ console.warn('TM refresh room state failed:', e); }
-}
-
-function tmShowNoRoom(){
-  document.getElementById('tm-no-room').style.display='block';
-  document.getElementById('tm-active-room').style.display='none';
-}
-
-function tmShowCreateRoom(){
-  document.getElementById('tm-create-panel').style.display='block';
-  document.getElementById('tm-no-room').style.display='none';
-  var inp = document.getElementById('tm-room-name-inp');
-  if(inp){ inp.value=''; inp.focus(); }
-}
-
-function tmHideCreateRoom(){
-  document.getElementById('tm-create-panel').style.display='none';
-  document.getElementById('tm-no-room').style.display='block';
-}
-
-// ── Create room ──
-async function tmCreateRoom(){
-  // Check permission
-  var canCreate = isAdminUser();
-  if(!canCreate){
-    try{
-      var prows = await sbQuery('settings','key=eq.tm_agent_create_enabled&select=value');
-      if(prows&&prows.length) canCreate = prows[0].value === 'true';
-    }catch(e){}
-  }
-  if(!canCreate){ alert('Only Admin or TL can create a room. Ask your admin to enable this for agents.'); return; }
-  var inp = document.getElementById('tm-room-name-inp');
-  var name = (inp&&inp.value||'').trim();
-  if(!name){ var msg=document.getElementById('tm-create-msg'); if(msg){msg.textContent='Please enter a room name.';msg.style.display='block';} return; }
-  try{
-    // Check if a room is already active
-    var existing = await sbQuery('huddle_rooms','is_active=eq.true&select=id,name&limit=1');
-    if(existing&&existing.length){
-      if(!confirm('There is already an active room: "'+existing[0].name+'". End it and start a new one?')) return;
-      await sbUpdate('huddle_rooms','id',existing[0].id,{is_active:false});
-      // Clean up old participants
-      await fetch(SUPABASE_URL+'/rest/v1/huddle_participants?room_id=eq.'+existing[0].id,{method:'DELETE',headers:sbHeaders()});
-    }
-    // Generate room code
-    var code = Math.random().toString(36).slice(2,8).toUpperCase();
-    var rows = await sbInsert('huddle_rooms',{
-      id: code,
-      name: name,
-      created_by: currentUser.id,
-      created_by_name: currentUser.name,
-      is_active: true,
-      created_at: new Date().toISOString()
-    });
-    document.getElementById('tm-create-panel').style.display='none';
-    TM.isCreator = true;
-    await tmJoinRoom(code, name);
-  }catch(e){ var msg=document.getElementById('tm-create-msg'); if(msg){msg.textContent='Error: '+e.message;msg.style.display='block';} }
-}
-
-// ── Join by code input ──
-async function tmJoinByCode(){
-  var inp = document.getElementById('tm-join-code-input');
-  var code = (inp&&inp.value||'').trim().toUpperCase();
-  if(!code){ alert('Please enter a room code.'); return; }
-  try{
-    var rows = await sbQuery('huddle_rooms','id=eq.'+encodeURIComponent(code)+'&is_active=eq.true&select=id,name');
-    if(!rows||!rows.length){ alert('Room not found or no longer active. Check the code and try again.'); return; }
-    await tmJoinRoom(rows[0].id, rows[0].name);
-  }catch(e){ alert('Could not join: '+e.message); }
-}
-
-// ── Join room ──
-async function tmJoinRoom(roomId, roomName){
-  if(TM.roomId) await tmLeaveRoom();
-  TM.roomId=roomId; TM.roomCode=roomId; TM.roomName=roomName; TM.muted=true;
-  TM.joinedAt=new Date().toISOString();
-  var stream=await tmGetMic();
-  if(!stream){ TM.roomId=null; return; }
-  stream.getAudioTracks().forEach(function(t){ t.enabled=false; });
-  // Start polls FIRST so we don't miss offers
-  clearInterval(TM.signalPollInterval); clearInterval(TM.pollInterval); clearInterval(TM.chatPollInterval);
-  TM.processedSignals.clear();
-  TM.signalPollInterval=setInterval(tmPollSignals,1200);
-  TM.pollInterval=setInterval(tmUpdateRoomUI,4000);
-  TM.chatPollInterval=setInterval(tmPollChat,2000);
-  // Register participant
-  try{
-    var ex=await sbQuery('huddle_participants','room_id=eq.'+roomId+'&user_id=eq.'+currentUser.id+'&select=id');
-    if(!ex||!ex.length) await sbInsert('huddle_participants',{room_id:roomId,user_id:currentUser.id,user_name:currentUser.name,is_muted:true,joined_at:new Date().toISOString()});
-  }catch(e){ console.warn('TM participant insert failed:',e); }
-  // Connect to existing participants first (we are initiator)
-  try{
-    var parts=await sbQuery('huddle_participants','room_id=eq.'+roomId+'&user_id=neq.'+currentUser.id+'&select=user_id,user_name');
-    for(var i=0;i<(parts||[]).length;i++) await tmStartPeerConnection(parts[i].user_id,true);
-  }catch(e){}
-  // Signal others (alreadyConnected=true so they don't double-initiate)
-  await tmSendSignal(null,'tm_join',{name:currentUser.name,alreadyConnected:true});
-  tmShowActiveRoom(); tmUpdateRoomUI(); tmPollChat();
-}
-
-function tmShowActiveRoom(){
-  document.getElementById('tm-no-room').style.display='none';
-  document.getElementById('tm-create-panel').style.display='none';
-  document.getElementById('tm-active-room').style.display='block';
-  var nameEl = document.getElementById('tm-room-name-display');
-  var codeEl = document.getElementById('tm-room-code-display');
-  var endBtn = document.getElementById('tm-end-btn');
-  if(nameEl) nameEl.textContent = TM.roomName||'Room';
-  if(codeEl) codeEl.textContent = TM.roomCode;
-  if(endBtn) endBtn.style.display = isAdminUser() ? 'inline-block' : 'none';
-  tmUpdateMuteBtn();
-}
-
-async function tmUpdateRoomUI(){
-  if(!TM.roomId) return;
-  try{
-    var parts = await sbQuery('huddle_participants','room_id=eq.'+TM.roomId+'&select=user_id,user_name,is_muted&order=joined_at.asc');
-    var metaEl = document.getElementById('tm-room-meta');
-    var listEl = document.getElementById('tm-participants-list');
-    if(metaEl) metaEl.textContent = (parts||[]).length+' participant'+(parts&&parts.length!==1?'s':'');
-    if(listEl){
-      listEl.innerHTML = (parts||[]).map(function(p){
-        var isMe = p.user_id===currentUser.id;
-        var ini = (p.user_name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-        return '<div style="display:flex;align-items:center;gap:.6rem;padding:.45rem .5rem;border-radius:var(--radius-sm);background:'+(isMe?'rgba(239,73,60,.06)':'transparent')+';border:1px solid '+(isMe?'rgba(239,73,60,.15)':'transparent')+';">' +
-          '<div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;flex-shrink:0;" id="tm-part-av-'+p.user_id+'">'+ini+'</div>' +
-          '<div style="flex:1;font-size:.82rem;font-weight:'+(isMe?'700':'600')+';color:var(--text-primary);">'+esc(p.user_name)+(isMe?' <span style="font-size:.68rem;color:var(--text-dim);">(you)</span>':'')+
-          '</div>' +
-          '<span style="font-size:.72rem;">'+(p.is_muted?'🔇':'🎙')+'</span>' +
-        '</div>';
-      }).join('');
-    }
-  }catch(e){}
-}
-
-// ── Mute ──
-function tmToggleMute(){
-  TM.muted = !TM.muted;
-  if(TM.localStream) TM.localStream.getAudioTracks().forEach(function(t){ t.enabled=!TM.muted; });
-  // Update in DB
-  if(TM.roomId){
-    sbUpdate('huddle_participants','user_id',currentUser.id,{is_muted:TM.muted}).catch(function(){});
-    tmSendSignal(null,'tm_mute_state',{muted:TM.muted});
-  }
-  tmUpdateMuteBtn();
-}
-
-function tmUpdateMuteBtn(){
-  var btn = document.getElementById('tm-mute-btn');
-  if(!btn) return;
-  if(TM.muted){
-    btn.style.background='rgba(76,118,168,.15)'; btn.style.borderColor='var(--navy-border)'; btn.style.color='var(--text-muted)'; btn.textContent='🔇 Muted';
-  } else {
-    btn.style.background='rgba(239,73,60,.2)'; btn.style.borderColor='#ef493c'; btn.style.color='#ef493c'; btn.textContent='🔴 Live — Click to Mute';
-  }
-}
-
-// ── Chat ──
-var _tmLastChatTs = null;
-async function tmSendChat(){
-  var inp = document.getElementById('tm-chat-input');
-  var text = (inp&&inp.value||'').trim();
-  if(!text||!TM.roomId) return;
-  inp.value='';
-  try{
-    await sbInsert('huddle_messages',{room_id:TM.roomId,user_id:currentUser.id,user_name:currentUser.name,content:text,created_at:new Date().toISOString()});
-  }catch(e){ console.warn('TM chat send failed:',e); }
-}
-
-async function tmPollChat(){
-  if(!TM.roomId) return;
-  try{
-    var filters='room_id=eq.'+TM.roomId+'&order=created_at.asc&select=id,user_id,user_name,content,created_at';
-    if(_tmLastChatTs) filters+='&created_at=gt.'+encodeURIComponent(_tmLastChatTs);
-    var msgs = await sbQuery('huddle_messages', filters);
-    if(!msgs||!msgs.length) return;
-    var container = document.getElementById('tm-chat-msgs');
-    if(!container) return;
-    // Clear placeholder on first message
-    if(!_tmLastChatTs) container.innerHTML='';
-    msgs.forEach(function(m){
-      var isMe = m.user_id===currentUser.id;
-      var time = m.created_at ? new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-      var div = document.createElement('div');
-      div.style.cssText='display:flex;flex-direction:column;align-items:'+(isMe?'flex-end':'flex-start')+';gap:2px;';
-      div.innerHTML='<div style="font-size:.68rem;color:var(--text-dim);padding:0 .3rem;">'+(isMe?'You':esc(m.user_name))+' · '+time+'</div>'+
-        '<div style="max-width:80%;padding:.45rem .75rem;border-radius:12px;font-size:.82rem;color:var(--text-primary);background:'+(isMe?'rgba(239,73,60,.15)':'var(--navy-hover)')+';border:1px solid '+(isMe?'rgba(239,73,60,.25)':'var(--navy-border)')+';">'+esc(m.content)+'</div>';
-      container.appendChild(div);
-    });
-    container.scrollTop = container.scrollHeight;
-    _tmLastChatTs = msgs[msgs.length-1].created_at;
-  }catch(e){}
-}
-
-// ── Copy invite link ──
-function tmCopyInvite(){
-  var url = window.location.origin + window.location.pathname + '?huddle=' + TM.roomCode;
-  navigator.clipboard.writeText(url).then(function(){
-    var btn = document.querySelector('[onclick="tmCopyInvite()"]');
-    if(btn){ btn.textContent='✅ Copied!'; setTimeout(function(){ btn.textContent='📋 Copy Link'; },2000); }
-  }).catch(function(){ prompt('Copy this invite link:', url); });
-}
-
-// ── Leave room ──
-async function tmLeaveRoom(){
-  if(!TM.roomId) return;
-  clearInterval(TM.signalPollInterval);
-  clearInterval(TM.pollInterval);
-  clearInterval(TM.chatPollInterval);
-  TM.signalPollInterval=null; TM.pollInterval=null; TM.chatPollInterval=null;
-  await tmSendSignal(null,'tm_leave',{});
-  // Remove participant
-  try{ await fetch(SUPABASE_URL+'/rest/v1/huddle_participants?room_id=eq.'+TM.roomId+'&user_id=eq.'+currentUser.id,{method:'DELETE',headers:sbHeaders()}); }catch(e){}
-  // Close all peers
-  Object.keys(TM.peers).forEach(function(pid){ if(TM.peers[pid]){TM.peers[pid].close();delete TM.peers[pid];} });
-  if(TM.localStream){ TM.localStream.getTracks().forEach(function(t){t.stop();}); TM.localStream=null; }
-  TM.roomId=null; TM.roomCode=null; TM.roomName=null; TM.muted=true; TM.isCreator=false; TM.ICE=null; TM.joinedAt=null;
-  TM.processedSignals.clear(); _tmLastChatTs=null;
-  document.getElementById('tm-active-room').style.display='none';
-  document.getElementById('tm-no-room').style.display='block';
-  var inp=document.getElementById('tm-join-code-input'); if(inp) inp.value='';
-  await tmRefreshRoomState();
-}
-
-// ── End room (admin only) ──
-async function tmEndRoom(){
-  if(!isAdminUser()){ alert('Only Admin or TL can end the room.'); return; }
-  if(!confirm('End the room for everyone? All participants will be disconnected.')) return;
-  try{
-    await sbUpdate('huddle_rooms','id',TM.roomId,{is_active:false});
-    await tmSendSignal(null,'tm_room_ended',{});
-    // Clean participants
-    await fetch(SUPABASE_URL+'/rest/v1/huddle_participants?room_id=eq.'+TM.roomId,{method:'DELETE',headers:sbHeaders()});
-    await tmLeaveRoom();
-  }catch(e){ alert('Could not end room: '+e.message); }
-}
-
-// ── WebRTC ──
-async function tmGetMic(){
-  if(TM.localStream) return TM.localStream;
-  try{
-    TM.localStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,sampleRate:48000},video:false});
-    return TM.localStream;
-  }catch(e){ alert('Microphone access denied. Please allow mic access for Team Meet.'); return null; }
-}
-
-async function tmStartPeerConnection(peerId, isInitiator){
-  if(TM.peers[peerId]) return;
-  var stream = TM.localStream;
-  if(!stream) return;
-  var iceConfig = await tmGetIceConfig();
-  var pc = new RTCPeerConnection(iceConfig);
-  TM.peers[peerId] = pc;
-  stream.getTracks().forEach(function(t){ pc.addTrack(t, stream); });
-  pc.ontrack = function(e){
-    var old=document.getElementById('tm-audio-'+peerId); if(old) old.remove();
-    var audio=document.createElement('audio');
-    audio.srcObject=e.streams[0]; audio.autoplay=true; audio.id='tm-audio-'+peerId;
-    audio.setAttribute('playsinline','true');
-    document.body.appendChild(audio); audio.play().catch(function(){});
-    tmMarkSpeaking(peerId,e.streams[0]);
-  };
-  pc.onicecandidate = function(e){
-    if(e.candidate) tmSendSignal(peerId,'tm_ice',{candidate:e.candidate,for:peerId});
-  };
-  pc.onconnectionstatechange = function(){
-    if(pc.connectionState==='failed'||pc.connectionState==='disconnected'){
-      pc.close(); delete TM.peers[peerId];
-      var el=document.getElementById('tm-audio-'+peerId); if(el) el.remove();
+      icCleanupCall(true);
     }
   };
   if(isInitiator){
-    var offer = await pc.createOffer({offerToReceiveAudio:true});
+    var offer=await pc.createOffer();
     await pc.setLocalDescription(offer);
-    await tmSendSignal(peerId,'tm_offer',{sdp:pc.localDescription,for:peerId});
+    await icSend(peerId,'offer',{sdp:pc.localDescription});
   }
 }
 
-function tmMarkSpeaking(userId, stream){
+async function icHandleOffer(fromId,fromName,payload,isFloor){
+  var mic=await icGetMic();
+  if(!mic)return;
+  var ice=await icGetIce();
+  var pc=new RTCPeerConnection(ice);
+  var store=isFloor?IC.floorPeers:IC.peers;
+  store[fromId]=pc;
+  mic.getTracks().forEach(function(t){pc.addTrack(t,mic);});
+  pc.ontrack=function(e){
+    var audio=new Audio();
+    audio.srcObject=e.streams[0];
+    audio.autoplay=true;
+    document.body.appendChild(audio);
+    pc._audioEl=audio;
+  };
+  pc.onicecandidate=function(e){
+    if(e.candidate) icSend(isFloor?'floor':fromId,'ice',{candidate:e.candidate,for:fromId});
+  };
+  await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+  var answer=await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await icSend(isFloor?'floor':fromId,'answer',{sdp:pc.localDescription,for:fromId});
+}
+
+async function icHandleAnswer(fromId,payload){
+  var pc=IC.peers[fromId]||IC.floorPeers[fromId];
+  if(!pc)return;
+  try{await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));}catch(e){}
+}
+
+async function icHandleICE(fromId,payload){
+  var pc=IC.peers[fromId]||IC.floorPeers[fromId];
+  if(!pc||!payload.candidate)return;
+  try{await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));}catch(e){}
+}
+
+// ── Floor Channel ──
+async function icFloorToggle(){
+  if(IC.floor.active){ await icLeaveFloor(); } else { await icJoinFloor(); }
+}
+
+async function icJoinFloor(){
+  if(!currentUser)return;
+  var mic=await icGetMic();
+  if(!mic)return;
+  IC.floor.active=true;
+  IC.floor.members=IC.floor.members||[];
+  var me={id:currentUser.id,name:currentUser.name};
+  if(!IC.floor.members.find(function(m){return m.id===me.id;})) IC.floor.members.push(me);
+  var btn=document.getElementById('ic-floor-btn');
+  if(btn){btn.textContent='🎙 Leave Floor';btn.style.background='rgba(239,73,60,.12)';btn.style.borderColor='rgba(239,73,60,.35)';btn.style.color='#ef493c';}
+  await icSend('floor','floor_join',{floor_members:IC.floor.members});
+  icRenderFloor();
+}
+
+async function icLeaveFloor(){
+  IC.floor.active=false;
+  Object.keys(IC.floorPeers).forEach(function(k){
+    if(IC.floorPeers[k]){IC.floorPeers[k].close();}
+  });
+  IC.floorPeers={};
+  await icSend('floor','floor_leave',{});
+  IC.floor.members=(IC.floor.members||[]).filter(function(m){return m.id!==currentUser.id;});
+  var btn=document.getElementById('ic-floor-btn');
+  if(btn){btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline;vertical-align:-2px;"><path d="M12 1a3 3 0 00-3 3v4a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg> Join Floor';btn.style.background='rgba(46,197,111,.15)';btn.style.borderColor='rgba(46,197,111,.35)';btn.style.color='#2ec56f';}
+  icRenderFloor();
+}
+
+function icRenderFloor(){
+  var el=document.getElementById('ic-floor-members');
+  if(!el)return;
+  var members=IC.floor.members||[];
+  if(!members.length){el.textContent='Nobody on the floor channel';return;}
+  el.textContent=members.map(function(m){return m.name;}).join(', ')+' ('+(members.length)+' on channel)';
+}
+
+// ── Global toggle (Control Deck — admin only) ──
+async function cdVHGlobalToggle(on){
+  var msg=document.getElementById('cd-vh-msg');
   try{
-    var ctx = new (window.AudioContext||window.webkitAudioContext)();
-    var src = ctx.createMediaStreamSource(stream);
-    var analyser = ctx.createAnalyser();
-    src.connect(analyser);
-    var data = new Uint8Array(analyser.fftSize);
-    setInterval(function(){
-      analyser.getByteTimeDomainData(data);
-      var vol = data.reduce(function(s,v){return s+Math.abs(v-128);},0)/data.length;
-      var av = document.getElementById('tm-part-av-'+userId);
-      if(av) av.style.boxShadow = vol>5 ? '0 0 0 3px rgba(46,197,111,.5)' : 'none';
-    },200);
+    var ex=await sbQuery('settings','key=eq.voicehub_enabled&select=key');
+    if(ex&&ex.length){await sbUpdate('settings','key','voicehub_enabled',{value:on?'true':'false'});}
+    else{await sbInsert('settings',{key:'voicehub_enabled',value:on?'true':'false'});}
+    var status=document.getElementById('cd-vh-status');
+    if(status)status.textContent=on?'Enabled':'Hidden from agents';
+    if(msg){msg.style.display='block';msg.textContent=on?'✅ K7 Intercom enabled for all agents':'🔇 K7 Intercom hidden from all agents';setTimeout(function(){msg.style.display='none';},2500);}
+    // Update sidebar visibility
+    var icItem=document.getElementById('sidebar-intercom');
+    if(icItem)icItem.style.display=on?'flex':'none';
+  }catch(e){if(msg){msg.style.display='block';msg.textContent='Error: '+e.message;}}
+}
+
+// ── Check VH global toggle on login (reuse existing settings key) ──
+async function checkVHGlobalToggle(){
+  try{
+    var rows=await sbQuery('settings','key=eq.voicehub_enabled&select=value');
+    var enabled=(rows&&rows.length)?rows[0].value!=='false':true;
+    var status=document.getElementById('cd-vh-status');
+    if(status)status.textContent=enabled?'Enabled':'Hidden from agents';
+    var tog=document.getElementById('cd-vh-toggle');
+    if(tog)tog.checked=enabled;
+    var icItem=document.getElementById('sidebar-intercom');
+    if(icItem&&!isAdminUser())icItem.style.display=enabled?'flex':'none';
   }catch(e){}
 }
 
-// ── Signaling ──
-async function tmSendSignal(toUserId, type, payload){
-  if(!currentUser||!TM.roomId) return;
-  try{
-    await sbInsert('voice_signals',{
-      from_id:currentUser.id, from_name:currentUser.name,
-      to_id:toUserId||null, to_room:'tm:'+TM.roomId,
-      type:type, payload:JSON.stringify(payload||{}),
-      created_at:new Date().toISOString()
-    });
-  }catch(e){ console.warn('TM signal send failed:',e); }
-}
 
-async function tmPollSignals(){
-  if(!currentUser||!TM.roomId) return;
-  try{
-    var windowMs=30000;
-    var since=TM.joinedAt?new Date(Math.min(new Date(TM.joinedAt).getTime(),Date.now()-windowMs)).toISOString():new Date(Date.now()-windowMs).toISOString();
-    var roomFilter='tm:'+TM.roomId;
-    var rows=await sbQuery('voice_signals',
-      'created_at=gt.'+encodeURIComponent(since)+
-      '&or=(to_id.eq.'+currentUser.id+',to_room.eq.'+encodeURIComponent(roomFilter)+')'+
-      '&order=created_at.asc&limit=80&select=id,from_id,from_name,to_id,to_room,type,payload'
-    );
-    if(!rows||!rows.length) return;
-    for(var i=0;i<rows.length;i++){
-      var sig=rows[i];
-      if(sig.from_id===currentUser.id) continue;
-      if(TM.processedSignals.has(sig.id)) continue;
-      TM.processedSignals.add(sig.id);
-      if(TM.processedSignals.size>500) TM.processedSignals.clear();
-      await tmHandleSignal(sig);
-    }
-    // ICE restart for failed peers
-    Object.keys(TM.peers).forEach(function(peerId){
-      var pc=TM.peers[peerId];
-      if(pc&&(pc.connectionState==='failed'||pc.connectionState==='disconnected')){
-        pc.close(); delete TM.peers[peerId];
-        var a=document.getElementById('tm-audio-'+peerId); if(a) a.remove();
-        setTimeout(function(){ tmStartPeerConnection(peerId,true); },1000);
-      }
-    });
-  }catch(e){}
-}
-
-async function tmHandleSignal(sig){
-  var payload={};
-  try{ payload=JSON.parse(sig.payload||'{}'); }catch(e){}
-  var from=sig.from_id;
-  switch(sig.type){
-    case 'tm_join':
-      if(!payload.alreadyConnected && !TM.peers[from]) await tmStartPeerConnection(from, true);
-      tmUpdateRoomUI();
-      break;
-    case 'tm_leave':
-      if(TM.peers[from]){ TM.peers[from].close(); delete TM.peers[from]; }
-      var ael=document.getElementById('tm-audio-'+from); if(ael) ael.remove();
-      tmUpdateRoomUI();
-      break;
-    case 'tm_room_ended':
-      if(!TM.isCreator){
-        alert('The room has been ended by the admin.');
-        await tmLeaveRoom();
-      }
-      break;
-    case 'tm_mute_state':
-      tmUpdateRoomUI();
-      break;
-    case 'tm_offer':
-      if(payload.for!==currentUser.id) break;
-      var pc=TM.peers[from];
-      if(!pc){
-        var stream=TM.localStream; if(!stream) break;
-        var ice=await tmGetIceConfig();
-        pc=new RTCPeerConnection(ice);
-        TM.peers[from]=pc;
-        stream.getTracks().forEach(function(t){pc.addTrack(t,stream);});
-        pc.ontrack=function(e){
-          var a=new Audio(); a.srcObject=e.streams[0]; a.autoplay=true; a.id='tm-audio-'+from; document.body.appendChild(a);
-          tmMarkSpeaking(from,e.streams[0]);
-        };
-        pc.onicecandidate=function(e){ if(e.candidate) tmSendSignal(from,'tm_ice',{candidate:e.candidate,for:from}); };
-      }
-      await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-      var answer=await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      await tmSendSignal(from,'tm_answer',{sdp:pc.localDescription,for:from});
-      break;
-    case 'tm_answer':
-      if(payload.for!==currentUser.id) break;
-      var apc=TM.peers[from];
-      if(apc&&apc.signalingState!=='stable') await apc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-      break;
-    case 'tm_ice':
-      var ipc=TM.peers[payload.for||from]||TM.peers[from];
-      if(ipc&&payload.candidate){ try{await ipc.addIceCandidate(new RTCIceCandidate(payload.candidate));}catch(e){} }
-      break;
-  }
-}
 
 // ══════════════════════════════════════════════════════════
 //  EASTER EGG SYSTEM
@@ -21599,6 +19993,19 @@ async function tmHandleSignal(sig){
 })();
 
 </script>
+
+<!-- ══ CELEBRATION OVERLAY (reused by Celebrations feature) ══ -->
+<div id="grand-overlay" style="display:none;position:fixed;inset:0;z-index:999999;pointer-events:none;">
+  <canvas id="grand-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;"></canvas>
+  <div id="grand-modal" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-60%) scale(0);
+    background:linear-gradient(135deg,#0d1627,#1a2847);
+    border:2px solid rgba(239,73,60,.5);border-radius:24px;
+    padding:2.8rem 3.2rem;text-align:center;
+    box-shadow:0 32px 80px rgba(0,0,0,.7),0 0 60px rgba(239,73,60,.2);
+    min-width:320px;max-width:480px;width:90vw;
+    pointer-events:all;transition:transform .65s cubic-bezier(.34,1.56,.64,1);">
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════
      CSAT MODULE — separate maintainable files
