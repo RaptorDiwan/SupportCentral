@@ -5916,13 +5916,12 @@ async function loadUsersPage(){
   var listEl=document.getElementById('um-user-list');
   listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>';
   try{
-    var users=await sbQuery('users','select=id,name,email,role,timesheet_enabled,is_blocked&order=name.asc');
+    var users=await sbQuery('users','select=id,name,email,role,is_blocked&order=name.asc');
     if(!users||!users.length){listEl.innerHTML='<div class="um-empty">No agents added yet.</div>';return;}
     listEl.innerHTML=users.map(function(u){
       var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
       var rc=u.role==='admin'?'admin':u.role==='tl'?'tl':'';
       var rl=u.role==='tl'?'Team Lead':(u.role||'agent');
-      var tsOn=u.timesheet_enabled?true:false;
       var isBlocked=u.is_blocked?true:false;
       var blockedBadge=isBlocked?'<span style="font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(239,73,60,.15);color:var(--accent-red);text-transform:uppercase;letter-spacing:.08em;margin-left:.5rem;">Blocked</span>':'';
       var unblockBtn=isBlocked?'<button onclick="bbAdminUnblock(\''+u.id+'\',\''+esc(u.name)+'\')" style="padding:.32rem .85rem;background:rgba(46,197,111,.1);border:1px solid rgba(46,197,111,.3);color:#1a7a45;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;">🔓 Unblock</button>':'';
@@ -5933,13 +5932,6 @@ async function loadUsersPage(){
           '<div class="um-user-email">'+esc(u.email)+'</div>'+
         '</div>'+
         unblockBtn+
-        '<div class="um-ts-toggle" title="Timesheet access">'+
-          '<span class="um-ts-label">Timesheet</span>'+
-          '<label class="ts-switch">'+
-            '<input type="checkbox" '+(tsOn?'checked':'')+' onchange="tsToggleUser(\''+u.id+'\',this.checked)"/>'+
-            '<span class="ts-slider"></span>'+
-          '</label>'+
-        '</div>'+
         '<button class="um-del-btn" onclick="removeUser(this.dataset.id,this.dataset.name)" data-id="'+u.id+'" data-name="'+esc(u.name)+'">Remove</button>'+
       '</div>';
     }).join('');
