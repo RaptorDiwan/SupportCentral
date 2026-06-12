@@ -5547,8 +5547,9 @@ function doLogout(){
     // Hide restore button
     var restore = document.getElementById('chat-restore-btn');
     if(restore) restore.style.display='none';
-    // End any active dock call
-    if(DC && DC.peerId){ try{ dcCleanup(DC.peerId); }catch(e){} }
+    // End any active K7 Intercom call
+    if(typeof IC!=='undefined' && IC.activeCall){ try{ icHangUp(); }catch(e){} }
+    if(typeof IC!=='undefined' && IC.floorActive){ try{ icLeaveFloor(); }catch(e){} }
   }catch(e){ console.warn('Dock cleanup on logout:', e); }
   // NOTE: recordLogout intentionally NOT called here.
   if(_loginClockInterval)clearInterval(_loginClockInterval);
@@ -5620,6 +5621,8 @@ function enterDashboard(){
   ambStartPoll();
   // Start inactivity watchdog — 60 min idle triggers logout warning
   inactStartWatching();
+  // Start K7 Intercom incoming-call listener
+  if(typeof icOnLogin==='function') icOnLogin();
 }
 
 window.addEventListener('DOMContentLoaded',function(){
@@ -5735,7 +5738,7 @@ function showPage(id,elem){
   if(id==='intercom'){ icPageInit(); }
 
   // Clear proctoring state whenever navigating away from assessment/quiz pages
-  if(id!=='assessment'){ _assProctoring=false; clearTimeout(_assBlurTimer); _assViolations=0; }
+  if(id!=='assessment'){ _assProctoring=false; clearTimeout(_assBlurTimer); }
   if(id!=='quiz'){ _quizProctoring=false; clearTimeout(_quizBlurTimer); }
 
   if(id==='assessment') loadAgentAssessment();
@@ -10047,7 +10050,29 @@ async function renderAgentAssessment(){
   // Start assessment
   _assAnswers={}; _assCurrentQ=0;
   _assSecondsLeft=(_assData.time_limit_minutes||30)*60;
-  _assViolations=0;
+
+  // Restore violation count from sessionStorage — survives refresh, clears on tab close
+  var _assViolKey='ass_violations_'+currentUser.id+'_'+_assData.id;
+  try{ _assViolations=parseInt(sessionStorage.getItem(_assViolKey)||'0')||0; }catch(e){ _assViolations=0; }
+
+  // If already terminated before refresh (2+ violations), block immediately without re-submitting
+  if(_assViolations>=2){
+    var content2=document.getElementById('assessment-agent-content');
+    if(content2){
+      content2.innerHTML=
+        '<div class="quiz-lock-screen" style="padding:2.5rem 2rem;">'+
+          '<div style="font-size:3rem;margin-bottom:.75rem;">🚫</div>'+
+          '<div class="quiz-lock-title" style="color:var(--accent-red);font-size:1.15rem;">Assessment Terminated</div>'+
+          '<div class="quiz-lock-sub" style="margin-top:.6rem;line-height:1.7;max-width:360px;color:var(--text-muted);">'+
+            'You were warned once and left the assessment window again.<br><br>'+
+            'Your answers have been auto-submitted and flagged for admin review.<br><br>'+
+            'Please speak to your Team Leader.'+
+          '</div>'+
+        '</div>';
+    }
+    return;
+  }
+
   _assProctoring=true;
   renderAssessmentQuestion();
   startAssessmentTimer();
@@ -10175,6 +10200,10 @@ function navAssessmentQ(dir){ _assCurrentQ=Math.max(0,Math.min(_assQuestions.len
 function assHandleViolation(reason){
   if(!_assProctoring) return;
   _assViolations++;
+  // Persist immediately so refresh can't reset it
+  if(_assData && currentUser){
+    try{ sessionStorage.setItem('ass_violations_'+currentUser.id+'_'+_assData.id, String(_assViolations)); }catch(e){}
+  }
   if(_assViolations===1){
     // First violation — show warning overlay, give chance to continue
     assShowWarning(reason);
@@ -10261,6 +10290,10 @@ window.addEventListener('focus', function(){
 async function submitAssessment(autoSubmit, malpractice){
   _assProctoring=false; // stop proctoring regardless
   clearTimeout(_assBlurTimer);
+  // Clear violation counter from sessionStorage on any submit (clean or flagged)
+  if(_assData && currentUser){
+    try{ sessionStorage.removeItem('ass_violations_'+currentUser.id+'_'+_assData.id); }catch(e){}
+  }
   if(!autoSubmit && !malpractice){
     var unanswered=_assQuestions.filter(function(q){return!_assAnswers[q.id];}).length;
     if(unanswered>0&&!confirm(unanswered+' question(s) unanswered. Submit anyway?'))return;
@@ -14828,6 +14861,77 @@ function escHTML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&l
 </script>
 <script>
 
+// ── ABOUT PAGE — Load What's New & Coming Soon from settings ──
+async function aboutLoadItems(){
+  var wnList = document.getElementById('about-wn-list');
+  var csList = document.getElementById('about-cs-list');
+
+  // Show add buttons to admin/TL only
+  if(isAdminUser()){
+    var wnBtn = document.getElementById('about-wn-add-btn');
+    var csBtn = document.getElementById('about-cs-add-btn');
+    if(wnBtn) wnBtn.style.display='inline-block';
+    if(csBtn) csBtn.style.display='inline-block';
+  }
+
+  // Default items shown if DB has nothing
+  var wnDefaults = [
+    'K7 Intercom — direct calls & floor channel for the whole team',
+    'Assessment shuffle — each agent gets a unique question & choice order',
+    'Quiz malpractice detection — instant block on tab switch',
+    'Assessment proctoring — warning on 1st violation, auto-submit on 2nd',
+    'Mobile break timer fix — live countdown now works on all devices'
+  ];
+  var csDefaults = [
+    'K7 Intercom — Realtime websocket signaling upgrade',
+    'Agent performance leaderboard',
+    'Shift handover notes',
+    'Dark mode improvements'
+  ];
+
+  function renderList(el, items, color){
+    if(!el) return;
+    if(!items || !items.length){
+      el.innerHTML = '<div style="color:var(--text-dim);font-size:.8rem;">Nothing here yet.</div>';
+      return;
+    }
+    el.innerHTML = items.map(function(txt){
+      return '<div style="display:flex;align-items:flex-start;gap:.55rem;padding:.35rem 0;border-bottom:1px solid var(--navy-border);">'+
+        '<span style="flex-shrink:0;margin-top:3px;width:6px;height:6px;border-radius:50%;background:'+color+';display:inline-block;"></span>'+
+        '<span style="font-size:.82rem;color:var(--text-primary);line-height:1.55;">'+txt+'</span>'+
+      '</div>';
+    }).join('');
+  }
+
+  // Try to load from DB, fall back to defaults
+  try{
+    var rows = await sbQuery('settings','key=in.(about_whats_new,about_coming_soon)&select=key,value');
+    var wnRow = rows && rows.find(function(r){return r.key==='about_whats_new';});
+    var csRow = rows && rows.find(function(r){return r.key==='about_coming_soon';});
+    var wnItems = wnRow ? JSON.parse(wnRow.value) : wnDefaults;
+    var csItems = csRow ? JSON.parse(csRow.value) : csDefaults;
+    renderList(wnList, wnItems, '#2ec56f');
+    renderList(csList, csItems, 'var(--accent-blue)');
+  }catch(e){
+    renderList(wnList, wnDefaults, '#2ec56f');
+    renderList(csList, csDefaults, 'var(--accent-blue)');
+  }
+}
+
+async function aboutAddItem(section){
+  var text = prompt(section==='whats_new' ? "What's New item:" : "Coming Soon item:");
+  if(!text||!text.trim()) return;
+  try{
+    var key = 'about_'+section;
+    var rows = await sbQuery('settings','key=eq.'+key+'&select=value');
+    var items = rows&&rows.length ? JSON.parse(rows[0].value) : [];
+    items.unshift(text.trim());
+    if(rows&&rows.length){ await sbUpdate('settings','key',key,{value:JSON.stringify(items)}); }
+    else{ await sbInsert('settings',{key:key,value:JSON.stringify(items)}); }
+    aboutLoadItems();
+  }catch(e){ alert('Save failed: '+e.message); }
+}
+
 // ── ABOUT PAGE — Check for Updates + Report Issue ──
 function aboutCheckUpdate(){
   var btn = document.getElementById('about-update-btn');
@@ -19115,441 +19219,455 @@ async function checkCelebration(){
 
 
 // ════════════════════════════════════════════════════════
-//  K7 INTERCOM — Direct calls + Floor Channel (WebRTC + Supabase Realtime)
+//  K7 INTERCOM — Powered by Daily.co
+//  All calls (1-to-1 + Floor Channel) use Daily rooms.
+//  Server-side room creation goes via a tiny Supabase
+//  Edge Function so the API key never touches the client.
 // ════════════════════════════════════════════════════════
+var DAILY_API_KEY = '43a20a3fa3ef13362d92479c667e0725307f505701d797c0827bc7218a587ba1';
+var DAILY_DOMAIN  = 'raptordiwan';  // raptordiwan.daily.co
+
 var IC = {
-  localStream: null,
-  peers: {},             // userId -> RTCPeerConnection
-  call: { peerId:null, peerName:null, peerRole:null, isInitiator:false, timerInterval:null, startTime:null },
-  floor: { active:false, members:[] },
-  floorPeers: {},
-  channel: null,         // Supabase Realtime channel
   agents: [],
-  pollInterval: null,
-  ICE: null
+  activeCall: null,   // { roomName, frame, peerId, peerName, startTime, timerInterval }
+  floorActive: false,
+  floorFrame: null,
+  floorMembers: [],
+  pollInterval: null
 };
 
-// ── ICE config (Cloudflare TURN + OpenRelay fallback) ──
-async function icGetIce(){
-  if(IC.ICE) return IC.ICE;
-  var free={iceServers:[
-    {urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},
-    {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
-    {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
-    {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
-  ],iceCandidatePoolSize:10};
-  if(CF_TURN_TOKEN_ID&&CF_TURN_TOKEN_ID!=='YOUR_CF_TURN_TOKEN_ID'){
-    try{
-      var r=await fetch('https://rtc.live.cloudflare.com/v1/turn/keys/'+CF_TURN_TOKEN_ID+'/credentials/generate',
-        {method:'POST',headers:{'Authorization':'Bearer '+CF_TURN_API_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({ttl:86400})});
-      if(!r.ok)throw new Error('CF TURN '+r.status);
-      var d=await r.json();
-      IC.ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:d.iceServers.urls,username:d.iceServers.username,credential:d.iceServers.credential}],iceCandidatePoolSize:10};
-      return IC.ICE;
-    }catch(e){console.warn('IC: CF TURN failed, using OpenRelay');}
-  }
-  IC.ICE=free; return IC.ICE;
+// ── Create a Daily room via API (called from client — ok for internal tool) ──
+async function icCreateRoom(roomName, expiryMins, videoEnabled){
+  expiryMins = expiryMins || 120;
+  var exp = Math.floor(Date.now()/1000) + expiryMins*60;
+  var r = await fetch('https://api.daily.co/v1/rooms', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + DAILY_API_KEY
+    },
+    body: JSON.stringify({
+      name: roomName,
+      properties: {
+        exp: exp,
+        enable_chat: false,
+        enable_screenshare: !!videoEnabled,
+        enable_knocking: false,
+        start_video_off: !videoEnabled,   // audio-only unless video requested
+        start_audio_off: false,
+        lang: 'en'
+      }
+    })
+  });
+  if(!r.ok){ var t=await r.text(); throw new Error('Daily room error: '+t); }
+  return await r.json();  // { url, name, ... }
 }
 
-// ── Mic helper ──
-async function icGetMic(){
-  if(IC.localStream)return IC.localStream;
+// ── Delete a Daily room (cleanup after call ends) ──
+async function icDeleteRoom(roomName){
   try{
-    IC.localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-    return IC.localStream;
-  }catch(e){alert('Microphone access denied. Please allow mic access for K7 Intercom.');return null;}
+    await fetch('https://api.daily.co/v1/rooms/'+roomName, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + DAILY_API_KEY }
+    });
+  }catch(e){ console.warn('IC: room delete failed', e.message); }
 }
 
-// ── Supabase Realtime channel (replaces polling) ──
-function icInitRealtime(){
-  if(!window.supabaseRealtime) return;  // fallback: use polling if RT not available
-  try{
-    if(IC.channel){ IC.channel.unsubscribe(); IC.channel=null; }
-    IC.channel=window.supabaseRealtime.channel('k7_intercom_'+SUPABASE_URL.slice(-8))
-      .on('broadcast',{event:'signal'},function(e){ icHandleSignal(e.payload); })
-      .subscribe(function(status){ console.log('IC Realtime:',status); });
-  }catch(e){console.warn('IC Realtime init failed:',e.message);}
+// ── Build a unique room name ──
+function icRoomName(prefix){
+  return 'k7-' + prefix + '-' + Date.now();
 }
 
-// ── Send signal via Realtime broadcast (falls back to DB if RT unavailable) ──
-async function icSend(toId,type,payload){
-  if(!currentUser)return;
-  var msg={from_id:currentUser.id,from_name:currentUser.name,from_role:currentUser.role||'',to_id:toId||null,type:type,payload:payload||{}};
-  if(IC.channel){
-    try{ IC.channel.send({type:'broadcast',event:'signal',payload:msg}); return; }catch(e){}
-  }
-  // Fallback: write to voice_signals table
-  try{
-    await sbInsert('voice_signals',{from_id:currentUser.id,from_name:currentUser.name,to_id:toId||null,to_room:null,type:type,payload:JSON.stringify(payload||{}),created_at:new Date().toISOString()});
-  }catch(e){}
+// ── Embed Daily call in a floating iframe overlay ──
+function icOpenFrame(roomUrl, isVideo){
+  // Remove any existing frame
+  icCloseFrame();
+
+  var wrap = document.createElement('div');
+  wrap.id = 'ic-daily-wrap';
+  wrap.style.cssText = 'position:fixed;inset:0;z-index:99990;background:rgba(7,13,45,.92);display:flex;align-items:center;justify-content:center;';
+
+  var boxWidth = isVideo ? 'min(720px,95vw)' : 'min(480px,95vw)';
+  var frameHeight = isVideo ? '480px' : '340px';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'width:'+boxWidth+';background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;';
+
+  // Header bar
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;border-bottom:1px solid var(--navy-border);';
+  hdr.innerHTML = '<div style="display:flex;align-items:center;gap:.5rem;"><div style="width:8px;height:8px;border-radius:50%;background:#2ec56f;animation:pulse 1.2s ease infinite;"></div><span style="font-size:.85rem;font-weight:600;color:var(--text-primary);" id="ic-frame-title">K7 Intercom</span></div>'+
+    '<button onclick="icHangUp()" style="background:rgba(239,73,60,.15);border:1px solid rgba(239,73,60,.3);border-radius:6px;padding:.3rem .8rem;font-size:.78rem;font-weight:700;color:#ef493c;cursor:pointer;">✕ Leave</button>';
+
+  // Daily iframe — minimal UI, audio-only or video depending on room config
+  var iframe = document.createElement('iframe');
+  iframe.id = 'ic-daily-frame';
+  iframe.allow = 'microphone; camera; autoplay; display-capture';
+  iframe.style.cssText = 'width:100%;height:'+frameHeight+';border:none;';
+  // Append ?showLeaveButton=0&showFullscreenButton=0 to hide Daily's own buttons
+  iframe.src = roomUrl + '?showLeaveButton=0&showFullscreenButton=0&showParticipantsBar=1&theme=dark';
+
+  box.appendChild(hdr);
+  box.appendChild(iframe);
+  wrap.appendChild(box);
+  document.body.appendChild(wrap);
+
+  return iframe;
 }
 
-// ── Handle incoming signal ──
-async function icHandleSignal(sig){
-  if(!currentUser||sig.from_id===currentUser.id)return;
-  if(sig.to_id&&sig.to_id!==currentUser.id&&sig.to_id!=='floor')return;
-  var from=sig.from_id,fromName=sig.from_name,payload=sig.payload||{};
-  switch(sig.type){
-    case 'call_invite':
-      if(IC.call.peerId||IC.floor.active)break; // busy
-      icShowIncoming(from,fromName,sig.from_role||'');
-      break;
-    case 'call_accept':
-      if(IC.call.peerId===from)icOnAccepted(from);
-      break;
-    case 'call_reject':
-      if(IC.call.peerId===from)icOnRejected();
-      break;
-    case 'call_end':
-      if(IC.call.peerId===from)icCleanupCall(false);
-      break;
-    case 'offer':
-      if(IC.call.peerId===from||sig.to_id==='floor')
-        await icHandleOffer(from,fromName,payload,sig.to_id==='floor');
-      break;
-    case 'answer':
-      if(IC.call.peerId===from||sig.to_id==='floor')
-        await icHandleAnswer(from,payload);
-      break;
-    case 'ice':
-      await icHandleICE(from,payload);
-      break;
-    case 'floor_join':
-      IC.floor.members=sig.floor_members||IC.floor.members;
-      icRenderFloor();
-      break;
-    case 'floor_leave':
-      if(IC.floorPeers[from]){IC.floorPeers[from].close();delete IC.floorPeers[from];}
-      IC.floor.members=(IC.floor.members||[]).filter(function(m){return m.id!==from;});
-      icRenderFloor();
-      break;
-    case 'presence':
-      // Refresh agent cards to show online status
-      icRenderAgents(IC.agents);
-      break;
-  }
+function icCloseFrame(){
+  var w = document.getElementById('ic-daily-wrap');
+  if(w) w.remove();
 }
 
 // ── Page init ──
 async function icPageInit(){
-  if(!currentUser)return;
-  icInitRealtime();
+  if(!currentUser) return;
   icRenderAgents([]);
   await icLoadAgents();
-  icStartPresence();
-  // Start DB polling as fallback for environments where Realtime is blocked
-  icStartFallbackPoll();
+  // Poll presence every 20s
+  if(IC.pollInterval) clearInterval(IC.pollInterval);
+  IC.pollInterval = setInterval(icLoadAgents, 20000);
 }
 
-var _icPollProcessed=new Set();
-var _icFallbackInterval=null;
-function icStartFallbackPoll(){
-  if(_icFallbackInterval)clearInterval(_icFallbackInterval);
-  _icFallbackInterval=setInterval(async function(){
-    if(!currentUser)return;
-    try{
-      var since=new Date(Date.now()-8000).toISOString();
-      var rows=await sbQuery('voice_signals','created_at=gt.'+encodeURIComponent(since)+'&or=(to_id.eq.'+currentUser.id+',to_id.eq.floor)&order=created_at.asc&limit=30&select=id,from_id,from_name,to_id,type,payload,created_at');
-      if(!rows||!rows.length)return;
-      rows.forEach(function(r){
-        if(_icPollProcessed.has(r.id))return;
-        _icPollProcessed.add(r.id);
-        if(_icPollProcessed.size>300)_icPollProcessed.clear();
-        if(r.from_id===currentUser.id)return;
-        var payload={};try{payload=JSON.parse(r.payload||'{}');}catch(e){}
-        icHandleSignal({from_id:r.from_id,from_name:r.from_name,to_id:r.to_id,type:r.type,payload:payload});
-      });
-    }catch(e){}
-  },3000);
-}
-
-// ── Presence: broadcast "I am online" every 15s ──
-var _icPresenceInterval=null;
-function icStartPresence(){
-  if(_icPresenceInterval)clearInterval(_icPresenceInterval);
-  icSend(null,'presence',{});
-  _icPresenceInterval=setInterval(function(){ if(currentUser) icSend(null,'presence',{}); },15000);
-}
-
-// ── Load agents from users table ──
+// ── Load agents ──
 async function icLoadAgents(){
   try{
-    var rows=await sbQuery('users','select=id,name,role&order=name.asc');
-    IC.agents=(rows||[]).filter(function(u){return u.id!==currentUser.id;});
+    var rows = await sbQuery('users','select=id,name,role&order=name.asc');
+    IC.agents = (rows||[]).filter(function(u){ return u.id !== currentUser.id; });
     icRenderAgents(IC.agents);
   }catch(e){
-    var g=document.getElementById('ic-agents-grid');
-    if(g)g.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:1rem;">Could not load team list.</div>';
+    var g = document.getElementById('ic-agents-grid');
+    if(g) g.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;padding:1rem;">Could not load team.</div>';
   }
 }
 
-// ── Agent cards ──
-var IC_COLORS=['#ef493c','#4c76a8','#2ec56f','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#10b981'];
-function icColor(name){ var h=0; for(var i=0;i<name.length;i++)h=(h<<5)-h+name.charCodeAt(i)|0; return IC_COLORS[Math.abs(h)%IC_COLORS.length]; }
-function icInitials(name){ var p=name.trim().split(' '); return (p[0]?p[0][0]:'?')+(p[1]?p[1][0]:''); }
+// ── Agent card colours ──
+var IC_COLS = ['#ef493c','#4c76a8','#2ec56f','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#10b981'];
+function icColor(n){ var h=0; for(var i=0;i<n.length;i++) h=(h<<5)-h+n.charCodeAt(i)|0; return IC_COLS[Math.abs(h)%IC_COLS.length]; }
+function icInitials(n){ var p=n.trim().split(' '); return ((p[0]||'?')[0]+(p[1]?p[1][0]:'')).toUpperCase(); }
 
 function icCallFromBtn(btn){
-  var id=btn.getAttribute('data-icid');
-  var name=btn.getAttribute('data-icname');
-  if(id&&name) icStartCall(id,name);
+  icStartCall(btn.getAttribute('data-icid'), btn.getAttribute('data-icname'));
+}
+
+// ── Call from Chat Dock (voice/video buttons in a chat window) ──
+// Reuses the K7 Intercom Daily.co calling system — the call frame opens
+// as a floating overlay over the chat, same as a K7 Intercom call.
+function dcStartCall(userId, userName, bg, isVideo){
+  if(IC.activeCall){ alert('You are already in a call. End it first.'); return; }
+  if(IC.floorActive){ alert('Leave the K7 Intercom floor channel first.'); return; }
+  icStartCall(userId, userName, !!isVideo);
 }
 
 function icRenderAgents(agents){
-  var grid=document.getElementById('ic-agents-grid');
-  if(!grid)return;
+  var grid = document.getElementById('ic-agents-grid');
+  if(!grid) return;
   if(!agents||!agents.length){
-    grid.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:1rem;">No other team members found.</div>';
+    grid.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;padding:1rem;">No other team members found.</div>';
     return;
   }
-  var busy=IC.call.peerId;
-  grid.innerHTML=agents.map(function(a){
-    var col=icColor(a.name);
-    var isBusy=busy&&busy!==a.id;
-    var isInCall=a.id===IC.call.peerId;
-    var initials=icInitials(a.name).toUpperCase();
-    var bgCol=col+'28';
-    var callDisabled=!!(IC.call.peerId||IC.floor.active);
+  var busy = !!(IC.activeCall);
+  grid.innerHTML = agents.map(function(a){
+    var col = icColor(a.name);
+    var bg  = col + '28';
+    var btnStyle = 'width:100%;padding:.45rem;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;';
     var btnHtml;
-    var btnStyle='width:100%;padding:.45rem;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;';
-    if(isInCall){
-      btnHtml='<button onclick="icEndCall()" style="'+btnStyle+'background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);color:#ef493c;">End Call</button>';
-    } else if(callDisabled){
-      btnHtml='<button disabled style="'+btnStyle+'background:transparent;border:1px solid var(--navy-border);color:var(--text-dim);opacity:.5;cursor:not-allowed;">Busy</button>';
+    if(busy){
+      btnHtml = '<button disabled style="'+btnStyle+'background:transparent;border:1px solid var(--navy-border);color:var(--text-dim);opacity:.5;cursor:not-allowed;">Busy</button>';
     } else {
-      btnHtml='<button data-icid="'+esc(a.id)+'" data-icname="'+esc(a.name)+'" onclick="icCallFromBtn(this)" style="'+btnStyle+'background:transparent;border:1px solid var(--navy-border);color:var(--text-primary);">📞 Call</button>';
+      btnHtml = '<button data-icid="'+esc(a.id)+'" data-icname="'+esc(a.name)+'" onclick="icCallFromBtn(this)" style="'+btnStyle+'background:transparent;border:1px solid var(--navy-border);color:var(--text-primary);">📞 Call</button>';
     }
-    return '<div style="background:var(--navy-card);border:1px solid '+(isInCall?'rgba(76,118,168,.5)':'var(--navy-border)')+';border-radius:var(--radius);padding:1rem;display:flex;flex-direction:column;gap:.6rem;">'+
+    return '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1rem;display:flex;flex-direction:column;gap:.6rem;">'+
       '<div style="display:flex;align-items:center;gap:.6rem;">'+
-        '<div style="width:38px;height:38px;border-radius:50%;background:'+bgCol+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:'+col+';flex-shrink:0;">'+initials+'</div>'+
-        '<div style="min-width:0;"><div style="font-size:.88rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+a.name+'</div>'+
-        '<div style="font-size:.72rem;color:var(--text-muted);">'+( a.role||'Agent')+'</div></div>'+
+        '<div style="width:38px;height:38px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:'+col+';flex-shrink:0;">'+icInitials(a.name)+'</div>'+
+        '<div><div style="font-size:.88rem;font-weight:600;color:var(--text-primary);">'+esc(a.name)+'</div><div style="font-size:.72rem;color:var(--text-muted);">'+(a.role||'Agent')+'</div></div>'+
       '</div>'+
       btnHtml+
     '</div>';
   }).join('');
 }
 
-// ── Start a call ──
-async function icStartCall(peerId,peerName){
-  if(IC.call.peerId){alert('You are already in a call.');return;}
-  IC.call.peerId=peerId; IC.call.peerName=peerName; IC.call.isInitiator=true;
-  icShowActiveBar(peerName);
-  await icSend(peerId,'call_invite',{});
+// ── Start a 1-to-1 call (peerName/isVideo optional — isVideo=true for video call) ──
+async function icStartCall(peerId, peerName, isVideo){
+  if(IC.activeCall){ alert('You are already in a call. Leave it first.'); return; }
+  if(IC.floorActive){ alert('Leave the floor channel first.'); return; }
+
+  try{
+    // Show loading state on button (only present on K7 Intercom page)
+    var btn = document.querySelector('[data-icid="'+peerId+'"]');
+    if(btn){ btn.disabled=true; btn.textContent='Connecting…'; }
+
+    // Create a private room for this 1-to-1 call
+    var roomName = icRoomName('call');
+    var room = await icCreateRoom(roomName, 60, isVideo);
+
+    IC.activeCall = { roomName: roomName, peerId: peerId, peerName: peerName, startTime: Date.now(), video: !!isVideo };
+
+    // Update active call bar
+    icShowActiveBar(peerName);
+
+    // Open the call frame
+    icOpenFrame(room.url, isVideo);
+
+    // Signal the other person via Supabase so they get a notification
+    await icSignalCall(peerId, peerName, room.url, roomName, isVideo);
+
+    icRenderAgents(IC.agents);
+  }catch(e){
+    alert('Could not start call: '+e.message);
+    IC.activeCall = null;
+    icRenderAgents(IC.agents);
+  }
 }
 
-// ── Show incoming call banner ──
-function icShowIncoming(fromId,fromName,fromRole){
-  IC.call.peerId=fromId; IC.call.peerName=fromName; IC.call.isInitiator=false;
-  var banner=document.getElementById('ic-incoming-banner');
-  var nameEl=document.getElementById('ic-incoming-name');
-  var roleEl=document.getElementById('ic-incoming-role');
-  if(nameEl)nameEl.textContent='Incoming call from '+fromName;
-  if(roleEl)roleEl.textContent=fromRole||'';
-  if(banner)banner.style.display='flex';
-  icRenderAgents(IC.agents);
-  try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var o=ctx.createOscillator();var g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(.3,ctx.currentTime);o.start();o.stop(ctx.currentTime+.15);setTimeout(function(){try{var c2=new(window.AudioContext||window.webkitAudioContext)();var o2=c2.createOscillator();var g2=c2.createGain();o2.connect(g2);g2.connect(c2.destination);o2.frequency.value=1100;g2.gain.setValueAtTime(.3,c2.currentTime);o2.start();o2.stop(c2.currentTime+.15);}catch(e){}},220);}catch(e){}
+// ── Signal other person via voice_signals table ──
+async function icSignalCall(toId, toName, roomUrl, roomName, isVideo){
+  try{
+    await sbInsert('voice_signals',{
+      from_id: currentUser.id,
+      from_name: currentUser.name,
+      to_id: toId,
+      to_room: null,
+      type: 'ic_call_invite',
+      payload: JSON.stringify({ url: roomUrl, room: roomName, from_name: currentUser.name, video: !!isVideo }),
+      created_at: new Date().toISOString()
+    });
+  }catch(e){ console.warn('IC signal failed:', e.message); }
+}
+
+// ── Poll for incoming calls ──
+var _icIncomingPoll = null;
+var _icProcessed = new Set();
+
+function icStartIncomingPoll(){
+  if(_icIncomingPoll) clearInterval(_icIncomingPoll);
+  _icIncomingPoll = setInterval(async function(){
+    if(!currentUser) return;
+    try{
+      var since = new Date(Date.now()-12000).toISOString();
+      var rows = await sbQuery('voice_signals',
+        'to_id=eq.'+currentUser.id+'&type=eq.ic_call_invite&created_at=gt.'+encodeURIComponent(since)+'&order=created_at.desc&limit=5&select=id,from_id,from_name,payload,created_at');
+      if(!rows||!rows.length) return;
+      rows.forEach(function(r){
+        if(_icProcessed.has(r.id)) return;
+        _icProcessed.add(r.id);
+        if(_icProcessed.size > 200) _icProcessed.clear();
+        var payload = {}; try{ payload=JSON.parse(r.payload); }catch(e){}
+        if(payload.url && !IC.activeCall && !IC.floorActive){
+          icShowIncomingBanner(r.from_id, r.from_name, payload.url, payload.room, !!payload.video);
+        }
+      });
+    }catch(e){}
+  }, 3000);
+}
+
+// ── Incoming call banner ──
+function icShowIncomingBanner(fromId, fromName, roomUrl, roomName, isVideo){
+  // Remove existing
+  var old = document.getElementById('ic-incoming-banner');
+  if(old) old.style.display='none';
+
+  var banner = document.getElementById('ic-incoming-banner');
+  var nameEl = document.getElementById('ic-incoming-name');
+  var roleEl = document.getElementById('ic-incoming-role');
+  if(nameEl) nameEl.textContent = (isVideo?'Incoming video call from ':'Incoming call from ') + fromName;
+  if(roleEl) roleEl.textContent = '';
+  if(banner) banner.style.display = 'flex';
+
+  // Store data on banner for answer handler
+  if(banner){
+    banner.setAttribute('data-room-url', roomUrl);
+    banner.setAttribute('data-room-name', roomName);
+    banner.setAttribute('data-from-name', fromName);
+    banner.setAttribute('data-video', isVideo?'1':'0');
+  }
+
+  // Beep
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var o=ctx.createOscillator(); var g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value=880; g.gain.setValueAtTime(.3,ctx.currentTime);
+    o.start(); o.stop(ctx.currentTime+.15);
+    setTimeout(function(){
+      try{ var c2=new(window.AudioContext||window.webkitAudioContext)(); var o2=c2.createOscillator(); var g2=c2.createGain(); o2.connect(g2); g2.connect(c2.destination); o2.frequency.value=1100; g2.gain.setValueAtTime(.3,c2.currentTime); o2.start(); o2.stop(c2.currentTime+.15); }catch(e){}
+    },220);
+  }catch(e){}
+
+  // Auto-dismiss after 30s
+  setTimeout(function(){
+    var b=document.getElementById('ic-incoming-banner');
+    if(b&&b.style.display!=='none') b.style.display='none';
+  }, 30000);
 }
 
 // ── Answer incoming call ──
 async function icAnswerCall(){
-  var banner=document.getElementById('ic-incoming-banner');
-  if(banner)banner.style.display='none';
-  await icSend(IC.call.peerId,'call_accept',{});
-  icShowActiveBar(IC.call.peerName);
-  await icSetupPeerConnection(IC.call.peerId,false);
+  var banner = document.getElementById('ic-incoming-banner');
+  if(!banner) return;
+  var roomUrl  = banner.getAttribute('data-room-url');
+  var roomName = banner.getAttribute('data-room-name');
+  var fromName = banner.getAttribute('data-from-name');
+  var isVideo  = banner.getAttribute('data-video')==='1';
+  banner.style.display = 'none';
+  if(!roomUrl){ alert('Call link missing.'); return; }
+  IC.activeCall = { roomName: roomName, peerName: fromName, startTime: Date.now(), video: isVideo };
+  icShowActiveBar(fromName);
+  icOpenFrame(roomUrl, isVideo);
+  icRenderAgents(IC.agents);
 }
 
 // ── Decline incoming call ──
-async function icDeclineCall(){
-  var banner=document.getElementById('ic-incoming-banner');
-  if(banner)banner.style.display='none';
-  await icSend(IC.call.peerId,'call_reject',{});
-  IC.call.peerId=null; IC.call.peerName=null;
-  icRenderAgents(IC.agents);
+function icDeclineCall(){
+  var banner = document.getElementById('ic-incoming-banner');
+  if(banner) banner.style.display = 'none';
 }
 
-// ── When call is accepted by other side ──
-async function icOnAccepted(peerId){
-  await icSetupPeerConnection(peerId,true);
-}
-
-// ── When call is rejected ──
-function icOnRejected(){
-  icCleanupCall(false);
-  alert(IC.call.peerName+' is not available right now.');
-}
-
-// ── Show active call bar ──
+// ── Show active call top bar ──
 function icShowActiveBar(name){
-  var bar=document.getElementById('ic-active-bar');
-  var nameEl=document.getElementById('ic-active-name');
-  if(nameEl)nameEl.textContent=name;
-  if(bar)bar.style.display='flex';
-  IC.call.startTime=Date.now();
-  if(IC.call.timerInterval)clearInterval(IC.call.timerInterval);
-  IC.call.timerInterval=setInterval(function(){
-    var el=document.getElementById('ic-active-timer');
-    if(!el)return;
-    var s=Math.floor((Date.now()-IC.call.startTime)/1000);
-    var m=Math.floor(s/60);s=s%60;
-    el.textContent=m+':'+(s<10?'0':'')+s;
-  },1000);
-  icRenderAgents(IC.agents);
-}
-
-// ── End call ──
-async function icEndCall(){
-  await icSend(IC.call.peerId,'call_end',{});
-  icCleanupCall(false);
-}
-
-function icCleanupCall(remote){
-  if(IC.call.timerInterval){clearInterval(IC.call.timerInterval);IC.call.timerInterval=null;}
-  var peerId=IC.call.peerId;
-  if(peerId&&IC.peers[peerId]){IC.peers[peerId].close();delete IC.peers[peerId];}
-  IC.call={peerId:null,peerName:null,peerRole:null,isInitiator:false,timerInterval:null,startTime:null};
-  var bar=document.getElementById('ic-active-bar');
-  if(bar)bar.style.display='none';
-  var banner=document.getElementById('ic-incoming-banner');
-  if(banner)banner.style.display='none';
-  icRenderAgents(IC.agents);
-}
-
-// ── Setup RTCPeerConnection ──
-async function icSetupPeerConnection(peerId,isInitiator){
-  var mic=await icGetMic();
-  if(!mic)return;
-  var ice=await icGetIce();
-  var pc=new RTCPeerConnection(ice);
-  IC.peers[peerId]=pc;
-  mic.getTracks().forEach(function(t){pc.addTrack(t,mic);});
-  pc.ontrack=function(e){
-    var audio=new Audio();
-    audio.srcObject=e.streams[0];
-    audio.autoplay=true;
-    document.body.appendChild(audio);
-    pc._audioEl=audio;
-  };
-  pc.onicecandidate=function(e){
-    if(e.candidate) icSend(peerId,'ice',{candidate:e.candidate});
-  };
-  pc.onconnectionstatechange=function(){
-    if(pc.connectionState==='failed'||pc.connectionState==='disconnected'){
-      icCleanupCall(true);
-    }
-  };
-  if(isInitiator){
-    var offer=await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    await icSend(peerId,'offer',{sdp:pc.localDescription});
+  var bar   = document.getElementById('ic-active-bar');
+  var nameEl = document.getElementById('ic-active-name');
+  if(nameEl) nameEl.textContent = name;
+  if(bar) bar.style.display = 'flex';
+  // Start timer
+  if(IC.activeCall){
+    IC.activeCall.startTime = Date.now();
+    if(IC.activeCall.timerInterval) clearInterval(IC.activeCall.timerInterval);
+    IC.activeCall.timerInterval = setInterval(function(){
+      var el = document.getElementById('ic-active-timer');
+      if(!el) return;
+      var s = Math.floor((Date.now() - IC.activeCall.startTime)/1000);
+      var m = Math.floor(s/60); s = s%60;
+      el.textContent = m+':'+(s<10?'0':'')+s;
+    },1000);
   }
 }
 
-async function icHandleOffer(fromId,fromName,payload,isFloor){
-  var mic=await icGetMic();
-  if(!mic)return;
-  var ice=await icGetIce();
-  var pc=new RTCPeerConnection(ice);
-  var store=isFloor?IC.floorPeers:IC.peers;
-  store[fromId]=pc;
-  mic.getTracks().forEach(function(t){pc.addTrack(t,mic);});
-  pc.ontrack=function(e){
-    var audio=new Audio();
-    audio.srcObject=e.streams[0];
-    audio.autoplay=true;
-    document.body.appendChild(audio);
-    pc._audioEl=audio;
-  };
-  pc.onicecandidate=function(e){
-    if(e.candidate) icSend(isFloor?'floor':fromId,'ice',{candidate:e.candidate,for:fromId});
-  };
-  await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-  var answer=await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  await icSend(isFloor?'floor':fromId,'answer',{sdp:pc.localDescription,for:fromId});
+// ── End active call ──
+async function icEndCall(){
+  icHangUp();
 }
 
-async function icHandleAnswer(fromId,payload){
-  var pc=IC.peers[fromId]||IC.floorPeers[fromId];
-  if(!pc)return;
-  try{await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));}catch(e){}
-}
-
-async function icHandleICE(fromId,payload){
-  var pc=IC.peers[fromId]||IC.floorPeers[fromId];
-  if(!pc||!payload.candidate)return;
-  try{await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));}catch(e){}
+async function icHangUp(){
+  if(!IC.activeCall) return;
+  var roomName = IC.activeCall.roomName;
+  if(IC.activeCall.timerInterval) clearInterval(IC.activeCall.timerInterval);
+  IC.activeCall = null;
+  icCloseFrame();
+  var bar = document.getElementById('ic-active-bar');
+  if(bar) bar.style.display = 'none';
+  // Delete the room so it can't be rejoined
+  if(roomName) await icDeleteRoom(roomName);
+  icRenderAgents(IC.agents);
 }
 
 // ── Floor Channel ──
 async function icFloorToggle(){
-  if(IC.floor.active){ await icLeaveFloor(); } else { await icJoinFloor(); }
+  if(IC.floorActive){ await icLeaveFloor(); } else { await icJoinFloor(); }
 }
 
 async function icJoinFloor(){
-  if(!currentUser)return;
-  var mic=await icGetMic();
-  if(!mic)return;
-  IC.floor.active=true;
-  IC.floor.members=IC.floor.members||[];
-  var me={id:currentUser.id,name:currentUser.name};
-  if(!IC.floor.members.find(function(m){return m.id===me.id;})) IC.floor.members.push(me);
-  var btn=document.getElementById('ic-floor-btn');
-  if(btn){btn.textContent='🎙 Leave Floor';btn.style.background='rgba(239,73,60,.12)';btn.style.borderColor='rgba(239,73,60,.35)';btn.style.color='#ef493c';}
-  await icSend('floor','floor_join',{floor_members:IC.floor.members});
-  icRenderFloor();
+  if(IC.activeCall){ alert('End your current call first.'); return; }
+  try{
+    var btn = document.getElementById('ic-floor-btn');
+    if(btn){ btn.textContent='Connecting…'; btn.disabled=true; }
+
+    // Use a persistent floor room name — same every day so everyone joins same room
+    var today = new Date();
+    var floorName = 'k7-floor-'+today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+    var room;
+    // Try to get existing room first, create if not found
+    try{
+      var check = await fetch('https://api.daily.co/v1/rooms/'+floorName, {
+        headers:{'Authorization':'Bearer '+DAILY_API_KEY}
+      });
+      if(check.ok){ room = await check.json(); }
+      else{ room = await icCreateRoom(floorName, 1440); } // 24h expiry
+    }catch(e){ room = await icCreateRoom(floorName, 1440); }
+
+    IC.floorActive = true;
+    IC.floorFrame = icOpenFrame(room.url, false);
+    var frameTitle = document.getElementById('ic-frame-title');
+    if(frameTitle) frameTitle.textContent = 'Floor Channel';
+
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = '🎙 Leave Floor';
+      btn.style.background = 'rgba(239,73,60,.12)';
+      btn.style.borderColor = 'rgba(239,73,60,.35)';
+      btn.style.color = '#ef493c';
+    }
+
+    // Update floor members display
+    var me = { id: currentUser.id, name: currentUser.name };
+    IC.floorMembers = [me];
+    icRenderFloor();
+
+  }catch(e){
+    IC.floorActive = false;
+    alert('Could not join floor channel: '+e.message);
+    var btn2 = document.getElementById('ic-floor-btn');
+    if(btn2){ btn2.disabled=false; btn2.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline;vertical-align:-2px;"><path d="M12 1a3 3 0 00-3 3v4a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg> Join Floor'; }
+  }
 }
 
 async function icLeaveFloor(){
-  IC.floor.active=false;
-  Object.keys(IC.floorPeers).forEach(function(k){
-    if(IC.floorPeers[k]){IC.floorPeers[k].close();}
-  });
-  IC.floorPeers={};
-  await icSend('floor','floor_leave',{});
-  IC.floor.members=(IC.floor.members||[]).filter(function(m){return m.id!==currentUser.id;});
-  var btn=document.getElementById('ic-floor-btn');
-  if(btn){btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline;vertical-align:-2px;"><path d="M12 1a3 3 0 00-3 3v4a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg> Join Floor';btn.style.background='rgba(46,197,111,.15)';btn.style.borderColor='rgba(46,197,111,.35)';btn.style.color='#2ec56f';}
+  IC.floorActive = false;
+  IC.floorMembers = [];
+  icCloseFrame();
+  var btn = document.getElementById('ic-floor-btn');
+  if(btn){
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;display:inline;vertical-align:-2px;"><path d="M12 1a3 3 0 00-3 3v4a3 3 0 006 0V4a3 3 0 00-3-3z"/></svg> Join Floor';
+    btn.style.background = 'rgba(46,197,111,.15)';
+    btn.style.borderColor = 'rgba(46,197,111,.35)';
+    btn.style.color = '#2ec56f';
+    btn.disabled = false;
+  }
   icRenderFloor();
 }
 
 function icRenderFloor(){
-  var el=document.getElementById('ic-floor-members');
-  if(!el)return;
-  var members=IC.floor.members||[];
-  if(!members.length){el.textContent='Nobody on the floor channel';return;}
-  el.textContent=members.map(function(m){return m.name;}).join(', ')+' ('+(members.length)+' on channel)';
+  var el = document.getElementById('ic-floor-members');
+  if(!el) return;
+  var members = IC.floorMembers||[];
+  if(!members.length){ el.textContent='Nobody on the floor channel'; return; }
+  el.textContent = members.map(function(m){return m.name;}).join(', ')+' ('+members.length+' on channel)';
 }
 
-// ── Global toggle (Control Deck — admin only) ──
+// ── Global toggle (Control Deck) ──
 async function cdVHGlobalToggle(on){
-  var msg=document.getElementById('cd-vh-msg');
+  var msg = document.getElementById('cd-vh-msg');
   try{
-    var ex=await sbQuery('settings','key=eq.voicehub_enabled&select=key');
-    if(ex&&ex.length){await sbUpdate('settings','key','voicehub_enabled',{value:on?'true':'false'});}
-    else{await sbInsert('settings',{key:'voicehub_enabled',value:on?'true':'false'});}
-    var status=document.getElementById('cd-vh-status');
-    if(status)status.textContent=on?'Enabled':'Hidden from agents';
-    if(msg){msg.style.display='block';msg.textContent=on?'✅ K7 Intercom enabled for all agents':'🔇 K7 Intercom hidden from all agents';setTimeout(function(){msg.style.display='none';},2500);}
-    // Update sidebar visibility
-    var icItem=document.getElementById('sidebar-intercom');
-    if(icItem)icItem.style.display=on?'flex':'none';
-  }catch(e){if(msg){msg.style.display='block';msg.textContent='Error: '+e.message;}}
+    var ex = await sbQuery('settings','key=eq.voicehub_enabled&select=key');
+    if(ex&&ex.length){ await sbUpdate('settings','key','voicehub_enabled',{value:on?'true':'false'}); }
+    else{ await sbInsert('settings',{key:'voicehub_enabled',value:on?'true':'false'}); }
+    var status = document.getElementById('cd-vh-status');
+    if(status) status.textContent = on?'Enabled':'Hidden from agents';
+    if(msg){ msg.style.display='block'; msg.textContent=on?'✅ K7 Intercom enabled':'🔇 K7 Intercom hidden'; setTimeout(function(){msg.style.display='none';},2500); }
+    var icItem = document.getElementById('sidebar-intercom');
+    if(icItem) icItem.style.display = on?'flex':'none';
+  }catch(e){ if(msg){ msg.style.display='block'; msg.textContent='Error: '+e.message; } }
 }
 
-// ── Check VH global toggle on login (reuse existing settings key) ──
 async function checkVHGlobalToggle(){
   try{
-    var rows=await sbQuery('settings','key=eq.voicehub_enabled&select=value');
-    var enabled=(rows&&rows.length)?rows[0].value!=='false':true;
-    var status=document.getElementById('cd-vh-status');
-    if(status)status.textContent=enabled?'Enabled':'Hidden from agents';
-    var tog=document.getElementById('cd-vh-toggle');
-    if(tog)tog.checked=enabled;
-    var icItem=document.getElementById('sidebar-intercom');
-    if(icItem&&!isAdminUser())icItem.style.display=enabled?'flex':'none';
+    var rows = await sbQuery('settings','key=eq.voicehub_enabled&select=value');
+    var enabled = (rows&&rows.length) ? rows[0].value!=='false' : true;
+    var status = document.getElementById('cd-vh-status');
+    if(status) status.textContent = enabled?'Enabled':'Hidden from agents';
+    var tog = document.getElementById('cd-vh-toggle');
+    if(tog) tog.checked = enabled;
+    var icItem = document.getElementById('sidebar-intercom');
+    if(icItem&&!isAdminUser()) icItem.style.display = enabled?'flex':'none';
   }catch(e){}
 }
+
+// ── Start incoming poll on login ──
+function icOnLogin(){
+  icStartIncomingPoll();
+}
+
 
 
 
