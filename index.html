@@ -4197,6 +4197,54 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         </div>
       </div>
 
+      <!-- ══ MANAGE USERS PAGE ══ -->
+      <div class="page" id="page-users">
+        <div class="um-header">
+          <div>
+            <h2 class="um-title">&#128101; Manage Users</h2>
+            <p class="um-sub">Add, remove and manage agent accounts.</p>
+          </div>
+          <button class="um-add-btn" onclick="toggleAddUser()">+ Add Agent</button>
+        </div>
+
+        <div id="um-add-form" class="um-add-form" style="display:none;">
+          <div class="um-form-row">
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.3rem;">Full Name</label>
+              <input type="text" id="new-name" class="um-input" placeholder="e.g. Arun Kumar"/>
+            </div>
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.3rem;">Email</label>
+              <input type="email" id="new-email" class="um-input" placeholder="agent@k7computing.com"/>
+            </div>
+          </div>
+          <div class="um-form-row" style="margin-top:1rem;">
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.3rem;">Password</label>
+              <input type="password" id="new-pass" class="um-input" placeholder="Min. 6 characters"/>
+            </div>
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:.78rem;color:var(--text-muted);display:block;margin-bottom:.3rem;">Role</label>
+              <select id="new-role" class="um-input">
+                <option value="agent">Agent</option>
+                <option value="tl">Team Lead</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div id="um-add-error" style="display:none;color:var(--accent-red);font-size:.8rem;margin-top:.85rem;"></div>
+          <div id="um-add-success" style="display:none;color:#1a7a45;font-size:.8rem;margin-top:.85rem;"></div>
+          <div style="display:flex;gap:.75rem;margin-top:1.1rem;">
+            <button class="um-save-btn" onclick="addUser()">Save Agent</button>
+            <button class="um-cancel-btn" onclick="toggleAddUser()">Cancel</button>
+          </div>
+        </div>
+
+        <div id="um-user-list">
+          <div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>
+        </div>
+      </div>
+
             <!-- ══ CONTROL DECK PAGE ══ -->
       <div class="page" id="page-controldeck">
         <div class="cd-wrap">
