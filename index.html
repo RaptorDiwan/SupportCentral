@@ -1022,16 +1022,6 @@
   .um-del-btn:hover { background:rgba(239,73,60,0.18); }
   .um-empty { color:var(--text-dim); font-size:0.875rem; padding:2rem; text-align:center;
     background:var(--navy-card); border:1px solid var(--navy-border); border-radius:var(--radius); }
-  .um-desig-input {
-    margin-top:.25rem; padding:.3rem .6rem; font-size:.75rem; width:100%; max-width:260px;
-    background:transparent; border:1px solid var(--navy-border); border-radius:6px;
-    color:var(--text-muted); font-family:'DM Sans',sans-serif; outline:none;
-    transition:border-color var(--transition), color var(--transition);
-  }
-  .um-desig-input:focus { border-color:var(--gold-dim); color:var(--text-primary); }
-  .um-desig-input::placeholder { color:var(--text-dim); }
-  .um-desig-saved { color:#2ec56f; font-size:.7rem; margin-left:.4rem; opacity:0; transition:opacity .3s; }
-  .um-desig-saved.show { opacity:1; }
   .cp-wrap { max-width:520px; }
 
   /* ─── ANIMATIONS ─── */
@@ -5926,7 +5916,7 @@ async function loadUsersPage(){
   var listEl=document.getElementById('um-user-list');
   listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>';
   try{
-    var users=await sbQuery('users','select=id,name,email,role,designation,is_blocked&order=name.asc');
+    var users=await sbQuery('users','select=id,name,email,role,is_blocked&order=name.asc');
     if(!users||!users.length){listEl.innerHTML='<div class="um-empty">No agents added yet.</div>';return;}
     listEl.innerHTML=users.map(function(u){
       var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
@@ -5940,10 +5930,6 @@ async function loadUsersPage(){
         '<div class="um-user-info">'+
           '<div class="um-user-name">'+esc(u.name)+' <span class="um-role-badge '+rc+'">'+rl+'</span>'+blockedBadge+'</div>'+
           '<div class="um-user-email">'+esc(u.email)+'</div>'+
-          '<input class="um-desig-input" id="um-desig-'+u.id+'" value="'+esc(u.designation||'')+'" placeholder="Designation shown in K7 Intercom (e.g. Principal Core Engineer)" '+
-            'onkeydown="if(event.key===\'Enter\'){this.blur();}" '+
-            'onblur="umSaveDesignation(\''+u.id+'\',this.value)"/>'+
-          '<span class="um-desig-saved" id="um-desig-saved-'+u.id+'">&#10003; Saved</span>'+
         '</div>'+
         unblockBtn+
         '<button class="um-del-btn" onclick="removeUser(this.dataset.id,this.dataset.name)" data-id="'+u.id+'" data-name="'+esc(u.name)+'">Remove</button>'+
@@ -5951,23 +5937,6 @@ async function loadUsersPage(){
     }).join('');
   }catch(e){listEl.innerHTML='<div class="um-empty" style="color:var(--accent-red);">Could not load users: '+e.message+'</div>';}
 }
-// ── Save per-agent Designation (shown in K7 Intercom & anywhere icRoleLabel is used) ──
-async function umSaveDesignation(userId, value){
-  var val = (value||'').trim();
-  try{
-    await sbUpdate('users','id',userId,{designation: val || null});
-    var badge = document.getElementById('um-desig-saved-'+userId);
-    if(badge){
-      badge.classList.add('show');
-      setTimeout(function(){ badge.classList.remove('show'); }, 1800);
-    }
-    // Refresh K7 Intercom agent list if it's currently loaded, so the change reflects immediately
-    if(typeof icLoadAgents==='function' && typeof IC!=='undefined') icLoadAgents();
-  }catch(e){
-    alert('Could not save designation: '+e.message);
-  }
-}
-
 async function tsToggleUser(userId,enabled){
   try{
     await sbUpdate('users','id',userId,{timesheet_enabled:enabled});
@@ -13254,7 +13223,6 @@ var CT = (function(){
   var _uploadDate   = null;
   var _showAssignFor   = null;
   var _showReassignFor = null;
-  var _showBindEmail   = false; // toggled inline binder for the selected agent filter
   var _filterAgent    = '';
   var _filterAction   = '';
   var _filterVertical = '';   // '' | 'Consumer' | 'Enterprise'
@@ -13332,14 +13300,6 @@ var CT = (function(){
         // 4. All words except last (handles "Abdul Rahim A" → "Abdul Rahim")
         if(words.length>=3){ var butlast=words.slice(0,-1).join(' '); if(!_emailMap[butlast]) _emailMap[butlast]=email; }
       });
-      // Merge admin-defined aliases (e.g. CRM name "Vijayaraghavan R" -> portal user "Vijay")
-      try{
-        var aliasRows=await sbQuery('settings','key=eq.ct_name_aliases&select=value');
-        if(aliasRows&&aliasRows.length){
-          var aliases=JSON.parse(aliasRows[0].value);
-          Object.keys(aliases).forEach(function(k){ _emailMap[k.toLowerCase().trim()]=aliases[k]; });
-        }
-      }catch(e){}
       console.log('CT emails ready:',Object.keys(_emailMap).length,'keys for',rows.length,'users');
     }catch(e){ console.warn('CT loadEmails:',e.message); }
   }
@@ -13684,18 +13644,9 @@ var CT = (function(){
         var _bBody='Hi,\n\nPlease look into this and follow up your pending cases today.\n\n'+_caseLines+'\n\n-- '+_bSender+'\n\nIf the case has already been handled, please ignore this message.';
         var _bSubj='Follow-up Reminder \u2014 Pending Cases Today ('+_agentPending.length+')';
         html+='<button class="ct-remind-btn" style="margin-left:auto;font-size:.75rem;padding:.35rem .85rem;white-space:nowrap;" onclick="CT.sendRemind(\''+escH(_agentEmail)+'\',\''+encodeURIComponent(_bBody)+'\',\''+encodeURIComponent(_bSubj)+'\')">📧 Remind '+escH(_filterAgent.split(' ')[0])+'</button>';
-      } else if(!_agentEmail){
-        // No email matched for this CRM agent name — offer to bind it to a portal user
-        html+='<button class="ct-remind-btn" style="margin-left:auto;font-size:.75rem;padding:.35rem .85rem;white-space:nowrap;" onclick="CT.toggleBindEmail()">🔗 Bind Email</button>';
       }
     }
     html+='</div>';
-    if(_filterAgent && !getEmail(_filterAgent) && _showBindEmail){
-      html+='<div class="ct-table-hdr" style="border-top:1px solid var(--navy-border);gap:.5rem;">'+
-        '<span style="font-size:.78rem;color:var(--text-muted);white-space:nowrap;">Bind &quot;'+escH(_filterAgent)+'&quot; to:</span>'+
-        ctAgentInputHTML('ct-bind-email-inp','Type agent name...','CT.confirmBindEmail()','Bind')+
-      '</div>';
-    }
     if(!filtered.length){ html+='<div class="ct-all-clear"><div class="ct-ac-ico">🔍</div>No cases match filters</div></div>'; return html; }
     html+='<div class="ct-tbl-wrap"><table class="ct-tbl"><thead><tr><th>Case #</th><th>Title / Customer</th><th>Agent</th><th>Status</th><th>Vertical</th><th>Modified</th><th>Follow-up</th><th>Action</th><th></th></tr></thead><tbody>';
     filtered.forEach(function(c){
@@ -13932,28 +13883,6 @@ var CT = (function(){
     drop: function(e){ e.preventDefault(); var z=document.getElementById('ct-drop'); if(z) z.classList.remove('drag'); var f=e.dataTransfer.files[0]; if(f) CT.fileSelect(f); },
     toggleEl: function(id){ var el=document.getElementById(id); if(el) el.style.display=el.style.display==='none'?'block':'none'; },
     toggleReassign: function(a){ _showReassignFor=(_showReassignFor===a)?null:a; renderCT(); },
-    toggleBindEmail: function(){ _showBindEmail=!_showBindEmail; renderCT(); },
-    confirmBindEmail: async function(){
-      var crmName=_filterAgent;
-      var inp=document.getElementById('ct-bind-email-inp');
-      var portalName=inp?inp.value.trim():'';
-      if(!portalName){ alert('Type and select a portal agent name first.'); return; }
-      await ctLoadAgentList();
-      var match=_ctAgentList.find(function(a){ return a.name.toLowerCase()===portalName.toLowerCase(); });
-      if(!match){ alert('No exact match for "'+portalName+'". Pick a name from the dropdown.'); return; }
-      if(!match.email){ alert(portalName+' has no email set in Manage Users.'); return; }
-      try{
-        var key='ct_name_aliases';
-        var rows=await sbQuery('settings','key=eq.'+key+'&select=value');
-        var aliases=rows&&rows.length?JSON.parse(rows[0].value):{};
-        aliases[crmName.toLowerCase().trim()]=match.email;
-        if(rows&&rows.length){ await sbUpdate('settings','key',key,{value:JSON.stringify(aliases)}); }
-        else{ await sbInsert('settings',{key:key,value:JSON.stringify(aliases)}); }
-        _showBindEmail=false;
-        await loadEmails();
-        renderCT();
-      }catch(e){ alert('Could not save: '+e.message); }
-    },
     confirmReassign: function(agent){
       // Legacy — now handled by confirmReassignFromInput
       // Try to find any active reassign input for this agent
@@ -13974,7 +13903,7 @@ var CT = (function(){
       saveAction(cn,title,owner,'Handled',null);
     },
     search:        function(v){ _searchQ=v;        renderCT(); },
-    filterAgent:   function(v){ _filterAgent=v; _showBindEmail=false; renderCT(); },
+    filterAgent:   function(v){ _filterAgent=v;   renderCT(); },
     filterAction:  function(v){ _filterAction=v;  renderCT(); },
     filterVertical:function(v){ _filterVertical=v; renderCT(); },
     showAssign: function(cn){ _showAssignFor=(_showAssignFor===cn)?null:cn; renderCT(); },
@@ -14940,65 +14869,6 @@ function escHTML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&l
 <script>
 
 // ── ABOUT PAGE — Load What's New & Coming Soon from settings ──
-var _aboutDefaults = {
-  whats_new: [
-    'K7 Intercom — direct calls & floor channel for the whole team',
-    'Assessment shuffle — each agent gets a unique question & choice order',
-    'Quiz malpractice detection — instant block on tab switch',
-    'Assessment proctoring — warning on 1st violation, auto-submit on 2nd',
-    'Mobile break timer fix — live countdown now works on all devices'
-  ],
-  coming_soon: [
-    'K7 Intercom — Realtime websocket signaling upgrade',
-    'Agent performance leaderboard',
-    'Shift handover notes',
-    'Dark mode improvements'
-  ]
-};
-var _aboutColors = { whats_new:'#2ec56f', coming_soon:'var(--accent-blue)' };
-
-async function aboutGetItems(section){
-  var key = 'about_'+section;
-  var rows = await sbQuery('settings','key=eq.'+key+'&select=value');
-  if(rows&&rows.length){
-    try{ return JSON.parse(rows[0].value); }catch(e){ return []; }
-  }
-  // No row yet — seed with defaults so edit/delete works from the start
-  var defaults = _aboutDefaults[section] || [];
-  await sbInsert('settings',{key:key,value:JSON.stringify(defaults)});
-  return defaults;
-}
-
-async function aboutSaveItems(section, items){
-  var key = 'about_'+section;
-  var ex = await sbQuery('settings','key=eq.'+key+'&select=key');
-  if(ex&&ex.length){ await sbUpdate('settings','key',key,{value:JSON.stringify(items)}); }
-  else{ await sbInsert('settings',{key:key,value:JSON.stringify(items)}); }
-}
-
-function aboutRenderList(el, items, section){
-  if(!el) return;
-  var color = _aboutColors[section];
-  var admin = isAdminUser();
-  if(!items || !items.length){
-    el.innerHTML = '<div style="color:var(--text-dim);font-size:.8rem;">Nothing here yet.</div>';
-    return;
-  }
-  el.innerHTML = items.map(function(txt,i){
-    var controls = admin
-      ? '<span style="display:flex;gap:.4rem;flex-shrink:0;margin-left:.5rem;">'+
-          '<button onclick="aboutEditItem(\''+section+'\','+i+')" title="Edit" style="background:none;border:none;cursor:pointer;font-size:.78rem;color:var(--text-muted);padding:0;">&#9998;</button>'+
-          '<button onclick="aboutDeleteItem(\''+section+'\','+i+')" title="Delete" style="background:none;border:none;cursor:pointer;font-size:.78rem;color:var(--accent-red);padding:0;">&#10006;</button>'+
-        '</span>'
-      : '';
-    return '<div style="display:flex;align-items:flex-start;gap:.55rem;padding:.35rem 0;border-bottom:1px solid var(--navy-border);">'+
-      '<span style="flex-shrink:0;margin-top:3px;width:6px;height:6px;border-radius:50%;background:'+color+';display:inline-block;"></span>'+
-      '<span style="font-size:.82rem;color:var(--text-primary);line-height:1.55;flex:1;">'+esc(txt)+'</span>'+
-      controls+
-    '</div>';
-  }).join('');
-}
-
 async function aboutLoadItems(){
   var wnList = document.getElementById('about-wn-list');
   var csList = document.getElementById('about-cs-list');
@@ -15011,14 +14881,47 @@ async function aboutLoadItems(){
     if(csBtn) csBtn.style.display='inline-block';
   }
 
+  // Default items shown if DB has nothing
+  var wnDefaults = [
+    'K7 Intercom — direct calls & floor channel for the whole team',
+    'Assessment shuffle — each agent gets a unique question & choice order',
+    'Quiz malpractice detection — instant block on tab switch',
+    'Assessment proctoring — warning on 1st violation, auto-submit on 2nd',
+    'Mobile break timer fix — live countdown now works on all devices'
+  ];
+  var csDefaults = [
+    'K7 Intercom — Realtime websocket signaling upgrade',
+    'Agent performance leaderboard',
+    'Shift handover notes',
+    'Dark mode improvements'
+  ];
+
+  function renderList(el, items, color){
+    if(!el) return;
+    if(!items || !items.length){
+      el.innerHTML = '<div style="color:var(--text-dim);font-size:.8rem;">Nothing here yet.</div>';
+      return;
+    }
+    el.innerHTML = items.map(function(txt){
+      return '<div style="display:flex;align-items:flex-start;gap:.55rem;padding:.35rem 0;border-bottom:1px solid var(--navy-border);">'+
+        '<span style="flex-shrink:0;margin-top:3px;width:6px;height:6px;border-radius:50%;background:'+color+';display:inline-block;"></span>'+
+        '<span style="font-size:.82rem;color:var(--text-primary);line-height:1.55;">'+txt+'</span>'+
+      '</div>';
+    }).join('');
+  }
+
+  // Try to load from DB, fall back to defaults
   try{
-    var wnItems = await aboutGetItems('whats_new');
-    var csItems = await aboutGetItems('coming_soon');
-    aboutRenderList(wnList, wnItems, 'whats_new');
-    aboutRenderList(csList, csItems, 'coming_soon');
+    var rows = await sbQuery('settings','key=in.(about_whats_new,about_coming_soon)&select=key,value');
+    var wnRow = rows && rows.find(function(r){return r.key==='about_whats_new';});
+    var csRow = rows && rows.find(function(r){return r.key==='about_coming_soon';});
+    var wnItems = wnRow ? JSON.parse(wnRow.value) : wnDefaults;
+    var csItems = csRow ? JSON.parse(csRow.value) : csDefaults;
+    renderList(wnList, wnItems, '#2ec56f');
+    renderList(csList, csItems, 'var(--accent-blue)');
   }catch(e){
-    aboutRenderList(wnList, _aboutDefaults.whats_new, 'whats_new');
-    aboutRenderList(csList, _aboutDefaults.coming_soon, 'coming_soon');
+    renderList(wnList, wnDefaults, '#2ec56f');
+    renderList(csList, csDefaults, 'var(--accent-blue)');
   }
 }
 
@@ -15026,35 +14929,14 @@ async function aboutAddItem(section){
   var text = prompt(section==='whats_new' ? "What's New item:" : "Coming Soon item:");
   if(!text||!text.trim()) return;
   try{
-    var items = await aboutGetItems(section);
+    var key = 'about_'+section;
+    var rows = await sbQuery('settings','key=eq.'+key+'&select=value');
+    var items = rows&&rows.length ? JSON.parse(rows[0].value) : [];
     items.unshift(text.trim());
-    await aboutSaveItems(section, items);
+    if(rows&&rows.length){ await sbUpdate('settings','key',key,{value:JSON.stringify(items)}); }
+    else{ await sbInsert('settings',{key:key,value:JSON.stringify(items)}); }
     aboutLoadItems();
   }catch(e){ alert('Save failed: '+e.message); }
-}
-
-async function aboutEditItem(section, index){
-  try{
-    var items = await aboutGetItems(section);
-    if(index<0||index>=items.length) return;
-    var text = prompt('Edit item:', items[index]);
-    if(text===null) return; // cancelled
-    if(!text.trim()){ alert('Item cannot be empty. Use the delete button to remove it.'); return; }
-    items[index] = text.trim();
-    await aboutSaveItems(section, items);
-    aboutLoadItems();
-  }catch(e){ alert('Save failed: '+e.message); }
-}
-
-async function aboutDeleteItem(section, index){
-  if(!confirm('Delete this item?')) return;
-  try{
-    var items = await aboutGetItems(section);
-    if(index<0||index>=items.length) return;
-    items.splice(index,1);
-    await aboutSaveItems(section, items);
-    aboutLoadItems();
-  }catch(e){ alert('Delete failed: '+e.message); }
 }
 
 // ── ABOUT PAGE — Check for Updates + Report Issue ──
@@ -19459,7 +19341,7 @@ async function icPageInit(){
 // ── Load agents ──
 async function icLoadAgents(){
   try{
-    var rows = await sbQuery('users','select=id,name,role,designation&order=name.asc');
+    var rows = await sbQuery('users','select=id,name,role&order=name.asc');
     IC.agents = (rows||[]).filter(function(u){ return u.id !== currentUser.id; });
     icRenderAgents(IC.agents);
   }catch(e){
@@ -19486,16 +19368,6 @@ function dcStartCall(userId, userName, bg, isVideo){
   icStartCall(userId, userName, !!isVideo);
 }
 
-// ── Display label under each agent's name in K7 Intercom ──
-// Priority: custom designation (set in Manage Users) > friendly role label > raw role value
-function icRoleLabel(a){
-  if(a.designation && a.designation.trim()) return a.designation.trim();
-  if(a.role==='admin') return 'Admin';
-  if(a.role==='tl') return 'Team Lead';
-  if(a.role==='agent') return 'Agent';
-  return a.role || 'Agent';
-}
-
 function icRenderAgents(agents){
   var grid = document.getElementById('ic-agents-grid');
   if(!grid) return;
@@ -19517,7 +19389,7 @@ function icRenderAgents(agents){
     return '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1rem;display:flex;flex-direction:column;gap:.6rem;">'+
       '<div style="display:flex;align-items:center;gap:.6rem;">'+
         '<div style="width:38px;height:38px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:'+col+';flex-shrink:0;">'+icInitials(a.name)+'</div>'+
-        '<div><div style="font-size:.88rem;font-weight:600;color:var(--text-primary);">'+esc(a.name)+'</div><div style="font-size:.72rem;color:var(--text-muted);">'+esc(icRoleLabel(a))+'</div></div>'+
+        '<div><div style="font-size:.88rem;font-weight:600;color:var(--text-primary);">'+esc(a.name)+'</div><div style="font-size:.72rem;color:var(--text-muted);">'+(a.role||'Agent')+'</div></div>'+
       '</div>'+
       btnHtml+
     '</div>';
