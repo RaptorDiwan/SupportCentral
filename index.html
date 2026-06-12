@@ -5187,31 +5187,6 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 const SUPABASE_URL='https://sodvlpcjpnepohpoqicf.supabase.co';
 const SUPABASE_KEY='sb_publishable_nEbzsiR9Qhb31ZMc-Pg-cA_tJEzkmAf';
 
-// ── Supabase Realtime client — used by K7 Intercom for instant signaling ──
-(function(){
-  try{
-    // Use Supabase Realtime JS v2 from CDN
-    var s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/@supabase/realtime-js@2.10.2/dist/main.umd.js';
-    s.onload=function(){
-      try{
-        window.supabaseRealtime=new window.Realtime.RealtimeClient(
-          'wss://sodvlpcjpnepohpoqicf.supabase.co/realtime/v1',
-          {params:{apikey:SUPABASE_KEY},heartbeatIntervalMs:20000,reconnectAfterMs:function(n){return Math.min(1000*Math.pow(2,n),30000);}}
-        );
-        window.supabaseRealtime.connect();
-        console.log('K7 Intercom: Realtime connected');
-      }catch(e){console.warn('K7 Intercom: Realtime init failed',e.message);}
-    };
-    s.onerror=function(){console.warn('K7 Intercom: Realtime CDN load failed, using fallback polling');};
-    document.head.appendChild(s);
-  }catch(e){}
-})();
-
-// ── Cloudflare TURN credentials — fill in your own below ──
-const CF_TURN_TOKEN_ID  = '8c1147a2b9ce301812a67174735d15be';
-const CF_TURN_API_TOKEN = 'df8223b259d761e0a85719db4602e94370a02b02d78bcc714377c33c0a4e3ca4';
-
 function sbHeaders(extra){
   return Object.assign({'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},extra||{});
 }
@@ -7112,7 +7087,6 @@ async function recordLogin(){
   // Start polls regardless
   startSettingsPoll();
   startHeartbeat();
-  vhStartSignalPoll();
 }
 
 // ── Heartbeat — updates last_seen every 10 min ──
@@ -19324,6 +19298,7 @@ function icCloseFrame(){
 async function icPageInit(){
   if(!currentUser) return;
   icRenderAgents([]);
+  icRenderFloor();
   await icLoadAgents();
   // Poll presence every 20s
   if(IC.pollInterval) clearInterval(IC.pollInterval);
@@ -19630,9 +19605,11 @@ async function icLeaveFloor(){
 function icRenderFloor(){
   var el = document.getElementById('ic-floor-members');
   if(!el) return;
-  var members = IC.floorMembers||[];
-  if(!members.length){ el.textContent='Nobody on the floor channel'; return; }
-  el.textContent = members.map(function(m){return m.name;}).join(', ')+' ('+members.length+' on channel)';
+  if(IC.floorActive){
+    el.textContent='You are on the floor channel';
+  } else {
+    el.textContent='Tap Join Floor to start an open voice channel';
+  }
 }
 
 // ── Global toggle (Control Deck) ──
@@ -19732,7 +19709,7 @@ function icOnLogin(){
       egEscapeAll();
       return;
     }
-    if(e.key.length === 1){
+    if(e.key && e.key.length === 1){
       _egBuffer += e.key.toLowerCase();
       if(_egBuffer.length > 20) _egBuffer = _egBuffer.slice(-20);
       egCheckBuffer();
