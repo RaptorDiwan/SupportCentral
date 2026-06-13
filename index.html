@@ -19304,7 +19304,7 @@ function icOpenFrame(roomUrl, isVideo){
   var hdr = document.createElement('div');
   hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;border-bottom:1px solid var(--navy-border);';
   hdr.innerHTML = '<div style="display:flex;align-items:center;gap:.5rem;"><div style="width:8px;height:8px;border-radius:50%;background:#2ec56f;animation:pulse 1.2s ease infinite;"></div><span style="font-size:.85rem;font-weight:600;color:var(--text-primary);" id="ic-frame-title">K7 Intercom</span></div>'+
-    '<button onclick="icHangUp()" style="background:rgba(239,73,60,.15);border:1px solid rgba(239,73,60,.3);border-radius:6px;padding:.3rem .8rem;font-size:.78rem;font-weight:700;color:#ef493c;cursor:pointer;">✕ Leave</button>';
+    '<button onclick="icLeaveCurrent()" style="background:rgba(239,73,60,.15);border:1px solid rgba(239,73,60,.3);border-radius:6px;padding:.3rem .8rem;font-size:.78rem;font-weight:700;color:#ef493c;cursor:pointer;">✕ Leave</button>';
 
   // Daily iframe — minimal UI, audio-only or video depending on room config
   var iframe = document.createElement('iframe');
@@ -19555,6 +19555,13 @@ function icShowActiveBar(name){
 // ── End active call ──
 async function icEndCall(){
   icHangUp();
+}
+
+// ── Leave button inside the call overlay — routes to the right cleanup ──
+function icLeaveCurrent(){
+  if(IC.floorActive){ icLeaveFloor(); }
+  else if(IC.activeCall){ icHangUp(); }
+  else { icCloseFrame(); } // safety net — just close any stray overlay
 }
 
 async function icHangUp(){
