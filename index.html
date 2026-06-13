@@ -3786,6 +3786,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                 <button class="qa-toggle-btn" onclick="qbBackupAllResponses()">&#128229; Backup All Responses</button>
                 <button class="qa-toggle-btn" onclick="qbViewAllResponses()">&#128065; View All Answers</button>
                 <button class="qa-toggle-btn" onclick="qbOpenLeaderboardManager()">&#127942; Leaderboard Manager</button>
+                <button class="qa-toggle-btn" onclick="qbOpenParticipantsManager()">&#128101; Manage Participants</button>
               </div>
             </div>
             <div id="qb-list"><div style="color:var(--text-dim);font-size:.875rem;padding:1rem;">Loading...</div></div>
@@ -3818,6 +3819,21 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                 </div>
               </div>
               <div id="qb-lb-body" style="color:var(--text-dim);font-size:.85rem;">Select date range and click Load.</div>
+            </div>
+            <!-- Manage Participants -->
+            <div id="qb-part-manager-panel" style="display:none;margin-top:1rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.2rem 1.4rem;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem;">
+                <div>
+                  <div style="font-size:.88rem;font-weight:700;color:var(--text-primary);">&#128101; Manage Quiz Participants</div>
+                  <div style="font-size:.74rem;color:var(--text-muted);margin-top:.15rem;">Untick agents who don't take the daily quiz &mdash; they'll be left out of the Monthly Report, Leaderboard &amp; Hall of Fame. Their quiz page stays unaffected.</div>
+                </div>
+                <button class="qa-del-btn" onclick="document.getElementById('qb-part-manager-panel').style.display='none'">&#10005; Close</button>
+              </div>
+              <div id="qb-part-body" style="color:var(--text-dim);font-size:.85rem;">Loading agents...</div>
+              <div style="margin-top:1rem;display:flex;gap:.6rem;align-items:center;">
+                <button class="qa-save-btn" onclick="qbSaveParticipants()">Save</button>
+                <span id="qb-part-msg" style="font-size:.78rem;color:var(--accent-green);display:none;"></span>
+              </div>
             </div>
           </div>
 
@@ -8662,7 +8678,8 @@ async function qrLoadReport(){
       'date=gte.'+fromDate+'&date=lte.'+toDate+'&order=submitted_at.asc&select=quiz_id,user_id,user_name,answer,is_correct,submitted_at,date'
     );
     var users = await sbQuery('users','select=id,name,role&order=name.asc');
-    var agents = (users||[]).filter(function(u){ return u.role!=='syslevel'; });
+    var excludedIds = await qbGetExcludedAgentIds();
+    var agents = (users||[]).filter(function(u){ return u.role!=='syslevel' && !excludedIds.has(u.id); });
     var rosterRows = window.rosterCache || null;
 
     _qrData = { quizzes:quizzes||[], responses:responses||[], agents:agents, rosterRows:rosterRows, month:month, year:year, fromDate:fromDate, toDate:toDate };
@@ -9428,6 +9445,60 @@ function qbOpenLeaderboardManager(){
   var fromEl=document.getElementById('qb-lb-from'); var toEl=document.getElementById('qb-lb-to');
   if(fromEl&&!fromEl.value)fromEl.value=fromD; if(toEl&&!toEl.value)toEl.value=toD;
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── Manage Quiz Participants (agents excluded from Monthly Report / Hall of Fame) ──
+var _QB_EXCLUDED_KEY='quiz_excluded_agents';
+
+// Returns a Set of user IDs to exclude from quiz reports
+async function qbGetExcludedAgentIds(){
+  try{
+    var rows=await sbQuery('settings','key=eq.'+_QB_EXCLUDED_KEY+'&select=value');
+    if(!rows||!rows.length||!rows[0].value) return new Set();
+    var arr=JSON.parse(rows[0].value);
+    return new Set(Array.isArray(arr)?arr:[]);
+  }catch(e){ return new Set(); }
+}
+
+async function qbOpenParticipantsManager(){
+  var panel=document.getElementById('qb-part-manager-panel');
+  var body=document.getElementById('qb-part-body');
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  body.innerHTML='<div style="color:var(--text-dim);font-size:.85rem;">Loading agents...</div>';
+  try{
+    var users=await sbQuery('users','select=id,name,role&order=name.asc');
+    var agents=(users||[]).filter(function(u){return u.role!=='syslevel';});
+    var excluded=await qbGetExcludedAgentIds();
+    body.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.5rem .75rem;">'+
+      agents.map(function(a){
+        var checked=excluded.has(a.id)?'':'checked';
+        return '<label style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:var(--text-primary);cursor:pointer;">'+
+          '<input type="checkbox" class="qb-part-cb" data-id="'+a.id+'" '+checked+' style="accent-color:var(--gold);width:15px;height:15px;"/>'+esc(a.name)+
+        '</label>';
+      }).join('')+
+    '</div>';
+  }catch(e){ body.innerHTML='<div style="color:var(--accent-red);font-size:.85rem;">Error: '+e.message+'</div>'; }
+}
+
+async function qbSaveParticipants(){
+  var msg=document.getElementById('qb-part-msg');
+  var excluded=[];
+  document.querySelectorAll('.qb-part-cb').forEach(function(cb){
+    if(!cb.checked) excluded.push(cb.getAttribute('data-id'));
+  });
+  msg.style.color='var(--text-dim)'; msg.textContent='Saving...'; msg.style.display='inline';
+  try{
+    var existing=await sbQuery('settings','key=eq.'+_QB_EXCLUDED_KEY+'&select=key');
+    var val=JSON.stringify(excluded);
+    if(existing&&existing.length) await sbUpdate('settings','key',_QB_EXCLUDED_KEY,{value:val});
+    else await sbInsert('settings',{key:_QB_EXCLUDED_KEY,value:val});
+    msg.style.color='var(--accent-green)';
+    msg.textContent='Saved! '+excluded.length+' agent(s) excluded from quiz reports.';
+  }catch(e){
+    msg.style.color='var(--accent-red)';
+    msg.textContent='Save failed: '+e.message;
+  }
 }
 
 async function qbLoadLeaderboardManager(){
