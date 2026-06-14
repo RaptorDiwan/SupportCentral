@@ -968,8 +968,8 @@ function csatBuildEmailHTML() {
     html += '<p style="margin:20px 0 6px;"><strong>LIVE CHAT</strong></p>';
 
     // Table 1 — Name + Average
-    html += '<table style="border-collapse:collapse;width:100%;max-width:320px;">';
-    html += '<tr><th style="' + TH + '">Name</th><th style="' + TH + '">Average</th></tr>';
+    html += '<table style="border-collapse:collapse;">';
+    html += '<tr><th style="' + TH + '" width="160">Name</th><th style="' + TH + '" width="90">Average</th></tr>';
     var chatMap={};
     chatData.rows.forEach(function(r){var k=r.agent||'Unknown';if(!chatMap[k])chatMap[k]=[];chatMap[k].push(r);});
     var chatList = Object.keys(chatMap).map(function(name){
@@ -994,11 +994,11 @@ function csatBuildEmailHTML() {
     var poorRows=[];
     chatData.rows.forEach(function(r){ if (r.score<=2) poorRows.push(r); });
     if (poorRows.length>0) {
-      html += '<table style="border-collapse:collapse;width:100%;">';
-      html += '<tr><th style="' + TH + '">Name</th><th style="' + TH + '">Chat id</th><th style="' + TH + '">Analysis</th></tr>';
+      html += '<table style="border-collapse:collapse;">';
+      html += '<tr><th style="' + TH + '" width="120">Name</th><th style="' + TH + '" width="120">Chat id</th><th style="' + TH + '" width="320">Analysis</th></tr>';
       poorRows.forEach(function(r,ni){
         var bg = ni%2===0 ? 'background:#f9f9f9;' : '';
-        html += '<tr style="' + bg + '"><td style="' + TDL + '">' + r.agent + '</td><td style="' + TDL + '">' + (r.conferenceId||'—') + '</td><td style="' + TDCM + '"></td></tr>';
+        html += '<tr style="' + bg + '"><td style="' + TDL + '">' + r.agent + '</td><td style="' + TDL + '">' + (r.conferenceId||'—') + '</td><td style="padding:7px 11px;text-align:left;font-family:Arial,sans-serif;font-size:13px;border:1px solid #d0d0d0;white-space:normal;">&nbsp;</td></tr>';
       });
       html += '</table><br/>';
     }
