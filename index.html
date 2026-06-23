@@ -10322,17 +10322,52 @@ async function showAssessmentResponses(id){
       panel.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">No submissions yet.</div>';
       return;
     }
-    panel.innerHTML='<div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;margin-bottom:.6rem;">SUBMISSIONS ('+responses.length+')</div>'+
+    var essayQs=questions.filter(function(q){return q.type==='essay';});
+    var pendingCount=0;
+    (responses||[]).forEach(function(r){
+      var marks=assParseJSON(r.essay_marks,{}); var ans=assParseJSON(r.answers,{});
+      essayQs.forEach(function(q){ var a=ans[q.id]; if(a!==undefined&&a!==null&&a!==''&&marks[q.id]===undefined) pendingCount++; });
+    });
+    panel.innerHTML=
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.9rem;">'+
+        '<span style="font-size:.78rem;color:var(--text-muted);">'+responses.length+' submission(s) &middot; '+
+          (pendingCount>0?'<span style="color:var(--gold);">'+pendingCount+' essay answer(s) need marking</span>':'<span style="color:var(--accent-green);">All marked &#10003;</span>')+
+        '</span>'+
+        '<div style="display:flex;gap:.5rem;">'+
+          '<button class="qa-toggle-btn" style="font-size:.74rem;" onclick="arExpandAll(\''+id+'\')">&#9660; Expand All</button>'+
+          '<button class="qa-toggle-btn" style="font-size:.74rem;" onclick="arCollapseAll(\''+id+'\')">&#9650; Collapse All</button>'+
+          '<button class="qa-toggle-btn" style="font-size:.74rem;" onclick="exportAssessmentReport(\''+id+'\',\'\')" title="Download CSV with all answers &amp; marks">&#8659; Download CSV</button>'+
+        '</div>'+
+      '</div>'+
       '<div id="ar-rows-'+id+'"></div>';
     renderAssessmentResponseRows(id);
   }catch(e){panel.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+e.message+'</div>';}
 }
 
+function arExpandAll(id){
+  var data=_arData[id]; if(!data)return;
+  data.responses.forEach(function(r){
+    var det=document.getElementById('ar-detail-'+r.id);
+    if(det&&det.style.display!=='block'){ det.innerHTML=assBuildResponseDetailHtml(id,r.id); det.style.display='block'; }
+    var btn=document.getElementById('ar-togbtn-'+r.id);
+    if(btn) btn.innerHTML='&#9650; Collapse';
+  });
+}
+
+function arCollapseAll(id){
+  var data=_arData[id]; if(!data)return;
+  data.responses.forEach(function(r){
+    var det=document.getElementById('ar-detail-'+r.id);
+    if(det) det.style.display='none';
+    var btn=document.getElementById('ar-togbtn-'+r.id);
+    if(btn) btn.innerHTML='&#128065; View Answers';
+  });
+}
+
 function renderAssessmentResponseRows(id){
   var rowsEl=document.getElementById('ar-rows-'+id);
   if(!rowsEl)return;
-  var data=_arData[id];
-  if(!data)return;
+  var data=_arData[id]; if(!data)return;
   var questions=data.questions, responses=data.responses;
   var openDetails={};
   rowsEl.querySelectorAll('[id^="ar-detail-"]').forEach(function(el){
@@ -10344,24 +10379,35 @@ function renderAssessmentResponseRows(id){
     var pct=total>0?Math.round(score/total*100):0;
     var isMalp=r.malpractice===true||r.malpractice==='true';
     var scoreColor=pct>=80?'var(--accent-green)':pct>=50?'var(--gold)':'var(--accent-red)';
-    var time=r.submitted_at?new Date(r.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'\u2014';
-    var summary='<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;margin-bottom:.3rem;flex-wrap:wrap;'+(isMalp?'border-left:3px solid var(--accent-red);':'')+'">'+
-      '<div style="flex:1;font-size:.82rem;font-weight:600;color:var(--text-primary);">'+esc(r.user_name)+'</div>'+
-      '<div style="font-size:.78rem;font-weight:700;color:'+scoreColor+';">'+(score+'/'+total+' ('+pct+'%)')+'</div>'+
-      '<div style="font-size:.72rem;color:var(--text-dim);">\u23F1 '+assTimeTakenStr(r.time_taken_seconds)+'</div>'+
-      '<div style="font-size:.72rem;color:var(--text-dim);">'+time+'</div>'+
-      (isMalp?'<span style="font-size:.68rem;font-weight:700;background:rgba(239,73,60,.12);color:var(--accent-red);padding:2px 8px;border-radius:20px;flex-shrink:0;">\uD83D\uDEAB Malpractice</span>':'')+
-      '<button class="qa-toggle-btn" style="padding:.25rem .6rem;font-size:.72rem;" onclick="toggleAssessmentResponseDetail(\''+id+'\',\''+r.id+'\')">\uD83D\uDC41 Answers</button>'+
-    '</div>';
+    var time=r.submitted_at?new Date(r.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'--';
+    var essayQs=questions.filter(function(q){return q.type==='essay';});
+    var marks=assParseJSON(r.essay_marks,{}); var answers=assParseJSON(r.answers,{});
+    var resPending=essayQs.filter(function(q){ var a=answers[q.id]; return a!==undefined&&a!==null&&a!==''&&marks[q.id]===undefined; }).length;
     var detId='ar-detail-'+r.id;
     var detOpen=!!openDetails[detId];
-    return summary+'<div id="'+detId+'" style="display:'+(detOpen?'block':'none')+';margin:0 0 .6rem .5rem;padding:.75rem .9rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:6px;">'+(detOpen?assBuildResponseDetailHtml(id,r.id):'')+'</div>';
+    var ini=esc((r.user_name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase());
+    return '<div style="margin-bottom:.4rem;">'+
+      '<div style="display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem;background:var(--navy-hover);border-radius:'+(detOpen?'6px 6px 0 0':'6px')+';flex-wrap:wrap;cursor:pointer;'+(isMalp?'border-left:3px solid var(--accent-red);':'')+'" onclick="toggleAssessmentResponseDetail(\''+id+'\',\''+r.id+'\')">'+
+        '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;flex-shrink:0;">'+ini+'</div>'+
+        '<div style="flex:1;font-size:.84rem;font-weight:600;color:var(--text-primary);">'+esc(r.user_name)+'</div>'+
+        '<div style="font-size:.78rem;font-weight:700;color:'+scoreColor+';">'+score+'/'+total+' ('+pct+'%)</div>'+
+        '<div style="font-size:.72rem;color:var(--text-dim);">&#9201; '+assTimeTakenStr(r.time_taken_seconds)+'</div>'+
+        '<div style="font-size:.72rem;color:var(--text-dim);">'+time+'</div>'+
+        (isMalp?'<span style="font-size:.68rem;font-weight:700;background:rgba(239,73,60,.12);color:var(--accent-red);padding:2px 8px;border-radius:20px;flex-shrink:0;">&#128683; Malpractice</span>':'')+
+        (resPending>0?'<span style="font-size:.68rem;font-weight:700;background:rgba(239,175,0,.1);color:var(--gold);padding:2px 8px;border-radius:20px;flex-shrink:0;">'+resPending+' to mark</span>':'')+
+        '<button id="ar-togbtn-'+r.id+'" class="qa-toggle-btn" style="padding:.22rem .6rem;font-size:.72rem;flex-shrink:0;" onclick="event.stopPropagation();toggleAssessmentResponseDetail(\''+id+'\',\''+r.id+'\')">'+
+          (detOpen?'&#9650; Collapse':'&#128065; View Answers')+
+        '</button>'+
+      '</div>'+
+      '<div id="'+detId+'" style="display:'+(detOpen?'block':'none')+';margin-bottom:.5rem;padding:.8rem 1rem;background:var(--navy-card);border:1px solid var(--navy-border);border-top:none;border-radius:0 0 6px 6px;">'+
+        (detOpen?assBuildResponseDetailHtml(id,r.id):'')+
+      '</div>'+
+    '</div>';
   }).join('');
 }
 
 function assBuildResponseDetailHtml(id, responseId){
-  var data=_arData[id];
-  if(!data)return '';
+  var data=_arData[id]; if(!data)return '';
   var questions=data.questions;
   var r=data.responses.find(function(x){return x.id===responseId;});
   if(!r)return '<div style="color:var(--text-dim);font-size:.8rem;">Not found.</div>';
@@ -10371,25 +10417,34 @@ function assBuildResponseDetailHtml(id, responseId){
   return questions.map(function(q,i){
     var userAns=answers[q.id];
     var hasAns=userAns!==undefined && userAns!==null && userAns!=='';
-    var row='<div style="margin-bottom:.75rem;padding-bottom:.6rem;'+(i<questions.length-1?'border-bottom:1px solid var(--navy-border);':'')+'">'+
-      '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);margin-bottom:.35rem;">Q'+(i+1)+'. '+esc(q.question)+'</div>';
+    var row='<div style="margin-bottom:.85rem;padding-bottom:.7rem;'+(i<questions.length-1?'border-bottom:1px solid var(--navy-border);':'')+'">' +
+      '<div style="font-size:.81rem;font-weight:600;color:var(--text-primary);margin-bottom:.4rem;">Q'+(i+1)+'. '+esc(q.question)+'</div>';
     if(q.type==='essay'){
       var isC=marks[q.id]===true, isW=marks[q.id]===false;
+      var statusBadge=isC
+        ?'<span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(46,197,111,.12);color:#1a7a45;">&#10003; Marked Correct</span>'
+        :isW?'<span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--accent-red);">&#10007; Marked Wrong</span>'
+        :'<span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(239,175,0,.1);color:var(--gold);">-- Pending Mark</span>';
       row+='<div style="display:flex;align-items:flex-start;gap:.75rem;flex-wrap:wrap;">'+
-        '<div style="flex:1;min-width:160px;font-size:.82rem;color:var(--text-primary);background:var(--navy-hover);padding:.5rem .7rem;border-radius:6px;word-break:break-word;">'+(hasAns?esc(userAns):'<em style="color:var(--text-dim);">(not answered)</em>')+'</div>'+
-        '<div style="display:flex;gap:.4rem;flex-shrink:0;">'+
-          '<button class="qbr-mark-btn correct" onclick="markAssessmentEssay(\''+id+'\',\''+responseId+'\',\''+q.id+'\',true)" '+(isC?'style="opacity:.4;cursor:default;" disabled':'')+'>\u2713 Correct</button>'+
-          '<button class="qbr-mark-btn wrong" onclick="markAssessmentEssay(\''+id+'\',\''+responseId+'\',\''+q.id+'\',false)" '+(isW?'style="opacity:.4;cursor:default;" disabled':'')+'>\u2717 Wrong</button>'+
+        '<div style="flex:1;min-width:160px;">'+
+          '<div style="font-size:.82rem;color:var(--text-primary);background:var(--navy-hover);padding:.5rem .75rem;border-radius:6px;word-break:break-word;margin-bottom:.4rem;">'+(hasAns?esc(userAns):'<em style="color:var(--text-dim);">(not answered)</em>')+'</div>'+
+          statusBadge+
         '</div>'+
+        (hasAns?
+          '<div style="display:flex;gap:.4rem;flex-shrink:0;align-items:flex-start;">'+
+            '<button class="qbr-mark-btn correct" onclick="markAssessmentEssay(\''+id+'\',\''+responseId+'\',\''+q.id+'\',true)" '+(isC?'style="opacity:.4;cursor:default;" disabled':'')+'>&#10003; Correct</button>'+
+            '<button class="qbr-mark-btn wrong" onclick="markAssessmentEssay(\''+id+'\',\''+responseId+'\',\''+q.id+'\',false)" '+(isW?'style="opacity:.4;cursor:default;" disabled':'')+'>&#10007; Wrong</button>'+
+          '</div>'
+        :'')+
       '</div>';
     } else {
       var isCorrect=hasAns && userAns===q.correct_answer;
-      var badge=!hasAns?'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(239,73,60,.07);color:var(--gold);">\u2014 No answer</span>'
-        :isCorrect?'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(46,197,111,.12);color:#1a7a45;">\u2713 Correct</span>'
-        :'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--accent-red);">\u2717 Wrong</span>';
+      var badge=!hasAns?'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(239,73,60,.07);color:var(--gold);">-- No answer</span>'
+        :isCorrect?'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(46,197,111,.12);color:#1a7a45;">&#10003; Correct</span>'
+        :'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--accent-red);">&#10007; Wrong</span>';
       row+='<div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;font-size:.82rem;">'+
         '<span style="color:var(--text-primary);background:var(--navy-hover);padding:.3rem .65rem;border-radius:6px;">'+(hasAns?esc(userAns):'<em style="color:var(--text-dim);">(not answered)</em>')+'</span>'+
-        (!isCorrect?'<span style="color:var(--text-dim);">Correct: <strong style="color:#1a7a45;">'+esc(q.correct_answer||'')+'</strong></span>':'')+
+        (!isCorrect&&hasAns?'<span style="color:var(--text-dim);">Correct: <strong style="color:#1a7a45;">'+esc(q.correct_answer||'')+'</strong></span>':'')+
         badge+
       '</div>';
     }
@@ -10400,15 +10455,20 @@ function assBuildResponseDetailHtml(id, responseId){
 
 function toggleAssessmentResponseDetail(id, responseId){
   var det=document.getElementById('ar-detail-'+responseId);
+  var btn=document.getElementById('ar-togbtn-'+responseId);
   if(!det)return;
-  if(det.style.display==='block'){det.style.display='none';return;}
+  if(det.style.display==='block'){
+    det.style.display='none';
+    if(btn) btn.innerHTML='&#128065; View Answers';
+    return;
+  }
   det.innerHTML=assBuildResponseDetailHtml(id, responseId);
   det.style.display='block';
+  if(btn) btn.innerHTML='&#9650; Collapse';
 }
 
 async function markAssessmentEssay(id, responseId, qId, isCorrect){
-  var data=_arData[id];
-  if(!data)return;
+  var data=_arData[id]; if(!data)return;
   var r=data.responses.find(function(x){return x.id===responseId;});
   if(!r)return;
   var marks=assParseJSON(r.essay_marks,{});
@@ -10419,9 +10479,12 @@ async function markAssessmentEssay(id, responseId, qId, isCorrect){
     r.essay_marks=marks; r.score=newScore;
     renderAssessmentResponseRows(id);
     var det=document.getElementById('ar-detail-'+responseId);
-    if(det){ det.innerHTML=assBuildResponseDetailHtml(id, responseId); det.style.display='block'; }
+    if(det){ det.innerHTML=assBuildResponseDetailHtml(id,responseId); det.style.display='block'; }
+    var btn=document.getElementById('ar-togbtn-'+responseId);
+    if(btn) btn.innerHTML='&#9650; Collapse';
   }catch(e){alert('Could not save mark: '+e.message);}
 }
+
 
 // ── Export / Backup Reports (Req 2) ──
 // Per-question result for a single response
@@ -10698,6 +10761,7 @@ function importAssessmentQuestionsFile(input, assessmentId, title){
 }
 
 // ── AGENT ASSESSMENT VIEW ──
+var _arData={};  // assessment responses cache keyed by assessment id
 var _assData=null, _assQuestions=[], _assAnswers={}, _assCurrentQ=0, _assTimerInterval=null, _assSecondsLeft=0, _assStartTime=null;
 // ── Proctoring state ──
 var _assProctoring=false;   // true only while an assessment is in progress
