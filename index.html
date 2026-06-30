@@ -3837,42 +3837,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
             </div>
           </div>
 
-          <!-- ── QUIZ MONTHLY REPORT ── -->
-          <div class="qa-builder-card" style="margin-top:1.5rem;">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;">
-              <div>
-                <h3 style="margin:0;">&#128202; Monthly Quiz Report</h3>
-                <p style="font-size:.78rem;color:var(--text-muted);margin:.25rem 0 0;">Pull full report — daily grid, points ranking, question bank, percentage summary</p>
-              </div>
-              <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;">
-                <select id="qr-month" class="ts-input" style="width:130px;">
-                  <option value="0">January</option><option value="1">February</option><option value="2">March</option>
-                  <option value="3">April</option><option value="4">May</option><option value="5">June</option>
-                  <option value="6">July</option><option value="7">August</option><option value="8">September</option>
-                  <option value="9">October</option><option value="10">November</option><option value="11">December</option>
-                </select>
-                <select id="qr-year" class="ts-input" style="width:95px;"></select>
-                <button class="ts-btn-primary" onclick="qrLoadReport()">Pull Report</button>
-                <button class="ts-btn-sec" id="qr-dl-btn" style="display:none;" onclick="qrDownloadExcel()">&#8659; Download Excel</button>
-                <button class="ts-btn-sec" id="qr-pub-btn" style="display:none;" onclick="qbPublishToHallOfFame()">&#127942; Publish to Hall of Fame</button>
-                <button class="qa-del-btn" id="qr-unpub-btn" style="display:none;" onclick="qbUnpublishHallOfFame()">&#128465; Unpublish</button>
-              </div>
-            </div>
-            <div id="qr-pub-status" style="font-size:.74rem;color:var(--text-muted);margin:-.5rem 0 .75rem;display:none;"></div>
 
-            <!-- Tab strip -->
-            <div style="display:flex;gap:.4rem;margin-bottom:1rem;border-bottom:1px solid var(--navy-border);padding-bottom:.6rem;flex-wrap:wrap;">
-              <button class="qr-tab active" id="qr-tab-1" onclick="qrTab(1,this)">&#128198; Daily Grid</button>
-              <button class="qr-tab" id="qr-tab-2" onclick="qrTab(2,this)">&#127942; Points &amp; Ranking</button>
-              <button class="qr-tab" id="qr-tab-3" onclick="qrTab(3,this)">&#128214; Question Bank</button>
-              <button class="qr-tab" id="qr-tab-4" onclick="qrTab(4,this)">&#128200; % Summary</button>
-            </div>
-
-            <div id="qr-panel-1" class="qr-panel active"><div style="color:var(--text-dim);font-size:.85rem;padding:1rem 0;">Select month and year, then pull report.</div></div>
-            <div id="qr-panel-2" class="qr-panel"></div>
-            <div id="qr-panel-3" class="qr-panel"></div>
-            <div id="qr-panel-4" class="qr-panel"></div>
-          </div>
 
         </div>
       </div>
@@ -5088,6 +5053,23 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                 <div style="color:var(--text-dim);font-size:.85rem;padding:.5rem 0;">Loading session records...</div>
               </div>
             </div>
+
+            <!-- Mobile Access Restriction -->
+            <div class="xc-card" style="border-color:rgba(239,73,60,.2);margin-top:1.25rem;">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem;">
+                <div>
+                  <div class="xc-card-title" style="color:#EF493C;">🚫 Mobile Access Restriction</div>
+                  <p class="xc-card-sub">Block specific agents from logging in or using the portal via mobile browser.</p>
+                </div>
+                <div style="display:flex;gap:.5rem;align-items:center;">
+                  <span id="si-mobile-status" style="font-size:.78rem;color:var(--text-muted);">Loading settings...</span>
+                </div>
+              </div>
+              <div id="si-mobile-agents-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-top:.75rem;">
+                <div style="color:var(--text-dim);font-size:.85rem;padding:.5rem 0;">Loading agents...</div>
+              </div>
+            </div>
+
           </div>
 
         </div>
@@ -5475,6 +5457,20 @@ async function doLogin(){
     console.log('Rows returned:',rows?rows.length:0);
     if(!rows||rows.length===0||rows[0].password!==hashed)throw new Error('invalid');
     const u=rows[0];
+
+    // ── Mobile Access Restriction check ──
+    var isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
+    if(isMobile && u.role !== 'syslevel' && u.role !== 'admin'){
+      const sEx = await sbQuery('settings', 'key=eq.blocked_mobile_agents&select=value');
+      let blockedIds = [];
+      if(sEx && sEx.length){
+        try { blockedIds = JSON.parse(sEx[0].value || '[]'); } catch(e){}
+      }
+      if(blockedIds.indexOf(u.id) > -1){
+        throw new Error('MOBILE_RESTRICTED');
+      }
+    }
+
     // ── Block check ──
     if(u.is_blocked){
       statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
@@ -5497,7 +5493,10 @@ async function doLogin(){
   }catch(e){
     console.error('Login failed:',e.message);
     statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
-    if(e.message==='invalid'){
+    if(e.message==='MOBILE_RESTRICTED'){
+      errEl.textContent='Access restricted: Mobile logins are blocked';
+    }
+    else if(e.message==='invalid'){
       // Record failure and log it
       var rlState=rlRecordFailure();
       rlLogFailedAttempt(email);
@@ -5731,36 +5730,68 @@ function enterDashboard(){
   if(typeof icOnLogin==='function') icOnLogin();
 }
 
+function initSavedSession(saved) {
+  currentUser=saved;
+  enterDashboard();
+  // Show cat — may run before cat script loads, so defer
+  setTimeout(function(){
+    if(typeof catShowWidget==='function') catShowWidget();
+    else { var t=setInterval(function(){ if(typeof catShowWidget==='function'){ catShowWidget(); clearInterval(t); } },200); }
+  }, 300);
+  // Silently re-fetch name/email/role from DB so stale localStorage names are corrected automatically
+  setTimeout(function(){
+    if(!currentUser||!currentUser.id||currentUser.role==='syslevel') return;
+    sbQuery('users','id=eq.'+currentUser.id+'&select=id,name,email,role,timesheet_enabled,photo_url').then(function(rows){
+      if(!rows||!rows.length) return;
+      var u=rows[0];
+      var changed=currentUser.name!==u.name||currentUser.email!==u.email||currentUser.role!==u.role;
+      currentUser.name=u.name;
+      currentUser.email=u.email;
+      currentUser.role=u.role;
+      currentUser.timesheetEnabled=u.timesheet_enabled?true:false;
+      if(u.photo_url) currentUser.photo_url=u.photo_url;
+      saveSession(currentUser);
+      if(changed){
+        var nameEl=document.getElementById('agent-display')||document.querySelector('.agent-name');
+        if(nameEl) nameEl.textContent=u.name;
+      }
+    }).catch(function(){});
+  }, 1500);
+}
+
 window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('password').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   const saved=loadSession();
   if(saved){
-    currentUser=saved;
-    enterDashboard();
-    // Show cat — may run before cat script loads, so defer
-    setTimeout(function(){
-      if(typeof catShowWidget==='function') catShowWidget();
-      else { var t=setInterval(function(){ if(typeof catShowWidget==='function'){ catShowWidget(); clearInterval(t); } },200); }
-    }, 300);
-    // Silently re-fetch name/email/role from DB so stale localStorage names are corrected automatically
-    setTimeout(function(){
-      if(!currentUser||!currentUser.id||currentUser.role==='syslevel') return;
-      sbQuery('users','id=eq.'+currentUser.id+'&select=id,name,email,role,timesheet_enabled,photo_url').then(function(rows){
-        if(!rows||!rows.length) return;
-        var u=rows[0];
-        var changed=currentUser.name!==u.name||currentUser.email!==u.email||currentUser.role!==u.role;
-        currentUser.name=u.name;
-        currentUser.email=u.email;
-        currentUser.role=u.role;
-        currentUser.timesheetEnabled=u.timesheet_enabled?true:false;
-        if(u.photo_url) currentUser.photo_url=u.photo_url;
-        saveSession(currentUser);
-        if(changed){
-          var nameEl=document.getElementById('agent-display')||document.querySelector('.agent-name');
-          if(nameEl) nameEl.textContent=u.name;
+    var isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
+    if(isMobile && saved.role !== 'syslevel' && saved.role !== 'admin'){
+      sbQuery('settings', 'key=eq.blocked_mobile_agents&select=value').then(function(sEx){
+        let blockedIds = [];
+        if(sEx && sEx.length){
+          try { blockedIds = JSON.parse(sEx[0].value || '[]'); } catch(e){}
         }
-      }).catch(function(){});
-    }, 1500);
+        if(blockedIds.indexOf(saved.id) > -1){
+          // Blocked! Clear session, show error on login screen
+          clearSession();
+          currentUser = null;
+          document.body.classList.remove('logged-in');
+          document.getElementById('dashboard-view').classList.remove('active');
+          document.getElementById('login-view').classList.add('active');
+          var errEl = document.getElementById('login-error');
+          if(errEl){
+            errEl.textContent = 'Access restricted: Mobile logins are blocked';
+            errEl.style.display = 'block';
+          }
+        } else {
+          initSavedSession(saved);
+        }
+      }).catch(function(){
+        // Safe fallback on network failure
+        initSavedSession(saved);
+      });
+    } else {
+      initSavedSession(saved);
+    }
   }
 });
 
@@ -8002,7 +8033,7 @@ function xcTabSwitch(name, btn){
   if(name === 'limits'){ xcReadCfg(); setTimeout(catToggleRefresh, 200); setTimeout(auToggleRefresh, 300); }
   if(name === 'users-adv') xcFetchUsr();
   if(name === 'quiz-adv') xcInitQuizSelectors();
-  if(name === 'session-intel') siLoadLogs();
+  if(name === 'session-intel') { siLoadLogs(); siLoadMobileRestrictions(); }
   // Pre-populate agent dropdowns
   xcInitSelectors();
 }
@@ -9897,34 +9928,7 @@ async function updateQuizBadge(){
 
 // ── Quiz malpractice terminate (instant, no warning) ──
 async function quizTerminate(){
-  if(!_quizProctoring) return;
-  _quizProctoring=false;
-  clearTimeout(_quizBlurTimer);
-  var content=document.getElementById('quiz-agent-content');
-  if(content){
-    content.innerHTML=
-      '<div style="position:relative;min-height:220px;display:flex;align-items:center;justify-content:center;">'+
-      '<div style="background:var(--navy-card);border:1.5px solid rgba(239,73,60,.4);border-radius:var(--radius);max-width:400px;width:92%;padding:2rem;text-align:center;">'+
-        '<div style="font-size:2.2rem;margin-bottom:.6rem;">🚫</div>'+
-        '<div style="font-family:var(--font-serif, serif);font-size:1.2rem;font-weight:700;color:var(--accent-red);margin-bottom:.5rem;">Malpractice Detected</div>'+
-        '<div style="font-size:.85rem;color:var(--text-muted);line-height:1.7;margin-bottom:1rem;">You left the quiz window.<br>Your attempt has been flagged and submitted.</div>'+
-        '<div style="font-size:.82rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:8px;padding:.65rem 1rem;color:var(--accent-red);font-weight:600;">'+
-          'Please speak to your Team Leader.'+
-        '</div>'+
-      '</div></div>';
-  }
-  // Auto-submit with malpractice flag — blank answer, consumes the attempt
-  if(_quizData){
-    try{
-      await sbInsert('quiz_responses',{
-        quiz_id:_quizData.id, user_id:currentUser.id, user_name:currentUser.name,
-        answer:'[malpractice - no answer]', date:todayStr(),
-        submitted_at:new Date().toISOString(),
-        is_correct:false, malpractice:true
-      });
-      updateQuizBadge();
-    }catch(e){ console.warn('Quiz malpractice submit failed:',e.message); }
-  }
+  // Disabled - malpractice logic removed
 }
 
 async function submitQuiz(){
@@ -10000,7 +10004,7 @@ async function loadAssessmentBuilderList(){
   var list=document.getElementById('ab-list');
   if(!list)return;
   try{
-    var rows=await sbQuery('assessments','select=id,title,date,folder,open_time,close_time,time_limit_minutes,max_attempts,review_enabled,shuffle_questions&order=date.desc');
+    var rows=await sbQuery('assessments','select=id,title,date,folder,open_time,close_time,time_limit_minutes,max_attempts,review_enabled,shuffle_questions,enabled&order=date.desc');
     if(!rows||!rows.length){list.innerHTML='<div style="color:var(--text-dim);padding:1rem;font-size:.875rem;">No assessments yet.</div>';return;}
 
     // Populate folder suggestions
@@ -10024,10 +10028,12 @@ async function loadAssessmentBuilderList(){
     list.innerHTML='';
     folderKeys.forEach(function(key,fi){
       var folder=folders[key];
+      var isCollapsed = fi > 0;
+      var hdrRadius = isCollapsed ? 'var(--radius)' : '0';
       var folderEl=document.createElement('div');
-      folderEl.style.cssText='margin-bottom:.75rem;border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;';
+      folderEl.style.cssText='margin-bottom:.75rem;border:1px solid var(--navy-border);border-radius:var(--radius);';
       var hdr=document.createElement('div');
-      hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.1rem;background:var(--navy-hover);cursor:pointer;user-select:none;flex-wrap:wrap;gap:.5rem;';
+      hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.1rem;background:var(--navy-hover);cursor:pointer;user-select:none;flex-wrap:wrap;gap:.5rem;border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);border-bottom-left-radius:'+hdrRadius+';border-bottom-right-radius:'+hdrRadius+';';
       var hdrLeft=document.createElement('div'); hdrLeft.style.cssText='display:flex;align-items:center;gap:.65rem;';
       var arrow=document.createElement('span'); arrow.textContent='\u25BC'; arrow.style.cssText='font-size:.7rem;color:var(--gold);transition:transform .2s;'; arrow.id='abf-arrow-'+fi;
       var folderLabel=document.createElement('span'); folderLabel.style.cssText='font-size:.88rem;font-weight:700;color:var(--text-primary);'; folderLabel.textContent='\uD83D\uDCC1 '+folder.label;
@@ -10038,20 +10044,32 @@ async function loadAssessmentBuilderList(){
       if(fi>0) arrow.style.transform='rotate(-90deg)';
       hdr.onclick=function(){
         var bd=document.getElementById('abf-body-'+fi); var ar=document.getElementById('abf-arrow-'+fi);
-        if(bd.style.display==='none'){bd.style.display='block';if(ar)ar.style.transform='';}
-        else{bd.style.display='none';if(ar)ar.style.transform='rotate(-90deg)';}
+        if(bd.style.display==='none'){
+          bd.style.display='block';if(ar)ar.style.transform='';
+          hdr.style.borderBottomLeftRadius='0';
+          hdr.style.borderBottomRightRadius='0';
+        }
+        else{
+          bd.style.display='none';if(ar)ar.style.transform='rotate(-90deg)';
+          hdr.style.borderBottomLeftRadius='var(--radius)';
+          hdr.style.borderBottomRightRadius='var(--radius)';
+        }
       };
 
       folder.assessments.forEach(function(a){
         var status=qaGetStatus(a.open_time,a.close_time);
         var statusLabels={upcoming:'Upcoming',open:'Open Now',closed:'Closed'};
+        var isEnabled=a.enabled!==false;
         var titleEsc=esc(a.title);
         var titleJs=a.title.replace(/'/g,"\\'");
         var wrap=document.createElement('div');
-        wrap.innerHTML='<div class="qa-item" style="flex-direction:column;align-items:stretch;margin-bottom:.5rem;">'+
+        wrap.innerHTML='<div class="qa-item" id="abi-'+a.id+'" style="flex-direction:column;align-items:stretch;margin-bottom:.5rem;'+(isEnabled?'':'opacity:.55;border-color:rgba(255,255,255,.08);')+'">'+
           '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">'+
             '<div class="qa-item-left">'+
-              '<div class="qa-item-title">'+titleEsc+'</div>'+
+              '<div class="qa-item-title" style="display:flex;align-items:center;gap:.5rem;">'+
+                (isEnabled?'':'<span style="font-size:.68rem;font-weight:700;background:rgba(239,73,60,.15);color:#ef493c;padding:1px 7px;border-radius:10px;">DISABLED</span>')+
+                '<span>'+titleEsc+'</span>'+
+              '</div>'+
               '<div class="qa-item-meta">'+
                 '<span>'+qaFmtDateTime(a.open_time)+' \u2192 '+qaFmtDateTime(a.close_time)+'</span>'+
                 '<span>'+a.time_limit_minutes+' min limit</span>'+
@@ -10061,14 +10079,21 @@ async function loadAssessmentBuilderList(){
             '</div>'+
             '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">'+
               '<span class="qa-status-pill '+status+'">'+statusLabels[status]+'</span>'+
-              '<button class="qa-toggle-btn" onclick="editAssessmentDetails(\''+a.id+'\')">&#9998; Edit</button>'+
+              '<button class="qa-toggle-btn'+(isEnabled?' on':'')+'" onclick="toggleAssessmentEnabled(\''+a.id+'\','+isEnabled+')">'+(isEnabled?'&#9989; Enabled':'&#10060; Disabled')+'</button>'+
               '<button class="qa-toggle-btn'+(a.review_enabled?' on':'')+'" onclick="toggleAssessmentReview(\''+a.id+'\','+a.review_enabled+')" >&#128065; Review '+(a.review_enabled?'ON':'OFF')+'</button>'+
-              '<button class="qa-toggle-btn" onclick="showAssessmentQuestions(\''+a.id+'\',\''+titleJs+'\')">&#10010; Questions</button>'+
-              '<button class="qa-toggle-btn" onclick="showAssessmentResponses(\''+a.id+'\')">&#128202; Responses</button>'+
-              '<button class="qa-toggle-btn" onclick="previewAssessmentBuilder(\''+a.id+'\',\''+titleJs+'\')">&#128065;&#65039; Preview</button>'+
-              '<button class="qa-toggle-btn" onclick="toggleDuplicatePanel(\''+a.id+'\')">&#128203; Duplicate</button>'+
-              '<button class="qa-toggle-btn" onclick="exportAssessmentReport(\''+a.id+'\',\''+titleJs+'\')">&#8659; Report</button>'+
-              '<button class="qa-del-btn" onclick="deleteAssessment(\''+a.id+'\')">Delete</button>'+
+              '<div class="xc-dropdown" style="position:relative;display:inline-block;">'+
+                '<button class="qa-toggle-btn" onclick="toggleDropdown(event,\'d-'+a.id+'\')">&#9881; Actions &#9662;</button>'+
+                '<div id="d-'+a.id+'" class="xc-dropdown-content" style="display:none;position:absolute;right:0;background:var(--navy-card,#1a202c);min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,0.4);border:1px solid var(--navy-border,rgba(255,255,255,0.1));border-radius:var(--radius-sm,8px);z-index:999;margin-top:6px;padding:6px 0;">'+
+                  '<a onclick="editAssessmentDetails(\''+a.id+'\');closeAllDropdowns();" style="display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem;color:var(--text-primary,#fff);font-size:.82rem;cursor:pointer;transition:background .2s;text-align:left;" onmouseover="this.style.background=\'var(--navy-hover,rgba(255,255,255,0.06))\'" onmouseout="this.style.background=\'none\'">&#9998; Edit Details</a>'+
+                  '<a onclick="showAssessmentQuestions(\''+a.id+'\',\''+titleJs+'\');closeAllDropdowns();" style="display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem;color:var(--text-primary,#fff);font-size:.82rem;cursor:pointer;transition:background .2s;text-align:left;" onmouseover="this.style.background=\'var(--navy-hover,rgba(255,255,255,0.06))\'" onmouseout="this.style.background=\'none\'">&#10010; Questions</a>'+
+                  '<a onclick="showAssessmentResponses(\''+a.id+'\');closeAllDropdowns();" style="display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem;color:var(--text-primary,#fff);font-size:.82rem;cursor:pointer;transition:background .2s;text-align:left;" onmouseover="this.style.background=\'var(--navy-hover,rgba(255,255,255,0.06))\'" onmouseout="this.style.background=\'none\'">&#128202; Responses</a>'+
+                  '<a onclick="previewAssessmentBuilder(\''+a.id+'\',\''+titleJs+'\');closeAllDropdowns();" style="display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem;color:var(--text-primary,#fff);font-size:.82rem;cursor:pointer;transition:background .2s;text-align:left;" onmouseover="this.style.background=\'var(--navy-hover,rgba(255,255,255,0.06))\'" onmouseout="this.style.background=\'none\'">&#128065;&#65039; Preview</a>'+
+                  '<a onclick="toggleDuplicatePanel(\''+a.id+'\');closeAllDropdowns();" style="display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem;color:var(--text-primary,#fff);font-size:.82rem;cursor:pointer;transition:background .2s;text-align:left;" onmouseover="this.style.background=\'var(--navy-hover,rgba(255,255,255,0.06))\'" onmouseout="this.style.background=\'none\'">&#128203; Duplicate</a>'+
+                  '<a onclick="exportAssessmentReport(\''+a.id+'\',\''+titleJs+'\');closeAllDropdowns();" style="display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem;color:var(--text-primary,#fff);font-size:.82rem;cursor:pointer;transition:background .2s;text-align:left;" onmouseover="this.style.background=\'var(--navy-hover,rgba(255,255,255,0.06))\'" onmouseout="this.style.background=\'none\'">&#8659; Report</a>'+
+                  '<div style="border-top:1px solid var(--navy-border,rgba(255,255,255,0.1));margin:5px 0;"></div>'+
+                  '<a onclick="deleteAssessment(\''+a.id+'\');closeAllDropdowns();" style="display:flex;align-items:center;gap:.6rem;padding:.55rem 1.1rem;color:var(--accent-red,#ef493c);font-size:.82rem;cursor:pointer;transition:background .2s;text-align:left;" onmouseover="this.style.background=\'rgba(239,73,60,0.15)\'" onmouseout="this.style.background=\'none\'">&#128465; Delete</a>'+
+                '</div>'+
+              '</div>'+
             '</div>'+
           '</div>'+
           '<div id="ae-panel-'+a.id+'" style="display:none;margin-top:1rem;padding:1rem;background:var(--navy-hover);border-radius:var(--radius-sm);border:1px solid var(--navy-border);">'+
@@ -10108,13 +10133,47 @@ async function loadAssessmentBuilderList(){
       var p=document.getElementById('aq-panel-'+aid);
       if(p) showAssessmentQuestions(aid,'',true);
     });
-  }catch(e){list.innerHTML='<div style="color:var(--accent-red);padding:1rem;">Error: '+e.message+'</div>';}
+  }catch(e){
+    if(e.message === 'DB_400') {
+      list.innerHTML='<div style="color:var(--accent-red,#EF493C);font-size:.82rem;padding:1rem;">Error: DB_400 (Bad Request)<br><br><b>Please run this SQL in Supabase SQL Editor to add the enabled column:</b><pre style="margin-top:.5rem;font-size:.72rem;background:rgba(0,0,0,.3);padding:.75rem;border-radius:6px;overflow-x:auto;white-space:pre-wrap;">ALTER TABLE assessments ADD COLUMN enabled boolean DEFAULT true;</pre></div>';
+    } else {
+      list.innerHTML='<div style="color:var(--accent-red);padding:1rem;">Error: '+e.message+'</div>';
+    }
+  }
 }
 
 
 async function toggleAssessmentReview(id,current){
   try{await sbUpdate('assessments','id',id,{review_enabled:!current});loadAssessmentBuilderList();}
   catch(e){alert('Toggle failed: '+e.message);}
+}
+
+async function toggleAssessmentEnabled(id,current){
+  try{await sbUpdate('assessments','id',id,{enabled:!current});loadAssessmentBuilderList();}
+  catch(e){alert('Toggle failed: '+e.message);}
+}
+
+function toggleDropdown(e, id){
+  e.stopPropagation();
+  var el=document.getElementById(id);
+  if(!el)return;
+  var show=el.style.display==='block';
+  closeAllDropdowns();
+  if(!show){
+    el.style.display='block';
+  }
+}
+function closeAllDropdowns(){
+  var all=document.querySelectorAll('.xc-dropdown-content');
+  all.forEach(function(d){d.style.display='none';});
+}
+if(!window._dropdownListenerAdded){
+  window.addEventListener('click', function(e){
+    if(!e.target.closest('.xc-dropdown')){
+      closeAllDropdowns();
+    }
+  });
+  window._dropdownListenerAdded=true;
 }
 
 function editAssessmentDetails(id){
@@ -10322,52 +10381,17 @@ async function showAssessmentResponses(id){
       panel.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem 0;">No submissions yet.</div>';
       return;
     }
-    var essayQs=questions.filter(function(q){return q.type==='essay';});
-    var pendingCount=0;
-    (responses||[]).forEach(function(r){
-      var marks=assParseJSON(r.essay_marks,{}); var ans=assParseJSON(r.answers,{});
-      essayQs.forEach(function(q){ var a=ans[q.id]; if(a!==undefined&&a!==null&&a!==''&&marks[q.id]===undefined) pendingCount++; });
-    });
-    panel.innerHTML=
-      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.9rem;">'+
-        '<span style="font-size:.78rem;color:var(--text-muted);">'+responses.length+' submission(s) &middot; '+
-          (pendingCount>0?'<span style="color:var(--gold);">'+pendingCount+' essay answer(s) need marking</span>':'<span style="color:var(--accent-green);">All marked &#10003;</span>')+
-        '</span>'+
-        '<div style="display:flex;gap:.5rem;">'+
-          '<button class="qa-toggle-btn" style="font-size:.74rem;" onclick="arExpandAll(\''+id+'\')">&#9660; Expand All</button>'+
-          '<button class="qa-toggle-btn" style="font-size:.74rem;" onclick="arCollapseAll(\''+id+'\')">&#9650; Collapse All</button>'+
-          '<button class="qa-toggle-btn" style="font-size:.74rem;" onclick="exportAssessmentReport(\''+id+'\',\'\')" title="Download CSV with all answers &amp; marks">&#8659; Download CSV</button>'+
-        '</div>'+
-      '</div>'+
+    panel.innerHTML='<div style="font-size:.72rem;font-weight:700;color:var(--text-muted);letter-spacing:.08em;margin-bottom:.6rem;">SUBMISSIONS ('+responses.length+')</div>'+
       '<div id="ar-rows-'+id+'"></div>';
     renderAssessmentResponseRows(id);
   }catch(e){panel.innerHTML='<div style="color:var(--accent-red);font-size:.82rem;">Error: '+e.message+'</div>';}
 }
 
-function arExpandAll(id){
-  var data=_arData[id]; if(!data)return;
-  data.responses.forEach(function(r){
-    var det=document.getElementById('ar-detail-'+r.id);
-    if(det&&det.style.display!=='block'){ det.innerHTML=assBuildResponseDetailHtml(id,r.id); det.style.display='block'; }
-    var btn=document.getElementById('ar-togbtn-'+r.id);
-    if(btn) btn.innerHTML='&#9650; Collapse';
-  });
-}
-
-function arCollapseAll(id){
-  var data=_arData[id]; if(!data)return;
-  data.responses.forEach(function(r){
-    var det=document.getElementById('ar-detail-'+r.id);
-    if(det) det.style.display='none';
-    var btn=document.getElementById('ar-togbtn-'+r.id);
-    if(btn) btn.innerHTML='&#128065; View Answers';
-  });
-}
-
 function renderAssessmentResponseRows(id){
   var rowsEl=document.getElementById('ar-rows-'+id);
   if(!rowsEl)return;
-  var data=_arData[id]; if(!data)return;
+  var data=_arData[id];
+  if(!data)return;
   var questions=data.questions, responses=data.responses;
   var openDetails={};
   rowsEl.querySelectorAll('[id^="ar-detail-"]').forEach(function(el){
@@ -10379,35 +10403,24 @@ function renderAssessmentResponseRows(id){
     var pct=total>0?Math.round(score/total*100):0;
     var isMalp=r.malpractice===true||r.malpractice==='true';
     var scoreColor=pct>=80?'var(--accent-green)':pct>=50?'var(--gold)':'var(--accent-red)';
-    var time=r.submitted_at?new Date(r.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'--';
-    var essayQs=questions.filter(function(q){return q.type==='essay';});
-    var marks=assParseJSON(r.essay_marks,{}); var answers=assParseJSON(r.answers,{});
-    var resPending=essayQs.filter(function(q){ var a=answers[q.id]; return a!==undefined&&a!==null&&a!==''&&marks[q.id]===undefined; }).length;
+    var time=r.submitted_at?new Date(r.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'\u2014';
+    var summary='<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;margin-bottom:.3rem;flex-wrap:wrap;'+(isMalp?'border-left:3px solid var(--accent-red);':'')+'">'+
+      '<div style="flex:1;font-size:.82rem;font-weight:600;color:var(--text-primary);">'+esc(r.user_name)+'</div>'+
+      '<div style="font-size:.78rem;font-weight:700;color:'+scoreColor+';">'+(score+'/'+total+' ('+pct+'%)')+'</div>'+
+      '<div style="font-size:.72rem;color:var(--text-dim);">\u23F1 '+assTimeTakenStr(r.time_taken_seconds)+'</div>'+
+      '<div style="font-size:.72rem;color:var(--text-dim);">'+time+'</div>'+
+      (isMalp?'<span style="font-size:.68rem;font-weight:700;background:rgba(239,73,60,.12);color:var(--accent-red);padding:2px 8px;border-radius:20px;flex-shrink:0;">\uD83D\uDEAB Malpractice</span>':'')+
+      '<button class="qa-toggle-btn" style="padding:.25rem .6rem;font-size:.72rem;" onclick="toggleAssessmentResponseDetail(\''+id+'\',\''+r.id+'\')">\uD83D\uDC41 Answers</button>'+
+    '</div>';
     var detId='ar-detail-'+r.id;
     var detOpen=!!openDetails[detId];
-    var ini=esc((r.user_name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase());
-    return '<div style="margin-bottom:.4rem;">'+
-      '<div style="display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem;background:var(--navy-hover);border-radius:'+(detOpen?'6px 6px 0 0':'6px')+';flex-wrap:wrap;cursor:pointer;'+(isMalp?'border-left:3px solid var(--accent-red);':'')+'" onclick="toggleAssessmentResponseDetail(\''+id+'\',\''+r.id+'\')">'+
-        '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;color:#fff;flex-shrink:0;">'+ini+'</div>'+
-        '<div style="flex:1;font-size:.84rem;font-weight:600;color:var(--text-primary);">'+esc(r.user_name)+'</div>'+
-        '<div style="font-size:.78rem;font-weight:700;color:'+scoreColor+';">'+score+'/'+total+' ('+pct+'%)</div>'+
-        '<div style="font-size:.72rem;color:var(--text-dim);">&#9201; '+assTimeTakenStr(r.time_taken_seconds)+'</div>'+
-        '<div style="font-size:.72rem;color:var(--text-dim);">'+time+'</div>'+
-        (isMalp?'<span style="font-size:.68rem;font-weight:700;background:rgba(239,73,60,.12);color:var(--accent-red);padding:2px 8px;border-radius:20px;flex-shrink:0;">&#128683; Malpractice</span>':'')+
-        (resPending>0?'<span style="font-size:.68rem;font-weight:700;background:rgba(239,175,0,.1);color:var(--gold);padding:2px 8px;border-radius:20px;flex-shrink:0;">'+resPending+' to mark</span>':'')+
-        '<button id="ar-togbtn-'+r.id+'" class="qa-toggle-btn" style="padding:.22rem .6rem;font-size:.72rem;flex-shrink:0;" onclick="event.stopPropagation();toggleAssessmentResponseDetail(\''+id+'\',\''+r.id+'\')">'+
-          (detOpen?'&#9650; Collapse':'&#128065; View Answers')+
-        '</button>'+
-      '</div>'+
-      '<div id="'+detId+'" style="display:'+(detOpen?'block':'none')+';margin-bottom:.5rem;padding:.8rem 1rem;background:var(--navy-card);border:1px solid var(--navy-border);border-top:none;border-radius:0 0 6px 6px;">'+
-        (detOpen?assBuildResponseDetailHtml(id,r.id):'')+
-      '</div>'+
-    '</div>';
+    return summary+'<div id="'+detId+'" style="display:'+(detOpen?'block':'none')+';margin:0 0 .6rem .5rem;padding:.75rem .9rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:6px;">'+(detOpen?assBuildResponseDetailHtml(id,r.id):'')+'</div>';
   }).join('');
 }
 
 function assBuildResponseDetailHtml(id, responseId){
-  var data=_arData[id]; if(!data)return '';
+  var data=_arData[id];
+  if(!data)return '';
   var questions=data.questions;
   var r=data.responses.find(function(x){return x.id===responseId;});
   if(!r)return '<div style="color:var(--text-dim);font-size:.8rem;">Not found.</div>';
@@ -10417,34 +10430,25 @@ function assBuildResponseDetailHtml(id, responseId){
   return questions.map(function(q,i){
     var userAns=answers[q.id];
     var hasAns=userAns!==undefined && userAns!==null && userAns!=='';
-    var row='<div style="margin-bottom:.85rem;padding-bottom:.7rem;'+(i<questions.length-1?'border-bottom:1px solid var(--navy-border);':'')+'">' +
-      '<div style="font-size:.81rem;font-weight:600;color:var(--text-primary);margin-bottom:.4rem;">Q'+(i+1)+'. '+esc(q.question)+'</div>';
+    var row='<div style="margin-bottom:.75rem;padding-bottom:.6rem;'+(i<questions.length-1?'border-bottom:1px solid var(--navy-border);':'')+'">'+
+      '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);margin-bottom:.35rem;">Q'+(i+1)+'. '+esc(q.question)+'</div>';
     if(q.type==='essay'){
       var isC=marks[q.id]===true, isW=marks[q.id]===false;
-      var statusBadge=isC
-        ?'<span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(46,197,111,.12);color:#1a7a45;">&#10003; Marked Correct</span>'
-        :isW?'<span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--accent-red);">&#10007; Marked Wrong</span>'
-        :'<span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(239,175,0,.1);color:var(--gold);">-- Pending Mark</span>';
       row+='<div style="display:flex;align-items:flex-start;gap:.75rem;flex-wrap:wrap;">'+
-        '<div style="flex:1;min-width:160px;">'+
-          '<div style="font-size:.82rem;color:var(--text-primary);background:var(--navy-hover);padding:.5rem .75rem;border-radius:6px;word-break:break-word;margin-bottom:.4rem;">'+(hasAns?esc(userAns):'<em style="color:var(--text-dim);">(not answered)</em>')+'</div>'+
-          statusBadge+
+        '<div style="flex:1;min-width:160px;font-size:.82rem;color:var(--text-primary);background:var(--navy-hover);padding:.5rem .7rem;border-radius:6px;word-break:break-word;">'+(hasAns?esc(userAns):'<em style="color:var(--text-dim);">(not answered)</em>')+'</div>'+
+        '<div style="display:flex;gap:.4rem;flex-shrink:0;">'+
+          '<button class="qbr-mark-btn correct" onclick="markAssessmentEssay(\''+id+'\',\''+responseId+'\',\''+q.id+'\',true)" '+(isC?'style="opacity:.4;cursor:default;" disabled':'')+'>\u2713 Correct</button>'+
+          '<button class="qbr-mark-btn wrong" onclick="markAssessmentEssay(\''+id+'\',\''+responseId+'\',\''+q.id+'\',false)" '+(isW?'style="opacity:.4;cursor:default;" disabled':'')+'>\u2717 Wrong</button>'+
         '</div>'+
-        (hasAns?
-          '<div style="display:flex;gap:.4rem;flex-shrink:0;align-items:flex-start;">'+
-            '<button class="qbr-mark-btn correct" onclick="markAssessmentEssay(\''+id+'\',\''+responseId+'\',\''+q.id+'\',true)" '+(isC?'style="opacity:.4;cursor:default;" disabled':'')+'>&#10003; Correct</button>'+
-            '<button class="qbr-mark-btn wrong" onclick="markAssessmentEssay(\''+id+'\',\''+responseId+'\',\''+q.id+'\',false)" '+(isW?'style="opacity:.4;cursor:default;" disabled':'')+'>&#10007; Wrong</button>'+
-          '</div>'
-        :'')+
       '</div>';
     } else {
       var isCorrect=hasAns && userAns===q.correct_answer;
-      var badge=!hasAns?'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(239,73,60,.07);color:var(--gold);">-- No answer</span>'
-        :isCorrect?'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(46,197,111,.12);color:#1a7a45;">&#10003; Correct</span>'
-        :'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--accent-red);">&#10007; Wrong</span>';
+      var badge=!hasAns?'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(239,73,60,.07);color:var(--gold);">\u2014 No answer</span>'
+        :isCorrect?'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(46,197,111,.12);color:#1a7a45;">\u2713 Correct</span>'
+        :'<span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--accent-red);">\u2717 Wrong</span>';
       row+='<div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;font-size:.82rem;">'+
         '<span style="color:var(--text-primary);background:var(--navy-hover);padding:.3rem .65rem;border-radius:6px;">'+(hasAns?esc(userAns):'<em style="color:var(--text-dim);">(not answered)</em>')+'</span>'+
-        (!isCorrect&&hasAns?'<span style="color:var(--text-dim);">Correct: <strong style="color:#1a7a45;">'+esc(q.correct_answer||'')+'</strong></span>':'')+
+        (!isCorrect?'<span style="color:var(--text-dim);">Correct: <strong style="color:#1a7a45;">'+esc(q.correct_answer||'')+'</strong></span>':'')+
         badge+
       '</div>';
     }
@@ -10455,20 +10459,15 @@ function assBuildResponseDetailHtml(id, responseId){
 
 function toggleAssessmentResponseDetail(id, responseId){
   var det=document.getElementById('ar-detail-'+responseId);
-  var btn=document.getElementById('ar-togbtn-'+responseId);
   if(!det)return;
-  if(det.style.display==='block'){
-    det.style.display='none';
-    if(btn) btn.innerHTML='&#128065; View Answers';
-    return;
-  }
+  if(det.style.display==='block'){det.style.display='none';return;}
   det.innerHTML=assBuildResponseDetailHtml(id, responseId);
   det.style.display='block';
-  if(btn) btn.innerHTML='&#9650; Collapse';
 }
 
 async function markAssessmentEssay(id, responseId, qId, isCorrect){
-  var data=_arData[id]; if(!data)return;
+  var data=_arData[id];
+  if(!data)return;
   var r=data.responses.find(function(x){return x.id===responseId;});
   if(!r)return;
   var marks=assParseJSON(r.essay_marks,{});
@@ -10479,12 +10478,9 @@ async function markAssessmentEssay(id, responseId, qId, isCorrect){
     r.essay_marks=marks; r.score=newScore;
     renderAssessmentResponseRows(id);
     var det=document.getElementById('ar-detail-'+responseId);
-    if(det){ det.innerHTML=assBuildResponseDetailHtml(id,responseId); det.style.display='block'; }
-    var btn=document.getElementById('ar-togbtn-'+responseId);
-    if(btn) btn.innerHTML='&#9650; Collapse';
+    if(det){ det.innerHTML=assBuildResponseDetailHtml(id, responseId); det.style.display='block'; }
   }catch(e){alert('Could not save mark: '+e.message);}
 }
-
 
 // ── Export / Backup Reports (Req 2) ──
 // Per-question result for a single response
@@ -10761,7 +10757,6 @@ function importAssessmentQuestionsFile(input, assessmentId, title){
 }
 
 // ── AGENT ASSESSMENT VIEW ──
-var _arData={};  // assessment responses cache keyed by assessment id
 var _assData=null, _assQuestions=[], _assAnswers={}, _assCurrentQ=0, _assTimerInterval=null, _assSecondsLeft=0, _assStartTime=null;
 // ── Proctoring state ──
 var _assProctoring=false;   // true only while an assessment is in progress
@@ -10774,7 +10769,16 @@ async function loadAgentAssessment(){
   content.innerHTML='<div class="quiz-lock-screen"><div class="quiz-lock-icon">&#8987;</div><div class="quiz-lock-title">Loading...</div></div>';
   try{
     var today=todayStr();
-    var rows=await sbQuery('assessments','date=eq.'+today+'&order=open_time.asc');
+    var rows;
+    try {
+      rows = await sbQuery('assessments','date=eq.'+today+'&enabled=neq.false&order=open_time.asc');
+    } catch(err) {
+      if (err.message === 'DB_400') {
+        rows = await sbQuery('assessments','date=eq.'+today+'&order=open_time.asc');
+      } else {
+        throw err;
+      }
+    }
     if(!rows||!rows.length){
       content.innerHTML='<div class="quiz-lock-screen"><div class="quiz-lock-icon">&#128203;</div><div class="quiz-lock-title">No Assessment Today</div><div class="quiz-lock-sub">No assessment scheduled for today.</div></div>';
       return;
@@ -10865,23 +10869,7 @@ async function renderAgentAssessment(){
   var _assViolKey='ass_violations_'+currentUser.id+'_'+_assData.id;
   try{ _assViolations=parseInt(sessionStorage.getItem(_assViolKey)||'0')||0; }catch(e){ _assViolations=0; }
 
-  // If already terminated before refresh (2+ violations), block immediately without re-submitting
-  if(_assViolations>=2){
-    var content2=document.getElementById('assessment-agent-content');
-    if(content2){
-      content2.innerHTML=
-        '<div class="quiz-lock-screen" style="padding:2.5rem 2rem;">'+
-          '<div style="font-size:3rem;margin-bottom:.75rem;">🚫</div>'+
-          '<div class="quiz-lock-title" style="color:var(--accent-red);font-size:1.15rem;">Assessment Terminated</div>'+
-          '<div class="quiz-lock-sub" style="margin-top:.6rem;line-height:1.7;max-width:360px;color:var(--text-muted);">'+
-            'You were warned once and left the assessment window again.<br><br>'+
-            'Your answers have been auto-submitted and flagged for admin review.<br><br>'+
-            'Please speak to your Team Leader.'+
-          '</div>'+
-        '</div>';
-    }
-    return;
-  }
+  // Lockout check disabled to prevent malpractice blocks
 
   _assProctoring=true;
   _assStartTime=Date.now();
@@ -11009,96 +10997,35 @@ function navAssessmentQ(dir){ _assCurrentQ=Math.max(0,Math.min(_assQuestions.len
 //  ASSESSMENT PROCTORING — tab/window switch detection
 // ════════════════════════════════════════════════════════
 function assHandleViolation(reason){
-  if(!_assProctoring) return;
-  _assViolations++;
-  // Persist immediately so refresh can't reset it
-  if(_assData && currentUser){
-    try{ sessionStorage.setItem('ass_violations_'+currentUser.id+'_'+_assData.id, String(_assViolations)); }catch(e){}
-  }
-  if(_assViolations===1){
-    // First violation — show warning overlay, give chance to continue
-    assShowWarning(reason);
-  } else {
-    // Second violation — terminate immediately
-    assTerminate(reason);
-  }
+  // Disabled - malpractice logic removed
 }
 
 function assShowWarning(reason){
-  // Remove any existing warning
-  var old=document.getElementById('ass-proctor-warn');
-  if(old) old.remove();
-
-  var overlay=document.createElement('div');
-  overlay.id='ass-proctor-warn';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(7,13,45,.82);z-index:9950;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);';
-  overlay.innerHTML=
-    '<div style="background:var(--navy-card);border:1.5px solid rgba(239,73,60,.4);border-radius:var(--radius);max-width:400px;width:92%;padding:2rem;text-align:center;box-shadow:0 24px 72px rgba(0,0,0,.4);">'+
-      '<div style="font-size:2.2rem;margin-bottom:.6rem;">⚠️</div>'+
-      '<div style="font-family:\'Cormorant Garamond\',serif;font-size:1.2rem;font-weight:700;color:var(--accent-red);margin-bottom:.5rem;">Warning — Malpractice Detected</div>'+
-      '<div style="font-size:.85rem;color:var(--text-muted);line-height:1.7;margin-bottom:.4rem;">'+
-        'You switched away from the assessment window.<br>'+
-        '<strong style="color:var(--text-primary);">This is your first and only warning.</strong>'+
-      '</div>'+
-      '<div style="font-size:.82rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:8px;padding:.65rem 1rem;color:var(--accent-red);font-weight:600;margin-bottom:1.4rem;">'+
-        '🚫 A second violation will auto-submit and flag your assessment.'+
-      '</div>'+
-      '<button onclick="assWarnDismiss()" style="padding:.65rem 2rem;background:var(--gold);border:none;border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:.9rem;font-weight:700;color:#fff;cursor:pointer;">I Understand — Continue</button>'+
-    '</div>';
-  document.body.appendChild(overlay);
+  // Disabled - malpractice logic removed
 }
 
 function assWarnDismiss(){
-  var w=document.getElementById('ass-proctor-warn');
-  if(w) w.remove();
+  // Disabled - malpractice logic removed
 }
 
 function assTerminate(reason){
-  _assProctoring=false;
-  clearTimeout(_assBlurTimer);
-  var w=document.getElementById('ass-proctor-warn');
-  if(w) w.remove();
-  submitAssessment(true, true); // auto-submit with malpractice=true
+  // Disabled - malpractice logic removed
 }
 
 // ── Visibility change (tab switch, minimise) ──
-// Assessment uses ONLY visibilitychange so one tab-switch = one violation (not two)
-document.addEventListener('visibilitychange', function(){
-  if(document.visibilityState==='hidden'){
-    // Assessment — 1st: warning, 2nd: terminate
-    if(_assProctoring){
-      clearTimeout(_assBlurTimer);
-      _assBlurTimer=setTimeout(function(){ assHandleViolation('tab_hidden'); }, 400);
-    }
-    // Quiz — instant terminate, no warning
-    if(_quizProctoring){
-      clearTimeout(_quizBlurTimer);
-      _quizBlurTimer=setTimeout(function(){ quizTerminate(); }, 300);
-    }
-  } else {
-    // Came back — cancel any pending grace timers
-    clearTimeout(_assBlurTimer);
-    clearTimeout(_quizBlurTimer);
-  }
-});
+// Disabled - malpractice logic removed
 
 // ── Window focus — clear any pending grace timers ──
-// (blur listener removed — Windows notification toasts/alarms fire 'blur'
-//  without hiding the tab, which was causing false-positive quiz terminations.
-//  visibilitychange above is the reliable signal for both quiz and assessment.)
-window.addEventListener('focus', function(){
-  clearTimeout(_assBlurTimer);
-  clearTimeout(_quizBlurTimer);
-});
+// Disabled - malpractice logic removed
 
-async function submitAssessment(autoSubmit, malpractice){
+async function submitAssessment(autoSubmit){
   _assProctoring=false; // stop proctoring regardless
   clearTimeout(_assBlurTimer);
-  // Clear violation counter from sessionStorage on any submit (clean or flagged)
+  // Clear violation counter from sessionStorage on any submit
   if(_assData && currentUser){
     try{ sessionStorage.removeItem('ass_violations_'+currentUser.id+'_'+_assData.id); }catch(e){}
   }
-  if(!autoSubmit && !malpractice){
+  if(!autoSubmit){
     var unanswered=_assQuestions.filter(function(q){return!_assAnswers[q.id];}).length;
     if(unanswered>0&&!confirm(unanswered+' question(s) unanswered. Submit anyway?'))return;
   }
@@ -11110,27 +11037,10 @@ async function submitAssessment(autoSubmit, malpractice){
       assessment_id:_assData.id, user_id:currentUser.id, user_name:currentUser.name,
       answers:JSON.stringify(_assAnswers), score:score,
       total_questions:_assQuestions.length, submitted_at:new Date().toISOString(), date:todayStr(),
-      malpractice: malpractice ? true : false,
+      malpractice: false,
       time_taken_seconds: timeTaken
     },['time_taken_seconds']);
-    if(malpractice){
-      // Show lockout screen — don't call renderAgentAssessment (would reload)
-      var content=document.getElementById('assessment-agent-content');
-      if(content){
-        content.innerHTML=
-          '<div class="quiz-lock-screen" style="padding:2.5rem 2rem;">'+
-            '<div style="font-size:3rem;margin-bottom:.75rem;">🚫</div>'+
-            '<div class="quiz-lock-title" style="color:var(--accent-red);font-size:1.15rem;">Assessment Terminated</div>'+
-            '<div class="quiz-lock-sub" style="margin-top:.6rem;line-height:1.7;max-width:360px;color:var(--text-muted);">'+
-              'You were warned once and left the assessment window again.'+
-              '<br><br>Your answers have been auto-submitted and flagged for admin review.'+
-              '<br><br>Please speak to your Team Leader.'+
-            '</div>'+
-          '</div>';
-      }
-    } else {
-      renderAgentAssessment();
-    }
+    renderAgentAssessment();
   }catch(e){alert('Submit failed: '+e.message);}
 }
 
@@ -15684,8 +15594,6 @@ async function aboutLoadItems(){
   var wnDefaults = [
     'K7 Intercom — direct calls & floor channel for the whole team',
     'Assessment shuffle — each agent gets a unique question & choice order',
-    'Quiz malpractice detection — instant block on tab switch',
-    'Assessment proctoring — warning on 1st violation, auto-submit on 2nd',
     'Mobile break timer fix — live countdown now works on all devices'
   ];
   var csDefaults = [
@@ -21049,7 +20957,7 @@ async function siLoadLogs(){
     rows.forEach(function(r,i){
       var bg=i%2===0?'transparent':'rgba(255,255,255,.02)';
       var dt=r.login_at?new Date(r.login_at):null;
-      var dtStr=dt?dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—';
+      var dtStr=dt?dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Kolkata'})+' '+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'})+' IST':'—';
       var loc=[r.city,r.region,r.country_code].filter(Boolean).join(', ')||'Unknown';
       var devIcon=r.device==='Mobile'?'📱':r.device==='Tablet'?'📟':'🖥️';
       html+='<tr style="background:'+bg+';border-bottom:.5px solid rgba(255,255,255,.04);">';
@@ -21066,6 +20974,98 @@ async function siLoadLogs(){
     wrap.innerHTML=html;
   }catch(e){
     wrap.innerHTML='<div style="color:var(--accent-red,#EF493C);font-size:.82rem;padding:.5rem 0;">Error: '+esc(e.message)+'<br><br><b>Run this SQL in Supabase to create the table:</b><pre style="margin-top:.5rem;font-size:.72rem;background:rgba(0,0,0,.3);padding:.75rem;border-radius:6px;overflow-x:auto;white-space:pre-wrap;">create table session_fingerprints (\n  id uuid default gen_random_uuid() primary key,\n  user_id text,\n  user_name text,\n  ip text,\n  city text,\n  region text,\n  isp text,\n  country text,\n  country_code text,\n  user_agent text,\n  browser text,\n  device text,\n  login_at timestamp default now()\n);</pre></div>';
+  }
+}
+
+var _blockedMobileAgents = [];
+
+async function siLoadMobileRestrictions() {
+  var listWrap = document.getElementById('si-mobile-agents-list');
+  var statusEl = document.getElementById('si-mobile-status');
+  if(!listWrap) return;
+  listWrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:.5rem 0;">Loading agents...</div>';
+  try {
+    var ex = await sbQuery('settings', 'key=eq.blocked_mobile_agents&select=value');
+    if (ex && ex.length) {
+      try {
+        _blockedMobileAgents = JSON.parse(ex[0].value || '[]');
+      } catch(e) {
+        _blockedMobileAgents = [];
+      }
+    } else {
+      _blockedMobileAgents = [];
+      await sbInsert('settings', {key: 'blocked_mobile_agents', value: '[]'});
+    }
+
+    var users = await sbQuery('users', 'select=id,name,role&order=name.asc');
+    var agents = (users || []).filter(function(u) { return u.role !== 'syslevel' && u.role !== 'admin'; });
+
+    if (!agents.length) {
+      listWrap.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;padding:.5rem 0;">No regular agents found.</div>';
+      if (statusEl) statusEl.textContent = '0 blocked';
+      return;
+    }
+
+    listWrap.innerHTML = '';
+    agents.forEach(function(u) {
+      var isBlocked = _blockedMobileAgents.indexOf(u.id) > -1;
+      var card = document.createElement('div');
+      card.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:.5rem .75rem;background:rgba(255,255,255,.015);border:1px solid var(--navy-border);border-radius:6px;';
+      
+      var nameSpan = document.createElement('span');
+      nameSpan.style.cssText = 'font-size:.8rem;color:var(--text-primary);font-weight:600;';
+      nameSpan.textContent = u.name;
+
+      var toggleLabel = document.createElement('label');
+      toggleLabel.className = 'cat-toggle-wrap';
+      toggleLabel.style.transform = 'scale(.8)';
+      
+      var checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = isBlocked;
+      checkbox.onchange = function() {
+        siToggleMobileBlock(u.id, this.checked);
+      };
+
+      var slider = document.createElement('span');
+      slider.className = 'cat-toggle-slider';
+
+      toggleLabel.appendChild(checkbox);
+      toggleLabel.appendChild(slider);
+      card.appendChild(nameSpan);
+      card.appendChild(toggleLabel);
+      listWrap.appendChild(card);
+    });
+
+    if (statusEl) {
+      statusEl.textContent = _blockedMobileAgents.length + ' blocked';
+      statusEl.style.color = _blockedMobileAgents.length ? '#ef493c' : 'var(--text-muted)';
+    }
+  } catch(e) {
+    listWrap.innerHTML = '<div style="color:#ef493c;font-size:.82rem;padding:.5rem 0;">Error loading settings: ' + esc(e.message) + '</div>';
+  }
+}
+
+async function siToggleMobileBlock(userId, block) {
+  var statusEl = document.getElementById('si-mobile-status');
+  if (statusEl) statusEl.textContent = 'Updating...';
+  try {
+    var idx = _blockedMobileAgents.indexOf(userId);
+    if (block) {
+      if (idx === -1) _blockedMobileAgents.push(userId);
+    } else {
+      if (idx > -1) _blockedMobileAgents.splice(idx, 1);
+    }
+    
+    await sbUpdate('settings', 'key', 'blocked_mobile_agents', {value: JSON.stringify(_blockedMobileAgents)});
+    
+    if (statusEl) {
+      statusEl.textContent = _blockedMobileAgents.length + ' blocked';
+      statusEl.style.color = _blockedMobileAgents.length ? '#ef493c' : 'var(--text-muted)';
+    }
+  } catch(e) {
+    alert('Failed to update block state: ' + e.message);
+    siLoadMobileRestrictions();
   }
 }
 
