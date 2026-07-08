@@ -6040,6 +6040,7 @@ async function loadUsersPage(){
         '</div>'+
         canUnblockToggle+
         unblockBtn+
+        (u.role!=='admin'?'<button onclick="makeUserAdmin(\''+u.id+'\',\''+esc(u.name)+'\')" style="padding:.32rem .85rem;background:rgba(76,118,168,.1);border:1px solid rgba(76,118,168,.3);color:var(--accent-blue);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;white-space:nowrap;">⬆️ Make Admin</button>':'')+
         '<button class="um-del-btn" onclick="removeUser(this.dataset.id,this.dataset.name)" data-id="'+u.id+'" data-name="'+esc(u.name)+'">Remove</button>'+
       '</div>';
     }).join('');
@@ -6136,6 +6137,14 @@ async function tsToggleUser(userId,enabled){
 async function removeUser(id,name){
   if(!confirm('Remove '+name+'? They will no longer be able to log in.'))return;
   try{await sbDelete('users','id',id);loadUsersPage();}catch(e){alert('Could not remove user.');}
+}
+
+async function makeUserAdmin(userId, userName){
+  if(!confirm('Give '+userName+' full Admin access?\n\nThey will be able to see and manage everything — Control Deck, Manage Users, quiz questions, assessments, and all other admin features.\n\nAre you sure?')) return;
+  try{
+    await sbUpdate('users','id',userId,{role:'admin'});
+    loadUsersPage();
+  }catch(e){ alert('Could not update role: '+e.message); }
 }
 
 const ROSTER_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRE80jgfcc5g_L8GNZsADwYJhE2WOJ1Ehe2LridB0f7EUh5TZKmq2mT2c-P6nRZg-U5UVc4tLAxEUCI/pub?output=csv';
