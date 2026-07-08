@@ -3099,6 +3099,10 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg>
         Control Deck
       </div>
+      <div class="sidebar-item" id="sidebar-unblock-agents" style="display:none;" onclick="showPage('unblock-agents', this)">
+        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Unblock Agents
+      </div>
       <div class="sidebar-item" onclick="showPage('reports', this)">
         <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z"/>
@@ -4280,6 +4284,20 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         </div>
 
         <div id="um-user-list">
+          <div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- ══ UNBLOCK AGENTS PAGE ══ -->
+      <div class="page" id="page-unblock-agents">
+        <div class="um-header">
+          <div>
+            <h2 class="um-title">🔓 Unblock Agents</h2>
+            <p class="um-sub">View and unblock agents who have been locked out due to break limit violations.</p>
+          </div>
+          <button class="um-add-btn" style="background:rgba(46,197,111,.12);border:1px solid rgba(46,197,111,.3);color:#1a7a45;" onclick="loadUnblockPage()">↻ Refresh</button>
+        </div>
+        <div id="ub-agent-list">
           <div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>
         </div>
       </div>
@@ -5471,7 +5489,7 @@ async function doLogin(){
     }
 
     console.log('Attempting login for:',email);
-    const rows=await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id,name,email,role,password,timesheet_enabled,photo_url,is_blocked,block_reason');
+    const rows=await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id,name,email,role,password,timesheet_enabled,photo_url,is_blocked,block_reason,can_unblock');
     console.log('Rows returned:',rows?rows.length:0);
     if(!rows||rows.length===0||rows[0].password!==hashed)throw new Error('invalid');
     const u=rows[0];
@@ -5488,7 +5506,7 @@ async function doLogin(){
       bbShowModal();
       return;
     }
-    currentUser={id:u.id,name:u.name,email:u.email,role:u.role,timesheetEnabled:u.timesheet_enabled?true:false,photo_url:u.photo_url||null};
+    currentUser={id:u.id,name:u.name,email:u.email,role:u.role,timesheetEnabled:u.timesheet_enabled?true:false,photo_url:u.photo_url||null,canUnblock:u.can_unblock?true:false};
     saveSession(currentUser);
     rlClear(); // successful login — reset failure counter
     statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
@@ -5825,6 +5843,7 @@ function showPage(id,elem){
 
   // Page-specific init
   if(id==='users'){loadUsersPage();}
+  if(id==='unblock-agents'){loadUnblockPage();}
   if(id==='changepass') resetChangePasswordForm();
   if(id==='reports'){loadReportAgents();initReportDates();}
   if(id==='roster'){
@@ -5896,6 +5915,9 @@ function updateAdminVisibility(){
 // toggle visibility
   var gmItem=document.getElementById('sidebar-sysconfig');
   if(gmItem) gmItem.style.display=_isSysLevel()?'flex':'none';
+  // Unblock Agents sidebar: visible only for non-admin users with can_unblock flag
+  var ubItem=document.getElementById('sidebar-unblock-agents');
+  if(ubItem) ubItem.style.display=(!isAdminUser() && currentUser && currentUser.canUnblock)?'flex':'none';
   // Timesheet: always on for admin/TL, only on for agents if timesheetEnabled flag set
   var tsItem=document.getElementById('sidebar-ts');
   if(tsItem){
@@ -5997,27 +6019,87 @@ async function loadUsersPage(){
   var listEl=document.getElementById('um-user-list');
   listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>';
   try{
-    var users=await sbQuery('users','select=id,name,email,role,is_blocked&order=name.asc');
+    var users=await sbQuery('users','select=id,name,email,role,is_blocked,can_unblock&order=name.asc');
     if(!users||!users.length){listEl.innerHTML='<div class="um-empty">No agents added yet.</div>';return;}
     listEl.innerHTML=users.map(function(u){
       var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
       var rc=u.role==='admin'?'admin':u.role==='tl'?'tl':'';
       var rl=u.role==='tl'?'Team Lead':(u.role||'agent');
       var isBlocked=u.is_blocked?true:false;
+      var canUnblock=u.can_unblock?true:false;
       var blockedBadge=isBlocked?'<span style="font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(239,73,60,.15);color:var(--accent-red);text-transform:uppercase;letter-spacing:.08em;margin-left:.5rem;">Blocked</span>':'';
       var unblockBtn=isBlocked?'<button onclick="bbAdminUnblock(\''+u.id+'\',\''+esc(u.name)+'\')" style="padding:.32rem .85rem;background:rgba(46,197,111,.1);border:1px solid rgba(46,197,111,.3);color:#1a7a45;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;">🔓 Unblock</button>':'';
+      var canUnblockToggle='<label title="Allow this agent to unblock blocked users" style="display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:var(--text-muted);cursor:pointer;white-space:nowrap;">'+
+        '<input type="checkbox" onchange="ubToggleAccess(\''+u.id+'\',this.checked)"'+(canUnblock?' checked':'')+' style="accent-color:var(--accent-green);width:14px;height:14px;cursor:pointer;"/>'+
+        'Can Unblock</label>';
       return '<div class="um-user-card">'+(isBlocked?'<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent-red);border-radius:var(--radius) 0 0 var(--radius);"></div>':'')+
         '<div class="um-user-avatar" style="'+(isBlocked?'background:linear-gradient(135deg,rgba(239,73,60,.6),rgba(239,73,60,.9));':'')+'">'+(isBlocked?'🔒':ini)+'</div>'+
         '<div class="um-user-info">'+
           '<div class="um-user-name">'+esc(u.name)+' <span class="um-role-badge '+rc+'">'+rl+'</span>'+blockedBadge+'</div>'+
           '<div class="um-user-email">'+esc(u.email)+'</div>'+
         '</div>'+
+        canUnblockToggle+
         unblockBtn+
         '<button class="um-del-btn" onclick="removeUser(this.dataset.id,this.dataset.name)" data-id="'+u.id+'" data-name="'+esc(u.name)+'">Remove</button>'+
       '</div>';
     }).join('');
   }catch(e){listEl.innerHTML='<div class="um-empty" style="color:var(--accent-red);">Could not load users: '+e.message+'</div>';}
 }
+
+// ── Toggle can_unblock for a user (from Manage Users) ──
+async function ubToggleAccess(userId, enabled){
+  try{
+    await sbUpdate('users','id',userId,{can_unblock:enabled});
+  }catch(e){
+    alert('Could not update unblock access: '+e.message);
+    loadUsersPage(); // revert checkbox state
+  }
+}
+
+// ── Load the Unblock Agents page (for can_unblock users) ──
+async function loadUnblockPage(){
+  var listEl=document.getElementById('ub-agent-list');
+  if(!listEl) return;
+  listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1.5rem;text-align:center;">Loading…</div>';
+  try{
+    var users=await sbQuery('users','is_blocked=eq.true&select=id,name,email,block_reason&order=name.asc');
+    if(!users||!users.length){
+      listEl.innerHTML='<div style="text-align:center;padding:2.5rem 1rem;"><div style="font-size:2rem;margin-bottom:.75rem;">✅</div><div style="font-size:.95rem;font-weight:600;color:var(--text-primary);">No blocked agents</div><div style="font-size:.82rem;color:var(--text-muted);margin-top:.35rem;">Everyone is currently unblocked.</div></div>';
+      return;
+    }
+    listEl.innerHTML=users.map(function(u){
+      var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+      var reason=u.block_reason||'Break limit exceeded';
+      return '<div class="um-user-card" id="ub-card-'+u.id+'" style="position:relative;">'+
+        '<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent-red);border-radius:var(--radius) 0 0 var(--radius);"></div>'+
+        '<div class="um-user-avatar" style="background:linear-gradient(135deg,rgba(239,73,60,.6),rgba(239,73,60,.9));">🔒</div>'+
+        '<div class="um-user-info">'+
+          '<div class="um-user-name">'+esc(u.name)+' <span style="font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(239,73,60,.15);color:var(--accent-red);text-transform:uppercase;letter-spacing:.08em;">Blocked</span></div>'+
+          '<div class="um-user-email">'+esc(u.email)+'</div>'+
+          '<div style="font-size:.72rem;color:var(--text-dim);margin-top:.2rem;">'+esc(reason)+'</div>'+
+        '</div>'+
+        '<button id="ub-btn-'+u.id+'" onclick="ubUnblockAgent(\''+u.id+'\',\''+esc(u.name)+'\')" style="padding:.38rem .95rem;background:rgba(46,197,111,.1);border:1px solid rgba(46,197,111,.3);color:#1a7a45;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;white-space:nowrap;">🔓 Unblock</button>'+
+      '</div>';
+    }).join('');
+  }catch(e){
+    listEl.innerHTML='<div class="um-empty" style="color:var(--accent-red);">Could not load blocked agents: '+esc(e.message)+'</div>';
+  }
+}
+
+// ── Unblock a single agent (from Unblock Agents page) ──
+async function ubUnblockAgent(userId, userName){
+  var btn=document.getElementById('ub-btn-'+userId);
+  if(btn){btn.textContent='Unblocking…';btn.disabled=true;}
+  try{
+    await sbUpdate('users','id',userId,{is_blocked:false,block_reason:null});
+    var card=document.getElementById('ub-card-'+userId);
+    if(card){ card.style.transition='opacity .3s'; card.style.opacity='0'; setTimeout(function(){ card.remove(); var remaining=document.querySelectorAll('#ub-agent-list .um-user-card'); if(!remaining.length){ var listEl=document.getElementById('ub-agent-list'); if(listEl) listEl.innerHTML='<div style="text-align:center;padding:2.5rem 1rem;"><div style="font-size:2rem;margin-bottom:.75rem;">✅</div><div style="font-size:.95rem;font-weight:600;color:var(--text-primary);">No blocked agents</div><div style="font-size:.82rem;color:var(--text-muted);margin-top:.35rem;">Everyone is currently unblocked.</div></div>'; } }, 350); }
+  }catch(e){
+    if(btn){btn.textContent='🔓 Unblock';btn.disabled=false;}
+    alert('Could not unblock '+userName+': '+e.message);
+  }
+}
+
 async function tsToggleUser(userId,enabled){
   try{
     await sbUpdate('users','id',userId,{timesheet_enabled:enabled});
