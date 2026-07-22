@@ -396,18 +396,19 @@ const CAT_COLORS={
   'ESP-Activation':'var(--tag-esp-activation)','Update':'var(--tag-esp-update)',
   'ESP-Connectivity':'var(--tag-esp-connectivity)','ESP-Scanning':'var(--tag-esp-scanning)',
   'UTM-Install':'var(--tag-utm-install)','UTM-Network':'var(--tag-utm-network)',
-  'UTM-VPN':'var(--tag-utm-vpn)','UTM-WebSec':'var(--tag-utm-websec)','UTM-HA':'var(--tag-utm-ha)'
+  'UTM-VPN':'var(--tag-utm-vpn)','UTM-WebSec':'var(--tag-utm-websec)','UTM-HA':'var(--tag-utm-ha)',
+  'ESP-OS':'#7c3aed'
 };
 
 // ── PLAN CONFIG ──
 const PLAN_CATS={
   consumer:['Activation','Updates','Scanning','Connectivity','Installation'],
-  enterprise:['License','Install','ESP-Activation','Update','ESP-Connectivity','ESP-Scanning'],
+  enterprise:['License','Install','ESP-Activation','Update','ESP-Connectivity','ESP-Scanning','ESP-OS'],
   utm:['UTM-Install','UTM-Network','UTM-VPN','UTM-WebSec','UTM-HA']
 };
 const PLAN_CAT_LABELS={
   'License':'License','Install':'Install','ESP-Activation':'Activation','Update':'Update',
-  'ESP-Connectivity':'Connectivity','ESP-Scanning':'Scanning & Config',
+  'ESP-Connectivity':'Connectivity','ESP-Scanning':'Scanning & Config','ESP-OS':'OS',
   'UTM-Install':'Installation','UTM-Network':'Network & WAN','UTM-VPN':'VPN',
   'UTM-WebSec':'Web Security','UTM-HA':'High Availability'
 };
@@ -546,7 +547,9 @@ const ENTERPRISE_ARTICLES=[
 {id:'esp-scn-008',plan:'enterprise',cat:'ESP-Scanning',title:'How to configure web filtering (allow/block websites)',tags:['web filtering','block website','allow website','category','business hours','exception','policy'],preview:'Enable web filtering in policy, set categories, business hours, and exceptions.',steps:['Click on Manage Clients.','Select the particular policy and click on Edit.','Click on Web-Filtering and select "Enable Web Filtering".','Select Category option if you would like to block websites using category — select the list of Categories you would like to block.','Business Hours option is given — select the required Business Hours accordingly.','Under Exception: you can allow or block websites as per your requirements.']},
 {id:'esp-scn-009',plan:'enterprise',cat:'ESP-Scanning',title:'How to schedule a Task to run immediately on endpoints',tags:['task','immediate','manage clients','tasks','new task','group','finish'],preview:'Create a new task via Manage Clients > Tasks > New Task and select target endpoints.',steps:['Click on Manage Clients.','Click on Tasks.','Click on New Task and select the required task which needs to be implemented immediately on the endpoints.','Select the Group or Computers on which you would like to run the Task.','Click on Finish to start the Task on the selected computers or group.']},
 {id:'esp-scn-010',plan:'enterprise',cat:'ESP-Scanning',title:'Unable to sync policy',tags:['policy sync','ping','last contact','secserver','duplicate entry'],preview:'Check server-client communication, last contact date, and check for duplicate entries.',steps:['Check whether the client is able to communicate with the server and vice-versa.','Try pinging to the client from the server and vice-versa and make sure the ping request is successful.','Check the particular endpoint last contact date in the K7 console and reactivate it with secserver tool if it is not recent.','Check in K7 console if any duplicate entry for that client is available.','If no duplicate: escalate to L2.']},
-{id:'esp-scn-011',plan:'enterprise',cat:'ESP-Scanning',title:'Unable to access USB device — Access Denied',tags:['usb','access denied','device control','policy','policy override','allow','device id'],preview:'Check if USB is blocked in Device Control policy or Policy Override. Allow and add device ID.',steps:['Check whether the USB device has been blocked under Device Control by the policy: Click on Manage Clients > Policy > select particular policy > Edit > Device Control.','Make sure "Allow" option is selected for Removable Drive (USB).','If it is not being blocked by the Policy: check the same under Policy Override (Manage Clients > Policy Override > Device Control — Removable Drive (USB) should be set to Allow).','If the USB device has been blocked under device control: add the device ID under the allowed device list.']}
+{id:'esp-scn-011',plan:'enterprise',cat:'ESP-Scanning',title:'Unable to access USB device — Access Denied',tags:['usb','access denied','device control','policy','policy override','allow','device id'],preview:'Check if USB is blocked in Device Control policy or Policy Override. Allow and add device ID.',steps:['Check whether the USB device has been blocked under Device Control by the policy: Click on Manage Clients > Policy > select particular policy > Edit > Device Control.','Make sure "Allow" option is selected for Removable Drive (USB).','If it is not being blocked by the Policy: check the same under Policy Override (Manage Clients > Policy Override > Device Control — Removable Drive (USB) should be set to Allow).','If the USB device has been blocked under device control: add the device ID under the allowed device list.']},
+// ── OS ──
+{id:'esp-os-001',plan:'enterprise',cat:'ESP-OS',title:'BSOD (Blue Screen of Death) — Driver related issue',tags:['bsod','blue screen','k7sentry','k7firewall','minidump','memory dump','driver','k7sentry.sys','k7firewall.sys','hardware block','policy'],preview:'BSOD may be caused by K7 driver conflict. Collect dumps, check driver versions, and disable hardware block rules in policy before escalating.',steps:['Confirm whether the BSOD is caused by K7 — check if <code>K7Sentry.sys</code> or <code>K7Firewall.sys</code> appears in the crash details or error screen.','Collect the complete minidump and memory dump files from the affected system: typically located at <code>C:\\Windows\\Minidump</code> and <code>C:\\Windows\\MEMORY.DMP</code>.','Check and note the version details of <code>K7Sentry.sys</code> and <code>K7Firewall.sys</code> from the K7 installation directory.','If the endpoint is under a policy that has hardware block rules enabled: disable those hardware block rules in the policy and monitor whether the BSOD recurs before escalating.'],infoBox:{type:'amber',title:'Note',text:'Whenever a BSOD occurs with a policy that has hardware block rules, disable them and check the status before escalating the issue to us. This may provide a clue to find the root cause of the issue.'}}
 ];
 
 // ═══════════════════════════════════════════════
