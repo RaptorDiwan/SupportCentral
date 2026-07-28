@@ -567,52 +567,192 @@
 
   /* Dropdown */
   .wx-dropdown {
-    position: absolute; top: calc(100% + 8px); left: 0;
-    width: 480px; max-width: calc(100vw - 2rem);
-    background: #111827; border: 1px solid rgba(255,255,255,.1);
-    border-radius: 14px; padding: 1rem;
-    box-shadow: 0 20px 60px rgba(0,0,0,.55);
-    z-index: 9999; animation: wxFadeIn .18s ease;
+    position: absolute; top: calc(100% + 10px); left: 0;
+    width: 520px; max-width: calc(100vw - 2rem);
+    background: #111827;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px; padding: 0;
+    box-shadow: 0 32px 80px rgba(0,0,0,.7), 0 0 0 0.5px rgba(255,255,255,.06);
+    z-index: 9999; overflow: hidden;
+    max-height: calc(100vh - 80px); overflow-y: auto;
+    animation: wxFadeIn .2s cubic-bezier(.16,1,.3,1);
   }
-  @keyframes wxFadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-  .wx-drop-title {
-    font-size: .62rem; letter-spacing: .12em; text-transform: uppercase;
-    color: rgba(255,255,255,.35); font-weight: 600; margin-bottom: .75rem;
+  body:not(.dark) .wx-dropdown {
+    background: #1e293b;
+    border-color: rgba(255,255,255,.12);
+    box-shadow: 0 32px 80px rgba(0,0,0,.45), 0 0 0 0.5px rgba(255,255,255,.08);
+  }
+  @keyframes wxFadeIn { from { opacity:0; transform:translateY(-8px) scale(.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+  .wx-drop-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .85rem 1.1rem .6rem;
+    border-bottom: 0.5px solid rgba(255,255,255,.07);
+  }
+  .wx-drop-header-left { display: flex; align-items: center; gap: .5rem; }
+  .wx-drop-htitle {
+    font-size: .72rem; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: rgba(255,255,255,.4);
     font-family: 'DM Sans', sans-serif;
   }
+  .wx-beta-tag {
+    font-size: .55rem; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: rgba(239,73,60,.9);
+    background: rgba(239,73,60,.12); border: 1px solid rgba(239,73,60,.25);
+    border-radius: 4px; padding: 1px 5px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .wx-drop-lastupd {
+    font-size: .62rem; color: rgba(255,255,255,.22);
+    font-family: 'DM Sans', sans-serif;
+  }
+
   .wx-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: .5rem;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0; padding: .5rem;
   }
   .wx-city-card {
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
-    border-radius: 10px; padding: .65rem .8rem;
-    display: flex; align-items: center; gap: .6rem;
-    transition: background .15s;
+    display: flex; align-items: center; gap: .7rem;
+    padding: .7rem .85rem; border-radius: 12px;
+    transition: background .15s; cursor: default;
+    position: relative; overflow: hidden;
   }
-  .wx-city-card:hover { background: rgba(255,255,255,.09); }
-  .wx-city-card.work-hours { border-color: rgba(46,197,111,.25); }
-  .wx-city-flag { font-size: 1.2rem; flex-shrink: 0; }
-  .wx-city-body { flex: 1; min-width: 0; }
-  .wx-city-name { font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.88); font-family: 'DM Sans',sans-serif; }
-  .wx-city-time { font-size: .9rem; font-weight: 700; color: #fff; font-family: 'DM Sans',sans-serif; font-variant-numeric: tabular-nums; }
-  .wx-city-date { font-size: .62rem; color: rgba(255,255,255,.38); font-family: 'DM Sans',sans-serif; }
-  .wx-city-wx  { text-align: right; flex-shrink: 0; }
-  .wx-city-wicon { font-size: 1.1rem; display: block; }
-  .wx-city-wtemp { font-size: .7rem; font-weight: 600; color: rgba(255,255,255,.7); font-family: 'DM Sans',sans-serif; }
+  .wx-city-card:hover { background: rgba(255,255,255,.06); }
+  .wx-city-card.work-hours { background: rgba(46,197,111,.04); }
+  .wx-city-card.work-hours:hover { background: rgba(46,197,111,.08); }
+
+  /* Subtle separator lines between rows */
+  .wx-city-card:nth-child(odd):not(:nth-last-child(-n+2)) {
+    border-bottom: 0.5px solid rgba(255,255,255,.04);
+  }
+
   .wx-work-dot {
-    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
-    background: rgba(255,255,255,.2);
+    width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(255,255,255,.15); position: absolute; top: .7rem; right: .75rem;
   }
-  .wx-work-dot.active { background: #2EC56F; box-shadow: 0 0 5px rgba(46,197,111,.6); }
+  .wx-work-dot.active { background: #2EC56F; box-shadow: 0 0 6px rgba(46,197,111,.7); }
+
+  .wx-city-flag { width:28px; height:20px; border-radius:3px; flex-shrink:0; object-fit:cover; display:block; }
+  .wx-city-body { flex: 1; min-width: 0; }
+  .wx-city-name {
+    font-size: .7rem; font-weight: 500; color: rgba(255,255,255,.5);
+    font-family: 'DM Sans',sans-serif; margin-bottom: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .wx-city-time {
+    font-size: 1.05rem; font-weight: 700; color: rgba(255,255,255,.95);
+    font-family: 'DM Sans',sans-serif; font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em; line-height: 1.1;
+  }
+  .wx-city-ampm {
+    font-size: .65rem; font-weight: 500; color: rgba(255,255,255,.4);
+    font-family: 'DM Sans',sans-serif; margin-left: 2px;
+  }
+  .wx-city-date {
+    font-size: .62rem; color: rgba(255,255,255,.25);
+    font-family: 'DM Sans',sans-serif; margin-top: 1px;
+  }
+  .wx-city-wx { text-align: right; flex-shrink: 0; min-width: 36px; }
+  .wx-city-wicon { font-size: 1.3rem; display: block; line-height: 1; }
+  .wx-city-wtemp {
+    font-size: .65rem; font-weight: 600; color: rgba(255,255,255,.45);
+    font-family: 'DM Sans',sans-serif; display: block; text-align: center;
+    margin-top: 1px;
+  }
   .wx-drop-footer {
-    margin-top: .75rem; padding-top: .65rem; border-top: 1px solid rgba(255,255,255,.07);
-    font-size: .65rem; color: rgba(255,255,255,.28); font-family: 'DM Sans',sans-serif;
-    text-align: center;
+    padding: .5rem 1.1rem .65rem;
+    border-top: 0.5px solid rgba(255,255,255,.06);
+    font-size: .62rem; color: rgba(255,255,255,.2);
+    font-family: 'DM Sans',sans-serif;
+    display: flex; align-items: center; gap: .4rem;
   }
   @media (max-width: 600px) {
-    .wx-dropdown { width: calc(100vw - 1.5rem); left: auto; right: 0; }
+    .wx-dropdown { width: calc(100vw - 1rem); left: auto; right: -1rem; border-radius: 16px; }
     .wx-grid { grid-template-columns: 1fr; }
     .wx-city-pill, .wx-pill-sep, .wx-globe { display: none; }
+  }
+
+  /* ── Focus Score Pill ── */
+  .focus-pill {
+    position: relative; width: 38px; height: 38px;
+    background: none; border: none; cursor: pointer;
+    padding: 0; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .focus-ring-svg { position: absolute; top: 0; left: 0; }
+  .focus-ring-num {
+    position: relative; z-index: 1;
+    font-size: .62rem; font-weight: 700; color: #fff;
+    font-family: 'DM Sans', sans-serif; font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .focus-pill:hover .focus-ring-num { color: rgba(255,255,255,.85); }
+
+  /* Focus dropdown */
+  .focus-dropdown {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    width: 320px; max-width: calc(100vw - 2rem);
+    background: #111827;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px; padding: 0;
+    box-shadow: 0 32px 80px rgba(0,0,0,.7), 0 0 0 0.5px rgba(255,255,255,.06);
+    z-index: 9999; overflow: hidden;
+    max-height: calc(100vh - 80px); overflow-y: auto;
+    animation: wxFadeIn .2s cubic-bezier(.16,1,.3,1);
+  }
+  body:not(.dark) .focus-dropdown {
+    background: #1e293b;
+    border-color: rgba(255,255,255,.12);
+    box-shadow: 0 32px 80px rgba(0,0,0,.45), 0 0 0 0.5px rgba(255,255,255,.08);
+  }
+  .wx-dropdown::-webkit-scrollbar,
+  .focus-dropdown::-webkit-scrollbar { width: 4px; }
+  .wx-dropdown::-webkit-scrollbar-track,
+  .focus-dropdown::-webkit-scrollbar-track { background: transparent; }
+  .wx-dropdown::-webkit-scrollbar-thumb,
+  .focus-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 4px; }
+  .wx-dropdown::-webkit-scrollbar-thumb:hover,
+  .focus-dropdown::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.28); }
+  .focus-drop-header {
+    padding: .85rem 1.1rem .7rem;
+    border-bottom: 0.5px solid rgba(255,255,255,.07);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .focus-drop-title-row { display: flex; align-items: center; gap: .5rem; }
+  .focus-drop-title { font-size: .72rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.4); font-family: 'DM Sans',sans-serif; }
+  .focus-big-score { display: flex; align-items: center; gap: .75rem; margin: .9rem 1.1rem .6rem; }
+  .focus-big-ring { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+  .focus-big-ring svg { position: absolute; top: 0; left: 0; }
+  .focus-big-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: .95rem; font-weight: 700; font-family: 'DM Sans',sans-serif; }
+  .focus-big-label h3 { font-size: .92rem; font-weight: 600; color: rgba(255,255,255,.9); font-family: 'DM Sans',sans-serif; }
+  .focus-big-label p { font-size: .72rem; color: rgba(255,255,255,.4); font-family: 'DM Sans',sans-serif; margin-top: 2px; }
+  .focus-status-badge { font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; margin-top: 4px; display: inline-block; }
+
+  .focus-factors { padding: .4rem .75rem .75rem; display: flex; flex-direction: column; gap: .3rem; }
+  .focus-factor {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .5rem .6rem; border-radius: 10px;
+    background: rgba(255,255,255,.04);
+    transition: background .15s;
+  }
+  .focus-factor:hover { background: rgba(255,255,255,.07); }
+  .focus-f-icon { font-size: .95rem; flex-shrink: 0; width: 22px; text-align: center; }
+  .focus-f-body { flex: 1; min-width: 0; }
+  .focus-f-name { font-size: .72rem; font-weight: 500; color: rgba(255,255,255,.7); font-family: 'DM Sans',sans-serif; }
+  .focus-f-bar { height: 3px; background: rgba(255,255,255,.08); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+  .focus-f-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+  .focus-f-pts { font-size: .7rem; font-weight: 600; font-family: 'DM Sans',sans-serif; flex-shrink: 0; }
+
+  .focus-insight {
+    margin: 0 .75rem .75rem; padding: .65rem .85rem;
+    border-radius: 10px; font-size: .72rem; line-height: 1.5;
+    font-family: 'DM Sans',sans-serif;
+  }
+  .focus-drop-footer {
+    padding: .5rem 1.1rem .65rem;
+    border-top: 0.5px solid rgba(255,255,255,.06);
+    font-size: .62rem; color: rgba(255,255,255,.2);
+    font-family: 'DM Sans',sans-serif;
+    display: flex; align-items: center; gap: .4rem;
   }
 
   .home-greeting {
@@ -3062,6 +3202,18 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         <span class="topbar-msg-badge" id="topbar-msg-badge" style="display:none;">0</span>
       </button>
       <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDarkMode()" title="Toggle dark mode">&#9790;</button>
+      <!-- Focus Score -->
+      <div id="focus-wrap" style="position:relative;display:none;">
+        <button class="focus-pill" id="focus-pill" onclick="focusToggleDropdown(event)" title="Focus Score">
+          <svg class="focus-ring-svg" viewBox="0 0 38 38" width="38" height="38">
+            <circle cx="19" cy="19" r="15" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="3"/>
+            <circle id="focus-ring-arc" cx="19" cy="19" r="15" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"
+              stroke-dasharray="94.25" stroke-dashoffset="14.14" style="transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .6s ease,stroke .4s ease;"/>
+          </svg>
+          <span class="focus-ring-num" id="focus-ring-num">85</span>
+        </button>
+        <div id="focus-dropdown" class="focus-dropdown" style="display:none;"></div>
+      </div>
       <div class="agent-badge">
         <div class="avatar" id="avatar-initials">AG</div>
         <div class="agent-name" id="agent-display">Agent</div>
@@ -21772,18 +21924,18 @@ async function siClearAll(){
 
   // ── 12 World Cities ──
   var WX_CITIES = [
-    { key:'chennai',      flag:'🇮🇳', name:'Chennai',      tz:'Asia/Kolkata',        lat:13.0827,  lon:80.2707  },
-    { key:'dubai',        flag:'🇦🇪', name:'Dubai',         tz:'Asia/Dubai',          lat:25.2048,  lon:55.2708  },
-    { key:'riyadh',       flag:'🇸🇦', name:'Riyadh',        tz:'Asia/Riyadh',         lat:24.7136,  lon:46.6753  },
-    { key:'kuwait',       flag:'🇰🇼', name:'Kuwait City',   tz:'Asia/Kuwait',         lat:29.3759,  lon:47.9774  },
-    { key:'tehran',       flag:'🇮🇷', name:'Tehran',        tz:'Asia/Tehran',         lat:35.6892,  lon:51.3890  },
-    { key:'moscow',       flag:'🇷🇺', name:'Moscow',        tz:'Europe/Moscow',       lat:55.7558,  lon:37.6173  },
-    { key:'london',       flag:'🇬🇧', name:'London',        tz:'Europe/London',       lat:51.5074,  lon:-0.1278  },
-    { key:'newyork',      flag:'🇺🇸', name:'New York',      tz:'America/New_York',    lat:40.7128,  lon:-74.0060 },
-    { key:'johannesburg', flag:'🇿🇦', name:'Johannesburg',  tz:'Africa/Johannesburg', lat:-26.2041, lon:28.0473  },
-    { key:'singapore',    flag:'🇸🇬', name:'Singapore',     tz:'Asia/Singapore',      lat:1.3521,   lon:103.8198 },
-    { key:'shanghai',     flag:'🇨🇳', name:'Shanghai',      tz:'Asia/Shanghai',       lat:31.2304,  lon:121.4737 },
-    { key:'tokyo',        flag:'🇯🇵', name:'Tokyo',         tz:'Asia/Tokyo',          lat:35.6762,  lon:139.6503 }
+    { key:'chennai',      iso:'in', name:'Chennai',      tz:'Asia/Kolkata',        lat:13.0827,  lon:80.2707  },
+    { key:'dubai',        iso:'ae', name:'Dubai',         tz:'Asia/Dubai',          lat:25.2048,  lon:55.2708  },
+    { key:'riyadh',       iso:'sa', name:'Riyadh',        tz:'Asia/Riyadh',         lat:24.7136,  lon:46.6753  },
+    { key:'kuwait',       iso:'kw', name:'Kuwait City',   tz:'Asia/Kuwait',         lat:29.3759,  lon:47.9774  },
+    { key:'tehran',       iso:'ir', name:'Tehran',        tz:'Asia/Tehran',         lat:35.6892,  lon:51.3890  },
+    { key:'moscow',       iso:'ru', name:'Moscow',        tz:'Europe/Moscow',       lat:55.7558,  lon:37.6173  },
+    { key:'london',       iso:'gb', name:'London',        tz:'Europe/London',       lat:51.5074,  lon:-0.1278  },
+    { key:'newyork',      iso:'us', name:'New York',      tz:'America/New_York',    lat:40.7128,  lon:-74.0060 },
+    { key:'johannesburg', iso:'za', name:'Johannesburg',  tz:'Africa/Johannesburg', lat:-26.2041, lon:28.0473  },
+    { key:'singapore',    iso:'sg', name:'Singapore',     tz:'Asia/Singapore',      lat:1.3521,   lon:103.8198 },
+    { key:'shanghai',     iso:'cn', name:'Shanghai',      tz:'Asia/Shanghai',       lat:31.2304,  lon:121.4737 },
+    { key:'tokyo',        iso:'jp', name:'Tokyo',         tz:'Asia/Tokyo',          lat:35.6762,  lon:139.6503 }
   ];
 
   var WX_HOME = WX_CITIES[0]; // default = Chennai, replaced by geolocation
@@ -21891,21 +22043,37 @@ async function siClearAll(){
   function wxRenderDropdown(){
     var drop = document.getElementById('wx-dropdown');
     if(!drop) return;
-    var html = '<div class="wx-drop-title">🌍 World Clock &amp; Weather</div><div class="wx-grid">';
+    var now = new Date();
+    var updStr = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+    var html =
+      '<div class="wx-drop-header">'+
+        '<div class="wx-drop-header-left">'+
+          '<span class="wx-drop-htitle">World Clock &amp; Weather</span>'+
+        '</div>'+
+        '<span class="wx-drop-lastupd">Updated '+updStr+'</span>'+
+      '</div>'+
+      '<div class="wx-grid">';
     WX_CITIES.forEach(function(c){
       var t    = wxGetTime(c.tz);
       var date = wxGetDate(c.tz);
       var isWork = t.hour >= 9 && t.hour < 18;
       var wx   = _wxWeatherCache[c.key];
-      var wIcon = wx ? wx.icon : '⏳';
-      var wTemp = wx ? wx.temp+'°' : '—';
+      var wIcon = wx ? wx.icon : '';
+      var wTemp = wx ? wx.temp+'°' : '';
+      // Split time into number + AM/PM
+      var timeParts = t.time.match(/^(.+?)\s*(AM|PM)$/i);
+      var timeNum = timeParts ? timeParts[1] : t.time;
+      var timePeriod = timeParts ? timeParts[2] : '';
+      var flagHtml = c.iso
+        ? '<img class="wx-city-flag" src="https://flagcdn.com/w40/'+c.iso+'.png" alt="'+c.name+'" loading="lazy"/>'
+        : '<span style="font-size:1.3rem;flex-shrink:0;">📍</span>';
       html +=
         '<div class="wx-city-card'+(isWork?' work-hours':'')+'" id="wxcard-'+c.key+'">'+
           '<div class="wx-work-dot'+(isWork?' active':'')+'"></div>'+
-          '<span class="wx-city-flag">'+c.flag+'</span>'+
+          flagHtml+
           '<div class="wx-city-body">'+
             '<div class="wx-city-name">'+c.name+'</div>'+
-            '<div class="wx-city-time" id="wxt-'+c.key+'">'+t.time+'</div>'+
+            '<div class="wx-city-time" id="wxt-'+c.key+'">'+timeNum+'<span class="wx-city-ampm">'+timePeriod+'</span></div>'+
             '<div class="wx-city-date">'+date+'</div>'+
           '</div>'+
           '<div class="wx-city-wx">'+
@@ -21914,7 +22082,11 @@ async function siClearAll(){
           '</div>'+
         '</div>';
     });
-    html += '</div><div class="wx-drop-footer">🟢 Green dot = business hours (9am–6pm local) · Weather updates every 15 min</div>';
+    html += '</div>'+
+      '<div class="wx-drop-footer">'+
+        '<span style="width:6px;height:6px;border-radius:50%;background:#2EC56F;display:inline-block;box-shadow:0 0 5px rgba(46,197,111,.6);flex-shrink:0;"></span>'+
+        'Green dot = business hours (9 AM – 6 PM local) &nbsp;·&nbsp; Weather loads on first open'+
+      '</div>';
     drop.innerHTML = html;
   }
 
@@ -21925,7 +22097,13 @@ async function siClearAll(){
       if(!_wxOpen){ clearInterval(_wxClockTimer); _wxClockTimer=null; return; }
       WX_CITIES.forEach(function(c){
         var el = document.getElementById('wxt-'+c.key);
-        if(el){ el.textContent = wxGetTime(c.tz).time; }
+        if(el){
+          var t = wxGetTime(c.tz);
+          var timeParts = t.time.match(/^(.+?)\s*(AM|PM)$/i);
+          var timeNum = timeParts ? timeParts[1] : t.time;
+          var timePeriod = timeParts ? timeParts[2] : '';
+          el.innerHTML = timeNum+'<span class="wx-city-ampm">'+timePeriod+'</span>';
+        }
       });
     }, 1000);
   }
@@ -21965,41 +22143,460 @@ async function siClearAll(){
 
   // ── Geolocation → home city ──
   function wxStart(){
-    if(!navigator.geolocation){
-      wxFetchHome();
-      if(_wxInterval) clearInterval(_wxInterval);
-      _wxInterval = setInterval(wxFetchHome, 15*60*1000);
-      return;
-    }
+    // Always start immediately with Chennai as default — no "Your Location" flash
+    wxFetchHome();
+    if(_wxInterval) clearInterval(_wxInterval);
+    _wxInterval = setInterval(wxFetchHome, 15*60*1000);
+
+    if(!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       function(pos){
         var lat = pos.coords.latitude, lon = pos.coords.longitude;
-        // Update home city coords
-        WX_HOME = { key:'home', flag:'📍', name:'Your Location', tz: Intl.DateTimeFormat().resolvedOptions().timeZone, lat:lat, lon:lon };
-        // Try to get city name
+        // Only override if they're NOT in Chennai (>50km away)
+        var dLat = lat - 13.0827, dLon = lon - 80.2707;
+        var distKm = Math.sqrt(dLat*dLat + dLon*dLon) * 111;
+        if(distKm < 50) return; // close enough to Chennai — keep Chennai label
+        // They're elsewhere (e.g. Bangalore) — reverse geocode then update
         fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json')
           .then(function(r){ return r.json(); })
           .then(function(geo){
             var city = (geo.address && (geo.address.city || geo.address.town || geo.address.suburb)) || 'Your Location';
-            WX_HOME.name = city;
-            // Replace Chennai entry in grid with actual location
+            WX_HOME = { key:'home', flag:'📍', name:city, tz: Intl.DateTimeFormat().resolvedOptions().timeZone, lat:lat, lon:lon };
             WX_CITIES[0] = WX_HOME;
+            // Re-fetch with correct coords and update pill
+            wxFetchHome();
           }).catch(function(){});
-        wxFetchHome();
-        if(_wxInterval) clearInterval(_wxInterval);
-        _wxInterval = setInterval(wxFetchHome, 15*60*1000);
       },
-      function(){
-        // Fallback to Chennai
-        wxFetchHome();
-        if(_wxInterval) clearInterval(_wxInterval);
-        _wxInterval = setInterval(wxFetchHome, 15*60*1000);
-      },
+      function(){ /* denied — Chennai stays, already started */ },
       { timeout:6000, maximumAge:3600000 }
     );
   }
 
   document.addEventListener('DOMContentLoaded', function(){ wxStart(); });
+
+})();
+
+// ═══════════════════════════════════════════════════════════════
+//  FOCUS SCORE + STRESS TRACKER
+//  Focus: session length, breaks, time of day, unbroken screen
+//  Stress: typing rhythm, mouse velocity, rage clicks, tab focus
+//  Private to agent only — no admin visibility
+//  Beta · Under Testing
+// ═══════════════════════════════════════════════════════════════
+(function(){
+
+  var _focusOpen     = false;
+  var _focusInterval = null;
+  var _sessionStart  = null;
+  var _lastBreakTime = null;
+  var _breaksTaken   = 0;
+
+  // Stress tracking state
+  var _keyTimes = [], _backspaceCount = 0, _keyTotal = 0;
+  var _lastMouseX = null, _lastMouseY = null, _lastMouseT = null;
+  var _mouseVelocities = [];
+  var _clickTimes = [], _rageCount = 0;
+  var _tabHideCount = 0, _lastTabHide = null, _rapidTabSwitches = 0;
+
+  // ── Stress listeners ──
+  function stressAttachListeners(){
+    document.addEventListener('keydown', function(e){
+      var now = Date.now();
+      _keyTotal++;
+      if(e.key === 'Backspace') _backspaceCount++;
+      _keyTimes.push(now);
+      var cutoff = now - 120000;
+      _keyTimes = _keyTimes.filter(function(t){ return t > cutoff; });
+    });
+
+    var _lastSample = 0;
+    document.addEventListener('mousemove', function(e){
+      var now = Date.now();
+      if(now - _lastSample < 100) return;
+      _lastSample = now;
+      if(_lastMouseX !== null){
+        var dx = e.clientX - _lastMouseX;
+        var dy = e.clientY - _lastMouseY;
+        var dt = now - _lastMouseT;
+        if(dt > 0){
+          var vel = Math.sqrt(dx*dx + dy*dy) / dt * 100;
+          _mouseVelocities.push(vel);
+          if(_mouseVelocities.length > 40) _mouseVelocities.shift();
+        }
+      }
+      _lastMouseX = e.clientX; _lastMouseY = e.clientY; _lastMouseT = now;
+    });
+
+    document.addEventListener('click', function(e){
+      var now = Date.now();
+      _clickTimes.push({ t:now, x:e.clientX, y:e.clientY });
+      _clickTimes = _clickTimes.filter(function(c){ return now-c.t < 2000; });
+      if(_clickTimes.length >= 3){
+        var recent = _clickTimes.filter(function(c){ return now-c.t < 600; });
+        if(recent.length >= 3){
+          var first = recent[0];
+          var allClose = recent.every(function(c){
+            return Math.sqrt(Math.pow(c.x-first.x,2)+Math.pow(c.y-first.y,2)) < 50;
+          });
+          if(allClose){ _rageCount++; _clickTimes = []; }
+        }
+      }
+    });
+
+    document.addEventListener('visibilitychange', function(){
+      var now = Date.now();
+      if(document.hidden){
+        _tabHideCount++;
+        _lastTabHide = now;
+      } else {
+        if(_lastTabHide && (now - _lastTabHide) < 8000) _rapidTabSwitches++;
+      }
+    });
+  }
+
+  // ── Stress calculation ──
+  function stressCalc(){
+    var now = Date.now();
+    var sessionMins = _sessionStart ? (now - _sessionStart)/60000 : 1;
+
+    // 1. Typing rhythm
+    var typingScore = 100;
+    if(_keyTotal > 20){
+      var bsRatio = _backspaceCount / Math.max(1, _keyTotal);
+      if(bsRatio > 0.15) typingScore = Math.max(20, Math.round(100-(bsRatio-0.15)*400));
+      var wpm2min = _keyTimes.length / 5;
+      if(wpm2min > 80) typingScore = Math.min(typingScore, Math.max(30, Math.round(100-(wpm2min-80)*1.2)));
+    }
+
+    // 2. Mouse velocity
+    var mouseScore = 100;
+    if(_mouseVelocities.length > 5){
+      var avg = _mouseVelocities.reduce(function(a,b){return a+b;},0)/_mouseVelocities.length;
+      if(avg > 12) mouseScore = Math.max(20, Math.round(100-(avg-12)*4));
+      var variance = _mouseVelocities.reduce(function(a,v){return a+Math.pow(v-avg,2);},0)/_mouseVelocities.length;
+      var jitter = Math.sqrt(variance)/Math.max(1,avg);
+      if(jitter > 0.8) mouseScore = Math.min(mouseScore, Math.max(25, Math.round(100-jitter*40)));
+    }
+
+    // 3. Rage clicks
+    var rageScore = 100;
+    var rageRate = _rageCount / Math.max(1, sessionMins/10);
+    if(rageRate >= 1) rageScore = Math.max(20, Math.round(100-rageRate*25));
+
+    // 4. Tab focus
+    var tabScore = 100;
+    var tabRate = _rapidTabSwitches / Math.max(1, sessionMins/10);
+    if(tabRate >= 2) tabScore = Math.max(25, Math.round(100-(tabRate-1)*18));
+
+    var overall = Math.round(typingScore*0.3 + mouseScore*0.35 + rageScore*0.2 + tabScore*0.15);
+
+    return {
+      overall: overall,
+      signals: [
+        { icon:'⌨️', name:'Typing rhythm',
+          score: typingScore,
+          detail: _keyTotal < 20 ? 'Not enough data yet' :
+            typingScore >= 75 ? 'Relaxed, steady' : typingScore >= 50 ? 'Some pressure' : 'Erratic — take a breath',
+          raw: _keyTotal < 20 ? 'Type more to activate' : Math.round((_backspaceCount/Math.max(1,_keyTotal))*100)+'% backspace rate'
+        },
+        { icon:'🖱️', name:'Mouse movement',
+          score: mouseScore,
+          detail: _mouseVelocities.length < 5 ? 'Move mouse to activate' :
+            mouseScore >= 75 ? 'Smooth and controlled' : mouseScore >= 50 ? 'Slightly hurried' : 'Fast and erratic',
+          raw: _mouseVelocities.length > 0 ?
+            Math.round(_mouseVelocities.reduce(function(a,b){return a+b;},0)/_mouseVelocities.length)+' avg velocity' : '—'
+        },
+        { icon:'👆', name:'Click pattern',
+          score: rageScore,
+          detail: _rageCount === 0 ? 'No frustration clicks' :
+            _rageCount === 1 ? '1 frustration click detected' : _rageCount+' frustration clicks detected',
+          raw: _rageCount === 0 ? 'All clear' : _rageCount+' rage clicks'
+        },
+        { icon:'🪟', name:'Tab focus',
+          score: tabScore,
+          detail: _rapidTabSwitches === 0 ? 'Staying focused in portal' :
+            _rapidTabSwitches <= 2 ? 'Occasional tab switching' : 'Frequent tab switching',
+          raw: _rapidTabSwitches+' rapid switches'
+        }
+      ]
+    };
+  }
+
+  function stressLabel(s){
+    if(s>=75) return {text:'Calm',     color:'#22c55e', bg:'rgba(46,197,111,.12)'};
+    if(s>=50) return {text:'Moderate', color:'#f59e0b', bg:'rgba(245,158,11,.12)'};
+    return          {text:'Elevated',  color:'#ef4444', bg:'rgba(239,73,60,.12)' };
+  }
+  function stressSignalColor(s){ return s>=75?'#22c55e':s>=50?'#f59e0b':'#ef4444'; }
+
+  // ── Focus calculation (4 factors, 100pts) ──
+  function focusCalc(){
+    if(!_sessionStart) return null;
+    var now = Date.now();
+    var slHrs = (now - _sessionStart)/3600000;
+    var slMins = slHrs * 60;
+    var minsUnbroken = _lastBreakTime ? Math.round((now-_lastBreakTime)/60000) : Math.round(slMins);
+    var hour = new Date().getHours();
+    var bt = _breaksTaken;
+
+    // 1. Session length /30 — full points up to 3hrs, gradual decay after
+    var slPts = slHrs<=3 ? 30 : slHrs<=5 ? Math.max(12,Math.round(30-(slHrs-3)*7)) : Math.max(5,Math.round(30-(slHrs-3)*9));
+
+    // 2. Break compliance /30
+    // Grace period: first break not due until 1.5hrs in — before that, full 30pts
+    var bPts;
+    var bDetail;
+    if(slHrs < 1.5){
+      // Grace period — no break expected yet, full points
+      bPts = 30;
+      bDetail = 'First break due in '+Math.max(0,Math.round((1.5-slHrs)*60))+'m';
+    } else {
+      var suggested = Math.max(1, Math.floor(slHrs/1.5));
+      // Soft penalty — don't go to 0 immediately, decay over 30min window
+      var overdueRatio = Math.min(1, (slHrs - bt*1.5) / 1.5);
+      bPts = bt >= suggested ? 30 : Math.max(0, Math.round(30 - overdueRatio*30));
+      bDetail = bt+' of '+suggested+' suggested breaks';
+    }
+
+    // 3. Time of day /20
+    var tdPts = hour>=9&&hour<=11 ? 20 : hour>=14&&hour<=16 ? 10 : hour>=17||hour<8 ? 13 : 17;
+    var tdDetail = hour>=9&&hour<=11?'Morning peak — best focus':hour>=14&&hour<=16?'Afternoon dip zone':hour>=17?'End of day wind-down':'Normal window';
+
+    // 4. Unbroken screen /20 — grace for first 20 mins
+    var usPts;
+    var usDetail;
+    if(minsUnbroken <= 20){
+      usPts = 20;
+      usDetail = minsUnbroken+'m — still within safe window';
+    } else if(minsUnbroken <= 45){
+      usPts = Math.round(20 - (minsUnbroken-20)*0.28);
+      usDetail = minsUnbroken+'m — consider looking away soon';
+    } else {
+      usPts = Math.max(2, Math.round(20-(minsUnbroken-20)*0.36));
+      usDetail = minsUnbroken+'m — eye strain risk, take a break';
+    }
+
+    var total = Math.min(100, slPts+bPts+tdPts+usPts);
+    return {
+      total: total,
+      factors: [
+        {icon:'🕐',name:'Session length',   pts:slPts,max:30,detail:Math.round(slHrs*10)/10+'h on screen'},
+        {icon:'☕',name:'Break compliance', pts:bPts, max:30,detail:bDetail},
+        {icon:'🌅',name:'Time of day',      pts:tdPts,max:20,detail:tdDetail},
+        {icon:'👁️',name:'Unbroken screen',  pts:usPts,max:20,detail:usDetail}
+      ]
+    };
+  }
+
+  function focusColor(s){ return s>=80?'#22c55e':s>=60?'#f59e0b':'#ef4444'; }
+  function focusStatus(s){
+    if(s>=80) return {label:'Good',     bg:'rgba(46,197,111,.15)',color:'#2EC56F'};
+    if(s>=60) return {label:'Moderate', bg:'rgba(245,158,11,.15)', color:'#f59e0b'};
+    return          {label:'Low',       bg:'rgba(239,73,60,.15)',  color:'#ef4444'};
+  }
+  function focusInsight(score,factors){
+    if(score>=80) return {text:"You're focused and pacing well. Keep it up.",bg:'rgba(46,197,111,.08)',color:'rgba(46,197,111,.9)'};
+    var weak=factors.filter(function(f){return f.pts/f.max<0.6;});
+    var reason=weak.length?weak[0].name.toLowerCase():'session length';
+    if(score>=60) return {text:'Focus is moderate — '+reason+' is dragging your score. A short break could help.',bg:'rgba(245,158,11,.08)',color:'rgba(245,158,11,.9)'};
+    return {text:'Focus is low — '+reason+' needs attention. Step away for 5 minutes.',bg:'rgba(239,73,60,.08)',color:'rgba(239,73,60,.9)'};
+  }
+
+  // ── Pill — animated ring + number count-up/down ──
+  var _lastDisplayedScore = null;
+  function focusUpdatePill(score){
+    var arc  = document.getElementById('focus-ring-arc');
+    var num  = document.getElementById('focus-ring-num');
+    var wrap = document.getElementById('focus-wrap');
+    var pill = document.getElementById('focus-pill');
+    if(!arc||!num||!wrap) return;
+
+    var circ   = 2*Math.PI*15;
+    var target = score;
+    var color  = focusColor(target);
+
+    // Smooth ring animation via CSS transition (already on the element)
+    arc.setAttribute('stroke-dashoffset',(circ*(1-target/100)).toFixed(2));
+    arc.setAttribute('stroke', color);
+
+    // Animate number counting up or down
+    if(_lastDisplayedScore === null){
+      // First load — count up from 100 to score over 1.2s
+      var start = 100, end = target, duration = 1200;
+      var startTime = null;
+      function countUp(ts){
+        if(!startTime) startTime = ts;
+        var progress = Math.min(1,(ts-startTime)/duration);
+        var eased = 1 - Math.pow(1-progress,3); // ease-out cubic
+        var current = Math.round(start + (end-start)*eased);
+        num.textContent = current;
+        // Also animate ring in sync
+        arc.setAttribute('stroke-dashoffset',(circ*(1-current/100)).toFixed(2));
+        arc.setAttribute('stroke', focusColor(current));
+        if(progress < 1) requestAnimationFrame(countUp);
+        else { num.textContent = target; }
+      }
+      requestAnimationFrame(countUp);
+    } else if(_lastDisplayedScore !== target){
+      // Score changed — quick count + subtle pulse
+      var from = _lastDisplayedScore, to = target, dur = 600;
+      var t0 = null;
+      function countChange(ts){
+        if(!t0) t0 = ts;
+        var p = Math.min(1,(ts-t0)/dur);
+        var ep = p<0.5 ? 2*p*p : -1+(4-2*p)*p; // ease in-out
+        num.textContent = Math.round(from + (to-from)*ep);
+        if(p < 1) requestAnimationFrame(countChange);
+        else num.textContent = target;
+      }
+      requestAnimationFrame(countChange);
+
+      // Pulse the pill on drop (score decreased)
+      if(target < _lastDisplayedScore && pill){
+        pill.style.transition = 'transform .15s ease';
+        pill.style.transform = 'scale(1.18)';
+        setTimeout(function(){ pill.style.transform = 'scale(1)'; }, 180);
+      }
+    } else {
+      num.textContent = target;
+    }
+
+    _lastDisplayedScore = target;
+    wrap.style.display = '';
+  }
+
+  // ── Render dropdown ──
+  function focusRenderDropdown(fData,sData){
+    var drop=document.getElementById('focus-dropdown');
+    if(!drop||!fData) return;
+    var st=focusStatus(fData.total);
+    var ins=focusInsight(fData.total,fData.factors);
+    var circ=2*Math.PI*22;
+    var fOff=(circ*(1-fData.total/100)).toFixed(2);
+    var fCol=focusColor(fData.total);
+    var sl=stressLabel(sData.overall);
+
+    var html=
+      '<div class="focus-drop-header">'+
+        '<div class="focus-drop-title-row">'+
+          '<span class="focus-drop-title">Focus Score</span>'+
+          '<span class="wx-beta-tag">Beta · Under Testing</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="focus-big-score">'+
+        '<div class="focus-big-ring">'+
+          '<svg width="56" height="56" viewBox="0 0 56 56">'+
+            '<circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4"/>'+
+            '<circle cx="28" cy="28" r="22" fill="none" stroke="'+fCol+'" stroke-width="4" stroke-linecap="round"'+
+            ' stroke-dasharray="'+circ.toFixed(2)+'" stroke-dashoffset="'+fOff+'"'+
+            ' style="transform:rotate(-90deg);transform-origin:50% 50%;"/>'+
+          '</svg>'+
+          '<div class="focus-big-num" style="color:'+fCol+';">'+fData.total+'</div>'+
+        '</div>'+
+        '<div class="focus-big-label">'+
+          '<h3>'+fData.total+'% focus</h3>'+
+          '<p>Your current session score</p>'+
+          '<span class="focus-status-badge" style="background:'+st.bg+';color:'+st.color+';">'+st.label+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="focus-factors">';
+
+    fData.factors.forEach(function(f){
+      var pct=Math.round(f.pts/f.max*100);
+      var fc=focusColor(pct);
+      html+='<div class="focus-factor">'+
+        '<span class="focus-f-icon">'+f.icon+'</span>'+
+        '<div class="focus-f-body">'+
+          '<div class="focus-f-name">'+f.name+
+            ' <span style="color:rgba(255,255,255,.28);font-size:.63rem;">'+f.detail+'</span></div>'+
+          '<div class="focus-f-bar"><div class="focus-f-fill" style="width:'+pct+'%;background:'+fc+';"></div></div>'+
+        '</div>'+
+        '<span class="focus-f-pts" style="color:'+fc+';">'+f.pts+'/'+f.max+'</span>'+
+      '</div>';
+    });
+
+    html+='</div>'+
+      '<div class="focus-insight" style="background:'+ins.bg+';color:'+ins.color+';">'+ins.text+'</div>'+
+
+      '<div style="margin:.25rem .75rem 0;padding:.6rem 0 .4rem;border-top:0.5px solid rgba(255,255,255,.07);'+
+        'display:flex;align-items:center;justify-content:space-between;">'+
+        '<div style="display:flex;align-items:center;gap:.45rem;">'+
+          '<span style="font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;'+
+            'color:rgba(255,255,255,.35);font-family:DM Sans,sans-serif;">Stress Signals</span>'+
+        '</div>'+
+        '<span style="font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:20px;'+
+          'background:'+sl.bg+';color:'+sl.color+';font-family:DM Sans,sans-serif;">'+sl.text+'</span>'+
+      '</div>'+
+      '<div class="focus-factors" style="padding-top:.3rem;">';
+
+    sData.signals.forEach(function(s){
+      var sc=stressSignalColor(s.score);
+      html+='<div class="focus-factor">'+
+        '<span class="focus-f-icon">'+s.icon+'</span>'+
+        '<div class="focus-f-body">'+
+          '<div class="focus-f-name">'+s.name+
+            ' <span style="color:rgba(255,255,255,.25);font-size:.63rem;">'+s.raw+'</span></div>'+
+          '<div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:3px;font-family:DM Sans,sans-serif;">'+s.detail+'</div>'+
+          '<div class="focus-f-bar"><div class="focus-f-fill" style="width:'+s.score+'%;background:'+sc+';"></div></div>'+
+        '</div>'+
+        '<span class="focus-f-pts" style="color:'+sc+';">'+s.score+'</span>'+
+      '</div>';
+    });
+
+    html+='</div>'+
+      '<div class="focus-drop-footer">'+
+        '🔒 Private · Only you can see this · Updates every 2 min'+
+      '</div>';
+
+    drop.innerHTML=html;
+  }
+
+  // ── Tick ──
+  function focusTick(){
+    var fData=focusCalc();
+    if(!fData) return;
+    var sData=stressCalc();
+    focusUpdatePill(fData.total);
+    if(_focusOpen) focusRenderDropdown(fData,sData);
+  }
+
+  // ── Toggle ──
+  window.focusToggleDropdown=function(e){
+    e.stopPropagation();
+    var drop=document.getElementById('focus-dropdown');
+    if(!drop) return;
+    _focusOpen=drop.style.display==='none'||drop.style.display==='';
+    if(_focusOpen){
+      var fData=focusCalc(); var sData=stressCalc();
+      if(fData) focusRenderDropdown(fData,sData);
+      drop.style.display='block';
+    } else { drop.style.display='none'; }
+  };
+
+  document.addEventListener('click',function(e){
+    if(!_focusOpen) return;
+    var wrap=document.getElementById('focus-wrap');
+    if(wrap&&!wrap.contains(e.target)){
+      var drop=document.getElementById('focus-dropdown');
+      if(drop) drop.style.display='none';
+      _focusOpen=false;
+    }
+  });
+
+  window._focusRecordBreak=function(){ _breaksTaken++; _lastBreakTime=Date.now(); };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    stressAttachListeners();
+    var _focusCheck=setInterval(function(){
+      if(typeof currentUser!=='undefined'&&currentUser&&currentUser.id){
+        clearInterval(_focusCheck);
+        _sessionStart=Date.now();
+        _lastDisplayedScore=null; // ensures count-up animation on fresh login
+        focusTick();
+        _focusInterval=setInterval(focusTick, 60*1000); // tick every minute so decay feels live
+      }
+    },2000);
+  });
 
 })();
 </script>
