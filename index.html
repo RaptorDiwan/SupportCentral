@@ -5895,6 +5895,11 @@ function doLogout(){
   if(_loginClockInterval)clearInterval(_loginClockInterval);
   if(window._breakStatInterval){ clearInterval(window._breakStatInterval); window._breakStatInterval=null; }
   if(typeof catHideWidget==='function') catHideWidget();
+  // Clear focus session so next login starts fresh
+  try{
+    var _fuKey='focus_session_'+(currentUser&&currentUser.id?currentUser.id:'');
+    if(_fuKey!=='focus_session_') localStorage.removeItem(_fuKey);
+  }catch(e){}
   currentUser=null;clearSession();
   document.getElementById('dashboard-view').classList.remove('active');
   document.getElementById('login-view').classList.add('active');
@@ -7282,6 +7287,8 @@ function tbBreakPick(type){
   var startTime=new Date().toISOString();
   _breakState[type]={active:true,start:startTime,done:false};
   try{localStorage.setItem('tc_break_'+currentUser.id+'_'+type,JSON.stringify({start:startTime,date:todayStr()}));}catch(e){}
+  // Record break for focus score
+  if(typeof _focusRecordBreak==='function') _focusRecordBreak();
 
   // Supabase insert
   sbInsert('breaks',{user_id:currentUser.id,user_name:currentUser.name,date:todayStr(),break_type:type,start_time:startTime,over_limit:false,over_by_seconds:0})
@@ -22583,17 +22590,65 @@ async function siClearAll(){
     }
   });
 
-  window._focusRecordBreak=function(){ _breaksTaken++; _lastBreakTime=Date.now(); };
+  window._focusRecordBreak=function(){
+    _breaksTaken++;
+    _lastBreakTime=Date.now();
+    // Persist to localStorage so refresh doesn't lose break data
+    if(typeof currentUser!=='undefined'&&currentUser&&currentUser.id){
+      try{
+        localStorage.setItem('focus_session_'+currentUser.id, JSON.stringify({
+          start: _sessionStart,
+          breaks: _breaksTaken,
+          lastBreak: _lastBreakTime
+        }));
+      }catch(e){}
+    }
+  };
 
   document.addEventListener('DOMContentLoaded',function(){
     stressAttachListeners();
     var _focusCheck=setInterval(function(){
       if(typeof currentUser!=='undefined'&&currentUser&&currentUser.id){
         clearInterval(_focusCheck);
-        _sessionStart=Date.now();
-        _lastDisplayedScore=null; // ensures count-up animation on fresh login
+
+        var KEY = 'focus_session_'+currentUser.id;
+        var today = new Date().toDateString();
+        var stored = null;
+        try{ stored = JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+
+        if(stored && stored.start && new Date(stored.start).toDateString() === today){
+          // Same day — restore session so refresh doesn't reset
+          _sessionStart   = stored.start;
+          _breaksTaken    = stored.breaks  || 0;
+          _lastBreakTime  = stored.lastBreak|| null;
+          _lastDisplayedScore = null; // still animate to current score, not count-up from 100
+        } else {
+          // New day or first login — fresh session
+          _sessionStart  = Date.now();
+          _breaksTaken   = 0;
+          _lastBreakTime = null;
+          _lastDisplayedScore = null;
+          try{
+            localStorage.setItem(KEY, JSON.stringify({
+              start: _sessionStart, breaks: 0, lastBreak: null
+            }));
+          }catch(e){}
+        }
+
         focusTick();
-        _focusInterval=setInterval(focusTick, 60*1000); // tick every minute so decay feels live
+        _focusInterval=setInterval(function(){
+          // Save state every tick so it's always fresh on restore
+          focusTick();
+          if(typeof currentUser!=='undefined'&&currentUser&&currentUser.id){
+            try{
+              localStorage.setItem('focus_session_'+currentUser.id, JSON.stringify({
+                start: _sessionStart,
+                breaks: _breaksTaken,
+                lastBreak: _lastBreakTime
+              }));
+            }catch(e){}
+          }
+        }, 60*1000);
       }
     },2000);
   });
