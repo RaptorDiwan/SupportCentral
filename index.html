@@ -2110,75 +2110,6 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   /* Empty state */
   .radar-empty{color:var(--text-dim);font-size:.82rem;padding:.4rem 0;}
 
-  /* ═══════════════════════════════════════
-     REMINDERS (Apple iCloud style)
-  ═══════════════════════════════════════ */
-  .rem-root{display:flex;height:calc(100vh - 60px);overflow:hidden;}
-
-  /* Sidebar — matches portal sidebar */
-  .rem-sidebar{width:200px;flex-shrink:0;background:var(--navy-sidebar,var(--navy-card));border-right:1px solid var(--navy-border);padding:1rem 0 1.4rem;display:flex;flex-direction:column;gap:1px;}
-  .rem-sidebar-section{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);padding:.8rem 1rem .4rem;}
-  .rem-sidebar-item{display:flex;align-items:center;gap:.75rem;padding:.58rem 1rem;cursor:pointer;border-radius:10px;margin:0 .4rem;transition:background .15s;font-size:.83rem;font-weight:500;color:var(--text-muted);}
-
-  .rem-sidebar-item:hover{background:var(--navy-hover,rgba(255,255,255,.05));}
-  .rem-list-active{background:rgba(239,73,60,.1)!important;color:var(--text-primary)!important;}
-  .rem-sidebar-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .rem-sidebar-count{margin-left:auto;font-size:.7rem;font-weight:700;color:var(--text-dim);background:var(--navy-deep,rgba(0,0,0,.2));padding:1px 7px;border-radius:10px;min-width:18px;text-align:center;}
-  .rem-addlist-btn{margin:auto .8rem 0;display:flex;align-items:center;gap:.5rem;background:none;border:1px dashed var(--navy-border);border-radius:8px;color:var(--text-muted);font-size:.78rem;cursor:pointer;padding:.5rem .8rem;transition:all .15s;font-family:'DM Sans',sans-serif;width:calc(100% - 1.6rem);}
-  .rem-addlist-btn:hover{border-color:var(--gold-dim,rgba(239,73,60,.35));color:var(--text-primary);}
-
-  /* Main */
-  .rem-main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--navy-bg,var(--navy));padding:1.6rem 2rem 1rem;}
-  .rem-main-header{margin-bottom:1rem;flex-shrink:0;}
-  .rem-main-title{font-size:1.7rem;font-weight:700;color:var(--gold,#ef493c);font-family:'DM Sans',sans-serif;letter-spacing:-.5px;}
-
-  .rem-empty{text-align:center;padding:3rem 1rem;flex-shrink:0;}
-  .rem-empty-icon{font-size:2.2rem;opacity:.25;margin-bottom:.6rem;}
-  .rem-empty-title{font-size:.9rem;font-weight:600;color:var(--text-muted);}
-  .rem-empty-sub{font-size:.73rem;color:var(--text-dim);margin-top:.3rem;}
-
-  /* List */
-  .rem-ul{list-style:none;overflow-y:auto;flex:1;padding-bottom:1rem;}
-  .rem-ul::-webkit-scrollbar{width:4px;}
-  .rem-ul::-webkit-scrollbar-thumb{background:var(--navy-border);border-radius:4px;}
-
-  .rem-item{display:flex;align-items:flex-start;gap:.85rem;padding:.75rem .2rem;border-bottom:1px solid var(--navy-border);cursor:default;transition:background .12s;}
-  .rem-item:hover{background:var(--navy-hover,rgba(255,255,255,.02));border-radius:6px;}
-  .rem-item.done{opacity:.35;}
-  .rem-item.done .rem-item-text{text-decoration:line-through;color:var(--text-dim);}
-  @keyframes remIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-  .rem-item{animation:remIn .17s ease;}
-
-  .rem-check{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--text-dim);flex-shrink:0;margin-top:2px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;background:transparent;}
-  .rem-check:hover{border-color:var(--accent-green,#1a7a45);}
-  .rem-item.done .rem-check{background:var(--accent-green,#1a7a45);border-color:var(--accent-green,#1a7a45);}
-  .rem-item.done .rem-check::after{content:'';width:4px;height:8px;border:1.5px solid white;border-top:none;border-left:none;transform:rotate(45deg) translateY(-1px);display:block;}
-  .rem-check-new{border-style:dashed;opacity:.35;cursor:default;pointer-events:none;}
-
-  .rem-item-body{flex:1;min-width:0;}
-  .rem-item-text{font-size:.87rem;color:var(--text-primary);line-height:1.5;word-break:break-word;outline:none;border-radius:3px;}
-  .rem-item-text:focus{background:rgba(255,255,255,.03);padding:0 3px;margin:0 -3px;}
-  .rem-item-meta{font-size:.67rem;color:var(--text-muted);margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
-  .rem-overdue{color:var(--accent-red,#ef493c)!important;font-weight:600;}
-  .rem-pri-badge{font-size:.6rem;padding:1px 6px;border-radius:10px;font-weight:600;}
-  .rem-pri-low{background:rgba(76,118,168,.18);color:#7aadff;}
-  .rem-pri-medium{background:rgba(239,170,50,.15);color:#ffb833;}
-  .rem-pri-high{background:rgba(239,73,60,.18);color:#ff7070;}
-
-  .rem-item-del{background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:.82rem;padding:2px 5px;border-radius:5px;opacity:0;transition:all .14s;flex-shrink:0;margin-top:1px;}
-  .rem-item:hover .rem-item-del{opacity:1;}
-  .rem-item-del:hover{color:var(--accent-red,#ef493c);background:rgba(239,73,60,.08);}
-
-  /* New row — at TOP */
-  .rem-new-row{display:flex;align-items:center;gap:.85rem;padding:.75rem .2rem;border-bottom:2px solid var(--navy-border);flex-shrink:0;margin-bottom:.5rem;}
-  .rem-inline-input{flex:1;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:.87rem;font-family:'DM Sans',sans-serif;padding:0;}
-  .rem-inline-input::placeholder{color:var(--text-dim);font-style:italic;}
-
-  /* Detail bar */
-  .rem-detail-bar{display:flex;gap:.5rem;padding:.55rem 0 .7rem;flex-shrink:0;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--navy-border);margin-bottom:.4rem;}
-  .rem-date-input{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:7px;padding:.3rem .65rem;color:var(--text-primary);font-size:.74rem;font-family:'DM Sans',sans-serif;outline:none;min-width:0;transition:border-color .18s;}
-  .rem-date-input:focus{border-color:var(--gold-dim,rgba(239,73,60,.35));}
-
 /* ═══════════════════════════════════════
      CHAT SYSTEM — Facebook Bottom Dock
   ═══════════════════════════════════════ */
@@ -3089,16 +3020,6 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
 <!-- ══════════ LOGIN VIEW ══════════ -->
 <canvas id="ambient-canvas"></canvas>
-<canvas id="eg-matrix-canvas"></canvas>
-<div id="eg-rave-overlay"></div>
-<div id="eg-diwan-splash">
-  <div class="eg-diwan-stars">✦ ✦ ✦ ✦ ✦</div>
-  <div class="eg-diwan-title">Diwan Chowthry</div>
-  <div class="eg-diwan-sub">The Architect of K7TeamCore</div>
-  <div class="eg-diwan-stars">✦ ✦ ✦ ✦ ✦</div>
-  <div class="eg-diwan-close" onclick="egDiwanClose()">— Press Escape or click to close —</div>
-</div>
-<div id="eg-hint-toast"></div>
 <div id="login-view" class="view active">
   <div class="login-box">
     <div class="login-logo">
@@ -3377,15 +3298,6 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         </svg>
         Timesheet
       </div>
-
-      <div class="sidebar-item" id="sidebar-reminders" onclick="showPage('reminders', this)">
-        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-        </svg>
-        Reminders
-        <span class="sidebar-badge" id="rem-badge" style="display:none;background:var(--gold);color:#fff;margin-left:auto;">0</span>
-      </div>
-
 
       <div class="sidebar-section">Account</div>
 
@@ -4327,87 +4239,6 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
       </div>
 
-      <!-- ── REMINDERS PAGE ── -->
-      <div class="page" id="page-reminders">
-        <div class="rem-root">
-          <!-- Sidebar (Apple-style) -->
-          <div class="rem-sidebar">
-            <div class="rem-sidebar-item rem-list-active" id="rem-tab-all" onclick="remSetTab('all',this)">
-              <span class="rem-sidebar-icon" style="background:#ef493c;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-              </span>
-              Reminders
-              <span class="rem-sidebar-count" id="rem-all-count">0</span>
-            </div>
-            <div class="rem-sidebar-item" id="rem-tab-today" onclick="remSetTab('today',this)">
-              <span class="rem-sidebar-icon" style="background:#2563eb;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01"/></svg>
-              </span>
-              Today
-              <span class="rem-sidebar-count" id="rem-today-count">0</span>
-            </div>
-            <div class="rem-sidebar-item" id="rem-tab-scheduled" onclick="remSetTab('scheduled',this)">
-              <span class="rem-sidebar-icon" style="background:#6d28d9;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              </span>
-              Scheduled
-              <span class="rem-sidebar-count" id="rem-sched-count">0</span>
-            </div>
-            <div class="rem-sidebar-item" id="rem-tab-done" onclick="remSetTab('done',this)">
-              <span class="rem-sidebar-icon" style="background:#059669;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-              </span>
-              Completed
-              <span class="rem-sidebar-count" id="rem-done-count">0</span>
-            </div>
-            <button id="rem-clear-done-btn" onclick="remClearDone()" style="display:none;margin:.35rem .5rem 0;width:calc(100% - 1rem);padding:.42rem .75rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.22);border-radius:8px;color:#EF493C;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:background .15s;" onmouseover="this.style.background='rgba(239,73,60,.16)'" onmouseout="this.style.background='rgba(239,73,60,.08)'">🗑 Clear Completed</button>
-            <button class="rem-addlist-btn" onclick="remAddNew()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              Add Reminder
-            </button>
-          </div>
-
-          <!-- Main content -->
-          <div class="rem-main">
-            <div class="rem-main-header">
-              <h1 class="rem-main-title" id="rem-main-title">Reminders</h1>
-            </div>
-
-            <!-- New reminder row — at TOP like Apple -->
-            <div class="rem-new-row" id="rem-new-row">
-              <div class="rem-check rem-check-new"></div>
-              <input class="rem-inline-input" id="rem-inline-input"
-                placeholder="New Reminder..."
-                maxlength="300"
-                autocomplete="off"
-                onkeydown="remInlineKey(event)"
-                onfocus="remShowDetailBar()"
-                onblur="remInlineBlur()"/>
-            </div>
-
-            <!-- Detail bar shown when input focused -->
-            <div class="rem-detail-bar" id="rem-detail-bar" style="display:none;">
-              <input type="date" class="rem-date-input" id="rem-date-input" title="Date" onblur="remInlineBlur()"/>
-              <input type="time" class="rem-date-input" id="rem-time-input" title="Time" onblur="remInlineBlur()"/>
-              <select class="rem-date-input" id="rem-pri-select" style="max-width:130px;" onblur="remInlineBlur()">
-                <option value="none">No Priority</option>
-                <option value="low">🔵 Low</option>
-                <option value="medium">🟡 Medium</option>
-                <option value="high">🔴 High</option>
-              </select>
-            </div>
-
-            <div class="rem-empty" id="rem-empty" style="display:none;">
-              <div class="rem-empty-icon">☑️</div>
-              <div class="rem-empty-title">No reminders yet</div>
-              <div class="rem-empty-sub">Type above and press Enter to add</div>
-            </div>
-
-            <!-- List -->
-            <ul class="rem-ul" id="rem-ul"></ul>
-          </div>
-        </div>
-      </div>
 
       <!-- ══ K7 INTERCOM PAGE ══ -->
       <div class="page" id="page-intercom" style="padding:2rem 2.5rem;overflow-y:auto;">
@@ -6846,6 +6677,7 @@ async function loadRosterSummary(){
 }
 
 const CLOUDINARY_CLOUD='dvp62lqmv';
+const CLOUDINARY_CLOUD2='qdazszk2';
 const M_TAG_MAP={all:null,birthday:'birthday',outing:'team-outing',dinner:'team-dinner',funfriday:'fun-friday'};
 const M_LABELS={all:'Recents',birthday:'Birthday',outing:'Team Outing',dinner:'Team Dinner',funfriday:'Fun Friday'};
 var _mlikes={},_mliked={},_mcomments={};
@@ -6869,9 +6701,42 @@ function _mTagKey(r){for(var k in M_TAG_MAP){if(M_TAG_MAP[k]&&(r.tags||[]).index
 function _mFmtDate(iso){if(!iso)return'';var d=new Date(iso);var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mo[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();}
 function _mTimeAgo(ts){var s=Math.floor((Date.now()-ts)/1000);if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function _mInitials(n){return(n||'U').split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);}
-async function _mFetch(tag){if(!CLOUDINARY_CLOUD||CLOUDINARY_CLOUD==='YOUR_CLOUD_NAME'){var v=M_TAG_MAP[tag];return v?DEMO_MOMENTS.filter(function(r){return(r.tags||[]).indexOf(v)>-1;}):DEMO_MOMENTS;}var v2=M_TAG_MAP[tag]||'site_moments';try{var res=await fetch('https://res.cloudinary.com/'+CLOUDINARY_CLOUD+'/image/list/'+v2+'.json');if(!res.ok)throw new Error('fail');var data=await res.json();var resources=(data.resources||[]).map(function(r){// Construct secure_url from public_id if missing
-if(!r.secure_url&&r.public_id){r.secure_url='https://res.cloudinary.com/'+CLOUDINARY_CLOUD+'/image/upload/q_auto,f_auto,w_600/'+r.public_id;}// Add tags array from the tag used to fetch
-if(!r.tags||!r.tags.length){var cTag=M_TAG_MAP[tag];r.tags=cTag?[cTag]:[];}return r;});return resources.sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);});}catch(e){console.warn('Cloudinary fetch error:',e.message);var v3=M_TAG_MAP[tag];return v3?DEMO_MOMENTS.filter(function(r){return(r.tags||[]).indexOf(v3)>-1;}):DEMO_MOMENTS;}}
+async function _mFetchFromCloud(cloudName, tag){
+  var v2=M_TAG_MAP[tag]||'site_moments';
+  try{
+    var res=await fetch('https://res.cloudinary.com/'+cloudName+'/image/list/'+v2+'.json');
+    if(!res.ok) throw new Error('fail');
+    var data=await res.json();
+    return (data.resources||[]).map(function(r){
+      if(!r.secure_url&&r.public_id){r.secure_url='https://res.cloudinary.com/'+cloudName+'/image/upload/q_auto,f_auto,w_600/'+r.public_id;}
+      if(!r.tags||!r.tags.length){var cTag=M_TAG_MAP[tag];r.tags=cTag?[cTag]:[];}
+      // prefix public_id with cloud name to avoid collisions between the two accounts
+      r.public_id=cloudName+'__'+r.public_id;
+      return r;
+    });
+  }catch(e){
+    console.warn('Cloudinary fetch error ('+cloudName+'):', e.message);
+    return [];
+  }
+}
+async function _mFetch(tag){
+  if(!CLOUDINARY_CLOUD||CLOUDINARY_CLOUD==='YOUR_CLOUD_NAME'){
+    var v=M_TAG_MAP[tag];
+    return v?DEMO_MOMENTS.filter(function(r){return(r.tags||[]).indexOf(v)>-1;}):DEMO_MOMENTS;
+  }
+  // Fetch from both clouds in parallel
+  var results=await Promise.all([
+    _mFetchFromCloud(CLOUDINARY_CLOUD, tag),
+    _mFetchFromCloud(CLOUDINARY_CLOUD2, tag)
+  ]);
+  var merged=results[0].concat(results[1]);
+  // If both failed, fall back to demo
+  if(!merged.length){
+    var vf=M_TAG_MAP[tag];
+    return vf?DEMO_MOMENTS.filter(function(r){return(r.tags||[]).indexOf(vf)>-1;}):DEMO_MOMENTS;
+  }
+  return merged.sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);});
+}
 // Hidden moments — stored in Supabase for global visibility
 var _mHiddenIds = []; // cache of hidden public_ids
 var _mHiddenLoaded = false;
@@ -9881,12 +9746,14 @@ async function qbEditQuiz(btn, quizId){
   var panel = document.getElementById('qb-edit-'+quizId);
   if(!panel) return;
   if(panel.style.display==='block'){ panel.style.display='none'; return; }
-  var rows = await sbQuery('quizzes','id=eq.'+quizId+'&select=id,question,type,date,open_time,close_time,max_attempts,correct_answer');
+  var rows = await sbQuery('quizzes','id=eq.'+quizId+'&select=id,question,type,date,open_time,close_time,max_attempts,correct_answer,choices');
   if(!rows||!rows.length) return;
   var q = rows[0];
   var d = qaISOtoLocalDate(q.open_time)||q.date;
   var ot = qaISOtoLocalTime(q.open_time);
   var ct = qaISOtoLocalTime(q.close_time);
+  var choicesArr = [];
+  try{ choicesArr = q.choices ? JSON.parse(q.choices) : []; }catch(e){ choicesArr = []; }
   // Build edit form using DOM
   panel.innerHTML='';
   var wrap=document.createElement('div'); wrap.style.cssText='display:flex;flex-direction:column;gap:.6rem;max-width:600px;';
@@ -9905,11 +9772,53 @@ async function qbEditQuiz(btn, quizId){
   row.appendChild(mkInput('qe-d-'+quizId,'date',d,'Date','0 0 140px'));
   row.appendChild(mkInput('qe-ot-'+quizId,'time',ot,'Opens','0 0 110px'));
   row.appendChild(mkInput('qe-ct-'+quizId,'time',ct,'Closes','0 0 110px'));
-  row.appendChild(mkInput('qe-ca-'+quizId,'text',q.correct_answer||'','Correct Answer (blank = essay)','1 1 140px'));
   wrap.appendChild(row);
+
+  var letters=['A','B','C','D','E','F'];
+  if(q.type==='mcq'){
+    var chLbl=document.createElement('div'); chLbl.style.cssText='font-size:.72rem;color:var(--text-muted);'; chLbl.textContent='Choices (select the correct one)'; wrap.appendChild(chLbl);
+    var chWrap=document.createElement('div'); chWrap.id='qe-choices-'+quizId; chWrap.style.cssText='display:flex;flex-direction:column;gap:.5rem;';
+    var srcChoices = choicesArr.length ? choicesArr : ['',''];
+    srcChoices.forEach(function(cVal,i){
+      var crow=document.createElement('div'); crow.className='qa-choice-row';
+      var radio=document.createElement('input'); radio.type='radio'; radio.name='qe-correct-'+quizId; radio.value=String(i);
+      if(q.correct_answer!=null && cVal===q.correct_answer) radio.checked=true;
+      var tinp=document.createElement('input'); tinp.type='text'; tinp.placeholder='Choice '+(letters[i]||i+1); tinp.className='qe-choice-input-'+quizId; tinp.value=cVal||'';
+      var rmv=document.createElement('button'); rmv.type='button'; rmv.textContent='\u2715'; rmv.style.cssText='background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:.9rem;';
+      rmv.onclick=function(){ crow.remove(); };
+      crow.appendChild(radio); crow.appendChild(tinp); crow.appendChild(rmv);
+      chWrap.appendChild(crow);
+    });
+    wrap.appendChild(chWrap);
+    var addBtn=document.createElement('button'); addBtn.type='button'; addBtn.className='qa-add-choice'; addBtn.textContent='+ Add Choice';
+    addBtn.onclick=(function(id){return function(){
+      var cw=document.getElementById('qe-choices-'+id);
+      var idx=cw.children.length;
+      var crow=document.createElement('div'); crow.className='qa-choice-row';
+      crow.innerHTML='<input type="radio" name="qe-correct-'+id+'" value="'+idx+'"/><input type="text" placeholder="Choice '+(letters[idx]||idx+1)+'" class="qe-choice-input-'+id+'"/><button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:.9rem;">&#10005;</button>';
+      cw.appendChild(crow);
+    };})(quizId);
+    wrap.appendChild(addBtn);
+  } else if(q.type==='truefalse'){
+    var tfLbl=document.createElement('div'); tfLbl.style.cssText='font-size:.72rem;color:var(--text-muted);'; tfLbl.textContent='Correct Answer'; wrap.appendChild(tfLbl);
+    var tfWrap=document.createElement('div'); tfWrap.style.cssText='display:flex;gap:1rem;';
+    ['True','False'].forEach(function(v){
+      var lab=document.createElement('label'); lab.style.cssText='display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--text-primary);';
+      var r=document.createElement('input'); r.type='radio'; r.name='qe-tf-'+quizId; r.value=v;
+      if(q.correct_answer===v) r.checked=true;
+      lab.appendChild(r); lab.appendChild(document.createTextNode(v));
+      tfWrap.appendChild(lab);
+    });
+    wrap.appendChild(tfWrap);
+  } else {
+    var caRow=document.createElement('div'); caRow.style.cssText='display:flex;gap:.6rem;flex-wrap:wrap;';
+    caRow.appendChild(mkInput('qe-ca-'+quizId,'text',q.correct_answer||'','Correct Answer (blank = essay)','1 1 140px'));
+    wrap.appendChild(caRow);
+  }
+
   var btns=document.createElement('div'); btns.style.cssText='display:flex;gap:.5rem;align-items:center;';
   var sv=document.createElement('button'); sv.className='qa-toggle-btn on'; sv.textContent='Save';
-  sv.onclick=(function(id){return function(){qbSaveEdit(id);};})(quizId); btns.appendChild(sv);
+  sv.onclick=(function(id,type){return function(){qbSaveEdit(id,type);};})(quizId,q.type); btns.appendChild(sv);
   var cx=document.createElement('button'); cx.className='qa-toggle-btn'; cx.textContent='Cancel';
   cx.onclick=(function(id){return function(){document.getElementById('qb-edit-'+id).style.display='none';};})(quizId); btns.appendChild(cx);
   var msg=document.createElement('span'); msg.id='qe-msg-'+quizId; msg.style.cssText='font-size:.78rem;color:var(--accent-green);'; btns.appendChild(msg);
@@ -9918,22 +9827,39 @@ async function qbEditQuiz(btn, quizId){
   panel.style.display='block';
 }
 
-async function qbSaveEdit(quizId){
+async function qbSaveEdit(quizId, type){
   var q = document.getElementById('qe-q-'+quizId).value.trim();
   var d = document.getElementById('qe-d-'+quizId).value;
   var ot = document.getElementById('qe-ot-'+quizId).value;
   var ct = document.getElementById('qe-ct-'+quizId).value;
-  var ca = document.getElementById('qe-ca-'+quizId).value.trim();
   var msg = document.getElementById('qe-msg-'+quizId);
   if(!q||!d||!ot||!ct){ if(msg){msg.textContent='Fill all fields.';msg.style.color='#ef493c';} return; }
+
+  var payload = { question:q, date:d, open_time:qaDateTimeToISO(d,ot), close_time:qaDateTimeToISO(d,ct) };
+
+  if(type==='mcq'){
+    var inputs=document.querySelectorAll('.qe-choice-input-'+quizId);
+    var checked=document.querySelector('input[name="qe-correct-'+quizId+'"]:checked');
+    if(!checked){ if(msg){msg.textContent='Please select the correct answer.';msg.style.color='#ef493c';} return; }
+    var choices=[]; inputs.forEach(function(inp){choices.push(inp.value.trim());});
+    choices=choices.filter(function(c){return c;});
+    if(choices.length<2){ if(msg){msg.textContent='Please add at least 2 choices.';msg.style.color='#ef493c';} return; }
+    var correctIdx=parseInt(checked.value);
+    payload.choices=JSON.stringify(choices);
+    payload.correct_answer=choices[correctIdx]!=null?choices[correctIdx]:choices[0];
+  } else if(type==='truefalse'){
+    var tf=document.querySelector('input[name="qe-tf-'+quizId+'"]:checked');
+    if(!tf){ if(msg){msg.textContent='Please select True or False.';msg.style.color='#ef493c';} return; }
+    payload.choices=JSON.stringify(['True','False']);
+    payload.correct_answer=tf.value;
+  } else {
+    var ca = document.getElementById('qe-ca-'+quizId).value.trim();
+    payload.correct_answer = ca||null;
+  }
+
   if(msg) msg.textContent='Saving...';
   try{
-    await sbUpdate('quizzes','id',quizId,{
-      question:q, date:d,
-      open_time:qaDateTimeToISO(d,ot),
-      close_time:qaDateTimeToISO(d,ct),
-      correct_answer:ca||null
-    });
+    await sbUpdate('quizzes','id',quizId,payload);
     if(msg){msg.textContent='Saved!';msg.style.color='var(--accent-green)';}
     setTimeout(function(){ document.getElementById('qb-edit-'+quizId).style.display='none'; loadQuizBuilderList(); },800);
   }catch(e){ if(msg){msg.textContent='Error: '+e.message;msg.style.color='#ef493c';} }
@@ -16335,119 +16261,7 @@ function pplCloseLightbox(){
   }
   .amb-btn.off.active{ border-color:rgba(239,73,60,.4);background:rgba(239,73,60,.08);color:var(--accent-red); }
   .amb-btn-icon{ font-size:1.4rem;line-height:1; }
-  /* ══ EASTER EGG SYSTEM ══ */
 
-  /* Gravity */
-  .eg-gravity-el {
-    position: fixed !important;
-    transition: none !important;
-    z-index: 8000;
-    cursor: grab;
-  }
-  .eg-gravity-el:active { cursor: grabbing; }
-
-  /* Barrel roll */
-  @keyframes eg-barrel-roll {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  .eg-barrel { animation: eg-barrel-roll 1s ease-in-out; }
-
-  /* Tilt */
-  .eg-tilted { transform: rotate(2.5deg) !important; transition: transform .6s ease !important; transform-origin: center center; }
-
-  /* Matrix canvas */
-  #eg-matrix-canvas {
-    position: fixed; inset: 0; z-index: 9500;
-    pointer-events: none; opacity: 0;
-    transition: opacity .5s;
-  }
-  #eg-matrix-canvas.active { opacity: 1; }
-
-  /* Rave */
-  #eg-rave-overlay {
-    position: fixed; inset: 0; z-index: 9400;
-    pointer-events: none; opacity: 0;
-    mix-blend-mode: screen;
-    transition: opacity .1s;
-  }
-
-  /* Thanos dust */
-  .eg-dust-particle {
-    position: fixed; pointer-events: none;
-    z-index: 9300; border-radius: 50%;
-    animation: eg-dust-fly var(--dur,1.2s) ease forwards;
-  }
-  @keyframes eg-dust-fly {
-    0%   { opacity:1; transform: translate(0,0) scale(1); }
-    100% { opacity:0; transform: translate(var(--tx,40px), var(--ty,-60px)) scale(0); }
-  }
-
-  /* k7diwan splash */
-  #eg-diwan-splash {
-    position: fixed; inset: 0; z-index: 9600;
-    display: none;
-    align-items: center; justify-content: center;
-    flex-direction: column; gap: 1rem;
-    background: radial-gradient(ellipse at center, rgba(10,15,40,0.97) 0%, rgba(5,8,25,0.99) 100%);
-    opacity: 0; pointer-events: none;
-    transition: opacity .6s;
-  }
-  #eg-diwan-splash.active { display: flex; opacity: 1; pointer-events: all; }
-  #eg-diwan-splash .eg-diwan-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2.2rem, 6vw, 4.5rem);
-    font-weight: 700;
-    background: linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6, #06b6d4);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-size: 300% 300%;
-    animation: eg-diwan-gradient 3s ease infinite;
-    text-align: center; letter-spacing: .06em;
-  }
-  @keyframes eg-diwan-gradient {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  #eg-diwan-splash .eg-diwan-sub {
-    font-size: 1rem; color: rgba(200,210,230,0.7);
-    letter-spacing: .25em; text-transform: uppercase;
-    font-family: 'DM Sans', sans-serif;
-  }
-  #eg-diwan-splash .eg-diwan-stars {
-    font-size: 1.8rem; letter-spacing: .5rem;
-    animation: eg-star-pulse 1.4s ease-in-out infinite;
-  }
-  @keyframes eg-star-pulse {
-    0%,100% { opacity:.4; transform: scale(0.95); }
-    50%     { opacity:1;  transform: scale(1.05); }
-  }
-  #eg-diwan-splash .eg-diwan-close {
-    margin-top: 1.5rem; font-size: .78rem; color: rgba(255,255,255,.3);
-    cursor: pointer; letter-spacing: .15em; font-family: 'DM Sans', sans-serif;
-  }
-  #eg-diwan-splash .eg-diwan-close:hover { color: rgba(255,255,255,.6); }
-  .eg-confetti {
-    position: fixed; pointer-events: none; z-index: 9550;
-    width: 8px; height: 8px; border-radius: 2px;
-    animation: eg-confetti-fall var(--dur,3s) ease-in forwards;
-  }
-  @keyframes eg-confetti-fall {
-    0%   { opacity:1; transform: translateY(var(--sy,0px)) rotate(0deg) translateX(0); }
-    100% { opacity:0; transform: translateY(var(--ey,600px)) rotate(var(--r,720deg)) translateX(var(--ex,80px)); }
-  }
-
-  /* Easter egg toast hint */
-  #eg-hint-toast {
-    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-    background: rgba(15,20,45,0.92); color: rgba(200,215,240,0.9);
-    font-size: .72rem; padding: .45rem 1.1rem; border-radius: 20px;
-    border: 1px solid rgba(100,130,200,0.2); z-index: 9700;
-    font-family: 'DM Sans', sans-serif; letter-spacing: .08em;
-    opacity: 0; pointer-events: none; transition: opacity .3s;
-    white-space: nowrap;
-  }
-  #eg-hint-toast.show { opacity: 1; }
 </style>
 
 <!-- ══ Widget Root ══ -->
@@ -17664,22 +17478,11 @@ function tryCatReminder(q){
   rawText=rawText.replace(/^(to|about|for|on|at|a|the|my)\s+/gi,'').replace(/\s+(at|on|for)\s*$/gi,'').replace(/\s+/g,' ').trim();
   if(!rawText||rawText.length<2) return null;
 
-  if(typeof window.remAddFromCat==='function'){
-    window.remAddFromCat(rawText,dateStr,timeStr,'none');
-    var resp='Done Boss! Added: "'+rawText+'"';
-    if(dateStr){
-      // Display using local date
-      var parts=dateStr.split('-');
-      var dt=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
-      var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      var MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      resp+=' — '+DNAMES[dt.getDay()]+' '+dt.getDate()+' '+MNAMES[dt.getMonth()];
-      if(timeStr)resp+=' at '+timeStr;
-    }
-    resp+=' 🐾';
-    return resp;
-  }
-  return 'Added to your reminders Boss! "'+rawText+'" 🐾';
+  // NOTE: this used to persist to the Reminders (Apple iCloud style) page via
+  // window.remAddFromCat, which has been removed. Rather than falsely claiming
+  // success, return null so catDispatch falls through to the timed-reminder
+  // brain (handleReminder) or the AI fallback instead of lying to the user.
+  return null;
 }
 
 // ════════════════════════════════════════════════
@@ -18434,372 +18237,6 @@ setState('sleep');
 })();
 </script>
 
-
-<script>
-// ═══════════════════════════════════════════════════════
-//  REMINDERS — Apple iCloud style, inline editing
-// ═══════════════════════════════════════════════════════
-var _rems = [];
-var _remTab = 'all';
-var _remBlurBlock = false;
-var _remNotifTimers = {};
-var REM_KEY = 'k7tc_rem_v2';
-
-// ── Storage ──
-function remLoad(){
-  try{ var s=localStorage.getItem(REM_KEY); _rems=s?JSON.parse(s):[]; }catch(e){ _rems=[]; }
-}
-function remSave(){
-  try{ localStorage.setItem(REM_KEY,JSON.stringify(_rems)); }catch(e){}
-  if(typeof sbInsert==='function'&&typeof currentUser!=='undefined'&&currentUser){
-    var key='rem_'+currentUser.id;
-    var val=JSON.stringify(_rems);
-    if(typeof sbQuery==='function'){
-      sbQuery('settings','key=eq.'+key+'&select=key').then(function(ex){
-        if(ex&&ex.length){ if(typeof sbUpdate==='function')sbUpdate('settings','key',key,{value:val}); }
-        else if(typeof sbInsert==='function'){ sbInsert('settings',{key:key,value:val}); }
-      }).catch(function(){});
-    }
-  }
-}
-async function remLoadCloud(){
-  if(typeof sbQuery!=='function'||typeof currentUser==='undefined'||!currentUser)return;
-  try{
-    var rows=await sbQuery('settings','key=eq.rem_'+currentUser.id+'&select=value');
-    if(rows&&rows.length&&rows[0].value){
-      var c=JSON.parse(rows[0].value);
-      if(c&&Array.isArray(c)&&c.length>=_rems.length){ _rems=c; remSave(); }
-    }
-  }catch(e){}
-}
-
-// ── Init ──
-function remPruneOld(){
-  var cutoff=Date.now()-24*3600*1000;
-  var before=_rems.length;
-  _rems=_rems.filter(function(r){
-    if(!r.done) return true;
-    var ts=r.completedAt||r.doneAt||r.updatedAt||r.createdAt||0;
-    if(!ts) return false;
-    return new Date(ts).getTime()>cutoff;
-  });
-  if(_rems.length!==before) remSave();
-}
-function remInit(){
-  remLoad();
-  remPruneOld();
-  remLoadCloud().then(function(){ remPruneOld(); remRender(); remScheduleAll(); });
-  remRender();
-}
-// Hook showPage
-(function hookRem(){
-  if(typeof showPage==='function'){
-    var _sp=showPage;
-    showPage=function(id,el){
-      _sp(id,el);
-      if(id==='reminders')setTimeout(remInit,80);
-    };
-  } else { setTimeout(hookRem,300); }
-})();
-
-// ── Tabs ──
-function remSetTab(tab,el){
-  _remTab=tab;
-  document.querySelectorAll('.rem-sidebar-item').forEach(function(p){p.classList.remove('rem-list-active');});
-  if(el)el.classList.add('rem-list-active');
-  var titles={all:'Reminders',today:'Today',scheduled:'Scheduled',done:'Completed'};
-  var t=document.getElementById('rem-main-title');
-  if(t)t.textContent=titles[tab]||'Reminders';
-  remRender();
-}
-
-// ── Render ──
-function remRender(){
-  var now=new Date();
-  var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  var active=_rems.filter(function(r){return!r.done;});
-  var todayR=_rems.filter(function(r){return!r.done&&r.date&&r.date.slice(0,10)===todayStr;});
-  var sched =_rems.filter(function(r){return!r.done&&r.date;});
-  var done  =_rems.filter(function(r){return r.done;});
-
-  function sc(id,n){var e=document.getElementById(id);if(e)e.textContent=n||'';}
-  sc('rem-all-count',   active.length||'');
-  sc('rem-today-count', todayR.length||'');
-  sc('rem-sched-count', sched.length||'');
-  sc('rem-done-count',  done.length||'');
-
-  // Show clear button only when there are completed items
-  var clearBtn=document.getElementById('rem-clear-done-btn');
-  if(clearBtn) clearBtn.style.display=done.length>0?'block':'none';
-
-  // Badge on sidebar
-  var badge=document.getElementById('rem-badge');
-  if(badge){badge.textContent=active.length;badge.style.display=active.length>0?'':'none';}
-
-  var show = _remTab==='all'?active:_remTab==='today'?todayR:_remTab==='scheduled'?sched:done;
-  var ul=document.getElementById('rem-ul');
-  var empty=document.getElementById('rem-empty');
-  if(!ul)return;
-  ul.innerHTML='';
-
-  if(show.length===0){
-    if(empty)empty.style.display='block';
-  } else {
-    if(empty)empty.style.display='none';
-    var PRI={none:'',low:'<span class="rem-pri-badge rem-pri-low">Low</span>',medium:'<span class="rem-pri-badge rem-pri-medium">Medium</span>',high:'<span class="rem-pri-badge rem-pri-high">High</span>'};
-    show.forEach(function(r){
-      var li=document.createElement('li');
-      li.className='rem-item'+(r.done?' done':'');
-      li.dataset.id=r.id;
-      var meta='';
-      if(r.date){
-        var dt=new Date(r.date);
-        var overdue=!r.done&&dt<now;
-        var ds=dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
-        if(r.time)ds+=' '+r.time;
-        meta+='<span class="'+(overdue?'rem-overdue':'')+'">'+(overdue?'⚠ ':'')+ds+'</span>';
-      }
-      if(r.priority&&r.priority!=='none') meta+=PRI[r.priority]||'';
-      var chk=document.createElement('div'); chk.className='rem-check'; chk.onclick=function(){remToggle(r.id);};
-      var bodyDiv=document.createElement('div'); bodyDiv.className='rem-item-body';
-      var textDiv=document.createElement('div'); textDiv.className='rem-item-text'; textDiv.contentEditable='true';
-      textDiv.textContent=r.text;
-      textDiv.addEventListener('blur',function(){remEditSave(this,r.id);});
-      textDiv.addEventListener('keydown',function(e){remEditKey(e,r.id);});
-      bodyDiv.appendChild(textDiv);
-      if(meta){var metaDiv=document.createElement('div');metaDiv.className='rem-item-meta';metaDiv.innerHTML=meta;bodyDiv.appendChild(metaDiv);}
-      var delBtn=document.createElement('button'); delBtn.className='rem-item-del'; delBtn.textContent='🗑'; delBtn.onclick=function(){remDel(r.id);};
-      li.appendChild(chk); li.appendChild(bodyDiv); li.appendChild(delBtn);
-      ul.appendChild(li);
-    });
-  }
-
-  // Show/hide detail bar based on input focus
-  var inp=document.getElementById('rem-inline-input');
-  if(inp&&document.activeElement===inp){
-    var db=document.getElementById('rem-detail-bar');
-    if(db)db.style.display='flex';
-  }
-}
-
-function escR(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-// ── Toggle done ──
-function remToggle(id){
-  var r=_rems.find(function(x){return x.id===id;});
-  if(!r)return;
-  r.done=!r.done;
-  r.completedAt=r.done?new Date().toISOString():null;
-  remSave();
-  // Animate complete
-  var li=document.querySelector('.rem-item[data-id="'+id+'"]');
-  if(li){
-    li.classList.toggle('done',r.done);
-    if(r.done) setTimeout(remRender,350); else remRender();
-  }
-}
-
-// ── Delete ──
-function remDel(id){
-  _rems=_rems.filter(function(r){return r.id!==id;});
-  remSave(); remRender();
-}
-
-// ── Clear all completed ──
-function remClearDone(){
-  var count=_rems.filter(function(r){return r.done;}).length;
-  if(!count) return;
-  if(!confirm('Clear all '+count+' completed reminder'+(count!==1?'s':'')+' permanently?')) return;
-  _rems=_rems.filter(function(r){return!r.done;});
-  remSave(); remRender();
-}
-
-// ── Inline editing of existing items ──
-function remEditSave(el,id){
-  var text=(el.textContent||'').trim();
-  var r=_rems.find(function(x){return x.id===id;});
-  if(!r)return;
-  if(!text){ remDel(id); return; }
-  r.text=text;
-  remSave();
-}
-function remEditKey(e,id){
-  if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); remAddNew(); }
-  if(e.key==='Backspace'&&(e.target.textContent||'')===''){
-    e.preventDefault(); remDel(id);
-  }
-}
-
-// ── New inline input ──
-function remShowDetailBar(){
-  var db=document.getElementById('rem-detail-bar');
-  if(db)db.style.display='flex';
-  var di=document.getElementById('rem-date-input');
-  if(di&&!di.value){
-    var nd=new Date();
-    di.value=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
-  }
-}
-
-function remAddNew(){
-  var inp=document.getElementById('rem-inline-input');
-  var db=document.getElementById('rem-detail-bar');
-  if(!inp)return;
-  if(db)db.style.display='flex';
-  inp.focus();
-  // Set today as default date
-  var di=document.getElementById('rem-date-input');
-  if(di&&!di.value){
-    var nd=new Date();
-    di.value=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
-  }
-}
-
-function remInlineKey(e){
-  if(e.key==='Enter'){
-    e.preventDefault();
-    remCommitInline();
-    // Stay focused for next entry
-    setTimeout(function(){
-      var inp=document.getElementById('rem-inline-input');
-      if(inp)inp.focus();
-    },30);
-  }
-  if(e.key==='Escape'){
-    e.target.value='';
-    var db=document.getElementById('rem-detail-bar');
-    if(db)db.style.display='none';
-    e.target.blur();
-  }
-}
-
-function remInlineBlur(){
-  // Small delay to allow clicking detail bar without losing content
-  setTimeout(function(){
-    var inp=document.getElementById('rem-inline-input');
-    var db=document.getElementById('rem-detail-bar');
-    
-    // Check if the focus has moved to something inside the detail bar, or back to the input
-    var isFocusingInput = document.activeElement === inp;
-    var isFocusingDetailBar = db && db.contains(document.activeElement);
-    
-    if (isFocusingInput || isFocusingDetailBar) {
-      return; // User is still interacting with the reminder creator
-    }
-    
-    if(inp&&inp.value.trim()) remCommitInline();
-    if(db) db.style.display='none';
-  },250);
-}
-
-function remCommitInline(){
-  var inp=document.getElementById('rem-inline-input');
-  var text=(inp?inp.value:'').trim();
-  if(!text)return;
-  var di=document.getElementById('rem-date-input');
-  var ti=document.getElementById('rem-time-input');
-  var pi=document.getElementById('rem-pri-select');
-  var dateVal=di&&di.value?di.value:null;
-  var timeVal=ti&&ti.value?ti.value:null;
-  var fullDate=dateVal?(dateVal+(timeVal?'T'+timeVal+':00':'')):null;
-  var rem={
-    id:'r'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
-    text:text, date:fullDate, time:timeVal,
-    priority:pi?pi.value:'none', done:false,
-    createdAt:new Date().toISOString()
-  };
-  _rems.unshift(rem);
-  remSave(); remRender();
-  if(inp)inp.value='';
-  // Reset detail bar inputs
-  if(di)di.value=new Date().toISOString().slice(0,10);
-  if(ti)ti.value='';
-  if(pi)pi.value='none';
-  // Schedule notification
-  remScheduleOne(rem);
-}
-
-// ── Cat can add reminders ──
-window.remAddFromCat=function(text,dateStr,timeStr,priority){
-  var fullDate=dateStr?(dateStr+(timeStr?'T'+timeStr+':00':'')):null;
-  var rem={
-    id:'r'+Date.now()+'_cat',
-    text:text, date:fullDate, time:timeStr||null,
-    priority:priority||'none', done:false,
-    createdAt:new Date().toISOString()
-  };
-  _rems.unshift(rem);
-  remSave(); remRender(); remScheduleOne(rem);
-  return rem;
-};
-
-// ── Email notification via EmailJS ──
-function remSendEmail(r){
-  try{
-    if(!window.EMAILJS_SERVICE_ID||window.EMAILJS_SERVICE_ID==='YOUR_SERVICE_ID')return;
-    if(!window.emailjs)return;
-    var agentEmail=(typeof currentUser!=='undefined'&&currentUser)?currentUser.email:'';
-    var agentName=(typeof currentUser!=='undefined'&&currentUser)?currentUser.name:'Boss';
-    if(!agentEmail)return;
-    var dueText='';
-    if(r.date){
-      var parts=r.date.split('T')[0].split('-');
-      var dt=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
-      var DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      dueText=DAYS[dt.getDay()]+' '+dt.getDate()+' '+MONTHS[dt.getMonth()];
-      if(r.time) dueText+=' at '+r.time;
-    }
-    emailjs.send(window.EMAILJS_SERVICE_ID, window.EMAILJS_TEMPLATE_ID, {
-      email:     agentEmail,
-      to_name:   agentName,
-      reminder:  r.text,
-      due_time:  dueText||'Now',
-      app_name:  'K7TeamCore'
-    }).then(function(){ console.log('[EmailJS] Reminder sent to '+agentEmail); })
-      .catch(function(e){ console.warn('[EmailJS] Send failed:',e); });
-  }catch(e){ console.warn('[EmailJS] Error:',e); }
-}
-
-// ── Sticky popup ──
-function remShowPopup(r){
-  var old=document.getElementById('rem-notif-popup');
-  if(old) old.remove();
-  var n=document.createElement('div');
-  n.id='rem-notif-popup';
-  n.style.cssText='position:fixed;top:72px;right:22px;z-index:99999;background:var(--navy-card);border:1px solid rgba(239,73,60,.4);border-radius:14px;padding:1rem 1rem 1rem 1rem;max-width:300px;box-shadow:0 12px 40px rgba(0,0,0,.45);animation:remIn .3s ease;';
-  n.innerHTML=
-    '<div style="display:flex;gap:.65rem;align-items:flex-start;">'+
-      '<span style="font-size:1.3rem;flex-shrink:0;margin-top:1px;">🔔</span>'+
-      '<div style="flex:1;min-width:0;">'+
-        '<div style="font-size:.82rem;font-weight:700;color:var(--text-primary);margin-bottom:.25rem;">Reminder</div>'+
-        '<div style="font-size:.8rem;color:var(--text-muted);line-height:1.5;word-break:break-word;">'+escR(r.text)+'</div>'+
-        (r.time?'<div style="font-size:.72rem;color:var(--accent-red);margin-top:.35rem;font-weight:600;">⏰ '+escR(r.time)+'</div>':'')+
-      '</div>'+
-      '<button onclick="document.getElementById(\'rem-notif-popup\').remove()" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:1rem;padding:0 0 0 .4rem;flex-shrink:0;line-height:1;" title="Dismiss">✕</button>'+
-    '</div>'+
-    '<div style="display:flex;gap:.5rem;margin-top:.75rem;justify-content:flex-end;">'+
-      '<button onclick="document.getElementById(\'rem-notif-popup\').remove()" style="padding:.3rem .9rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;">Got it</button>'+
-    '</div>';
-  document.body.appendChild(n);
-  if(window.Notification&&Notification.permission==='granted') new Notification('K7 Reminder',{body:r.text});
-}
-
-// ── Schedule one reminder ──
-function remScheduleOne(r){
-  if(!r.date||r.done) return;
-  var dt=new Date(r.date);
-  if(isNaN(dt.getTime())) return;
-  var ms=dt.getTime()-Date.now();
-  // Missed by ≤30 min (tab was closed) — fire immediately
-  if(ms<=0&&ms>=-30*60*1000){ remSendEmail(r); remShowPopup(r); return; }
-  if(ms<=0||ms>7*24*3600000) return;
-  if(_remNotifTimers[r.id]) clearTimeout(_remNotifTimers[r.id]);
-  _remNotifTimers[r.id]=setTimeout(function(){ remSendEmail(r); remShowPopup(r); },ms);
-}
-function remScheduleAll(){ _rems.forEach(function(r){ if(!r.done) remScheduleOne(r); }); }
-if(window.Notification&&Notification.permission==='default') setTimeout(function(){ Notification.requestPermission(); },3000);
-</script>
 
 <script>
 // ═══════════════════════════════════════════════════════
@@ -20587,449 +20024,6 @@ async function checkVHGlobalToggle(){
 function icOnLogin(){
   icStartIncomingPoll();
 }
-
-
-
-
-// ══════════════════════════════════════════════════════════
-//  EASTER EGG SYSTEM
-//  Triggers (outside input fields only):
-//    Konami code  ↑↑↓↓←→←→BA  → Gravity
-//    k7magic      → Barrel roll
-//    k7matrix     → Matrix rain
-//    k7rave       → Rave party
-//    k7thanos     → Thanos snap
-//    k7tilt       → Tilt page  (k7straight to restore)
-//    k7diwan      → Special tribute splash
-// ══════════════════════════════════════════════════════════
-
-(function(){
-
-  // ── Key sequence tracker ──
-  var _egBuffer = '';
-  var _egKonami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-  var _egKonamiPos = 0;
-  var _egActive = {};   // which effects are currently running
-
-  function egInInput(){
-    var t = document.activeElement;
-    if(!t) return false;
-    var tag = t.tagName;
-    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return true;
-    if(t.isContentEditable) return true;
-    return false; // divs, body, buttons etc are fine
-  }
-
-  // Debug: expose buffer so you can check in console
-  Object.defineProperty(window, '_egDebug', { get: function(){ return { buffer: _egBuffer, konamiPos: _egKonamiPos, active: _egActive }; } });
-
-  function egHint(msg){
-    var el = document.getElementById('eg-hint-toast');
-    if(!el) return;
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(el._ht);
-    el._ht = setTimeout(function(){ el.classList.remove('show'); }, 2800);
-  }
-
-  document.addEventListener('keydown', function(e){
-    // Konami code check (works even in inputs for arrow keys to not block normal use)
-    var expected = _egKonami[_egKonamiPos];
-    var key = e.key;
-    if(key === expected){
-      _egKonamiPos++;
-      if(_egKonamiPos === _egKonami.length){
-        _egKonamiPos = 0;
-        egGravity();
-      }
-    } else {
-      _egKonamiPos = (key === _egKonami[0]) ? 1 : 0;
-    }
-
-    // Text sequences — only outside inputs
-    if(egInInput()) return;
-    if(e.key === 'Escape'){
-      egEscapeAll();
-      return;
-    }
-    if(e.key && e.key.length === 1){
-      _egBuffer += e.key.toLowerCase();
-      if(_egBuffer.length > 20) _egBuffer = _egBuffer.slice(-20);
-      egCheckBuffer();
-    }
-  });
-
-  function egCheckBuffer(){
-    var b = _egBuffer;
-    if(b.endsWith('k7magic'))   { _egBuffer=''; egBarrelRoll(); }
-    else if(b.endsWith('k7matrix'))  { _egBuffer=''; egMatrix(); }
-    else if(b.endsWith('k7rave'))    { _egBuffer=''; egRave(); }
-    else if(b.endsWith('k7thanos'))  { _egBuffer=''; egThanos(); }
-    else if(b.endsWith('k7tilt'))    { _egBuffer=''; egTilt(); }
-    else if(b.endsWith('k7straight')){ _egBuffer=''; egUnTilt(); }
-    else if(b.endsWith('k7diwan'))   { _egBuffer=''; egDiwan(); }
-  }
-
-  function egEscapeAll(){
-    egGravityStop();
-    egMatrixStop();
-    egRaveStop();
-    egDiwanClose();
-    egUnTilt();
-    _egActive = {};
-  }
-
-  // ════════════════════════════
-  //  GRAVITY
-  // ════════════════════════════
-  var _egGravityBodies = [];
-  var _egGravityRAF = null;
-
-  function egGravity(){
-    if(_egActive.gravity){ egGravityStop(); return; }
-    _egActive.gravity = true;
-    egHint('🌍 Gravity activated! Click elements to throw them. Konami again to restore.');
-
-    // Grab all meaningful elements
-    var sel = '.sidebar-item, .cd-card, .main-content > div > div, .home-card, .stat-card, .topbar-msg-btn, .work-clock-wrap';
-    var els = document.querySelectorAll(sel);
-    var W = window.innerWidth, H = window.innerHeight;
-
-    els.forEach(function(el){
-      var r = el.getBoundingClientRect();
-      if(r.width < 10 || r.height < 10) return;
-
-      // Save original styles
-      var orig = {
-        position: el.style.position, left: el.style.left, top: el.style.top,
-        width: el.style.width, zIndex: el.style.zIndex,
-        transform: el.style.transform, margin: el.style.margin,
-        transition: el.style.transition
-      };
-
-      // Fix dimensions and position
-      el.style.position = 'fixed';
-      el.style.left     = r.left + 'px';
-      el.style.top      = r.top  + 'px';
-      el.style.width    = r.width + 'px';
-      el.style.zIndex   = '8000';
-      el.style.margin   = '0';
-      el.style.transition = 'none';
-      el.classList.add('eg-gravity-el');
-
-      var body = {
-        el: el, orig: orig,
-        x: r.left, y: r.top,
-        vx: (Math.random()-0.5)*2,
-        vy: -(Math.random()*1.5),
-        rot: 0, rotV: (Math.random()-0.5)*4,
-        w: r.width, h: r.height,
-        mass: Math.max(0.4, Math.min(2.0, (r.width*r.height)/40000)),
-        bounces: 0
-      };
-
-      el.addEventListener('click', function(ev){
-        if(!_egActive.gravity) return;
-        ev.stopPropagation();
-        body.vy = -(8 + Math.random()*6);
-        body.vx = (Math.random()-0.5)*10;
-        body.rotV = (Math.random()-0.5)*12;
-      }, true);
-
-      _egGravityBodies.push(body);
-    });
-
-    _egGravityRAF = requestAnimationFrame(egGravityTick);
-  }
-
-  function egGravityTick(){
-    if(!_egActive.gravity){ _egGravityRAF=null; return; }
-    var H = window.innerHeight;
-    var W = window.innerWidth;
-    var gravity = 0.45;
-
-    _egGravityBodies.forEach(function(b){
-      b.vy += gravity * b.mass;
-      b.x  += b.vx;
-      b.y  += b.vy;
-      b.rot += b.rotV;
-
-      // Floor bounce
-      if(b.y + b.h >= H){
-        b.y  = H - b.h;
-        b.vy = -(b.vy * 0.42);
-        b.vx *=  0.78;
-        b.rotV *= 0.7;
-        b.bounces++;
-        if(Math.abs(b.vy) < 0.8) b.vy = 0;
-        if(Math.abs(b.vx) < 0.2) b.vx = 0;
-      }
-      // Side walls
-      if(b.x < 0){ b.x=0; b.vx=Math.abs(b.vx)*0.5; }
-      if(b.x + b.w > W){ b.x=W-b.w; b.vx=-Math.abs(b.vx)*0.5; }
-
-      b.el.style.left      = b.x + 'px';
-      b.el.style.top       = b.y + 'px';
-      b.el.style.transform = 'rotate('+b.rot+'deg)';
-    });
-
-    _egGravityRAF = requestAnimationFrame(egGravityTick);
-  }
-
-  function egGravityStop(){
-    _egActive.gravity = false;
-    if(_egGravityRAF){ cancelAnimationFrame(_egGravityRAF); _egGravityRAF=null; }
-    _egGravityBodies.forEach(function(b){
-      b.el.classList.remove('eg-gravity-el');
-      b.el.style.position   = b.orig.position;
-      b.el.style.left       = b.orig.left;
-      b.el.style.top        = b.orig.top;
-      b.el.style.width      = b.orig.width;
-      b.el.style.zIndex     = b.orig.zIndex;
-      b.el.style.transform  = b.orig.transform;
-      b.el.style.margin     = b.orig.margin;
-      b.el.style.transition = b.orig.transition;
-    });
-    _egGravityBodies = [];
-  }
-
-  // ════════════════════════════
-  //  BARREL ROLL
-  // ════════════════════════════
-  function egBarrelRoll(){
-    if(_egActive.barrel) return;
-    _egActive.barrel = true;
-    egHint('🛢️ Do a barrel roll!');
-    var root = document.getElementById('dashboard-view') || document.body;
-    root.classList.add('eg-barrel');
-    root.addEventListener('animationend', function done(){
-      root.classList.remove('eg-barrel');
-      root.removeEventListener('animationend', done);
-      _egActive.barrel = false;
-    });
-  }
-
-  // ════════════════════════════
-  //  MATRIX RAIN
-  // ════════════════════════════
-  var _egMatrixRAF = null;
-  var _egMatrixDrops = [];
-
-  function egMatrix(){
-    if(_egActive.matrix){ egMatrixStop(); return; }
-    _egActive.matrix = true;
-    egHint('💊 There is no spoon. Type k7matrix again or Escape to exit.');
-
-    var canvas = document.getElementById('eg-matrix-canvas');
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-    canvas.classList.add('active');
-
-    var ctx  = canvas.getContext('2d');
-    var cols = Math.floor(canvas.width / 16);
-    _egMatrixDrops = Array(cols).fill(1);
-
-    function tick(){
-      if(!_egActive.matrix){ ctx.clearRect(0,0,canvas.width,canvas.height); return; }
-      ctx.fillStyle = 'rgba(0,0,0,0.06)';
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle = '#00ff41';
-      ctx.font = '14px monospace';
-      _egMatrixDrops.forEach(function(y,i){
-        var ch = String.fromCharCode(0x30A0 + Math.random()*96);
-        ctx.fillStyle = y===1 ? '#fff' : '#00ff41';
-        ctx.fillText(ch, i*16, y*16);
-        if(y*16 > canvas.height && Math.random() > 0.975) _egMatrixDrops[i] = 0;
-        _egMatrixDrops[i]++;
-      });
-      _egMatrixRAF = requestAnimationFrame(tick);
-    }
-    tick();
-
-    // Auto stop after 12 seconds
-    setTimeout(function(){ if(_egActive.matrix) egMatrixStop(); }, 12000);
-  }
-
-  function egMatrixStop(){
-    _egActive.matrix = false;
-    if(_egMatrixRAF){ cancelAnimationFrame(_egMatrixRAF); _egMatrixRAF=null; }
-    var canvas = document.getElementById('eg-matrix-canvas');
-    if(canvas){
-      canvas.classList.remove('active');
-      setTimeout(function(){ var ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }, 500);
-    }
-  }
-
-  // ════════════════════════════
-  //  RAVE
-  // ════════════════════════════
-  var _egRaveTimer = null;
-  var _egRaveInterval = null;
-
-  function egRave(){
-    if(_egActive.rave){ egRaveStop(); return; }
-    _egActive.rave = true;
-    egHint('🎉 RAVE MODE! Type k7rave again or Escape to stop.');
-
-    var overlay = document.getElementById('eg-rave-overlay');
-    var hues = [0,30,60,120,180,240,300];
-    var i = 0;
-    overlay.style.opacity = '1';
-
-    _egRaveInterval = setInterval(function(){
-      if(!_egActive.rave){ return; }
-      var h = hues[i++ % hues.length];
-      overlay.style.background = 'hsla('+h+',100%,60%,0.18)';
-      document.body.style.filter = 'hue-rotate('+h+'deg)';
-    }, 160);
-
-    // Auto stop after 8s
-    _egRaveTimer = setTimeout(function(){ if(_egActive.rave) egRaveStop(); }, 8000);
-  }
-
-  function egRaveStop(){
-    _egActive.rave = false;
-    clearInterval(_egRaveInterval);
-    clearTimeout(_egRaveTimer);
-    var overlay = document.getElementById('eg-rave-overlay');
-    if(overlay) overlay.style.opacity = '0';
-    document.body.style.filter = '';
-  }
-
-  // ════════════════════════════
-  //  THANOS SNAP
-  // ════════════════════════════
-  function egThanos(){
-    if(_egActive.thanos) return;
-    _egActive.thanos = true;
-    egHint('⚡ Perfectly balanced, as all things should be.');
-
-    var els = Array.from(document.querySelectorAll('.sidebar-item'));
-    var half = Math.floor(els.length / 2);
-    var victims = els.sort(function(){ return Math.random()-0.5; }).slice(0, half);
-
-    victims.forEach(function(el, idx){
-      setTimeout(function(){
-        var r = el.getBoundingClientRect();
-        // Spawn dust particles
-        for(var p=0; p<18; p++){
-          var d = document.createElement('div');
-          d.className = 'eg-dust-particle';
-          var hue = 20+Math.random()*40;
-          d.style.cssText =
-            'left:'+(r.left+Math.random()*r.width)+'px;'+
-            'top:'+(r.top+Math.random()*r.height)+'px;'+
-            'width:'+(3+Math.random()*5)+'px;'+
-            'height:'+(3+Math.random()*5)+'px;'+
-            'background:hsl('+hue+',80%,55%);'+
-            '--tx:'+(Math.random()-0.5)*120+'px;'+
-            '--ty:'+(-(20+Math.random()*100))+'px;'+
-            '--dur:'+(0.8+Math.random()*0.7)+'s;';
-          document.body.appendChild(d);
-          setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 1600);
-        }
-        el.style.transition = 'opacity .6s, transform .6s';
-        el.style.opacity    = '0';
-        el.style.transform  = 'scale(0.3) translateY(-20px)';
-      }, idx * 80);
-    });
-
-    setTimeout(function(){
-      egHint('🫳 Snapped. Escape to restore.');
-      _egActive.thanos = false;
-    }, victims.length*80 + 800);
-
-    // Restore after 6s
-    setTimeout(function(){
-      victims.forEach(function(el){
-        el.style.transition = 'opacity .5s, transform .5s';
-        el.style.opacity    = '';
-        el.style.transform  = '';
-      });
-    }, 6000);
-  }
-
-  // ════════════════════════════
-  //  TILT
-  // ════════════════════════════
-  var _egTilted = false;
-
-  function egTilt(){
-    if(_egTilted) return;
-    _egTilted = true;
-    egHint('↗️ Tilted! Type k7straight to fix.');
-    var root = document.getElementById('dashboard-view') || document.body;
-    root.classList.add('eg-tilted');
-  }
-
-  function egUnTilt(){
-    if(!_egTilted) return;
-    _egTilted = false;
-    var root = document.getElementById('dashboard-view') || document.body;
-    root.classList.remove('eg-tilted');
-    egHint('✅ Back to normal.');
-  }
-
-  // ════════════════════════════
-  //  K7DIWAN TRIBUTE
-  // ════════════════════════════
-  function egDiwan(){
-    if(_egActive.diwan) return;
-    _egActive.diwan = true;
-    var splash = document.getElementById('eg-diwan-splash');
-    if(!splash) return;
-    splash.style.display = 'flex';
-    splash.style.opacity = '0';
-    void splash.offsetWidth; // force reflow so transition fires
-    splash.classList.add('active');
-
-    // Confetti burst
-    var colors = ['#f59e0b','#ef4444','#8b5cf6','#06b6d4','#10b981','#f97316','#ec4899'];
-    for(var i=0; i<80; i++){
-      (function(){
-        var c = document.createElement('div');
-        c.className = 'eg-confetti';
-        c.style.cssText =
-          'left:'+(10+Math.random()*80)+'vw;'+
-          'top:-20px;'+
-          'background:'+colors[Math.floor(Math.random()*colors.length)]+';'+
-          '--dur:'+(2+Math.random()*2)+'s;'+
-          '--ey:'+(window.innerHeight+40)+'px;'+
-          '--r:'+(360+Math.random()*720)+'deg;'+
-          '--ex:'+(Math.random()-0.5)*200+'px;';
-        document.body.appendChild(c);
-        setTimeout(function(){ if(c.parentNode) c.parentNode.removeChild(c); }, 4200);
-      })();
-    }
-  }
-
-  window.egDiwanClose = function(){
-    var splash = document.getElementById('eg-diwan-splash');
-    if(splash){
-      splash.classList.remove('active');
-      splash.style.opacity = '0';
-      setTimeout(function(){ splash.style.display = 'none'; }, 650);
-    }
-    _egActive.diwan = false;
-  };
-
-  // Hook Escape to also close diwan splash
-  document.addEventListener('keydown', function(e){
-    if(e.key==='Escape' && _egActive.diwan) egDiwanClose();
-  });
-
-  // ── Init: expose for console testing and Escape ──
-  window._egEscapeAll = egEscapeAll;
-  window.egGravity    = egGravity;
-  window.egBarrelRoll = egBarrelRoll;
-  window.egMatrix     = egMatrix;
-  window.egRave       = egRave;
-  window.egThanos     = egThanos;
-  window.egTilt       = egTilt;
-  window.egDiwan      = egDiwan;
-
-})();
-
 </script>
 
 <!-- ══ CELEBRATION OVERLAY (reused by Celebrations feature) ══ -->
@@ -21949,7 +20943,6 @@ async function siClearAll(){
   var WX_HOME = WX_CITIES[0]; // default = Chennai, replaced by geolocation
   var _wxInterval    = null;
   var _wxClockTimer  = null;
-  var _wxLastRain    = false;
   var _wxOpen        = false;
   var _wxWeatherCache = {}; // key → { icon, temp, fetched }
   var _wxFetching     = {}; // key → true (in-flight guard)
@@ -22005,16 +20998,8 @@ async function siClearAll(){
     // Show wrap
     var wrap = document.getElementById('wx-wrap');
     if(wrap) wrap.style.display = '';
-    // Rain animation
-    var isRaining = wx.isRain || wx.precip > 0;
-    if(typeof _ambSchedManualOverride !== 'undefined' && !_ambSchedManualOverride){
-      if(isRaining && !_wxLastRain){
-        if(typeof ambApply === 'function') ambApply(wx.isThunder ? 'thunder' : 'rain');
-      } else if(!isRaining && _wxLastRain){
-        if(typeof ambApply === 'function') ambApply('off');
-      }
-    }
-    _wxLastRain = isRaining;
+    // NOTE: automatic weather-triggered ambient rain/thunder has been disabled by request.
+    // Weather pill (icon/temp/city) still updates above; it just no longer drives ambApply().
     // Refresh dropdown if open
     if(_wxOpen) wxRenderDropdown();
   }
