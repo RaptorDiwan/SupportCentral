@@ -1229,6 +1229,13 @@
     transition:all var(--transition); flex-shrink:0;
   }
   .um-del-btn:hover { background:rgba(239,73,60,0.18); }
+  .um-relieve-btn {
+    background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25);
+    color:#8b5cf6; padding:0.35rem 0.85rem; border-radius:6px;
+    font-size:0.78rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif;
+    transition:all var(--transition); flex-shrink:0;
+  }
+  .um-relieve-btn:hover { background:rgba(139,92,246,0.18); }
   .um-empty { color:var(--text-dim); font-size:0.875rem; padding:2rem; text-align:center;
     background:var(--navy-card); border:1px solid var(--navy-border); border-radius:var(--radius); }
   .cp-wrap { max-width:520px; }
@@ -1941,6 +1948,22 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
   .ppl-card-status.off{background:rgba(123,135,153,.1);color:var(--text-dim);}
   .ppl-card-edit{position:absolute;top:.6rem;right:.6rem;padding:.25rem .55rem;font-size:.68rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:5px;cursor:pointer;color:var(--text-muted);display:none;}
   .ppl-card:hover .ppl-card-edit{display:block;}
+
+  /* Alumni / In Our Hearts tribute section */
+  .ppl-alumni-divider{display:flex;align-items:center;gap:.8rem;margin:1.4rem 0 .1rem;}
+  .ppl-alumni-divider::before,.ppl-alumni-divider::after{content:'';flex:1;height:1px;background:var(--navy-border);}
+  .ppl-alumni-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--text-muted);white-space:nowrap;display:flex;align-items:center;gap:.4rem;}
+  .ppl-alumni-sub{font-size:.72rem;color:var(--text-dim);text-align:center;margin:.2rem 0 .9rem;}
+  .ppl-alumni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.1rem;}
+  .ppl-alumni-card{background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.5rem 1.1rem 1.1rem;text-align:center;position:relative;opacity:.82;transition:opacity .2s;}
+  .ppl-alumni-card:hover{opacity:1;}
+  .ppl-alumni-card .ppl-card-avatar,.ppl-alumni-card .ppl-card-initials{filter:grayscale(70%) sepia(12%);}
+  .ppl-alumni-card .ppl-card-name{color:var(--text-primary);}
+  .ppl-alumni-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.66rem;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(239,73,60,.1);color:var(--accent-red);margin-top:.5rem;}
+  .ppl-alumni-date{font-size:.63rem;color:var(--text-dim);margin-top:.35rem;}
+  .ppl-alumni-restore{position:absolute;top:.55rem;right:.55rem;background:none;border:none;font-size:.64rem;color:var(--text-dim);cursor:pointer;opacity:0;transition:opacity .15s;font-family:'DM Sans',sans-serif;}
+  .ppl-alumni-card:hover .ppl-alumni-restore{opacity:1;}
+  .ppl-alumni-restore:hover{color:var(--text-primary);}
 
   /* Profile modal */
   .ppl-modal-hero{padding:2rem 1.5rem 1.2rem;text-align:center;border-bottom:1px solid var(--navy-border);}
@@ -5264,6 +5287,13 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           <div class="ppl-grid" id="ppl-grid">
             <div class="ppl-loading">Loading team...</div>
           </div>
+
+          <!-- Alumni / In Our Hearts — relieved teammates, kept as a tribute -->
+          <div id="ppl-alumni-wrap" style="display:none;">
+            <div class="ppl-alumni-divider"><span class="ppl-alumni-title">🕊️ Alumni · In Our Hearts</span></div>
+            <div class="ppl-alumni-sub">Team members who've moved on — but always part of our story</div>
+            <div class="ppl-alumni-grid" id="ppl-alumni-grid"></div>
+          </div>
         </div>
 
         <!-- Profile Modal -->
@@ -6096,6 +6126,7 @@ async function loadUsersPage(){
         canUnblockToggle+
         unblockBtn+
         (u.role!=='admin'?'<button onclick="makeUserAdmin(\''+u.id+'\',\''+esc(u.name)+'\')" style="padding:.32rem .85rem;background:rgba(76,118,168,.1);border:1px solid rgba(76,118,168,.3);color:var(--accent-blue);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;white-space:nowrap;">⬆️ Make Admin</button>':'')+
+        '<button class="um-relieve-btn" onclick="relieveUser(this.dataset.id,this.dataset.name)" data-id="'+u.id+'" data-name="'+esc(u.name)+'">🕊️ Relieve</button>'+
         '<button class="um-del-btn" onclick="removeUser(this.dataset.id,this.dataset.name)" data-id="'+u.id+'" data-name="'+esc(u.name)+'">Remove</button>'+
       '</div>';
     }).join('');
@@ -6205,6 +6236,32 @@ async function tsToggleUser(userId,enabled){
 async function removeUser(id,name){
   if(!confirm('Remove '+name+'? They will no longer be able to log in.'))return;
   try{await sbDelete('users','id',id);loadUsersPage();}catch(e){alert('Could not remove user.');}
+}
+
+// ── Relieve from duty — a gentler alternative to Remove.
+//    Keeps the person's People profile, marks it with a tribute badge,
+//    and moves them into the "Alumni · In Our Hearts" section instead of deleting them. ──
+async function relieveUser(userId, userName){
+  if(!confirm('Mark '+userName+' as Relieved from Duty?\n\nThey will move to the "Alumni · In Our Hearts" section on the People page with a tribute badge. Nothing is deleted — this can be undone from that card later.'))return;
+  var revokeLogin = confirm('Also revoke '+userName+'\'s login access right now?\n\nOK = Yes, block their login immediately.\nCancel = No, leave login as-is for now.');
+  try{
+    var people = await sbQuery('people','user_id=eq.'+userId+'&select=id');
+    var hasProfile = people && people.length;
+    if(hasProfile){
+      await sbUpdate('people','id',people[0].id,{
+        relieved:true,
+        relieved_date:new Date().toISOString().slice(0,10),
+        relieved_note:'Relieved from Duty ❤️'
+      });
+    }
+    if(revokeLogin){
+      await sbUpdate('users','id',userId,{is_blocked:true,block_reason:'Relieved from duty'});
+    }
+    alert(hasProfile
+      ? userName+' has been marked as Relieved from Duty. 🕊️'
+      : userName+' — login access updated, but no matching People profile was found, so no tribute card could be created.');
+    loadUsersPage();
+  }catch(e){ alert('Could not complete: '+e.message); }
 }
 
 async function makeUserAdmin(userId, userName){
@@ -11982,15 +12039,21 @@ function pplInitialsDiv(p,size,cls){
 
 function pplRender(people){
   var grid = document.getElementById('ppl-grid');
+  var alumniWrap = document.getElementById('ppl-alumni-wrap');
+  var alumniGrid = document.getElementById('ppl-alumni-grid');
   if(!people||!people.length){
     grid.innerHTML='<div class="ppl-loading">No profiles yet. Add the first one!</div>';
+    if(alumniWrap) alumniWrap.style.display='none';
     return;
   }
+
+  var activePeople = people.filter(function(p){ return !p.relieved; });
+  var relievedPeople = people.filter(function(p){ return p.relieved; });
 
   // Get live attendance status
   var attMap = window._liveAttMap||{};
 
-  grid.innerHTML = people.map(function(p){
+  grid.innerHTML = (activePeople.length ? activePeople : []).map(function(p){
     var ini = pplInitials(p.name);
     var bg  = pplColor(p.name);
 
@@ -12031,7 +12094,48 @@ function pplRender(people){
       (chipsHtml?'<div class="ppl-card-badges">'+chipsHtml+'</div>':'')+
       statusHtml+
     '</div>';
-  }).join('');
+  }).join('') || '<div class="ppl-loading">No active profiles right now.</div>';
+
+  // ── Alumni / In Our Hearts — relieved teammates, kept as a tribute ──
+  if(alumniWrap && alumniGrid){
+    if(relievedPeople.length){
+      alumniGrid.innerHTML = relievedPeople.map(function(p){
+        var ini = pplInitials(p.name);
+        var bg  = pplColor(p.name);
+        var imgSrc = p.photo_url || '';
+        var avatar = imgSrc
+          ? '<div class="ppl-card-avatar"><img src="'+imgSrc+'" onerror="this.style.display=\'none\';this.parentElement.style.cursor=\'default\'"/></div>'
+          : '<div class="ppl-card-initials" style="background:'+bg+';">'+ini+'</div>';
+        var dateStr = '';
+        if(p.relieved_date){
+          try{
+            var dt = new Date(p.relieved_date+'T00:00:00');
+            dateStr = dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+          }catch(e){}
+        }
+        var restoreBtn = isAdminUser() ? '<button class="ppl-alumni-restore" onclick="event.stopPropagation();pplRestore(\''+p.id+'\',\''+esc(p.name)+'\')" title="Restore to active team">↺ Restore</button>' : '';
+        return '<div class="ppl-alumni-card">'+
+          restoreBtn+
+          avatar+
+          '<div class="ppl-card-name">'+esc(p.name||'')+'</div>'+
+          '<div class="ppl-card-role">'+esc(p.role||'')+(p.team?' · '+esc(p.team):'')+'</div>'+
+          '<div class="ppl-alumni-badge">'+esc(p.relieved_note||'Relieved from Duty ❤️')+'</div>'+
+          (dateStr?'<div class="ppl-alumni-date">'+dateStr+'</div>':'')+
+        '</div>';
+      }).join('');
+      alumniWrap.style.display='';
+    } else {
+      alumniWrap.style.display='none';
+    }
+  }
+}
+
+async function pplRestore(personId, personName){
+  if(!confirm('Restore '+personName+' to the active team list?\n\nThis removes the tribute badge and moves them back into the main People grid.'))return;
+  try{
+    await sbUpdate('people','id',personId,{relieved:false,relieved_date:null});
+    pplLoad();
+  }catch(e){ alert('Could not restore: '+e.message); }
 }
 
 function pplFilter(search){
