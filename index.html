@@ -12114,7 +12114,7 @@ function pplRender(people){
           }catch(e){}
         }
         var restoreBtn = isAdminUser() ? '<button class="ppl-alumni-restore" onclick="event.stopPropagation();pplRestore(\''+p.id+'\',\''+esc(p.name)+'\')" title="Restore to active team">↺ Restore</button>' : '';
-        return '<div class="ppl-alumni-card">'+
+        return '<div class="ppl-alumni-card" onclick="pplOpenProfile(\''+p.id+'\')" style="cursor:pointer;">'+
           restoreBtn+
           avatar+
           '<div class="ppl-card-name">'+esc(p.name||'')+'</div>'+
@@ -12163,10 +12163,23 @@ function pplOpenProfile(id){
 
   var canEdit = isAdminUser() || (currentUser && currentUser.id === p.user_id);
 
+  var relievedHtml = '';
+  if(p.relieved){
+    var relDateStr = '';
+    if(p.relieved_date){
+      try{ relDateStr = new Date(p.relieved_date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }catch(e){}
+    }
+    relievedHtml = '<div style="margin-top:.6rem;display:flex;flex-direction:column;align-items:center;gap:.25rem;">'+
+      '<span class="ppl-alumni-badge" style="position:static;">'+esc(p.relieved_note||'Relieved from Duty ❤️')+'</span>'+
+      (relDateStr?'<span class="ppl-alumni-date" style="margin-top:0;">'+relDateStr+'</span>':'')+
+    '</div>';
+  }
+
   var html = '<div class="ppl-modal-hero">'+
     avatar+
     '<div class="ppl-modal-name">'+esc(p.name||'')+'</div>'+
     '<div class="ppl-modal-role">'+esc(p.role||'')+(p.team?' · '+esc(p.team):'')+'</div>'+
+    relievedHtml+
     (canEdit?'<button class="ppl-upload-btn" style="margin-top:.6rem;" onclick="pplOpenEdit(\''+p.id+'\')">✎ Edit Profile</button>':'')+
   '</div>'+
   '<div class="ppl-modal-body">';
