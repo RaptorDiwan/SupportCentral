@@ -191,7 +191,7 @@
   body {
     font-family: 'DM Sans', sans-serif;
     background:
-      linear-gradient(145deg, #EAF2FC 0%, #DCE7F5 46%, #C8D3E1 100%);
+      linear-gradient(145deg, #FBF3EC 0%, #F7ECE6 46%, #EDE0D3 100%);
     color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
@@ -426,6 +426,11 @@
   .li-wipe-logo svg { width: 100%; height: 100%; display: block; }
   .li-wipe-logo.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
   .li-wipe-logo.burst { opacity: 0; transform: translate(-50%,-50%) scale(2.1); filter: drop-shadow(0 0 34px rgba(255,91,61,0)); }
+
+  /* Lightweight local particle burst for small in-page actions (Start/End
+     Work) — always transparent when idle, never dims the screen or blocks
+     clicks, unlike the full-screen login/logout transition above. */
+  .li-burst { position: fixed; inset: 0; z-index: 500; pointer-events: none; }
 
   @media (max-width: 860px) {
     #login-view { flex-direction: column; }
@@ -1772,9 +1777,13 @@
     .sidebar { display: none; }
     .main-content { padding: 1rem 1rem 7rem 1rem; overflow-y: visible; }
 
-    /* ── BOTTOM NAV ── */
-    .mobile-bottom-nav { display: flex !important; }
-    .mob-nav-more-panel.open { display: block; }
+    /* ── BOTTOM NAV ──
+       Gated on body.logged-in (same pattern already used for #chat-dock-icon
+       etc.) — without this, the bottom nav (with Reports/Quiz/etc. shortcuts)
+       would render on top of the login page too, since it lives outside the
+       #dashboard-view container and isn't hidden by the view-switching logic. */
+    body.logged-in .mobile-bottom-nav { display: flex !important; }
+    body.logged-in .mob-nav-more-panel.open { display: block; }
 
     /* ── BREAK BAR ── */
     .break-bar { left: 0; padding: .5rem .75rem; flex-direction: column; gap: .4rem; bottom: 56px; }
@@ -1811,7 +1820,7 @@
 
     /* ── FORMS ── */
     .field-group input, .field-group select, .field-group textarea { width: 100%; box-sizing: border-box; }
-    .login-card { padding: 2rem 1.25rem; margin: 1rem; }
+    .li-form-wrap { padding: 0 .25rem; }
   }
 
   /* Hide bottom nav on desktop — shown only via media query above */
@@ -3174,6 +3183,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
     <text x="74" y="100" font-family="Arial, sans-serif" font-weight="700" font-size="100" fill="#ff5b3d">7</text>
   </svg>
 </div>
+<canvas id="li-burst" class="li-burst" aria-hidden="true"></canvas>
 
 <!-- ══════════ DASHBOARD VIEW ══════════ -->
 <div id="dashboard-view" class="view" style="flex-direction:column;">
@@ -5746,6 +5756,70 @@ function liDrawDot(ctx, x, y, size, hue, alpha){
   ctx.arc(x, y, size * 0.75, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOCAL BUTTON BURST — lightweight particle "confirm" flourish for small
+//  in-page actions (Start Work / End Work). Deliberately NOT the full-screen
+//  login/logout treatment: no backdrop dimming, no blocked input, no view
+//  swap — just a quick, proportionate acknowledgment right at the button.
+//  Reuses liDrawDot/liEaseOutCubic/liGetGlowSprite from the engine above.
+// ═══════════════════════════════════════════════════════════════
+var _lbCanvas = null, _lbCtx = null, _lbParticles = [], _lbRAF = null, _lbStart = 0;
+var LB_DURATION_MS = 550;
+
+function liButtonBurst(btnId, hue1, hue2){
+  var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reducedMotion) return;
+  var canvas = document.getElementById('li-burst');
+  var btn = document.getElementById(btnId);
+  if(!canvas || !btn || typeof canvas.getContext !== 'function') return;
+
+  _lbCanvas = canvas;
+  _lbCtx = canvas.getContext('2d');
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  _lbCanvas.width = Math.round(window.innerWidth * dpr);
+  _lbCanvas.height = Math.round(window.innerHeight * dpr);
+  _lbCanvas.style.width = window.innerWidth + 'px';
+  _lbCanvas.style.height = window.innerHeight + 'px';
+  _lbCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  var r = btn.getBoundingClientRect();
+  var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  var count = window.innerWidth < 480 ? 16 : 26;
+  _lbParticles = [];
+  for(var i = 0; i < count; i++){
+    var angle = (Math.PI * 2 * i / count) + (Math.random() * 0.4 - 0.2);
+    var dist = Math.max(r.width, r.height) * 0.4 + Math.random() * 40;
+    _lbParticles.push({
+      cx: cx, cy: cy, angle: angle, dist: dist,
+      size: 1.2 + Math.random() * 2,
+      hue: hue1 + Math.random() * (hue2 - hue1)
+    });
+  }
+
+  if(_lbRAF){ cancelAnimationFrame(_lbRAF); }
+  _lbStart = performance.now();
+  _lbRAF = requestAnimationFrame(liBurstLoop);
+}
+
+function liBurstLoop(now){
+  var elapsed = now - _lbStart;
+  var p = Math.min(1, elapsed / LB_DURATION_MS);
+  var e = liEaseOutCubic(p);
+  _lbCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  for(var i = 0; i < _lbParticles.length; i++){
+    var pt = _lbParticles[i];
+    var x = pt.cx + Math.cos(pt.angle) * pt.dist * e;
+    var y = pt.cy + Math.sin(pt.angle) * pt.dist * e;
+    liDrawDot(_lbCtx, x, y, pt.size, pt.hue, (1 - p) * 0.9);
+  }
+  if(p < 1){
+    _lbRAF = requestAnimationFrame(liBurstLoop);
+  } else {
+    _lbCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    _lbRAF = null;
+  }
 }
 
 function liDraw(elapsed){
@@ -11940,6 +12014,9 @@ async function workClockIn(){
       time: loginTime,
       date: today
     }));
+    // Quick local particle confirm — grabbed while the button is still
+    // visible, right before setWclockUI() swaps it out for End Work.
+    liButtonBurst('wclock-start-btn', 135, 155);
     setWclockUI('active');
     startWclockTick();
     showAttendanceBadge(loginTime);
@@ -12016,6 +12093,9 @@ async function confirmEndWork(){
     // Update display
     var display = document.getElementById('work-clock-display');
     if(display){ display.textContent = 'Done — ' + h + 'h ' + m + 'm'; display.style.color = '#4ade80'; }
+    // Quick local particle confirm — grabbed while End Work is still
+    // visible, right before setWclockUI() swaps it back to Start Work.
+    liButtonBurst('wclock-end-btn', 8, 26);
     setWclockUI('done');
     // Clear persisted clock-in
     localStorage.removeItem('tc_clockin_'+currentUser.id);
