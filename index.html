@@ -7980,7 +7980,7 @@ async function loadReport(){
 
 function renderBlockLog(rows){
   var output = document.getElementById('report-output');
-  var canDelete = typeof isAdminUser==='function' && isAdminUser(); // godmode-only override
+  var canDelete = typeof _isSysLevel==='function' && _isSysLevel(); // godmode (syslevel) only — not admin/TL
   var html = '<table class="reports-table" style="min-width:700px;">';
   html += '<thead><tr>'+
     '<th style="white-space:nowrap;">Date &amp; Time</th>'+
@@ -8022,7 +8022,7 @@ function renderBlockLog(rows){
 
 // ── Godmode-only: manual override to delete Block/Unblock Log entries ──
 async function blocklogDeleteEntry(id){
-  if(!isAdminUser()) return;
+  if(!_isSysLevel()) return;
   if(!confirm('Permanently delete this block/unblock log entry?\n\nThis cannot be undone.')) return;
   try{
     await sbDelete('block_audit_log','id',id);
@@ -8037,7 +8037,7 @@ async function blocklogDeleteEntry(id){
 }
 
 async function blocklogDeleteAll(){
-  if(!isAdminUser()) return;
+  if(!_isSysLevel()) return;
   if(!_reportData || !_reportData.length) return;
   if(!confirm('Permanently delete all '+_reportData.length+' block/unblock log entries currently shown?\n\nThis cannot be undone.')) return;
   try{
