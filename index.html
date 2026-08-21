@@ -16239,23 +16239,27 @@ var ESC = (function(){
   }
 
   // Shared by the dashboard cards and the Excel export, so both always agree.
-  // Scoped to today only, so the live per-agent status cards reset each day.
+  // Live state (current case, not-started queue) is NEVER date-filtered — it
+  // reflects real-time reality. Only the daily counters/averages (Assigned
+  // today, Avg. Pickup, Avg. Handling) reset each day, matching the team KPI chips above.
   function computeAgentStats(){
     var byAgent = {};
     _rows.forEach(function(r){
-      if(!isToday(r.assigned_at)) return; // keep the L2 status cards scoped to today, resetting each day
       if(isPoolCase(r)) return; // pool cases have no owner yet — don't show up disguised as a fake "engineer" card
+      var isOpen = r.status==='assigned' || r.status==='started'; // still live, regardless of when it was assigned
+      var assignedToday = isToday(r.assigned_at);
+      if(!isOpen && !assignedToday) return; // resolved on a prior day — irrelevant to today's card
       var k=r.l2_agent_name||'Unassigned';
       if(!byAgent[k]) byAgent[k]={ name:k, assigned:0, pickedUp:0, pickupTotal:0, resolved:0, handleTotal:0, pending:0, inProgress:0, current:null, notStartedTickets:[] };
-      byAgent[k].assigned++;
-      if(r.status==='assigned'){ byAgent[k].pending++; byAgent[k].notStartedTickets.push(r); }
+      if(assignedToday) byAgent[k].assigned++; // "Assigned" count is today's workload only
+      if(r.status==='assigned'){ byAgent[k].pending++; byAgent[k].notStartedTickets.push(r); } // always shown, any age — real backlog
       if(r.status==='started'){
         byAgent[k].inProgress++;
-        if(!byAgent[k].current || new Date(r.started_at)>new Date(byAgent[k].current.started_at)) byAgent[k].current=r;
+        if(!byAgent[k].current || new Date(r.started_at)>new Date(byAgent[k].current.started_at)) byAgent[k].current=r; // always shown, any age — real live state
       }
-      if(r.started_at){ byAgent[k].pickedUp++; byAgent[k].pickupTotal += pickupMs(r); }
+      if(r.started_at && isToday(r.started_at)){ byAgent[k].pickedUp++; byAgent[k].pickupTotal += pickupMs(r); } // today's pickups only
       var hm = handleMs(r);
-      if(hm!=null){ byAgent[k].resolved++; byAgent[k].handleTotal += hm; }
+      if(hm!=null && isToday(r.resolved_at)){ byAgent[k].resolved++; byAgent[k].handleTotal += hm; } // today's resolutions only
     });
     return Object.keys(byAgent).map(function(k){ return byAgent[k]; }).sort(function(a,b){ return b.assigned-a.assigned; });
   }
