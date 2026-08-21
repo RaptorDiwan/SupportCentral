@@ -7980,6 +7980,7 @@ async function loadReport(){
 
 function renderBlockLog(rows){
   var output = document.getElementById('report-output');
+  var canDelete = typeof isAdminUser==='function' && isAdminUser(); // godmode-only override
   var html = '<table class="reports-table" style="min-width:700px;">';
   html += '<thead><tr>'+
     '<th style="white-space:nowrap;">Date &amp; Time</th>'+
@@ -7988,7 +7989,8 @@ function renderBlockLog(rows){
     '<th>Email</th>'+
     '<th>Unblocked / Blocked By</th>'+
     '<th>Reason</th>'+
-    '</tr></thead><tbody>';
+    (canDelete ? '<th style="text-align:right;">Manual Override</th>' : '')+
+    '</tr></thead><tbody id="blocklog-tbody">';
   rows.forEach(function(r){
     var ts = r.timestamp ? new Date(r.timestamp) : null;
     var tsStr = ts ? ts.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+ts.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—';
@@ -7996,18 +7998,57 @@ function renderBlockLog(rows){
     var actionBadge = isBlock
       ? '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;background:rgba(239,73,60,.12);color:#EF493C;">🔒 Blocked</span>'
       : '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;background:rgba(46,197,111,.12);color:#1a7a45;">🔓 Unblocked</span>';
-    html += '<tr>'+
+    html += '<tr id="blocklog-row-'+esc(r.id)+'">'+
       '<td style="white-space:nowrap;font-size:.78rem;">'+esc(tsStr)+'</td>'+
       '<td>'+actionBadge+'</td>'+
       '<td style="font-weight:600;">'+esc(r.target_user_name||'—')+'</td>'+
       '<td style="font-size:.78rem;color:var(--text-muted);">'+esc(r.target_user_email||'—')+'</td>'+
       '<td style="font-weight:500;">'+esc(r.actor_user_name||'—')+'</td>'+
       '<td style="font-size:.78rem;color:var(--text-muted);">'+esc(r.reason||'—')+'</td>'+
+      (canDelete
+        ? '<td style="text-align:right;"><button onclick="blocklogDeleteEntry(\''+esc(r.id)+'\')" style="padding:.28rem .7rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.28);color:#EF493C;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;">🗑 Delete</button></td>'
+        : '')+
       '</tr>';
   });
   html += '</tbody></table>';
   output.innerHTML = '<div style="overflow-x:auto;">'+html+'</div>'+
-    '<div style="margin-top:.75rem;font-size:.75rem;color:var(--text-dim);">'+rows.length+' event(s) found</div>';
+    '<div style="margin-top:.75rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'+
+      '<span style="font-size:.75rem;color:var(--text-dim);" id="blocklog-count">'+rows.length+' event(s) found</span>'+
+      (canDelete && rows.length
+        ? '<button onclick="blocklogDeleteAll()" style="padding:.32rem .85rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.28);color:#EF493C;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">🗑 Delete All Shown</button>'
+        : '')+
+    '</div>';
+}
+
+// ── Godmode-only: manual override to delete Block/Unblock Log entries ──
+async function blocklogDeleteEntry(id){
+  if(!isAdminUser()) return;
+  if(!confirm('Permanently delete this block/unblock log entry?\n\nThis cannot be undone.')) return;
+  try{
+    await sbDelete('block_audit_log','id',id);
+    var row = document.getElementById('blocklog-row-'+id);
+    if(row) row.remove();
+    if(_reportData && _reportData.length) _reportData = _reportData.filter(function(r){ return String(r.id)!==String(id); });
+    var countEl = document.getElementById('blocklog-count');
+    if(countEl) countEl.textContent = (_reportData?_reportData.length:0)+' event(s) found';
+  }catch(e){
+    alert('Could not delete entry: '+e.message);
+  }
+}
+
+async function blocklogDeleteAll(){
+  if(!isAdminUser()) return;
+  if(!_reportData || !_reportData.length) return;
+  if(!confirm('Permanently delete all '+_reportData.length+' block/unblock log entries currently shown?\n\nThis cannot be undone.')) return;
+  try{
+    for(var i=0;i<_reportData.length;i++){
+      await sbDelete('block_audit_log','id',_reportData[i].id);
+    }
+    _reportData = [];
+    renderBlockLog([]);
+  }catch(e){
+    alert('Some entries may not have been deleted: '+e.message);
+  }
 }
 
 function renderEscalationRemoteReport(rows){
@@ -16198,9 +16239,11 @@ var ESC = (function(){
   }
 
   // Shared by the dashboard cards and the Excel export, so both always agree.
+  // Scoped to today only, so the live per-agent status cards reset each day.
   function computeAgentStats(){
     var byAgent = {};
     _rows.forEach(function(r){
+      if(!isToday(r.assigned_at)) return; // keep the L2 status cards scoped to today, resetting each day
       if(isPoolCase(r)) return; // pool cases have no owner yet — don't show up disguised as a fake "engineer" card
       var k=r.l2_agent_name||'Unassigned';
       if(!byAgent[k]) byAgent[k]={ name:k, assigned:0, pickedUp:0, pickupTotal:0, resolved:0, handleTotal:0, pending:0, inProgress:0, current:null, notStartedTickets:[] };
@@ -16232,9 +16275,9 @@ var ESC = (function(){
     var inProg   = _rows.filter(function(r){ return r.status==='started'; });
     var resolvedTodayRows = _rows.filter(function(r){ return r.status==='resolved' && isToday(r.resolved_at); });
     var resolvedToday = resolvedTodayRows.length; // includes all sources — every real resolution counts toward the team's total
-    var pickedUp = _rows.filter(function(r){ return r.started_at; }); // pickup time, same rule for every source now — the manual Start Work click is what starts the clock
+    var pickedUp = _rows.filter(function(r){ return r.started_at && isToday(r.started_at); }); // today's pickups only — resets daily
     var avgPickupAll = pickedUp.length ? (pickedUp.reduce(function(s,r){ return s+pickupMs(r); },0)/pickedUp.length) : null;
-    var handledRows = _rows.filter(function(r){ return handleMs(r)!=null; }); // includes all sources — handling time is real regardless of where the case came from
+    var handledRows = _rows.filter(function(r){ return handleMs(r)!=null && isToday(r.resolved_at); }); // today's resolutions only — resets daily
     var avgHandleAll = handledRows.length ? (handledRows.reduce(function(s,r){ return s+handleMs(r); },0)/handledRows.length) : null;
 
     function vertSplit(rows){ return { ent: rows.filter(function(r){ return r.vertical==='Enterprise'; }).length, con: rows.filter(function(r){ return r.vertical==='Consumer'; }).length }; }
@@ -16280,10 +16323,13 @@ var ESC = (function(){
 
     if(urgentWrap){
       if(!attnItems.length){
-        // Nothing to flag — the hero "Not Started" card already shows 0,
-        // so this section just disappears instead of taking up space to
-        // announce an empty state. Only shows up when there's something to act on.
-        urgentWrap.innerHTML = '';
+        // Nothing to flag right now — show an explicit all-clear state so it's
+        // visually confirmed the check ran, instead of the section just vanishing.
+        urgentWrap.innerHTML = '<div class="xc-card"><div class="xc-card-title">Needs Attention</div><div class="xc-card-sub">Not-started cases and remotes running past 30 min — worst first.</div>'+
+          '<div style="display:flex;align-items:center;gap:.6rem;padding:1.1rem 0 .3rem;color:var(--accent-green);font-weight:600;font-size:.85rem;">'+
+            '<span style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);display:inline-block;flex-shrink:0;"></span>'+
+            'All caught up — nothing waiting or overdue right now.'+
+          '</div></div>';
       } else {
         urgentWrap.innerHTML = '<div class="xc-card"><div class="xc-card-title">Needs Attention</div><div class="xc-card-sub">Not-started cases and remotes running past 30 min — worst first.</div>'+
           '<div class="esc-urgent-strip">'+
@@ -16555,8 +16601,7 @@ var ESC = (function(){
     if(agentWrap){
       var agentGranularity = _agentPeriod;
       var agentCurrentKey = keyFor(new Date(), agentGranularity);
-      var periodLabel = agentGranularity==='day'?'today':agentGranularity==='week'?'this week':'this month';
-      if(agentTitle) agentTitle.textContent = 'Cases Handled by Engineer — '+periodLabel;
+      if(agentTitle) agentTitle.textContent = 'Cases Handled by Engineer';
 
       var byAgent = {};
       _rows.forEach(function(r){
