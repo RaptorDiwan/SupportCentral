@@ -2812,13 +2812,24 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
   .tb-break-btn.open .tb-break-arrow { transform: rotate(180deg); }
 
   .tb-break-menu {
-    position: absolute; top: calc(100% + 8px); right: 0;
+    /* Positioned with JS (see tbBreakToggle) using position:fixed rather
+       than absolute + top/right. On mobile, .topbar-right has
+       overflow-x:auto, and per the CSS spec once overflow-x isn't
+       "visible" the browser forces overflow-y to compute to "auto" too —
+       so an absolutely-positioned dropdown here gets clipped by that
+       scroll container no matter what overflow-y says. position:fixed
+       escapes ancestor overflow clipping entirely (as long as no
+       ancestor has a transform/filter, which none here do), so the menu
+       renders on top of everything instead of being cut off. */
+    position: fixed; top: 0; left: 0;
     background: rgba(14,20,50,.97); border: 1px solid rgba(255,255,255,.14);
     border-radius: 12px; padding: .5rem;
     min-width: 210px; z-index: 6000;
     box-shadow: 0 16px 48px rgba(0,0,0,.5);
     backdrop-filter: blur(16px);
     display: none;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
   }
   .tb-break-menu.open { display: block; animation: fadeSlideDown .15s ease; }
   @keyframes fadeSlideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
@@ -5862,7 +5873,7 @@ function _inactForceLogout(){
     document.getElementById('dashboard-view').classList.remove('active');
     document.getElementById('login-view').classList.add('active');
     var bb = document.getElementById('break-bar'); if(bb) bb.style.display = 'none';
-    var tbw = document.getElementById('tb-break-wrap'); if(tbw) tbw.style.display = 'none';
+    var tbw = document.getElementById('tb-break-wrap'); if(tbw) tbw.style.display = 'none'; if(typeof tbBreakClose==='function') tbBreakClose();
     var ab = document.getElementById('attendance-badge'); if(ab) ab.style.display = 'none';
     var wdt = document.getElementById('work-done-toast'); if(wdt) wdt.remove();
     document.getElementById('username').value = '';
@@ -5953,7 +5964,7 @@ async function doLogout(){
   document.getElementById('dashboard-view').classList.remove('active');
   document.getElementById('login-view').classList.add('active');
   var bb=document.getElementById('break-bar');if(bb)bb.style.display='none';
-  var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';
+  var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';if(typeof tbBreakClose==='function')tbBreakClose();
   var ab=document.getElementById('attendance-badge');if(ab)ab.style.display='none';
   // Remove the "Work Session Complete" toast if it's still showing (e.g. user
   // logs out within its 12s auto-dismiss window) — it's appended straight to
@@ -7171,7 +7182,7 @@ async function bbGoToLogin(){
   document.getElementById('dashboard-view').classList.remove('active');
   document.getElementById('login-view').classList.add('active');
   var bb=document.getElementById('break-bar');if(bb)bb.style.display='none';
-  var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';
+  var tbw=document.getElementById('tb-break-wrap');if(tbw)tbw.style.display='none';if(typeof tbBreakClose==='function')tbBreakClose();
   var ab=document.getElementById('attendance-badge');if(ab)ab.style.display='none';
   var wdt=document.getElementById('work-done-toast');if(wdt)wdt.remove();
   document.getElementById('username').value='';
@@ -7320,25 +7331,79 @@ const BREAK_EMOJIS = { breakfast:'🍳', lunch:'🍽️', beverage:'☕', shortb
 var _breakState = {}; // { type: { start, elapsed, done, interval } }
 
 // ── Topbar break button functions ──
+function tbBreakEnsurePortal(){
+  // .topbar (an ancestor several levels up) uses backdrop-filter, which
+  // per spec makes it a new "containing block" for position:fixed
+  // descendants — so a fixed element left inside it doesn't actually
+  // anchor to the viewport, it anchors to .topbar instead, which drags
+  // .topbar-right's overflow-x:auto clipping back into play. Moving the
+  // menu to be a direct child of <body> (a "portal", same trick libraries
+  // like Radix/Popper use) takes it out from under any filtered/
+  // backdrop-filtered ancestor for good.
+  var menu=document.getElementById('tb-break-menu');
+  if(menu && menu.parentElement !== document.body){
+    document.body.appendChild(menu);
+  }
+}
+function tbBreakClose(){
+  var menu=document.getElementById('tb-break-menu');
+  var btn=document.getElementById('tb-break-btn');
+  if(menu)menu.classList.remove('open');
+  if(btn)btn.classList.remove('open');
+  window.removeEventListener('resize',tbBreakPositionMenu);
+  window.removeEventListener('scroll',tbBreakPositionMenu,true);
+}
+function tbBreakPositionMenu(){
+  // Menu is position:fixed, so it's positioned relative to the viewport,
+  // not the scrolling .topbar-right wrap — this is what keeps it from
+  // getting clipped on mobile. We compute the spot from the button's
+  // actual on-screen position instead of relying on CSS top/right.
+  var btn=document.getElementById('tb-break-btn');
+  var menu=document.getElementById('tb-break-menu');
+  if(!btn||!menu)return;
+  var r=btn.getBoundingClientRect();
+  var margin=8;
+  // Default: below the button, right-aligned to it.
+  var menuWidth=Math.max(menu.offsetWidth,210);
+  var left=r.right-menuWidth;
+  if(left<margin) left=margin; // don't run off the left edge on narrow screens
+  var maxLeft=window.innerWidth-menuWidth-margin;
+  if(left>maxLeft) left=Math.max(margin,maxLeft);
+  var top=r.bottom+margin;
+  // If there isn't room below (small phones with the break bar docked at
+  // the bottom), flip the menu above the button instead of letting it
+  // overflow off the bottom of the screen.
+  var menuHeight=menu.offsetHeight||300;
+  if(top+menuHeight>window.innerHeight-margin){
+    top=r.top-menuHeight-margin;
+    if(top<margin) top=margin;
+  }
+  menu.style.left=left+'px';
+  menu.style.top=top+'px';
+}
 function tbBreakToggle(e){
   if(e) e.stopPropagation();
+  tbBreakEnsurePortal();
   var btn=document.getElementById('tb-break-btn');
   var menu=document.getElementById('tb-break-menu');
   if(!btn||!menu)return;
   var isOpen=menu.classList.contains('open');
   if(isOpen){
-    menu.classList.remove('open');
-    btn.classList.remove('open');
+    tbBreakClose();
   } else {
+    // Show first (off-screen-safe defaults) so offsetWidth/Height are
+    // measurable, then position it, then reveal.
     menu.classList.add('open');
     btn.classList.add('open');
+    tbBreakPositionMenu();
+    window.addEventListener('resize',tbBreakPositionMenu);
+    window.addEventListener('scroll',tbBreakPositionMenu,true);
     // Close when clicking outside
     setTimeout(function(){
       document.addEventListener('click',function closeTbMenu(ev){
         var wrap=document.getElementById('tb-break-wrap');
-        if(wrap&&!wrap.contains(ev.target)){
-          menu.classList.remove('open');
-          btn.classList.remove('open');
+        if((wrap&&!wrap.contains(ev.target))&&!menu.contains(ev.target)){
+          tbBreakClose();
         }
         document.removeEventListener('click',closeTbMenu);
       });
@@ -7351,6 +7416,8 @@ function tbBreakPick(type){
   var mainBtn=document.getElementById('tb-break-btn');
   if(menu)menu.classList.remove('open');
   if(mainBtn)mainBtn.classList.remove('open');
+  window.removeEventListener('resize',tbBreakPositionMenu);
+  window.removeEventListener('scroll',tbBreakPositionMenu,true);
 
   // Check if already active — end the break
   var state=_breakState[type];
@@ -7980,7 +8047,6 @@ async function loadReport(){
 
 function renderBlockLog(rows){
   var output = document.getElementById('report-output');
-  var canDelete = typeof _isSysLevel==='function' && _isSysLevel(); // godmode (syslevel) only — not admin/TL
   var html = '<table class="reports-table" style="min-width:700px;">';
   html += '<thead><tr>'+
     '<th style="white-space:nowrap;">Date &amp; Time</th>'+
@@ -7989,8 +8055,7 @@ function renderBlockLog(rows){
     '<th>Email</th>'+
     '<th>Unblocked / Blocked By</th>'+
     '<th>Reason</th>'+
-    (canDelete ? '<th style="text-align:right;">Manual Override</th>' : '')+
-    '</tr></thead><tbody id="blocklog-tbody">';
+    '</tr></thead><tbody>';
   rows.forEach(function(r){
     var ts = r.timestamp ? new Date(r.timestamp) : null;
     var tsStr = ts ? ts.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+ts.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—';
@@ -7998,57 +8063,18 @@ function renderBlockLog(rows){
     var actionBadge = isBlock
       ? '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;background:rgba(239,73,60,.12);color:#EF493C;">🔒 Blocked</span>'
       : '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;background:rgba(46,197,111,.12);color:#1a7a45;">🔓 Unblocked</span>';
-    html += '<tr id="blocklog-row-'+esc(r.id)+'">'+
+    html += '<tr>'+
       '<td style="white-space:nowrap;font-size:.78rem;">'+esc(tsStr)+'</td>'+
       '<td>'+actionBadge+'</td>'+
       '<td style="font-weight:600;">'+esc(r.target_user_name||'—')+'</td>'+
       '<td style="font-size:.78rem;color:var(--text-muted);">'+esc(r.target_user_email||'—')+'</td>'+
       '<td style="font-weight:500;">'+esc(r.actor_user_name||'—')+'</td>'+
       '<td style="font-size:.78rem;color:var(--text-muted);">'+esc(r.reason||'—')+'</td>'+
-      (canDelete
-        ? '<td style="text-align:right;"><button onclick="blocklogDeleteEntry(\''+esc(r.id)+'\')" style="padding:.28rem .7rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.28);color:#EF493C;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;">🗑 Delete</button></td>'
-        : '')+
       '</tr>';
   });
   html += '</tbody></table>';
   output.innerHTML = '<div style="overflow-x:auto;">'+html+'</div>'+
-    '<div style="margin-top:.75rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">'+
-      '<span style="font-size:.75rem;color:var(--text-dim);" id="blocklog-count">'+rows.length+' event(s) found</span>'+
-      (canDelete && rows.length
-        ? '<button onclick="blocklogDeleteAll()" style="padding:.32rem .85rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.28);color:#EF493C;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">🗑 Delete All Shown</button>'
-        : '')+
-    '</div>';
-}
-
-// ── Godmode-only: manual override to delete Block/Unblock Log entries ──
-async function blocklogDeleteEntry(id){
-  if(!_isSysLevel()) return;
-  if(!confirm('Permanently delete this block/unblock log entry?\n\nThis cannot be undone.')) return;
-  try{
-    await sbDelete('block_audit_log','id',id);
-    var row = document.getElementById('blocklog-row-'+id);
-    if(row) row.remove();
-    if(_reportData && _reportData.length) _reportData = _reportData.filter(function(r){ return String(r.id)!==String(id); });
-    var countEl = document.getElementById('blocklog-count');
-    if(countEl) countEl.textContent = (_reportData?_reportData.length:0)+' event(s) found';
-  }catch(e){
-    alert('Could not delete entry: '+e.message);
-  }
-}
-
-async function blocklogDeleteAll(){
-  if(!_isSysLevel()) return;
-  if(!_reportData || !_reportData.length) return;
-  if(!confirm('Permanently delete all '+_reportData.length+' block/unblock log entries currently shown?\n\nThis cannot be undone.')) return;
-  try{
-    for(var i=0;i<_reportData.length;i++){
-      await sbDelete('block_audit_log','id',_reportData[i].id);
-    }
-    _reportData = [];
-    renderBlockLog([]);
-  }catch(e){
-    alert('Some entries may not have been deleted: '+e.message);
-  }
+    '<div style="margin-top:.75rem;font-size:.75rem;color:var(--text-dim);">'+rows.length+' event(s) found</div>';
 }
 
 function renderEscalationRemoteReport(rows){
@@ -16239,27 +16265,21 @@ var ESC = (function(){
   }
 
   // Shared by the dashboard cards and the Excel export, so both always agree.
-  // Live state (current case, not-started queue) is NEVER date-filtered — it
-  // reflects real-time reality. Only the daily counters/averages (Assigned
-  // today, Avg. Pickup, Avg. Handling) reset each day, matching the team KPI chips above.
   function computeAgentStats(){
     var byAgent = {};
     _rows.forEach(function(r){
       if(isPoolCase(r)) return; // pool cases have no owner yet — don't show up disguised as a fake "engineer" card
-      var isOpen = r.status==='assigned' || r.status==='started'; // still live, regardless of when it was assigned
-      var assignedToday = isToday(r.assigned_at);
-      if(!isOpen && !assignedToday) return; // resolved on a prior day — irrelevant to today's card
       var k=r.l2_agent_name||'Unassigned';
       if(!byAgent[k]) byAgent[k]={ name:k, assigned:0, pickedUp:0, pickupTotal:0, resolved:0, handleTotal:0, pending:0, inProgress:0, current:null, notStartedTickets:[] };
-      if(assignedToday) byAgent[k].assigned++; // "Assigned" count is today's workload only
-      if(r.status==='assigned'){ byAgent[k].pending++; byAgent[k].notStartedTickets.push(r); } // always shown, any age — real backlog
+      byAgent[k].assigned++;
+      if(r.status==='assigned'){ byAgent[k].pending++; byAgent[k].notStartedTickets.push(r); }
       if(r.status==='started'){
         byAgent[k].inProgress++;
-        if(!byAgent[k].current || new Date(r.started_at)>new Date(byAgent[k].current.started_at)) byAgent[k].current=r; // always shown, any age — real live state
+        if(!byAgent[k].current || new Date(r.started_at)>new Date(byAgent[k].current.started_at)) byAgent[k].current=r;
       }
-      if(r.started_at && isToday(r.started_at)){ byAgent[k].pickedUp++; byAgent[k].pickupTotal += pickupMs(r); } // today's pickups only
+      if(r.started_at){ byAgent[k].pickedUp++; byAgent[k].pickupTotal += pickupMs(r); }
       var hm = handleMs(r);
-      if(hm!=null && isToday(r.resolved_at)){ byAgent[k].resolved++; byAgent[k].handleTotal += hm; } // today's resolutions only
+      if(hm!=null){ byAgent[k].resolved++; byAgent[k].handleTotal += hm; }
     });
     return Object.keys(byAgent).map(function(k){ return byAgent[k]; }).sort(function(a,b){ return b.assigned-a.assigned; });
   }
@@ -16279,9 +16299,9 @@ var ESC = (function(){
     var inProg   = _rows.filter(function(r){ return r.status==='started'; });
     var resolvedTodayRows = _rows.filter(function(r){ return r.status==='resolved' && isToday(r.resolved_at); });
     var resolvedToday = resolvedTodayRows.length; // includes all sources — every real resolution counts toward the team's total
-    var pickedUp = _rows.filter(function(r){ return r.started_at && isToday(r.started_at); }); // today's pickups only — resets daily
+    var pickedUp = _rows.filter(function(r){ return r.started_at; }); // pickup time, same rule for every source now — the manual Start Work click is what starts the clock
     var avgPickupAll = pickedUp.length ? (pickedUp.reduce(function(s,r){ return s+pickupMs(r); },0)/pickedUp.length) : null;
-    var handledRows = _rows.filter(function(r){ return handleMs(r)!=null && isToday(r.resolved_at); }); // today's resolutions only — resets daily
+    var handledRows = _rows.filter(function(r){ return handleMs(r)!=null; }); // includes all sources — handling time is real regardless of where the case came from
     var avgHandleAll = handledRows.length ? (handledRows.reduce(function(s,r){ return s+handleMs(r); },0)/handledRows.length) : null;
 
     function vertSplit(rows){ return { ent: rows.filter(function(r){ return r.vertical==='Enterprise'; }).length, con: rows.filter(function(r){ return r.vertical==='Consumer'; }).length }; }
@@ -16327,13 +16347,10 @@ var ESC = (function(){
 
     if(urgentWrap){
       if(!attnItems.length){
-        // Nothing to flag right now — show an explicit all-clear state so it's
-        // visually confirmed the check ran, instead of the section just vanishing.
-        urgentWrap.innerHTML = '<div class="xc-card"><div class="xc-card-title">Needs Attention</div><div class="xc-card-sub">Not-started cases and remotes running past 30 min — worst first.</div>'+
-          '<div style="display:flex;align-items:center;gap:.6rem;padding:1.1rem 0 .3rem;color:var(--accent-green);font-weight:600;font-size:.85rem;">'+
-            '<span style="width:8px;height:8px;border-radius:50%;background:var(--accent-green);display:inline-block;flex-shrink:0;"></span>'+
-            'All caught up — nothing waiting or overdue right now.'+
-          '</div></div>';
+        // Nothing to flag — the hero "Not Started" card already shows 0,
+        // so this section just disappears instead of taking up space to
+        // announce an empty state. Only shows up when there's something to act on.
+        urgentWrap.innerHTML = '';
       } else {
         urgentWrap.innerHTML = '<div class="xc-card"><div class="xc-card-title">Needs Attention</div><div class="xc-card-sub">Not-started cases and remotes running past 30 min — worst first.</div>'+
           '<div class="esc-urgent-strip">'+
@@ -16605,7 +16622,8 @@ var ESC = (function(){
     if(agentWrap){
       var agentGranularity = _agentPeriod;
       var agentCurrentKey = keyFor(new Date(), agentGranularity);
-      if(agentTitle) agentTitle.textContent = 'Cases Handled by Engineer';
+      var periodLabel = agentGranularity==='day'?'today':agentGranularity==='week'?'this week':'this month';
+      if(agentTitle) agentTitle.textContent = 'Cases Handled by Engineer — '+periodLabel;
 
       var byAgent = {};
       _rows.forEach(function(r){
