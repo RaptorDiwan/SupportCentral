@@ -536,42 +536,32 @@
     50% { opacity: .6; box-shadow: 0 0 0 3px rgba(255,91,61,0); }
   }
 
-  /* UI dissolving into particles: the two login panels fade + scale down
-     while the magnetic particle convergence plays on the canvas above them.
-     Also applies to the dashboard so the same effect works in reverse on
-     logout (dashboard dissolves, login panels reform underneath). */
-  body.li-transitioning .li-brand,
-  body.li-transitioning .li-panel,
-  body.li-transitioning #dashboard-view {
-    transition: transform .8s cubic-bezier(.65,0,.35,1), filter .8s ease, opacity .8s cubic-bezier(.65,0,.35,1);
-    transform: scale(0.96);
-    filter: blur(4px);
-    opacity: 0;
-  }
-
-  /* Magnetic particle convergence canvas */
+  /* Elegant color wipe — a brand-gradient panel that slides across the
+     screen to cover it, then continues onward (success) or retreats back
+     the way it came (failure/logout-cancel). Driven entirely by the
+     .animating class + transform, no canvas/JS animation loop needed. */
   .li-wipe {
     position: fixed; inset: 0; z-index: 999;
+    background: linear-gradient(100deg, #1c2340 0%, #401f28 60%, #ff7a5c 100%);
+    transform: translateX(-100%);
     pointer-events: none;
-    opacity: 0;
-    transition: opacity .25s ease;
   }
-  .li-wipe.show { opacity: 1; pointer-events: all; }
+  .li-wipe.animating { transition: transform .55s cubic-bezier(.65,0,.35,1); }
 
-  /* Brand mark that condenses into being at the convergence point, then
-     bursts away (success) or is simply dismissed (failure/reverse) */
+  /* Brand wordmark that fades in once the wipe has fully covered the
+     screen (a subtle "something's happening" cue during the network
+     wait), and fades out again the moment the wipe starts moving on. */
   .li-wipe-logo {
-    position: fixed; top: 0; left: 0; z-index: 1000;
-    width: 42px; height: 42px;
-    transform: translate(-50%,-50%) scale(0.4);
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 600;
+    color: #fff;
     opacity: 0;
     pointer-events: none;
-    filter: drop-shadow(0 0 18px rgba(255,91,61,0.8));
-    transition: opacity .35s ease, transform .35s cubic-bezier(.34,1.56,.64,1), filter .35s ease;
+    transition: opacity .3s ease;
   }
-  .li-wipe-logo svg { width: 100%; height: 100%; display: block; }
-  .li-wipe-logo.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-  .li-wipe-logo.burst { opacity: 0; transform: translate(-50%,-50%) scale(2.1); filter: drop-shadow(0 0 34px rgba(255,91,61,0)); }
+  .li-wipe-logo span { color: #ff8a6a; font-style: italic; }
+  .li-wipe-logo.show { opacity: 1; }
 
   /* Lightweight local particle burst for small in-page actions (Start/End
      Work) — always transparent when idle, never dims the screen or blocks
@@ -3190,14 +3180,9 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
   </div>
 </div>
 
-<!-- Magnetic particle convergence transition played while credentials are verified -->
-<canvas class="li-wipe" id="li-wipe" aria-hidden="true"></canvas>
-<div class="li-wipe-logo" id="liWipeLogo">
-  <svg viewBox="0 0 200 120">
-    <polygon points="10,18 60,56 110,18 64,110" fill="#fff"/>
-    <text x="74" y="100" font-family="Arial, sans-serif" font-weight="700" font-size="100" fill="#ff5b3d">7</text>
-  </svg>
-</div>
+<!-- Elegant color-wipe transition played while credentials are verified -->
+<div class="li-wipe" id="li-wipe" aria-hidden="true"></div>
+<div class="li-wipe-logo" id="liWipeLogo">K7<span>Team</span></div>
 <canvas id="li-burst" class="li-burst" aria-hidden="true"></canvas>
 
 <!-- ══════════ DASHBOARD VIEW ══════════ -->
@@ -5422,79 +5407,23 @@ async function rlLogFailedAttempt(emailTried){
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  LOGIN TRANSITION — magnetic particle convergence.
+//  LOGIN TRANSITION — elegant color wipe.
 //  Purely cosmetic; does not touch auth, validation, or rate-limit
 //  logic in doLogin(). Call sites (liStartWipe / liFinishWipe /
-//  liWaitForCover) are unchanged from the previous version.
+//  liWaitForCover) are unchanged from the previous version, so this
+//  can be swapped out again later without touching doLogin/logout.
 // ═══════════════════════════════════════════════════════════════
-var _liCanvas = null, _liCtx = null;
-var _liParticles = [];
-var _liAnimRAF = null;
-var _liPhase = null;          // 'converge' | 'hold' | 'burst' | 'reverse'
-var _liPhaseStart = 0;
-var _liTarget = {x:0, y:0};
-var _liConvergeDone = false;
+var LI_WIPE_MS = 550; // matches the CSS transition duration below
 
-// Resolves once particles have fully converged — used to guarantee the
-// dashboard is never swapped in while the dissolve is still mid-flight.
+// Resolves once the wipe panel has fully covered the screen — used to
+// guarantee the dashboard is never swapped in while it's still visible.
 var _liCoverResolve = null;
 var _liCoverPromise = null;
 function liWaitForCover(){
   return _liCoverPromise || Promise.resolve();
 }
 
-var LI_CONVERGE_MS = 800;
-var LI_BURST_MS = 650;
-var LI_REVERSE_MS = 750;
-
 function liEaseOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
-
-function liResizeCanvas(){
-  if(!_liCanvas) return;
-  // Cap the backing-buffer pixel ratio — modern phones report DPR 3, which
-  // would triple the canvas fill cost for no visible benefit on a glow effect.
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
-  _liCanvas.width = Math.round(window.innerWidth * dpr);
-  _liCanvas.height = Math.round(window.innerHeight * dpr);
-  _liCanvas.style.width = window.innerWidth + 'px';
-  _liCanvas.style.height = window.innerHeight + 'px';
-  if(_liCtx) _liCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-
-// Particles spawn from random points across whichever panels are actually
-// visible right now — the login card (brand + form) when signing in, or the
-// full viewport when triggered from the dashboard (e.g. on logout), since
-// the login panels are display:none (zero-sized) at that point.
-function liSpawnParticles(){
-  var particles = [];
-  var sources = [];
-  var brand = document.querySelector('.li-brand');
-  var panel = document.querySelector('.li-panel');
-  if(brand){ var br = brand.getBoundingClientRect(); if(br.width > 0 && br.height > 0) sources.push({ r: br, h1: 8,  h2: 22 }); }
-  if(panel){ var pr = panel.getBoundingClientRect(); if(pr.width > 0 && pr.height > 0) sources.push({ r: pr, h1: 14, h2: 34 }); }
-  if(!sources.length){ sources.push({ r: {left:0, top:0, width:window.innerWidth, height:window.innerHeight}, h1: 14, h2: 30 }); }
-
-  // Fewer particles on smaller/likely-lower-powered screens — the sprite-based
-  // glow below is cheap, but this keeps things comfortable on older phones too.
-  var count = window.innerWidth < 480 ? 60 : (window.innerWidth < 700 ? 90 : 200);
-  for(var i = 0; i < count; i++){
-    var s = sources[i % sources.length];
-    var x = s.r.left + Math.random() * s.r.width;
-    var y = s.r.top + Math.random() * s.r.height;
-    particles.push({
-      sx: x, sy: y, x: x, y: y,
-      size: 1.4 + Math.random() * 2.6,
-      hue: s.h1 + Math.random() * (s.h2 - s.h1),
-      delay: Math.random() * 0.18,           // staggered convergence start
-      orbitA: Math.random() * Math.PI * 2,   // gentle hold-phase orbit
-      orbitR: 3 + Math.random() * 10,
-      orbitSpeed: 0.5 + Math.random() * 0.9,
-      burstAngle: Math.random() * Math.PI * 2,
-      burstDist: 60 + Math.random() * Math.max(window.innerWidth, window.innerHeight) * 0.6
-    });
-  }
-  return particles;
-}
 
 // A single pre-rendered radial-gradient sprite, reused via drawImage for every
 // particle on every frame. This avoids ctx.shadowBlur (expensive, largely
@@ -5596,139 +5525,74 @@ function liBurstLoop(now){
   }
 }
 
-function liDraw(elapsed){
-  if(!_liCtx || !_liCanvas) return;
-  var ctx = _liCtx, w = window.innerWidth, h = window.innerHeight;
-  ctx.clearRect(0, 0, w, h);
-  var tx = _liTarget.x, ty = _liTarget.y, i, p;
-
-  if(_liPhase === 'converge'){
-    p = Math.min(1, elapsed / LI_CONVERGE_MS);
-    ctx.fillStyle = 'rgba(28,20,30,' + (0.72 * liEaseOutCubic(p)) + ')';
-    ctx.fillRect(0, 0, w, h);
-    for(i = 0; i < _liParticles.length; i++){
-      var pt = _liParticles[i];
-      var lp = Math.max(0, Math.min(1, (p - pt.delay) / (1 - pt.delay)));
-      var e = liEaseOutCubic(lp);
-      pt.x = pt.sx + (tx - pt.sx) * e;
-      pt.y = pt.sy + (ty - pt.sy) * e;
-      liDrawDot(ctx, pt.x, pt.y, pt.size * (0.6 + 0.4 * e), pt.hue, 0.25 + 0.65 * e);
-    }
-  } else if(_liPhase === 'hold'){
-    ctx.fillStyle = 'rgba(28,20,30,0.78)';
-    ctx.fillRect(0, 0, w, h);
-    var t = elapsed / 1000;
-    for(i = 0; i < _liParticles.length; i++){
-      var pp = _liParticles[i];
-      var ang = pp.orbitA + t * pp.orbitSpeed;
-      liDrawDot(ctx, tx + Math.cos(ang) * pp.orbitR, ty + Math.sin(ang) * pp.orbitR, pp.size, pp.hue, 0.85);
-    }
-  } else if(_liPhase === 'burst'){
-    p = Math.min(1, elapsed / LI_BURST_MS);
-    var eb = liEaseOutCubic(p);
-    ctx.fillStyle = 'rgba(28,20,30,' + (0.78 * (1 - p)) + ')';
-    ctx.fillRect(0, 0, w, h);
-    for(i = 0; i < _liParticles.length; i++){
-      var bpt = _liParticles[i];
-      var bx = tx + Math.cos(bpt.burstAngle) * bpt.burstDist * eb;
-      var by = ty + Math.sin(bpt.burstAngle) * bpt.burstDist * eb;
-      liDrawDot(ctx, bx, by, bpt.size, bpt.hue, (1 - p) * 0.9);
-    }
-  } else if(_liPhase === 'reverse'){
-    p = Math.min(1, elapsed / LI_REVERSE_MS);
-    var er = liEaseOutCubic(p);
-    ctx.fillStyle = 'rgba(28,20,30,' + (0.78 * (1 - p)) + ')';
-    ctx.fillRect(0, 0, w, h);
-    for(i = 0; i < _liParticles.length; i++){
-      var rpt = _liParticles[i];
-      rpt.x = tx + (rpt.sx - tx) * er;
-      rpt.y = ty + (rpt.sy - ty) * er;
-      liDrawDot(ctx, rpt.x, rpt.y, rpt.size, rpt.hue, 0.9 * (1 - er) + 0.15);
-    }
-  }
-}
-
-function liLoop(now){
-  var elapsed = now - _liPhaseStart;
-  liDraw(elapsed);
-
-  if(_liPhase === 'converge' && elapsed >= LI_CONVERGE_MS){
-    _liPhase = 'hold';
-    _liPhaseStart = now;
-    if(!_liConvergeDone){
-      _liConvergeDone = true;
-      var logo = document.getElementById('liWipeLogo');
-      if(logo){
-        logo.style.left = _liTarget.x + 'px';
-        logo.style.top = _liTarget.y + 'px';
-        logo.classList.add('show');
-      }
-      if(_liCoverResolve) _liCoverResolve();
-    }
-  } else if((_liPhase === 'burst' && elapsed >= LI_BURST_MS) || (_liPhase === 'reverse' && elapsed >= LI_REVERSE_MS)){
-    liEndAnimation();
-    return;
-  }
-  _liAnimRAF = requestAnimationFrame(liLoop);
-}
-
-function liEndAnimation(){
-  if(_liAnimRAF){ cancelAnimationFrame(_liAnimRAF); _liAnimRAF = null; }
-  var overlay = document.getElementById('li-wipe');
-  if(overlay) overlay.classList.remove('show');
-  var logo = document.getElementById('liWipeLogo');
-  if(logo) logo.classList.remove('show', 'burst');
-  document.body.classList.remove('li-transitioning');
-  if(_liCtx) _liCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-  _liPhase = null;
-  _liConvergeDone = false;
-}
+// Direction the wipe last travelled in — so liFinishWipe(true) always
+// continues onward in the same direction it arrived from, rather than
+// snapping back, which is what makes the motion read as "moving through"
+// rather than "bouncing".
+var _liWipeDir = 1;
+var _liCovered = false;
 
 function liStartWipe(targetId){
   var overlay = document.getElementById('li-wipe');
-  var btn = document.getElementById(targetId || 'login-btn');
+  var logo = document.getElementById('liWipeLogo');
   // Respect the OS-level "reduce motion" accessibility setting (common on
-  // iOS) — login/logout still work identically, it just skips the particle show.
+  // iOS) — login/logout still work identically, it just skips the wipe.
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!overlay || typeof overlay.getContext !== 'function' || reducedMotion){ _liCoverPromise = Promise.resolve(); return; }
+  if(!overlay || reducedMotion){ _liCoverPromise = Promise.resolve(); _liCovered = true; return; }
 
-  if(_liAnimRAF){ cancelAnimationFrame(_liAnimRAF); _liAnimRAF = null; }
-  _liConvergeDone = false;
+  _liCovered = false;
+  _liWipeDir = 1;
 
-  _liCanvas = overlay;
-  _liCtx = overlay.getContext('2d');
-  liResizeCanvas();
-
-  var r = btn ? btn.getBoundingClientRect() : null;
-  _liTarget = r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-  _liParticles = liSpawnParticles();
-
-  overlay.classList.add('show');
-  document.body.classList.add('li-transitioning');
+  // Snap to the starting position with no transition, then animate in on
+  // the next frame — this two-step is what makes repeated logins/logouts
+  // always start clean instead of picking up mid-motion.
+  overlay.classList.remove('animating');
+  overlay.style.transform = 'translateX(-100%)';
+  overlay.style.pointerEvents = 'all';
+  if(logo) logo.classList.remove('show');
+  // Force reflow so the removal above is committed before we re-add the
+  // transitioning class — without this the browser can coalesce both
+  // style changes into one paint and skip the animation entirely.
+  void overlay.offsetWidth;
 
   _liCoverPromise = new Promise(function(resolve){ _liCoverResolve = resolve; });
 
-  _liPhase = 'converge';
-  _liPhaseStart = performance.now();
-  _liAnimRAF = requestAnimationFrame(liLoop);
+  overlay.classList.add('animating');
+  requestAnimationFrame(function(){
+    overlay.style.transform = 'translateX(0%)';
+  });
+
+  setTimeout(function(){
+    _liCovered = true;
+    if(logo) logo.classList.add('show');
+    if(_liCoverResolve) _liCoverResolve();
+  }, LI_WIPE_MS);
 }
 
 function liFinishWipe(success){
   function begin(){
+    var overlay = document.getElementById('li-wipe');
     var logo = document.getElementById('liWipeLogo');
+    if(!overlay) return;
+    if(logo) logo.classList.remove('show');
     if(success){
-      if(logo) logo.classList.add('burst');
-      _liPhase = 'burst';
+      // Continue onward in the same direction, off the far edge of the
+      // screen — the view underneath has already been swapped by now.
+      overlay.style.transform = 'translateX(' + (100 * _liWipeDir) + '%)';
     } else {
-      if(logo) logo.classList.remove('show');
-      _liPhase = 'reverse';
+      // Retreat back the way it came, uncovering the (unchanged) view
+      // that was already there.
+      overlay.style.transform = 'translateX(-100%)';
     }
-    _liPhaseStart = performance.now();
+    setTimeout(function(){
+      overlay.classList.remove('animating');
+      overlay.style.pointerEvents = 'none';
+    }, LI_WIPE_MS);
   }
-  // Guard: if particles haven't finished converging yet (a very fast
-  // network response), wait for that moment before exiting, so the
-  // burst/reverse motion always looks intentional rather than jumpy.
-  if(_liConvergeDone){ begin(); }
+  // Guard: if the cover hasn't finished arriving yet (a very fast network
+  // response), wait for that moment first so the exit motion always reads
+  // as intentional rather than jumpy.
+  if(_liCovered){ begin(); }
   else { liWaitForCover().then(begin); }
 }
 
@@ -8058,7 +7922,7 @@ function renderBlockLog(rows){
     '</tr></thead><tbody>';
   rows.forEach(function(r){
     var ts = r.timestamp ? new Date(r.timestamp) : null;
-    var tsStr = ts ? ts.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+ts.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—';
+    var tsStr = ts ? ts.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Kolkata'})+' '+ts.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}) : '—';
     var isBlock = r.action === 'blocked';
     var actionBadge = isBlock
       ? '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;background:rgba(239,73,60,.12);color:#EF493C;">🔒 Blocked</span>'
@@ -8104,7 +7968,7 @@ function renderEscalationRemoteReport(rows){
     var durMin = Math.floor(ms/60000), durSec = Math.floor((ms%60000)/1000);
     var durStr = durMin+'m '+durSec+'s';
     var isLongest = longest && r.id===longest.id;
-    var fmtTs = function(d){ return d ? d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '—'; };
+    var fmtTs = function(d){ return d ? d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',timeZone:'Asia/Kolkata'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}) : '—'; };
     html += '<tr'+(isLongest?' style="background:rgba(239,73,60,.06);"':'')+'>'+
       '<td style="font-weight:600;">'+esc(r.ticket_id||'—')+(r.source && r.source!=='L1 Escalation' ? ' <span style="font-size:.65rem;color:var(--text-dim);">('+esc(r.source)+')</span>' : '')+'</td>'+
       '<td>'+esc(r.l2_agent_name||'—')+'</td>'+
@@ -8474,7 +8338,7 @@ function exportReportCSV(){
     headers = ['Date & Time','Action','Account Affected','Email','Actioned By','Reason'];
     rows = _reportData.map(function(r){
       var ts = r.timestamp ? new Date(r.timestamp) : null;
-      var tsStr = ts ? ts.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+ts.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+      var tsStr = ts ? ts.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Kolkata'})+' '+ts.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}) : '';
       return [tsStr, r.action||'', r.target_user_name||'', r.target_user_email||'', r.actor_user_name||'', r.reason||''];
     });
   } else if(type==='escremote'){
@@ -10949,7 +10813,7 @@ function renderAssessmentResponseRows(id){
     var pct=total>0?Math.round(score/total*100):0;
     var isMalp=r.malpractice===true||r.malpractice==='true';
     var scoreColor=pct>=80?'var(--accent-green)':pct>=50?'var(--gold)':'var(--accent-red)';
-    var time=r.submitted_at?new Date(r.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'\u2014';
+    var time=r.submitted_at?new Date(r.submitted_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}):'\u2014';
     var summary='<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem .7rem;background:var(--navy-hover);border-radius:6px;margin-bottom:.3rem;flex-wrap:wrap;'+(isMalp?'border-left:3px solid var(--accent-red);':'')+'">'+
       '<div style="flex:1;font-size:.82rem;font-weight:600;color:var(--text-primary);">'+esc(r.user_name)+'</div>'+
       '<div style="font-size:.78rem;font-weight:700;color:'+scoreColor+';">'+(score+'/'+total+' ('+pct+'%)')+'</div>'+
@@ -12566,7 +12430,7 @@ function pplRender(people){
         if(p.relieved_date){
           try{
             var dt = new Date(p.relieved_date+'T00:00:00');
-            dateStr = dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+            dateStr = dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Kolkata'});
           }catch(e){}
         }
         var restoreBtn = isAdminUser() ? '<button class="ppl-alumni-restore" onclick="event.stopPropagation();pplRestore(\''+p.id+'\',\''+esc(p.name)+'\')" title="Restore to active team">↺ Restore</button>' : '';
@@ -12623,7 +12487,7 @@ function pplOpenProfile(id){
   if(p.relieved){
     var relDateStr = '';
     if(p.relieved_date){
-      try{ relDateStr = new Date(p.relieved_date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }catch(e){}
+      try{ relDateStr = new Date(p.relieved_date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Kolkata'}); }catch(e){}
     }
     relievedHtml = '<div style="margin-top:.6rem;display:flex;flex-direction:column;align-items:center;gap:.25rem;">'+
       '<span class="ppl-alumni-badge" style="position:static;">'+esc(p.relieved_note||'Relieved from Duty ❤️')+'</span>'+
@@ -13416,8 +13280,8 @@ function chatFmtTime(iso){
   var d=new Date(iso),now=new Date(),diff=now-d;
   if(diff<60000)return'now';
   if(diff<3600000)return Math.floor(diff/60000)+'m';
-  if(diff<86400000)return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  if(diff<86400000)return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'});
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',timeZone:'Asia/Kolkata'});
 }
 
 // ── DOCK INIT ──
@@ -13778,11 +13642,11 @@ function dockRenderMsgs(out, rows, userId, scrollToBottom){
     var m=rows[i];
     var isMine=m.from_user_id===currentUser.id;
     var d=new Date(m.created_at);
-    var dateStr=d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    var dateStr=d.toLocaleDateString('en-IN',{day:'numeric',month:'short',timeZone:'Asia/Kolkata'});
     if(dateStr!==lastDate){ html+='<div class="dock-chat-date-div">'+dateStr+'</div>'; lastDate=dateStr; }
     var nextMsg=rows[i+1];
     var isLast=!nextMsg||nextMsg.from_user_id!==m.from_user_id;
-    var timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    var timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'});
     var isGif=m.content&&m.content.startsWith('__GIF__');
     var bubbleContent=isGif?'<img src="'+esc(m.content.slice(7))+'" alt="GIF" loading="lazy"/>':esc(m.content);
     var cls='dock-bubble'+(isGif?' is-gif':'');
@@ -14300,7 +14164,7 @@ function msgRenderMessagesInPage(rows, isGroup){
     var m=rows[i];
     var isMine=m.from_user_id===currentUser.id;
     var d=new Date(m.created_at);
-    var dateStr=d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    var dateStr=d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Kolkata'});
     if(dateStr!==lastDate){
       html+='<div class="chat-date-divider">'+dateStr+'</div>';
       lastDate=dateStr;
@@ -14308,7 +14172,7 @@ function msgRenderMessagesInPage(rows, isGroup){
     var nextMsg=rows[i+1];
     var isLastInGroup=!nextMsg||nextMsg.from_user_id!==m.from_user_id;
     var isFirstInGroup=i===0||rows[i-1].from_user_id!==m.from_user_id||rows[i-1].created_at.slice(0,10)!==m.created_at.slice(0,10);
-    var timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    var timeStr=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'});
     var expires=m.expires_at?new Date(m.expires_at):new Date(d.getTime()+24*3600000);
     var hoursLeft=Math.max(0,Math.ceil((expires-Date.now())/3600000));
     var tick=isMine?(m.read_at?'<span class="msg-tick read">✓✓</span>':'<span class="msg-tick sent">✓✓</span>'):'';
@@ -16505,11 +16369,11 @@ var ESC = (function(){
       var d = new Date(now);
       if(granularity==='day'){
         d.setDate(now.getDate()-i);
-        buckets.push({ key:dayKey(d), label:d.getDate()+' '+SHORT_MONTHS[d.getMonth()], rangeLabel:d.toLocaleDateString() });
+        buckets.push({ key:dayKey(d), label:d.getDate()+' '+SHORT_MONTHS[d.getMonth()], rangeLabel:d.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}) });
       } else if(granularity==='week'){
         d.setDate(now.getDate()-i*7);
         var mon = mondayOf(d);
-        buckets.push({ key:weekKey(d), label:mon.getDate()+' '+SHORT_MONTHS[mon.getMonth()], rangeLabel:'Week of '+mon.toLocaleDateString() });
+        buckets.push({ key:weekKey(d), label:mon.getDate()+' '+SHORT_MONTHS[mon.getMonth()], rangeLabel:'Week of '+mon.toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}) });
       } else {
         d.setMonth(now.getMonth()-i);
         buckets.push({ key:monthKey(d), label:SHORT_MONTHS[d.getMonth()], rangeLabel:SHORT_MONTHS[d.getMonth()]+' '+d.getFullYear() });
@@ -17451,7 +17315,7 @@ function renderVH(root, toggleHtml){
   html += '<div class="ct-stat"><div class="ct-stat-label">Total Open</div><div class="ct-stat-val">'+_vhTickets.length+'</div></div>';
   html += '<div class="ct-stat"><div class="ct-stat-label">Needs Action</div><div class="ct-stat-val amber">'+total+'</div></div>';
   html += '<div class="ct-stat"><div class="ct-stat-label">No Follow-up</div><div class="ct-stat-val orange">'+stale.length+'</div></div>';
-  html += '<div class="ct-stat"><div class="ct-stat-label">Last Refresh</div><div class="ct-stat-val" style="font-size:.9rem;color:var(--text-muted);">'+new Date().toLocaleTimeString()+'</div></div>';
+  html += '<div class="ct-stat"><div class="ct-stat-label">Last Refresh</div><div class="ct-stat-val" style="font-size:.9rem;color:var(--text-muted);">'+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata'})+'</div></div>';
   html += '</div>';
 
   if(!flagged.length){
@@ -17523,7 +17387,7 @@ function renderVH(root, toggleHtml){
     html += '<td><div class="ct-own"><div class="ct-own-av" style="background:'+bg+';">'+ini+'</div><span class="ct-own-nm">'+escHTML(agent)+'</span></div></td>';
     html += '<td><span class="vh-badge '+(status.toLowerCase()==='open'?'open':'pending')+'">'+escHTML(status)+'</span></td>';
     html += '<td style="font-size:.74rem;color:var(--text-muted);">'+escHTML(client)+'</td>';
-    html += '<td style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;">'+(lastAct?new Date(lastAct).toLocaleDateString():'—')+'</td>';
+    html += '<td style="font-size:.74rem;color:var(--text-muted);white-space:nowrap;">'+(lastAct?new Date(lastAct).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}):'—')+'</td>';
     html += '<td>'+(staleRow?'<span class="vh-badge stale">'+days+'d ago</span>':'<span style="font-size:.71rem;color:#1a7a45;">✓ Today</span>')+'</td>';
     html += '</tr>';
   });
@@ -18681,7 +18545,7 @@ function parseReminderTime(q){
  if(ampm==='am'&&h===12)h=0;
  var t=new Date(now); t.setHours(h,m,0,0);
  if(t<=now)t.setDate(t.getDate()+1); // next occurrence
- return {targetTime:t, label:t.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+ return {targetTime:t, label:t.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'})};
  }
  return null;
 }
@@ -18752,7 +18616,7 @@ async function tryAttendance(q){
  if(!brks||!brks.length) return 'Nobody is on break right now! Everyone is at their desk ';
  var lines=['Currently on break right now:\n'];
  brks.forEach(function(b){
- var since=b.start_time?new Date(b.start_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'?';
+ var since=b.start_time?new Date(b.start_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}):'?';
  var mins=b.start_time?Math.floor((Date.now()-new Date(b.start_time).getTime())/60000):0;
  lines.push((b.user_name||'?')+' — '+(b.break_type||'Break')+' since '+since+' ('+mins+' mins)');
  });
@@ -18769,7 +18633,7 @@ async function tryAttendance(q){
  var lines=['Currently logged in ('+att.length+' agents):\n'];
  att.forEach(function(a){
  if(canSeeTimes){
- var since=a.login_time?new Date(a.login_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'?';
+ var since=a.login_time?new Date(a.login_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}):'?';
  lines.push((a.user_name||'?')+' — since '+since);
  } else {
  lines.push(a.user_name||'?');
@@ -18931,7 +18795,7 @@ async function tryAgentLookup(q){
  if(att&&att.length){
  var a=att[0];
  if(canSeeTime){
- var loginT=a.login_time?new Date(a.login_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'?';
+ var loginT=a.login_time?new Date(a.login_time).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}):'?';
  lines.push('Login today: '+loginT+(a.logout_time?' (logged out)':' (active)'));
  } else {
  lines.push('Status today: '+(a.logout_time?'Logged out':'Active'));
@@ -19519,7 +19383,7 @@ function tryLocalChat(q){
  return 'It is '+full+'! The day you chose to chat with a cat instead of your girlfriend or boyfriend ';
  }
  if(/what.*time|time.*now|current.*time/.test(qlo)){
- var t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+ var t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'});
  return 'I am a cat not a clock But it is approximately '+t+'Check your taskbar!';
  }
 
@@ -20421,7 +20285,7 @@ async function cdLoadAnnouncements(){
       var body=document.createElement('div'); body.style.cssText='flex:1;font-size:.82rem;color:var(--text-primary);';
       body.textContent=a.text||'';
       var meta=document.createElement('div'); meta.style.cssText='font-size:.7rem;color:var(--text-dim);margin-top:2px;';
-      meta.textContent=(a.posted_by||'Admin')+' · '+new Date(a.created_at).toLocaleDateString();
+      meta.textContent=(a.posted_by||'Admin')+' · '+new Date(a.created_at).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'});
       body.appendChild(meta); row.appendChild(body);
       var del=document.createElement('button'); del.style.cssText='background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.85rem;padding:0 4px;'; del.title='Delete'; del.textContent='🗑';
       del.onclick=(function(id){return function(){cdDeleteAnnouncement(id);};})(a.id);
@@ -22044,6 +21908,22 @@ async function siCaptureSession(user){
   }catch(e){ console.error('Session Intel capture failed:', e); }
 }
 
+// session_fingerprints.login_at is stored via new Date().toISOString()
+// (a UTC value), but the column itself is declared as a naive
+// `timestamp` (no time zone) — see the CREATE TABLE fallback below.
+// Postgres/PostgREST therefore hands the value back with no Z/offset
+// marker, e.g. "2026-08-29T09:50:00". Browsers parse a date-time string
+// with no zone marker as *local* time, not UTC — so it never actually
+// gets shifted to IST, it just gets relabelled. This forces UTC parsing
+// so the later timeZone:'Asia/Kolkata' formatting has correct input.
+// (If the column is ever migrated to `timestamptz`, PostgREST will
+// return a string that already carries Z/offset, and the regex below
+// detects that and leaves it alone — safe either way.)
+function siParseUTC(str){
+  if(!str) return null;
+  if(/Z$|[+-]\d{2}:?\d{2}$/.test(str)) return new Date(str);
+  return new Date(str.replace(' ','T')+'Z');
+}
 async function siLoadLogs(){
   if(!_isSysLevel()) return;
   var wrap=document.getElementById('si-table-wrap');
@@ -22086,8 +21966,8 @@ async function siLoadLogs(){
     html+='</tr></thead><tbody>';
     rows.forEach(function(r,i){
       var bg=i%2===0?'transparent':'rgba(255,255,255,.02)';
-      var dt=r.login_at?new Date(r.login_at):null;
-      var dtStr=dt?dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—';
+      var dt=siParseUTC(r.login_at);
+      var dtStr=dt?dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric',timeZone:'Asia/Kolkata'})+' '+dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'}):'—';
       var loc=[r.city,r.region,r.country_code].filter(Boolean).join(', ')||'Unknown';
       var devIcon=r.device==='Mobile'?'📱':r.device==='Tablet'?'📟':'🖥️';
       html+='<tr style="background:'+bg+';border-bottom:.5px solid rgba(255,255,255,.04);">';
@@ -22250,7 +22130,7 @@ async function siClearAll(){
     var drop = document.getElementById('wx-dropdown');
     if(!drop) return;
     var now = new Date();
-    var updStr = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+    var updStr = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'});
     var html =
       '<div class="wx-drop-header">'+
         '<div class="wx-drop-header-left">'+
