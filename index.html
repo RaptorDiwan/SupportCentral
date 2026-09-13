@@ -6214,6 +6214,8 @@ async function loadUnblockPage(){
   listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1.5rem;text-align:center;">Loading…</div>';
   try{
     var users=await sbQuery('users','is_blocked=eq.true&select=id,name,email,block_reason&order=name.asc');
+    // Relieved-from-duty is an intentional offboarding block, not a break-limit block — keep it out of this report.
+    if(users) users=users.filter(function(u){ return u.block_reason!=='Relieved from duty'; });
     if(!users||!users.length){
       listEl.innerHTML='<div style="text-align:center;padding:2.5rem 1rem;"><div style="font-size:2rem;margin-bottom:.75rem;">✅</div><div style="font-size:.95rem;font-weight:600;color:var(--text-primary);">No blocked agents</div><div style="font-size:.82rem;color:var(--text-muted);margin-top:.35rem;">Everyone is currently unblocked.</div></div>';
       return;
@@ -7085,7 +7087,9 @@ async function bbUnblockAll(){
   var listEl = document.getElementById('cd-bb-blocked-list');
   try{
     // Fetch all blocked agents
-    var rows = await sbQuery('users','is_blocked=eq.true&select=id,name,email');
+    var rows = await sbQuery('users','is_blocked=eq.true&select=id,name,email,block_reason');
+    // Relieved-from-duty is an intentional offboarding block, not a break-limit block — keep it out of this report.
+    if(rows) rows=rows.filter(function(u){ return u.block_reason!=='Relieved from duty'; });
     if(!rows || rows.length === 0){
       if(statusEl){ statusEl.textContent='✅ No agents are currently blocked.'; statusEl.style.color='var(--accent-green)'; statusEl.style.display='block'; }
       if(listEl) listEl.style.display='none';
@@ -7140,6 +7144,8 @@ async function bbLoadBlockedList(){
   if(!listEl) return;
   try{
     var rows = await sbQuery('users','is_blocked=eq.true&select=id,name,email,block_reason');
+    // Relieved-from-duty is an intentional offboarding block, not a break-limit block — keep it out of this report.
+    if(rows) rows=rows.filter(function(u){ return u.block_reason!=='Relieved from duty'; });
     if(!rows || rows.length === 0){
       listEl.style.display='none';
       return;
