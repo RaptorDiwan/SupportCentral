@@ -11,14 +11,15 @@
     --gold: #EF493C;
     --gold-light: #FF6658;
     --gold-dim: #C9352B;
-    --navy: #DCE7F5;
-    --navy-mid: #CAD5E3;
-    --navy-card: #F9FBFF;
-    --navy-border: #C5D1E1;
-    --navy-hover: #EDF4FD;
+    /* Light theme — same colours as before, one step deeper (previous values in comments) */
+    --navy: #CAD7E8;        /* was #DCE7F5 */
+    --navy-mid: #B7C5D7;    /* was #CAD5E3 */
+    --navy-card: #EBF0F7;   /* was #F9FBFF */
+    --navy-border: #B2C0D3; /* was #C5D1E1 */
+    --navy-hover: #DDE6F2;  /* was #EDF4FD */
     --text-primary: #070D2D;
-    --text-muted: #445168;
-    --text-dim: #7B8799;
+    --text-muted: #3A465B;  /* was #445168 — slightly darker to keep contrast */
+    --text-dim: #66728A;    /* was #7B8799 — slightly darker to keep contrast */
     --accent-green: #2EC56F;
     --accent-red: #EF493C;
     --accent-blue: #4C76A8;
@@ -337,7 +338,7 @@
   body {
     font-family: 'DM Sans', sans-serif;
     background:
-      linear-gradient(145deg, #FBF3EC 0%, #F7ECE6 46%, #EDE0D3 100%);
+      linear-gradient(145deg, #EEE3D9 0%, #E8DBD2 46%, #DCCDBF 100%); /* was #FBF3EC / #F7ECE6 / #EDE0D3 */
     color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
@@ -393,6 +394,8 @@
   .li-brand::after { width: 380px; height: 380px; bottom: -140px; left: -100px; background: radial-gradient(circle, rgba(120,140,255,0.28), transparent 70%); animation: liFloat2 16s ease-in-out infinite; }
   @keyframes liFloat1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-30px,30px); } }
   @keyframes liFloat2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(25px,-25px); } }
+  /* Login animations off: glows stay as a still background, "New" dot stops pulsing */
+  .li-brand::before, .li-brand::after { animation: none; }
 
   .li-brand-top { position: relative; z-index: 2; display: flex; align-items: center; gap: 9px; }
   .li-brand-word { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 600; letter-spacing: .02em; }
@@ -531,6 +534,7 @@
     background: #ff5b3d;
     animation: liNewPulse 1.8s ease-in-out infinite;
   }
+  .li-new-badge::before, .li-new-badge::after { animation: none !important; }
   @keyframes liNewPulse {
     0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,91,61,0.5); }
     50% { opacity: .6; box-shadow: 0 0 0 3px rgba(255,91,61,0); }
@@ -3681,7 +3685,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                   <div class="hm-body"><div class="hm-title">Announcements</div><div class="hm-sub">Post notices to all agents</div></div>
                   <svg class="hm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
-                <div class="hm-card" onclick="openRosterUrlManager()">
+                <div class="hm-card" onclick="openRosterUrlDialogEnhanced()">
                   <div class="hm-icon" style="background:rgba(46,197,111,.08);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EC56F" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
                   <div class="hm-body"><div class="hm-title">Roster URL</div><div class="hm-sub">Update monthly roster Google Sheet link</div></div>
                   <svg class="hm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
@@ -5413,6 +5417,8 @@ async function rlLogFailedAttempt(emailTried){
 //  liWaitForCover) are unchanged from the previous version, so this
 //  can be swapped out again later without touching doLogin/logout.
 // ═══════════════════════════════════════════════════════════════
+// Set to true to bring back the login/logout colour-wipe animation.
+var LI_LOGIN_ANIMATION = false;
 var LI_WIPE_MS = 550; // matches the CSS transition duration below
 
 // Resolves once the wipe panel has fully covered the screen — used to
@@ -5538,7 +5544,7 @@ function liStartWipe(targetId){
   // Respect the OS-level "reduce motion" accessibility setting (common on
   // iOS) — login/logout still work identically, it just skips the wipe.
   var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!overlay || reducedMotion){ _liCoverPromise = Promise.resolve(); _liCovered = true; return; }
+  if(!overlay || reducedMotion || !LI_LOGIN_ANIMATION){ _liCoverPromise = Promise.resolve(); _liCovered = true; return; }
 
   _liCovered = false;
   _liWipeDir = 1;
@@ -5570,6 +5576,7 @@ function liStartWipe(targetId){
 }
 
 function liFinishWipe(success){
+  if(!LI_LOGIN_ANIMATION) return; // animation off — plain login/logout
   function begin(){
     var overlay = document.getElementById('li-wipe');
     var logo = document.getElementById('liWipeLogo');
@@ -6341,6 +6348,24 @@ async function makeUserAdmin(userId, userName){
 const ROSTER_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRE80jgfcc5g_L8GNZsADwYJhE2WOJ1Ehe2LridB0f7EUh5TZKmq2mT2c-P6nRZg-U5UVc4tLAxEUCI/pub?output=csv';
 const NOT_PRESENT_CODES=new Set(['L','CO','W']);
 window.rosterCache=null;
+// Agent rows = the block right after the DATE + DAY rows, up to the summary rows
+// ("Live agents on Call", "TOTAL PRESENT", ...). Rows with a name but a missing EMP ID
+// (e.g. a new joiner) are still included; summary/escalation rows below are not.
+function rosterAgentRows(rows){
+  if(!rows) return [];
+  var dr=rows.find(function(r){ return String(r[1]||'').trim().toUpperCase()==='DATE'; });
+  if(!dr) return [];
+  var out=[], start=rows.indexOf(dr)+1;
+  for(var i=start;i<rows.length;i++){
+    var r=rows[i], id=String(r[0]||'').trim(), nm=String(r[1]||'').trim();
+    if(nm.toUpperCase()==='DAY') continue;
+    if(!/^K\d+/i.test(id) && /live agents|total present|^date$|shift|week off|comp off|^leave$|escalation/i.test(nm)) break;
+    if(!nm && !/^K\d+/i.test(id)) continue;
+    if(!nm){ r=r.slice(); r[1]=id; }
+    out.push(r);
+  }
+  return out;
+}
 function parseCsv(t){var rows=[],row=[],cell='',inQ=false;for(var i=0;i<t.length;i++){var c=t[i],n=t[i+1];if(c==='"'&&inQ&&n==='"'){cell+='"';i++;}else if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){row.push(cell.trim());cell='';}else if((c==='\n'||c==='\r')&&!inQ){if(c==='\r'&&n==='\n')i++;row.push(cell.trim());rows.push(row);row=[];cell='';}else{cell+=c;}}if(cell||row.length){row.push(cell.trim());rows.push(row);}return rows;}
 function getMonthIndex(l){var m=l.match(/([A-Za-z]+)\s*-\s*(\d{4})/);if(!m)return null;var mo={jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11};return{month:mo[m[1].toLowerCase()],year:Number(m[2])};}
 function statusParts(v){return String(v||'').toUpperCase().split(/[^A-Z]+/).filter(Boolean);}
@@ -6417,9 +6442,7 @@ function renderRosterPage(rows, todayCol, error){
   }
   if(todayBtn) todayBtn.style.opacity = _rosterWeekOffset===0?'.4':'1';
 
-  var agentRows = rows.slice(rows.indexOf(dateRow)+2).filter(function(r){
-    return String(r[0]||'').trim() && String(r[1]||'').trim() && /^K\d+/i.test(String(r[0]||'').trim());
-  });
+  var agentRows = rosterAgentRows(rows);
 
   window._rosterRenderedRows = agentRows;
   window._rosterVisibleCols = visibleCols;
@@ -6544,7 +6567,9 @@ function renderRosterGrid(agentRows, visibleCols, todayCol, search){
     pgHtml += '</div>';
   }
 
-  wrap.innerHTML = '<table class="roster-tbl">'+thead+tbody+'</table>'+pgHtml;
+  var countHtml = '<div class="roster-pg-info" style="padding:.6rem 1rem;">'+
+    (search ? filtered.length+' of '+agentRows.length+' agents match' : agentRows.length+' agents in this month\'s roster')+'</div>';
+  wrap.innerHTML = '<table class="roster-tbl">'+thead+tbody+'</table>'+(pgHtml||countHtml);
 }
 
 function rosterChangePage(dir){
@@ -6579,7 +6604,7 @@ function loadMyShift(rows){
 
   // Match by name — compare roster name with Supabase user name
   var userName=currentUser.name.toLowerCase().trim();
-  var agentRow=rows.slice(rows.indexOf(dateRow)+2).find(function(r){
+  var agentRow=rosterAgentRows(rows).find(function(r){
     var rName=String(r[1]||'').toLowerCase().trim();
     return rName===userName||
            rName.split(' ')[0]===userName.split(' ')[0]||
@@ -6615,7 +6640,11 @@ function loadMyShift(rows){
   var processNextMonthRows = function(nRows){
     var nDateRow=nRows.find(function(r){return String(r[1]).trim().toUpperCase()==='DATE';});
     if(!nDateRow)return;
-    var nAgentRow=nRows.slice(nRows.indexOf(nDateRow)+2).find(function(r){
+    // Safety: only use this sheet if its header really is next month
+    var nHdr=nRows.find(function(r){return r.some(function(c){return /[A-Za-z]+\s*-\s*\d{4}/.test(c);});});
+    var nMi=nHdr?getMonthIndex(nHdr.find(function(c){return /[A-Za-z]+\s*-\s*\d{4}/.test(c);})||''):null;
+    if(nMi&&nMi.month!==undefined&&nMi.month!==today.getMonth()+1)return;
+    var nAgentRow=rosterAgentRows(nRows).find(function(r){
       var rName=String(r[1]||'').toLowerCase().trim();
       return rName===userName||
              rName.split(' ')[0]===userName.split(' ')[0]||
@@ -6639,9 +6668,15 @@ function loadMyShift(rows){
 
   if(nextKey && ROSTER_MONTHS && ROSTER_MONTHS[nextKey]){
     var nextMonthCfg=ROSTER_MONTHS[nextKey];
-    var nextUrl=nextMonthCfg.customUrl||getRosterMonthUrl(nextMonthCfg.gid);
-    var cached=window._rosterDataCache[nextUrl];
-    if(cached && cached.rows){
+    var nextUrl=nextMonthCfg.customUrl||(nextMonthCfg.gid?getRosterMonthUrl(nextMonthCfg.gid):'');
+    var cached=nextUrl?window._rosterDataCache[nextUrl]:null;
+    if(!nextUrl){
+      // Custom URLs are only loaded from settings once — load them, then retry one time
+      if(!window._myShiftSettingsTried && typeof loadRosterMonthSettings==='function'){
+        window._myShiftSettingsTried=true;
+        loadRosterMonthSettings().then(function(){ loadMyShift(rows); });
+      }
+    } else if(cached && cached.rows){
       processNextMonthRows(cached.rows);
     } else {
       // Fetch next month silently and update schedule
@@ -6649,7 +6684,8 @@ function loadMyShift(rows){
         if(!csv)return;
         var nRows=parseCsv(csv);
         window._rosterDataCache[nextUrl]={rows:nRows,timestamp:Date.now()};
-        window._rosterAllRows=nRows; // update cat cache too
+        // NOTE: do NOT assign window._rosterAllRows here — that belongs to the roster page
+        // and overwrote the month being displayed with next month's rows.
         processNextMonthRows(nRows);
         // Re-render the card now that we have data
         var card=document.getElementById('my-shift-card');
@@ -6741,6 +6777,9 @@ function _processRosterRows(rows){
   var dr = rows.find(function(row){ return String(row[1]).trim().toUpperCase()==='DATE'; });
   if(!mr||!dr){ renderRosterPage(rows, false); return; }
   var mi = getMonthIndex(mr.find(function(c){ return /[A-Za-z]+\s*-\s*\d{4}/.test(c); })||'');
+  // The sheet's own "Oct - 2026" header decides which calendar month the columns belong to,
+  // so weekday names / weekend shading are right no matter how the sheet was loaded.
+  if(mi && mi.month!==undefined){ window._rosterTodayM = mi.month; window._rosterTodayY = mi.year; }
   var today = new Date();
   if(!mi||mi.month!==today.getMonth()||mi.year!==today.getFullYear()){
     document.getElementById('absence-title').textContent='Roster loaded';
@@ -6752,9 +6791,8 @@ function _processRosterRows(rows){
   if(dc<0){ renderRosterPage(rows, false); return; }
   var s={absent:[],wfh:[],halfDay:[]};
   var _absentDetails=[];
-  rows.slice(rows.indexOf(dr)+2).forEach(function(row){
-    var ei=String(row[0]||'').trim(),n=String(row[1]||'').trim();
-    if(!ei||!n||!/^K\d+/i.test(ei))return;
+  rosterAgentRows(rows).forEach(function(row){
+    var n=String(row[1]||'').trim();
     var p=statusParts(row[dc]);
     var rawCode=String(row[dc]||'').trim();
     if(p.some(function(x){return NOT_PRESENT_CODES.has(x);})){s.absent.push(n);_absentDetails.push({name:n,code:rawCode});}
@@ -6781,7 +6819,7 @@ async function loadRosterSummary(){
         // Try current month first
         var monthRow = settings.find(function(r){ return r.key==='roster_url_'+curMonth.toLowerCase(); });
         var genericRow = settings.find(function(r){ return r.key==='roster_url'; });
-        var best = monthRow || genericRow;
+        var best = (monthRow && monthRow.value) ? monthRow : genericRow;
         if(best && best.value){ rosterUrl = best.value; window._rosterCsvUrl = best.value; }
       }
     }catch(e2){}
@@ -14630,7 +14668,7 @@ var CT = (function(){
       dateRow.slice(2).forEach(function(cell,i){ if(Number(cell)===day) colIdx=i+2; });
       if(colIdx<0) return off;
       var NO=['L','CO','W','WO','OFF'];
-      rows.filter(function(r){ return String(r[0]||'').trim()&&/^K\d+/i.test(String(r[0]||'')); })
+      (typeof rosterAgentRows==='function'?rosterAgentRows(rows):rows.filter(function(r){ return /^K\d+/i.test(String(r[0]||'').trim()); }))
         .forEach(function(r){ var parts=String(r[colIdx]||'').toUpperCase().trim().split(/[^A-Z]+/).filter(Boolean); if(parts.some(function(p){ return NO.indexOf(p)>-1; })) off.push(String(r[1]||'').trim()); });
     }catch(e){}
     return off;
@@ -17070,8 +17108,15 @@ function initRosterMonthTabs(){
     var today = new Date();
     var ALL_KEYS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var currentMonthKey = ALL_KEYS[today.getMonth()];
-    // Show all months from Jan up to and including the current month
-    var monthKeys = ALL_KEYS.slice(0, today.getMonth() + 1);
+    // Show every month up to and including the current one, PLUS any later month
+    // whose roster sheet has already been added (customUrl or gid) — e.g. October
+    // is visible in September as soon as the admin saves its link.
+    var curIdx = today.getMonth();
+    var monthKeys = ALL_KEYS.filter(function(k, i){
+      var c = ROSTER_MONTHS[k];
+      if(!c) return false;
+      return i <= curIdx || !!(c.customUrl || c.gid);
+    });
 
     var html = '<span style="font-size:.72rem;color:var(--text-muted);margin-right:.3rem;align-self:center;">Month:</span>';
     monthKeys.forEach(function(key){
@@ -17093,7 +17138,7 @@ function initRosterMonthTabs(){
 async function loadRosterMonthSettings(){
   try{
     // Load any custom per-month URLs saved in settings
-    var rows = await sbQuery('settings','key=like.roster_url_%&select=key,value');
+    var rows = await sbQuery('settings','key=like.roster_url_*&select=key,value');
     if(rows && rows.length){
       rows.forEach(function(r){
         var rawKey = r.key.replace('roster_url_','');
@@ -17120,6 +17165,7 @@ function switchRosterMonth(key, silent){
   var url = month.customUrl || getRosterMonthUrl(month.gid);
   window._rosterCsvUrl = url;
   window._rosterWeekOffset = 0; // reset week view on month switch
+  window._rosterPage = 0;
 
   // ── Fix: set correct month/year context for day-name & weekend calculations ──
   var MONTH_IDX = {'Jan':0,'Feb':1,'Mar':2,'Apr':3,'May':4,'Jun':5,'Jul':6,'Aug':7,'Sep':8,'Oct':9,'Nov':10,'Dec':11};
@@ -18913,6 +18959,7 @@ function getDateRow(rows){return rows.find(function(r){return String(r[1]).trim(
 function getAgentRows(rows){
  var dr=getDateRow(rows);if(!dr)return[];
  var start=rows.indexOf(dr)+2;
+ if(typeof rosterAgentRows==='function')return rosterAgentRows(rows);
  return rows.slice(start).filter(function(r){return r[0]&&/^K\d+/i.test(String(r[0]).trim())&&String(r[1]).trim();});
 }
 function colForDate(rows,d){
