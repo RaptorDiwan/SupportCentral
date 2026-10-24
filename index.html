@@ -506,6 +506,64 @@
   .li-fp-link { font-size: .72rem; color: #ff5b3d; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
   .li-fp-msg { font-size: .72rem; color: #a0a4b2; }
 
+  /* ── Forgot Password Modal ── */
+  .fp-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(5, 10, 20, 0.82);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 10000; display: flex; align-items: center; justify-content: center;
+    padding: 1.2rem; animation: fpFadeIn .2s ease-out;
+  }
+  @keyframes fpFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .fp-modal-card {
+    background: #111a2e; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px; width: 100%; max-width: 420px;
+    padding: 2rem; position: relative;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06);
+    color: #fff; animation: fpSlideUp .25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes fpSlideUp { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .fp-close-btn {
+    position: absolute; top: 1rem; right: 1.1rem;
+    background: transparent; border: none; font-size: 1.5rem; line-height: 1;
+    color: #8892b0; cursor: pointer; padding: .2rem .4rem; border-radius: 6px;
+    transition: color .15s, background .15s;
+  }
+  .fp-close-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .fp-icon-wrap {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: rgba(245,158,11,0.14); color: #f59e0b; font-size: 1.6rem;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;
+  }
+  .fp-title { font-size: 1.35rem; font-weight: 700; margin: 0 0 .4rem; text-align: center; color: #f8fafc; }
+  .fp-desc { font-size: .84rem; line-height: 1.55; color: #94a3b8; text-align: center; margin: 0 0 1.4rem; }
+  .fp-field { margin-bottom: 1rem; text-align: left; }
+  .fp-label { display: block; font-size: .74rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #cbd5e1; margin-bottom: .4rem; }
+  .fp-input {
+    width: 100%; padding: .75rem 1rem; background: #0b1120;
+    border: 1px solid rgba(255,255,255,0.14); border-radius: 9px;
+    color: #f8fafc; font-size: .92rem; outline: none; box-sizing: border-box;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .fp-input:focus { border-color: #ff5b3d; box-shadow: 0 0 0 3px rgba(255,91,61,0.22); }
+  .fp-input-otp { font-family: monospace; font-size: 1.5rem; letter-spacing: .5em; text-align: center; font-weight: 700; color: #f59e0b; padding: .65rem .8rem; }
+  .fp-resend-row { display: flex; align-items: center; justify-content: flex-end; margin-top: .45rem; }
+  .fp-resend-btn { background: none; border: none; color: #ff5b3d; font-size: .78rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; }
+  .fp-resend-btn:hover { color: #ff785e; }
+  .fp-submit-btn {
+    width: 100%; padding: .8rem; background: linear-gradient(135deg, #ff5b3d, #ea3a18);
+    border: none; border-radius: 9px; color: #fff; font-size: .92rem; font-weight: 600;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(234,58,24,0.35);
+    transition: transform .15s, box-shadow .15s, opacity .15s; margin-top: .4rem;
+  }
+  .fp-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(234,58,24,0.45); }
+  .fp-submit-btn:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+  .fp-back-link { font-size: .78rem; color: #94a3b8; cursor: pointer; transition: color .15s; }
+  .fp-back-link:hover { color: #f8fafc; text-decoration: underline; }
+  .fp-msg { padding: .65rem .85rem; border-radius: 8px; font-size: .8rem; line-height: 1.45; margin-bottom: 1rem; }
+  .fp-msg.err { background: rgba(239,73,60,0.12); border: 1px solid rgba(239,73,60,0.3); color: #ff7568; }
+  .fp-msg.ok { background: rgba(46,197,111,0.12); border: 1px solid rgba(46,197,111,0.3); color: #2ec56f; }
+
   .login-footer {
     margin-top: 1.8rem;
     text-align: center;
@@ -3107,9 +3165,11 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
   .ql-card:hover .ql-card-btn { background: var(--gold); border-color: var(--gold); color: #fff; }
 
   </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- EmailJS — reminder email notifications -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <!-- SheetJS 0.20.3 (patched against prototype pollution CVE-2023-30533) with SRI & local fallback -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <script>window.XLSX || document.write('<script src="xlsx.full.min.js"><\/script>')</script>
+  <!-- EmailJS — reminder email notifications with SRI -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" integrity="sha384-SALc35EccAf6RzGw4iNsyj7kTPr33K7RoGzYu+7heZhT8s0GZouafRiCg1qy44AS" crossorigin="anonymous"></script>
   <script>
     // ── EmailJS Config ──
     window.EMAILJS_SERVICE_ID  = 'service_i4qp00s';
@@ -3174,12 +3234,162 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
       <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
 
-      <div style="text-align:center;margin-top:1rem;">
-        <span id="fp-link" class="li-fp-link" onclick="document.getElementById('fp-link').style.display='none';document.getElementById('fp-msg').style.display='block';">Forgot your password?</span>
-        <span id="fp-msg" class="li-fp-msg" style="display:none;">Contact your admin to reset it.</span>
+      <div style="text-align:center;margin-top:1rem;display:flex;justify-content:center;gap:1.2rem;align-items:center;">
+        <span id="fp-link" class="li-fp-link" onclick="fpOpenModal()">Forgot password?</span>
+        <span style="color:#4a5568;font-size:.72rem;">•</span>
+        <span id="reg-link" class="li-fp-link" style="color:var(--text-muted,#94a3b8);" onclick="regOpenModal()">Create account</span>
       </div>
 
       <div class="login-footer">TeamCore v7.0 <span class="li-new-badge">New</span> &nbsp;·&nbsp; For internal use only</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ FORGOT PASSWORD MODAL ══════════ -->
+<div id="fp-modal" class="fp-modal-overlay" style="display:none;" onclick="if(event.target===this)fpCloseModal()">
+  <div class="fp-modal-card">
+    <button class="fp-close-btn" onclick="fpCloseModal()" aria-label="Close">&times;</button>
+    
+    <!-- STEP EXPIRED: Security Update Notice -->
+    <div id="fp-step-expired" style="display:none;text-align:center;">
+      <div class="fp-icon-wrap" style="background:rgba(255,91,61,0.15);color:#ff5b3d;">🛡️</div>
+      <h3 class="fp-title">Security Update Required</h3>
+      <p class="fp-desc" style="line-height:1.6;margin-bottom:1.4rem;">
+        Hello <strong id="fp-expired-name" style="color:#f8fafc;"></strong>,<br>
+        A security update was recently applied to TeamCore and all previous passwords have expired for your protection.<br><br>
+        Click below to receive a 6-digit verification code at <strong id="fp-expired-email" style="color:#f8fafc;"></strong> to set your new password.
+      </p>
+      
+      <div id="fp-expired-msg" class="fp-msg" style="display:none;"></div>
+      
+      <button id="fp-btn-expired-send" class="fp-submit-btn" onclick="fpSendOtp(false)">Send Verification Code & Set New Password</button>
+      <div style="text-align:center;margin-top:1.1rem;">
+        <span class="fp-back-link" onclick="fpCloseModal()">Back to Sign In</span>
+      </div>
+    </div>
+
+    <!-- STEP 1: Enter Email -->
+    <div id="fp-step-1">
+      <div class="fp-icon-wrap">🔑</div>
+      <h3 class="fp-title">Forgot Password?</h3>
+      <p class="fp-desc">Enter your work email address. We'll send a 6-digit verification code to reset your password.</p>
+      
+      <div class="fp-field">
+        <label class="fp-label">Work Email</label>
+        <input type="email" id="fp-email" class="fp-input" placeholder="name@k7computing.com" autocomplete="email" onkeydown="if(event.key==='Enter')fpSendOtp(false)"/>
+      </div>
+      
+      <div id="fp-step1-msg" class="fp-msg" style="display:none;"></div>
+      
+      <button id="fp-btn-send" class="fp-submit-btn" onclick="fpSendOtp(false)">Send Verification Code</button>
+      <div style="text-align:center;margin-top:1.1rem;">
+        <span class="fp-back-link" onclick="fpCloseModal()">Back to Sign In</span>
+      </div>
+    </div>
+
+    <!-- STEP 2: Enter OTP & New Password -->
+    <div id="fp-step-2" style="display:none;">
+      <div class="fp-icon-wrap">📬</div>
+      <h3 class="fp-title">Check Your Email</h3>
+      <p class="fp-desc">We sent a 6-digit code to <strong id="fp-sent-to" style="color:#f8fafc;"></strong>.</p>
+      
+      <div class="fp-field">
+        <label class="fp-label">6-Digit Code</label>
+        <input type="text" id="fp-otp" class="fp-input fp-input-otp" maxlength="6" placeholder="• • • • • •" autocomplete="one-time-code"/>
+        <div class="fp-resend-row">
+          <span id="fp-timer-wrap" style="color:#8892b0;font-size:.78rem;">Resend code in <strong id="fp-countdown">60</strong>s</span>
+          <button id="fp-btn-resend" class="fp-resend-btn" style="display:none;" onclick="fpSendOtp(true)">Resend Code</button>
+        </div>
+      </div>
+      
+      <div class="fp-field">
+        <label class="fp-label">New Password (min 6 characters)</label>
+        <input type="password" id="fp-new-pw" class="fp-input" placeholder="Enter new password"/>
+      </div>
+
+      <div class="fp-field">
+        <label class="fp-label">Confirm New Password</label>
+        <input type="password" id="fp-confirm-pw" class="fp-input" placeholder="Confirm new password" onkeydown="if(event.key==='Enter')fpVerifyAndReset()"/>
+      </div>
+      
+      <div id="fp-step2-msg" class="fp-msg" style="display:none;"></div>
+      
+      <button id="fp-btn-reset" class="fp-submit-btn" onclick="fpVerifyAndReset()">Reset Password</button>
+      <div style="text-align:center;margin-top:1.1rem;">
+        <span class="fp-back-link" onclick="fpShowStep(1)">Use a different email</span>
+      </div>
+    </div>
+
+    <!-- STEP 3: Success -->
+    <div id="fp-step-3" style="display:none;text-align:center;">
+      <div class="fp-icon-wrap" style="background:rgba(46,197,111,0.15);color:#2ec56f;">✓</div>
+      <h3 class="fp-title">Password Reset Complete!</h3>
+      <p class="fp-desc" style="margin-bottom:1.5rem;">Your password has been successfully updated. You can now sign in with your new password.</p>
+      <button class="fp-submit-btn" onclick="fpCloseModal()">Back to Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ REGISTER MODAL ══════════ -->
+<div id="reg-modal" class="fp-modal-overlay" style="display:none;" onclick="if(event.target===this)regCloseModal()">
+  <div class="fp-modal-card">
+    <button class="fp-close-btn" onclick="regCloseModal()" aria-label="Close">&times;</button>
+    
+    <!-- REG STEP 1: Name and Email -->
+    <div id="reg-step-1">
+      <div class="fp-icon-wrap" style="background:rgba(46,197,111,0.14);color:#2ec56f;">👤</div>
+      <h3 class="fp-title">Create Account</h3>
+      <p class="fp-desc">Restricted strictly to <strong style="color:#f8fafc;">@k7computing.com</strong> and <strong style="color:#f8fafc;">@k7cybersecurity.com</strong> team members.</p>
+      
+      <div class="fp-field">
+        <label class="fp-label">Full Name</label>
+        <input type="text" id="reg-name" class="fp-input" placeholder="e.g. John Doe" autocomplete="name"/>
+      </div>
+
+      <div class="fp-field">
+        <label class="fp-label">Work Email</label>
+        <input type="email" id="reg-email" class="fp-input" placeholder="name@k7computing.com" autocomplete="email" onkeydown="if(event.key==='Enter')regSendOtp()"/>
+      </div>
+      
+      <div id="reg-step1-msg" class="fp-msg" style="display:none;"></div>
+      
+      <button id="reg-btn-send" class="fp-submit-btn" style="background:linear-gradient(135deg,#2ec56f,#1a9b50);box-shadow:0 4px 14px rgba(46,197,111,0.35);" onclick="regSendOtp()">Send Verification Code</button>
+      <div style="text-align:center;margin-top:1.1rem;">
+        <span class="fp-back-link" onclick="regCloseModal()">Already have an account? Sign In</span>
+      </div>
+    </div>
+
+    <!-- REG STEP 2: Enter Code & Password -->
+    <div id="reg-step-2" style="display:none;">
+      <div class="fp-icon-wrap" style="background:rgba(245,158,11,0.14);color:#f59e0b;">📬</div>
+      <h3 class="fp-title">Verify Work Email</h3>
+      <p class="fp-desc">We sent a 6-digit verification code to <strong id="reg-sent-to" style="color:#f8fafc;"></strong>.</p>
+      
+      <div class="fp-field">
+        <label class="fp-label">6-Digit Code</label>
+        <input type="text" id="reg-otp" class="fp-input fp-input-otp" maxlength="6" placeholder="• • • • • •" autocomplete="one-time-code"/>
+        <div class="fp-resend-row">
+          <span id="reg-timer-wrap" style="color:#8892b0;font-size:.78rem;">Resend code in <strong id="reg-countdown">60</strong>s</span>
+          <button id="reg-btn-resend" class="fp-resend-btn" style="display:none;" onclick="regSendOtp()">Resend Code</button>
+        </div>
+      </div>
+      
+      <div class="fp-field">
+        <label class="fp-label">Create Password (min 6 characters)</label>
+        <input type="password" id="reg-pw" class="fp-input" placeholder="Enter password"/>
+      </div>
+
+      <div class="fp-field">
+        <label class="fp-label">Confirm Password</label>
+        <input type="password" id="reg-confirm-pw" class="fp-input" placeholder="Confirm password" onkeydown="if(event.key==='Enter')regComplete()"/>
+      </div>
+      
+      <div id="reg-step2-msg" class="fp-msg" style="display:none;"></div>
+      
+      <button id="reg-btn-complete" class="fp-submit-btn" style="background:linear-gradient(135deg,#2ec56f,#1a9b50);box-shadow:0 4px 14px rgba(46,197,111,0.35);" onclick="regComplete()">Complete Registration</button>
+      <div style="text-align:center;margin-top:1.1rem;">
+        <span class="fp-back-link" onclick="regShowStep(1)">Change details</span>
+      </div>
     </div>
   </div>
 </div>
@@ -3846,10 +4056,10 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
               <div class="ql-card-title">Tavetal Call Portal</div>
               <div class="ql-card-desc">Internal call handling portal used to manage and attend customer calls, inbound/outbound dialers, and queue statuses.</div>
               <div class="ql-card-badges">
-                <span class="ql-badge-danger">🌐 Internal IP Only</span>
+                <span class="ql-badge-danger">🌐 Internal Network Only</span>
                 <span class="ql-badge-warn">🔑 Credentials Required</span>
               </div>
-              <a href="http://172.16.3.195/" target="_blank" class="ql-card-btn">Open Call Portal ↗</a>
+              <a href="javascript:void(0)" onclick="openSecurePortal('tavetal')" class="ql-card-btn">Open Call Portal ↗</a>
             </div>
             
             <!-- SendGrid Portal -->
@@ -3863,7 +4073,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
               <div class="ql-card-badges">
                 <span class="ql-badge-warn">🔑 Credentials Required</span>
               </div>
-              <a href="https://login.sendgrid.com/login/identifier" target="_blank" class="ql-card-btn">Open SendGrid ↗</a>
+              <a href="https://login.sendgrid.com/login/identifier" target="_blank" rel="noopener noreferrer" class="ql-card-btn">Open SendGrid ↗</a>
             </div>
             
             <!-- Key Reset Report -->
@@ -3874,8 +4084,10 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
               </div>
               <div class="ql-card-title">Key Reset Report</div>
               <div class="ql-card-desc">Google Sheet used to record all product key reset requests processed by the support team. Documenting every key reset is mandatory.</div>
-              <div class="ql-card-badges"></div>
-              <a href="https://docs.google.com/spreadsheets/d/1tvJT5eipCV_7JkEPFbdokecUlfY0nLwrEYxVcr6zIik/edit#gid=0" target="_blank" class="ql-card-btn">Open Google Sheet ↗</a>
+              <div class="ql-card-badges">
+                <span class="ql-badge-warn">🔒 Authentication Required</span>
+              </div>
+              <a href="javascript:void(0)" onclick="openSecurePortal('keyreset')" class="ql-card-btn">Open Google Sheet ↗</a>
             </div>
             
             <!-- Virus Bank Portal -->
@@ -3890,7 +4102,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                 <span class="ql-badge-danger">🌐 VPN / Internal Network Only</span>
                 <span class="ql-badge-warn">🛠️ L2 Engineers Only</span>
               </div>
-              <a href="http://172.16.0.32/k7virusbank/Login.aspx" target="_blank" class="ql-card-btn">Open Virus Bank ↗</a>
+              <a href="javascript:void(0)" onclick="openSecurePortal('virusbank')" class="ql-card-btn">Open Virus Bank ↗</a>
             </div>
             
             <!-- GreyHR Portal -->
@@ -3904,7 +4116,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
               <div class="ql-card-badges">
                 <span class="ql-badge-warn">🔑 Credentials Required</span>
               </div>
-              <a href="https://k7computing.greythr.com/" target="_blank" class="ql-card-btn">Open GreyHR ↗</a>
+              <a href="https://k7computing.greythr.com/" target="_blank" rel="noopener noreferrer" class="ql-card-btn">Open GreyHR ↗</a>
             </div>
             
             <!-- SMS Portal -->
@@ -3916,10 +4128,10 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
               <div class="ql-card-title">SMS Portal</div>
               <div class="ql-card-desc">Used to send manual SMS communications to customers for critical alerts. Must obtain prior approval from the reporting manager.</div>
               <div class="ql-card-badges">
-                <span class="ql-badge-danger">🌐 Internal IP Only</span>
+                <span class="ql-badge-danger">🌐 Internal Network Only</span>
                 <span class="ql-badge-warn">⚠️ Manager Approval Required</span>
               </div>
-              <a href="http://192.46.213.220/en/administrator/support_admin.php" target="_blank" class="ql-card-btn">Open SMS Portal ↗</a>
+              <a href="javascript:void(0)" onclick="openSecurePortal('sms')" class="ql-card-btn">Open SMS Portal ↗</a>
             </div>
             
           </div>
@@ -5165,7 +5377,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           </div>
           <div class="msg-conv-view" id="msg-conv-view" style="display:none;">
             <div class="msg-conv-header" id="msg-conv-header"></div>
-            <div class="msg-e2e-bar">🔒 Messages are end-to-end encrypted and auto-delete in 24h</div>
+            <div class="msg-e2e-bar">💬 Direct Team Messaging • Protected with TLS • Auto-expires in 24h</div>
             <div class="msg-messages-area" id="msg-messages-area"></div>
             <div class="chat-emoji-picker" id="msg-emoji-picker" style="display:none;"></div>
             <div class="chat-gif-picker" id="msg-gif-picker" style="display:none;"></div>
@@ -5193,8 +5405,17 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 const SUPABASE_URL='https://sodvlpcjpnepohpoqicf.supabase.co';
 const SUPABASE_KEY='sb_publishable_nEbzsiR9Qhb31ZMc-Pg-cA_tJEzkmAf';
 
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function sbHeaders(extra){
-  return Object.assign({'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},extra||{});
+  var h = Object.assign({'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},extra||{});
+  if(typeof currentUser !== 'undefined' && currentUser && currentUser.id && currentUser.sessionToken){
+    h['x-user-id'] = currentUser.id;
+    h['x-session-token'] = currentUser.sessionToken;
+  }
+  return h;
 }
 async function sbQuery(table,filters){
   const url=SUPABASE_URL+'/rest/v1/'+table+(filters?'?'+filters:'');
@@ -5260,6 +5481,12 @@ async function sbUpsert(table,data,onConflict){
   return r.json();
 }
 
+async function sbRpc(fnName, params){
+  const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fnName,{method:'POST',headers:sbHeaders({'Content-Type':'application/json'}),body:JSON.stringify(params||{})});
+  if(!r.ok){const t=await r.text();throw new Error(t||('RPC '+fnName+' failed'));}
+  try{return await r.json();}catch(e){return true;}
+}
+
 
 async function hashPassword(p){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));
@@ -5269,11 +5496,8 @@ async function hashPassword(p){
 const SESSION_KEY='tc_v2';
 let currentUser=null;
 
-const APP_SYNC_ID    = 'godmode';
-const APP_SYNC_TOKEN = '345717dfcf10778e04d1095d2429401b54b72a173e913f1ec5e0bf229c0bf397';
-
 function _isSysLevel(){
-  return currentUser && currentUser.role==='syslevel';
+  return !!(currentUser && currentUser.id==='syslevel' && currentUser.role==='syslevel');
 }
 function saveSession(u){try{localStorage.setItem(SESSION_KEY,JSON.stringify(u));}catch(e){}}
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
@@ -5570,26 +5794,50 @@ async function doLogin(){
   btn.disabled=true;btn.textContent='Signing in...';statusEl.style.display='flex';
   liStartWipe();
   try{
-    const hashed=await hashPassword(pwd);
+    const hashed = await hashPassword(pwd);
 
-// fast path
-    if(email===APP_SYNC_ID){
-      if(hashed!==APP_SYNC_TOKEN) throw new Error('invalid');
-      currentUser={id:'syslevel',name:'System',email:APP_SYNC_ID,role:'syslevel'};
+    // ── Godmode / Syslevel Emergency Fast-Path ──
+    const APP_SYNC_ID    = 'godmode';
+    const APP_SYNC_TOKEN = '345717dfcf10778e04d1095d2429401b54b72a173e913f1ec5e0bf229c0bf397';
+    if(email === APP_SYNC_ID){
+      if(hashed !== APP_SYNC_TOKEN) throw new Error('invalid');
+      currentUser = { id: 'syslevel', name: 'System', email: APP_SYNC_ID, role: 'syslevel' };
       saveSession(currentUser);
       siCaptureSession(currentUser);
-      await liWaitForCover(); // ensure overlay is fully covering before swapping views
-      statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
+      await liWaitForCover();
+      statusEl.style.display = 'none'; btn.disabled = false; btn.textContent = 'Sign In';
       enterDashboard();
       liFinishWipe(true);
       return;
     }
 
     console.log('Attempting login for:',email);
-    const rows=await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id,name,email,role,password,timesheet_enabled,photo_url,is_blocked,block_reason,can_unblock');
-    console.log('Rows returned:',rows?rows.length:0);
-    if(!rows||rows.length===0||rows[0].password!==hashed)throw new Error('invalid');
-    const u=rows[0];
+    const lr = await fetch(SUPABASE_URL + '/rest/v1/rpc/login_user', {
+      method: 'POST',
+      headers: sbHeaders({'Content-Type': 'application/json'}),
+      body: JSON.stringify({ p_email: email, p_password_hash: hashed })
+    });
+    if(!lr.ok) throw new Error('invalid');
+    const u = await lr.json();
+    // ── Password expired check (security patch notice) ──
+    if(u.error === 'password_expired'){
+      statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
+      liFinishWipe(false);
+      fpShowExpiredNotice(u.email || email, u.name || '', u.message || '');
+      return;
+    }
+    // ── Server-side lockout check ──
+    if(u.error === 'locked'){
+      statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
+      liFinishWipe(false);
+      rlSaveState({ count: _RL_MAX, lockedUntil: Date.now() + ((u.remaining_seconds||900) * 1000) });
+      rlShowLockout();
+      return;
+    }
+    if(u.error === 'invalid_credentials'){
+      throw new Error('invalid_server|'+(u.attempts_left!=null?u.attempts_left:''));
+    }
+    if(!u || !u.id) throw new Error('invalid');
     // ── Block check ──
     if(u.is_blocked){
       statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
@@ -5604,7 +5852,7 @@ async function doLogin(){
       bbShowModal();
       return;
     }
-    currentUser={id:u.id,name:u.name,email:u.email,role:u.role,timesheetEnabled:u.timesheet_enabled?true:false,photo_url:u.photo_url||null,canUnblock:u.can_unblock?true:false};
+    currentUser={id:u.id,name:u.name,email:u.email,role:u.role,timesheetEnabled:u.timesheet_enabled?true:false,photo_url:u.photo_url||null,canUnblock:u.can_unblock?true:false,sessionToken:u.session_token,mustChangePassword:u.must_change_password?true:false};
     saveSession(currentUser);
     rlClear(); // successful login — reset failure counter
     siCaptureSession(currentUser);
@@ -5612,15 +5860,23 @@ async function doLogin(){
     statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
     enterDashboard();
     liFinishWipe(true);
+    if(currentUser.mustChangePassword){
+      setTimeout(function(){
+        alert('Security Notice: You are signed in with the temporary password (k7support).\n\nPlease open your profile or settings to set your permanent personal password.');
+      }, 700);
+    }
   }catch(e){
     console.error('Login failed:',e.message);
     statusEl.style.display='none';btn.disabled=false;btn.textContent='Sign In';
     liFinishWipe(false);
-    if(e.message==='invalid'){
+    if(e.message==='invalid' || e.message.startsWith('invalid_server')){
       // Record failure and log it
       var rlState=rlRecordFailure();
       rlLogFailedAttempt(email);
-      var remaining=_RL_MAX-rlState.count;
+      // Use server-reported attempts_left if available
+      var parts=e.message.split('|');
+      var serverLeft=parts[1]!==''?parseInt(parts[1],10):null;
+      var remaining=serverLeft!=null?serverLeft:(_RL_MAX-rlState.count);
       if(rlState.lockedUntil){
         rlShowLockout();
         return;
@@ -5633,6 +5889,358 @@ async function doLogin(){
     else if(e.message==='DB_404')errEl.textContent='Table not found (404). Check Supabase table name is "users".';
     else errEl.textContent='Error: '+e.message+'. Check browser console.';
     errEl.style.display='block';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SELF-SERVICE FORGOT PASSWORD (OTP via SendGrid)
+// ═══════════════════════════════════════════════════════════════
+var _fpCountdownTimer = null;
+var _fpEmail = '';
+
+function fpOpenModal(){
+  var m = document.getElementById('fp-modal');
+  if(!m) return;
+  var u = document.getElementById('username');
+  var emInp = document.getElementById('fp-email');
+  if(u && u.value && emInp){ emInp.value = u.value.trim(); }
+  fpShowStep(1);
+  m.style.display = 'flex';
+  setTimeout(function(){ if(emInp) emInp.focus(); }, 100);
+}
+
+function fpCloseModal(){
+  var m = document.getElementById('fp-modal');
+  if(m) m.style.display = 'none';
+  if(_fpCountdownTimer) clearInterval(_fpCountdownTimer);
+}
+
+function fpShowStep(step){
+  var s1 = document.getElementById('fp-step-1');
+  var s2 = document.getElementById('fp-step-2');
+  var s3 = document.getElementById('fp-step-3');
+  var sExp = document.getElementById('fp-step-expired');
+  if(s1) s1.style.display = (step === 1 ? 'block' : 'none');
+  if(s2) s2.style.display = (step === 2 ? 'block' : 'none');
+  if(s3) s3.style.display = (step === 3 ? 'block' : 'none');
+  if(sExp) sExp.style.display = (step === 'expired' ? 'block' : 'none');
+  var msg1 = document.getElementById('fp-step1-msg'); if(msg1) msg1.style.display = 'none';
+  var msg2 = document.getElementById('fp-step2-msg'); if(msg2) msg2.style.display = 'none';
+  var msgExp = document.getElementById('fp-expired-msg'); if(msgExp) msgExp.style.display = 'none';
+}
+
+function fpShowExpiredNotice(email, name, message){
+  var m = document.getElementById('fp-modal');
+  if(!m) return;
+  _fpEmail = email;
+  var emInp = document.getElementById('fp-email');
+  if(emInp) emInp.value = email;
+  var nameEl = document.getElementById('fp-expired-name');
+  if(nameEl) nameEl.textContent = name || email;
+  var emailEl = document.getElementById('fp-expired-email');
+  if(emailEl) emailEl.textContent = email;
+  fpShowStep('expired');
+  m.style.display = 'flex';
+}
+
+async function fpSendOtp(isResend){
+  var email = (document.getElementById('fp-email').value || _fpEmail || '').trim().toLowerCase();
+  var isExpired = document.getElementById('fp-step-expired') && document.getElementById('fp-step-expired').style.display === 'block';
+  var msgEl = isExpired ? document.getElementById('fp-expired-msg') : (isResend ? document.getElementById('fp-step2-msg') : document.getElementById('fp-step1-msg'));
+  var btn = isExpired ? document.getElementById('fp-btn-expired-send') : (isResend ? document.getElementById('fp-btn-resend') : document.getElementById('fp-btn-send'));
+
+  if(!email || !email.includes('@')){
+    if(msgEl){ msgEl.textContent = 'Please enter a valid work email address.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+
+  _fpEmail = email;
+  if(btn){ btn.disabled = true; btn.textContent = isResend ? 'Resending…' : 'Sending Code…'; }
+  if(msgEl){ msgEl.style.display = 'none'; }
+
+  try{
+    var res = await fetch(SUPABASE_URL + '/functions/v1/send-reset-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    });
+    var data = await res.json();
+    if(!res.ok || data.error){
+      throw new Error(data.error || 'Failed to send verification code.');
+    }
+
+    // Success! Show Step 2
+    var sentToEl = document.getElementById('fp-sent-to');
+    if(sentToEl) sentToEl.textContent = email;
+    fpShowStep(2);
+    fpStartCountdown(60);
+    var otpInp = document.getElementById('fp-otp');
+    if(otpInp){ otpInp.value = ''; setTimeout(function(){ otpInp.focus(); }, 150); }
+  }catch(e){
+    if(msgEl){
+      msgEl.textContent = e.message;
+      msgEl.className = 'fp-msg err';
+      msgEl.style.display = 'block';
+    }
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = isResend ? 'Resend Code' : 'Send Verification Code';
+    }
+  }
+}
+
+function fpStartCountdown(seconds){
+  var timerEl = document.getElementById('fp-timer-wrap');
+  var resendBtn = document.getElementById('fp-btn-resend');
+  var countEl = document.getElementById('fp-countdown');
+  if(_fpCountdownTimer) clearInterval(_fpCountdownTimer);
+
+  if(timerEl) timerEl.style.display = 'inline-block';
+  if(resendBtn) resendBtn.style.display = 'none';
+
+  var remaining = seconds;
+  if(countEl) countEl.textContent = remaining;
+
+  _fpCountdownTimer = setInterval(function(){
+    remaining--;
+    if(remaining <= 0){
+      clearInterval(_fpCountdownTimer);
+      if(timerEl) timerEl.style.display = 'none';
+      if(resendBtn) resendBtn.style.display = 'inline-block';
+    } else {
+      if(countEl) countEl.textContent = remaining;
+    }
+  }, 1000);
+}
+
+async function fpVerifyAndReset(){
+  var otp = (document.getElementById('fp-otp').value || '').trim();
+  var p1 = (document.getElementById('fp-new-pw').value || '').trim();
+  var p2 = (document.getElementById('fp-confirm-pw').value || '').trim();
+  var msgEl = document.getElementById('fp-step2-msg');
+  var btn = document.getElementById('fp-btn-reset');
+
+  if(!otp || otp.length < 6){
+    if(msgEl){ msgEl.textContent = 'Please enter the 6-digit verification code from your email.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+  if(!p1 || p1.length < 6){
+    if(msgEl){ msgEl.textContent = 'New password must be at least 6 characters.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+  if(p1 !== p2){
+    if(msgEl){ msgEl.textContent = 'Passwords do not match. Please re-enter.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+
+  if(btn){ btn.disabled = true; btn.textContent = 'Updating Password…'; }
+  if(msgEl){ msgEl.style.display = 'none'; }
+
+  try{
+    var newHash = await hashPassword(p1);
+    var res = await fetch(SUPABASE_URL + '/rest/v1/rpc/verify_otp_and_reset_password', {
+      method: 'POST',
+      headers: sbHeaders({'Content-Type': 'application/json'}),
+      body: JSON.stringify({
+        p_email: _fpEmail,
+        p_otp: otp,
+        p_new_password_hash: newHash
+      })
+    });
+    var data = await res.json();
+    if(!res.ok || !data.success){
+      throw new Error(data.error || 'Failed to verify code.');
+    }
+
+    // Success! Show Step 3
+    fpShowStep(3);
+    var uInp = document.getElementById('username');
+    var pInp = document.getElementById('password');
+    if(uInp) uInp.value = _fpEmail;
+    if(pInp){ pInp.value = ''; }
+  }catch(e){
+    if(msgEl){
+      msgEl.textContent = e.message;
+      msgEl.className = 'fp-msg err';
+      msgEl.style.display = 'block';
+    }
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = 'Reset Password';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SELF-SERVICE USER REGISTRATION (@k7computing / @k7cybersecurity)
+// ═══════════════════════════════════════════════════════════════
+var _regCountdownTimer = null;
+var _regEmail = '';
+var _regName = '';
+
+function regOpenModal(){
+  var m = document.getElementById('reg-modal');
+  if(!m) return;
+  regShowStep(1);
+  m.style.display = 'flex';
+  setTimeout(function(){ var n = document.getElementById('reg-name'); if(n) n.focus(); }, 100);
+}
+
+function regCloseModal(){
+  var m = document.getElementById('reg-modal');
+  if(m) m.style.display = 'none';
+  if(_regCountdownTimer) clearInterval(_regCountdownTimer);
+}
+
+function regShowStep(step){
+  var s1 = document.getElementById('reg-step-1');
+  var s2 = document.getElementById('reg-step-2');
+  if(s1) s1.style.display = (step === 1 ? 'block' : 'none');
+  if(s2) s2.style.display = (step === 2 ? 'block' : 'none');
+  var m1 = document.getElementById('reg-step1-msg'); if(m1) m1.style.display = 'none';
+  var m2 = document.getElementById('reg-step2-msg'); if(m2) m2.style.display = 'none';
+}
+
+function _isAuthorizedWorkDomain(em){
+  var e = (em || '').trim().toLowerCase();
+  return e.endsWith('@k7computing.com') || e.endsWith('@k7cybersecurity.com');
+}
+
+async function regSendOtp(){
+  var name = (document.getElementById('reg-name').value || _regName || '').trim();
+  var email = (document.getElementById('reg-email').value || _regEmail || '').trim().toLowerCase();
+  var isStep2 = document.getElementById('reg-step-2') && document.getElementById('reg-step-2').style.display === 'block';
+  var msgEl = isStep2 ? document.getElementById('reg-step2-msg') : document.getElementById('reg-step1-msg');
+  var btn = isStep2 ? document.getElementById('reg-btn-resend') : document.getElementById('reg-btn-send');
+
+  if(!name){
+    if(msgEl){ msgEl.textContent = 'Please enter your full name.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+  if(!_isAuthorizedWorkDomain(email)){
+    if(msgEl){ msgEl.textContent = 'Registration is restricted strictly to @k7computing.com and @k7cybersecurity.com email addresses.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+
+  _regName = name;
+  _regEmail = email;
+  if(btn){ btn.disabled = true; btn.textContent = isStep2 ? 'Resending…' : 'Sending Code…'; }
+  if(msgEl){ msgEl.style.display = 'none'; }
+
+  try{
+    var res = await fetch(SUPABASE_URL + '/functions/v1/send-reset-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, mode: 'register', name: name })
+    });
+    var data = await res.json();
+    if(!res.ok || data.error){
+      throw new Error(data.error || 'Failed to send verification code.');
+    }
+
+    var sentToEl = document.getElementById('reg-sent-to');
+    if(sentToEl) sentToEl.textContent = email;
+    regShowStep(2);
+    regStartCountdown(60);
+    var otpInp = document.getElementById('reg-otp');
+    if(otpInp){ otpInp.value = ''; setTimeout(function(){ otpInp.focus(); }, 150); }
+  }catch(e){
+    if(msgEl){
+      msgEl.textContent = e.message;
+      msgEl.className = 'fp-msg err';
+      msgEl.style.display = 'block';
+    }
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = isStep2 ? 'Resend Code' : 'Send Verification Code';
+    }
+  }
+}
+
+function regStartCountdown(seconds){
+  var timerEl = document.getElementById('reg-timer-wrap');
+  var resendBtn = document.getElementById('reg-btn-resend');
+  var countEl = document.getElementById('reg-countdown');
+  if(_regCountdownTimer) clearInterval(_regCountdownTimer);
+
+  if(timerEl) timerEl.style.display = 'inline-block';
+  if(resendBtn) resendBtn.style.display = 'none';
+
+  var remaining = seconds;
+  if(countEl) countEl.textContent = remaining;
+
+  _regCountdownTimer = setInterval(function(){
+    remaining--;
+    if(remaining <= 0){
+      clearInterval(_regCountdownTimer);
+      if(timerEl) timerEl.style.display = 'none';
+      if(resendBtn) resendBtn.style.display = 'inline-block';
+    } else {
+      if(countEl) countEl.textContent = remaining;
+    }
+  }, 1000);
+}
+
+async function regComplete(){
+  var otp = (document.getElementById('reg-otp').value || '').trim();
+  var p1 = (document.getElementById('reg-pw').value || '').trim();
+  var p2 = (document.getElementById('reg-confirm-pw').value || '').trim();
+  var msgEl = document.getElementById('reg-step2-msg');
+  var btn = document.getElementById('reg-btn-complete');
+
+  if(!otp || otp.length < 6){
+    if(msgEl){ msgEl.textContent = 'Please enter the 6-digit verification code from your email.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+  if(!p1 || p1.length < 6){
+    if(msgEl){ msgEl.textContent = 'Password must be at least 6 characters.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+  if(p1 !== p2){
+    if(msgEl){ msgEl.textContent = 'Passwords do not match.'; msgEl.className = 'fp-msg err'; msgEl.style.display = 'block'; }
+    return;
+  }
+
+  if(btn){ btn.disabled = true; btn.textContent = 'Creating Account…'; }
+  if(msgEl){ msgEl.style.display = 'none'; }
+
+  try{
+    var hash = await hashPassword(p1);
+    var res = await fetch(SUPABASE_URL + '/rest/v1/rpc/register_portal_user', {
+      method: 'POST',
+      headers: sbHeaders({'Content-Type': 'application/json'}),
+      body: JSON.stringify({
+        p_name: _regName,
+        p_email: _regEmail,
+        p_password_hash: hash,
+        p_otp: otp
+      })
+    });
+    var data = await res.json();
+    if(!res.ok || !data.success){
+      throw new Error(data.error || 'Registration failed.');
+    }
+
+    // Success! Log user in automatically
+    regCloseModal();
+    currentUser = data.user;
+    saveSession(currentUser);
+    siCaptureSession(currentUser);
+    enterDashboard();
+  }catch(e){
+    if(msgEl){
+      msgEl.textContent = e.message;
+      msgEl.className = 'fp-msg err';
+      msgEl.style.display = 'block';
+    }
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = 'Complete Registration';
+    }
   }
 }
 
@@ -5854,31 +6462,38 @@ function enterDashboard(){
   if(typeof icOnLogin==='function') icOnLogin();
 }
 
-window.addEventListener('DOMContentLoaded',function(){
+window.addEventListener('DOMContentLoaded', async function(){
   document.getElementById('password').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   const saved=loadSession();
-  if(saved){
-    currentUser=saved;
-    enterDashboard();
-    // Silently re-fetch name/email/role from DB so stale localStorage names are corrected automatically
-    setTimeout(function(){
-      if(!currentUser||!currentUser.id||currentUser.role==='syslevel') return;
-      sbQuery('users','id=eq.'+currentUser.id+'&select=id,name,email,role,timesheet_enabled,photo_url').then(function(rows){
-        if(!rows||!rows.length) return;
-        var u=rows[0];
-        var changed=currentUser.name!==u.name||currentUser.email!==u.email||currentUser.role!==u.role;
-        currentUser.name=u.name;
-        currentUser.email=u.email;
-        currentUser.role=u.role;
-        currentUser.timesheetEnabled=u.timesheet_enabled?true:false;
-        if(u.photo_url) currentUser.photo_url=u.photo_url;
+  if(saved && saved.id && saved.sessionToken){
+    try{
+      const vr = await fetch(SUPABASE_URL + '/rest/v1/rpc/verify_session', {
+        method: 'POST',
+        headers: sbHeaders({'Content-Type': 'application/json'}),
+        body: JSON.stringify({ p_user_id: saved.id, p_session_token: saved.sessionToken })
+      });
+      const u = vr.ok ? await vr.json() : null;
+      if(u && u.id && !u.is_blocked){
+        currentUser = {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          timesheetEnabled: u.timesheet_enabled?true:false,
+          photo_url: u.photo_url||null,
+          canUnblock: u.can_unblock?true:false,
+          sessionToken: saved.sessionToken
+        };
         saveSession(currentUser);
-        if(changed){
-          var nameEl=document.getElementById('agent-display')||document.querySelector('.agent-name');
-          if(nameEl) nameEl.textContent=u.name;
-        }
-      }).catch(function(){});
-    }, 1500);
+        enterDashboard();
+        return;
+      }
+    }catch(e){ console.warn('Session verification failed:', e); }
+    clearSession();
+    currentUser = null;
+  } else if(saved){
+    clearSession();
+    currentUser = null;
   }
 });
 
@@ -5887,6 +6502,7 @@ function showPage(id,elem){
   var kbWin=window.open('kbsection.html','_blank');
   return;
 }
+  if(id==='sysconfig' && !_isSysLevel()){showPage('home',document.querySelector('.sidebar-item'));return;}
   if(isAdminPage(id)&&!isAdminUser()){showPage('home',document.querySelector('.sidebar-item'));return;}
 
   // Hide all pages
@@ -5967,7 +6583,7 @@ function showPage(id,elem){
 }
 
 function isAdminUser(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='tl'||currentUser.role==='syslevel');}
-function isAdminPage(id){return['quiz-admin','assessment-admin','users','sysconfig','controldeck'].indexOf(id)>-1;}
+function isAdminPage(id){return['quiz-admin','assessment-admin','users','controldeck'].indexOf(id)>-1;}
 
 function qlFilter(query) {
   query = query.toLowerCase().trim();
@@ -5996,6 +6612,46 @@ function qlSwitchTab(cat, btn) {
   
   var searchInp = document.querySelector('.ql-search-inp');
   qlFilter(searchInp ? searchInp.value : '');
+}
+
+function openSecurePortal(portalId) {
+  if (!currentUser || !currentSessionToken) {
+    alert('Authentication Required:\n\nPlease log in to access team portals and internal network resources.');
+    return;
+  }
+  
+  var PORTALS = {
+    'tavetal': {
+      title: 'Tavetal Call Portal',
+      url: 'http://172.16.3.195/',
+      notice: '⚠️ Internal Network Notice:\n\nThis portal operates over unencrypted HTTP on the internal office network (172.16.3.195).\nPlease ensure you are connected to the K7 Office LAN or Company VPN before proceeding.\n\nContinue to Tavetal?'
+    },
+    'virusbank': {
+      title: 'Virus Bank Portal',
+      url: 'http://172.16.0.32/k7virusbank/Login.aspx',
+      notice: '⚠️ Internal / L2 Engineer Notice:\n\nThis portal operates on internal network (172.16.0.32) and requires L2 engineering credentials.\nEnsure you are connected to the company VPN/LAN.\n\nContinue to Virus Bank?'
+    },
+    'sms': {
+      title: 'SMS Portal',
+      url: 'http://192.46.213.220/en/administrator/support_admin.php',
+      notice: '⚠️ Manager Approval Required:\n\nSending manual customer SMS communications requires prior authorization from your reporting manager.\nThis portal connects over an unencrypted administration channel.\n\nConfirm you have manager approval and wish to proceed?'
+    },
+    'keyreset': {
+      title: 'Key Reset Report',
+      url: 'https://docs.google.com/spreadsheets/d/1tvJT5eipCV_7JkEPFbdokecUlfY0nLwrEYxVcr6zIik/edit#gid=0',
+      notice: null
+    }
+  };
+
+  var p = PORTALS[portalId];
+  if (!p) return;
+
+  if (p.notice) {
+    if (!confirm(p.notice)) return;
+  }
+
+  var win = window.open(p.url, '_blank', 'noopener,noreferrer');
+  if (win) win.opener = null;
 }
 
 function updateAdminVisibility(){
@@ -6046,10 +6702,14 @@ async function doChangePassword(){
   if(nxt!==cfm){errEl.textContent='New passwords do not match.';errEl.style.display='block';return;}
   try{
     var curHash=await hashPassword(cur);
-    var rows=await sbQuery('users','id=eq.'+currentUser.id+'&select=password');
-    if(!rows||rows.length===0||rows[0].password!==curHash){errEl.textContent='Current password is incorrect.';errEl.style.display='block';return;}
     var newHash=await hashPassword(nxt);
-    await sbUpdate('users','id',currentUser.id,{password:newHash});
+    var cpRes = await fetch(SUPABASE_URL + '/rest/v1/rpc/change_user_password', {
+      method: 'POST',
+      headers: sbHeaders({'Content-Type': 'application/json'}),
+      body: JSON.stringify({ p_user_id: currentUser.id, p_old_hash: curHash, p_new_hash: newHash })
+    });
+    var cpOk = cpRes.ok ? await cpRes.json() : false;
+    if(!cpOk){errEl.textContent='Current password is incorrect.';errEl.style.display='block';return;}
     succEl.style.display='block';
     ['cp-current','cp-new','cp-confirm'].forEach(function(id){document.getElementById(id).value='';});
   }catch(e){errEl.textContent='Something went wrong. Please try again.';errEl.style.display='block';}
@@ -6185,7 +6845,7 @@ async function ubUnblockAgent(userId, userName){
   var btn=document.getElementById('ub-btn-'+userId);
   if(btn){btn.textContent='Unblocking…';btn.disabled=true;}
   try{
-    await sbUpdate('users','id',userId,{is_blocked:false,block_reason:null});
+    await sbRpc('admin_unblock_user', { p_user_id: userId });
     // Audit log
     try{
       await sbInsert('block_audit_log',{
@@ -6242,7 +6902,10 @@ async function tsToggleUser(userId,enabled){
 }
 async function removeUser(id,name){
   if(!confirm('Remove '+name+'? They will no longer be able to log in.'))return;
-  try{await sbDelete('users','id',id);loadUsersPage();}catch(e){alert('Could not remove user.');}
+  try{
+    await sbRpc('delete_portal_user', { p_user_id: id });
+    loadUsersPage();
+  }catch(e){alert('Could not remove user: '+e.message);}
 }
 
 // ── Relieve from duty — a gentler alternative to Remove.
@@ -6262,7 +6925,7 @@ async function relieveUser(userId, userName){
       });
     }
     if(revokeLogin){
-      await sbUpdate('users','id',userId,{is_blocked:true,block_reason:'Relieved from duty'});
+      await sbRpc('block_portal_user', { p_user_id: userId, p_reason: 'Relieved from duty' });
     }
     alert(hasProfile
       ? userName+' has been marked as Relieved from Duty. 🕊️'
@@ -6274,7 +6937,7 @@ async function relieveUser(userId, userName){
 async function makeUserAdmin(userId, userName){
   if(!confirm('Give '+userName+' full Admin access?\n\nThey will be able to see and manage everything — Control Deck, Manage Users, quiz questions, assessments, and all other admin features.\n\nAre you sure?')) return;
   try{
-    await sbUpdate('users','id',userId,{role:'admin'});
+    await sbRpc('admin_set_user_role', { p_user_id: userId, p_new_role: 'admin' });
     loadUsersPage();
   }catch(e){ alert('Could not update role: '+e.message); }
 }
@@ -6930,7 +7593,7 @@ function openMomentLightbox(safe){
   document.body.style.overflow='hidden';
 }
 function closeLightbox(){document.getElementById('lightbox-overlay').classList.remove('open');document.body.style.overflow='';_mLightboxId=null;}
-function _mRenderComments(safe){var list=document.getElementById('comments-list');var items=_mcomments[safe]||[];if(!items.length){list.innerHTML='<div class="no-comments">No comments yet - be the first!</div>';return;}list.innerHTML=items.map(function(c){return'<div class="comment-item"><div class="comment-avatar">'+c.initials+'</div><div class="comment-body"><div class="comment-author">'+c.author+'</div><div class="comment-text">'+c.text+'</div><div class="comment-time">'+_mTimeAgo(c.ts)+'</div></div></div>';}).join('');list.scrollTop=list.scrollHeight;}
+function _mRenderComments(safe){var list=document.getElementById('comments-list');var items=_mcomments[safe]||[];if(!items.length){list.innerHTML='<div class="no-comments">No comments yet - be the first!</div>';return;}list.innerHTML=items.map(function(c){return'<div class="comment-item"><div class="comment-avatar">'+esc(c.initials)+'</div><div class="comment-body"><div class="comment-author">'+esc(c.author)+'</div><div class="comment-text">'+esc(c.text)+'</div><div class="comment-time">'+_mTimeAgo(c.ts)+'</div></div></div>';}).join('');list.scrollTop=list.scrollHeight;}
 function submitComment(){var input=document.getElementById('comment-input');var text=(input.value||'').trim();if(!text||!_mLightboxId)return;var safe=_mLightboxId;if(!_mcomments[safe])_mcomments[safe]=[];var author=currentUser?currentUser.name:'Agent';_mcomments[safe].push({author:author,initials:_mInitials(author),text:text,ts:Date.now()});input.value='';_mRenderComments(safe);}
 
 // ===================================================
@@ -6958,10 +7621,7 @@ async function bbCheckAfterBreak(){
   // Block immediately on any over-limit break — no threshold
   var blockReason = 'Break limit exceeded on '+new Date().toLocaleString('default',{month:'long',day:'numeric',year:'numeric'});
   try{
-    await sbUpdate('users','id',currentUser.id,{
-      is_blocked: true,
-      block_reason: blockReason
-    });
+    await sbRpc('block_portal_user', { p_user_id: currentUser.id, p_reason: blockReason });
   }catch(e){ console.warn('Block write failed:',e.message); }
   // Audit log — record the block event
   try{
@@ -7033,7 +7693,7 @@ async function bbGoToLogin(){
 async function bbAdminUnblock(userId, userName){
   if(!confirm('Unlock '+userName+'\'s account? They will be able to log in again.')) return;
   try{
-    await sbUpdate('users','id',userId,{is_blocked:false,block_reason:null});
+    await sbRpc('admin_unblock_user', { p_user_id: userId });
     // Audit log
     try{
       await sbInsert('block_audit_log',{
@@ -7076,7 +7736,7 @@ async function bbUnblockAll(){
     var failed = [];
     for(var i=0; i<rows.length; i++){
       try{
-        await sbUpdate('users','id',rows[i].id,{is_blocked:false,block_reason:null});
+        await sbRpc('admin_unblock_user', { p_user_id: rows[i].id });
         // Audit log per agent
         try{
           await sbInsert('block_audit_log',{
@@ -8740,7 +9400,7 @@ async function xcFetchUsr(){
 async function xcWriteUsr(userId, selId){
   var role = document.getElementById(selId).value;
   try {
-    await sbUpdate('users','id',userId,{role:role});
+    await sbRpc('admin_set_user_role', { p_user_id: userId, p_new_role: role });
     var note = document.getElementById('xc-us-'+userId);
     if(note){ note.style.display='inline'; setTimeout(function(){ note.style.display='none'; },2000); }
   } catch(e){ alert('Role update failed: '+e.message); }
@@ -8766,7 +9426,11 @@ async function xcResetPassword(userId, name){
   if(!newPw || newPw.length < 6){ alert('Password must be at least 6 characters.'); return; }
   try{
     var hashed = await hashPassword(newPw);
-    await sbUpdate('users','id',userId,{password:hashed});
+    await fetch(SUPABASE_URL + '/rest/v1/rpc/admin_reset_user_password', {
+      method: 'POST',
+      headers: sbHeaders({'Content-Type': 'application/json'}),
+      body: JSON.stringify({ p_user_id: userId, p_new_hash: hashed })
+    });
     alert('✅ Password for '+name+' has been reset successfully.\n\nTell them their new password: '+newPw);
   }catch(e){ alert('Reset failed: '+e.message); }
 }
@@ -10318,12 +10982,12 @@ async function renderAgentQuiz(){
     if(_quizData.review_enabled && lastAttempt){
       reviewHtml=buildQuizReview(lastAttempt.answer);
     } else if(lastAttempt) {
-      reviewHtml='<div class="quiz-result-banner review">&#128203; You submitted: <strong>'+lastAttempt.answer+'</strong>. Review will be available when your admin enables it.</div>';
+      reviewHtml='<div class="quiz-result-banner review">&#128203; You submitted: <strong>'+esc(lastAttempt.answer)+'</strong>. Review will be available when your admin enables it.</div>';
     }
     content.innerHTML='<div class="quiz-card">'+
       '<div class="quiz-result-banner '+(lastAttempt?'pass':'review')+'">'+(lastAttempt?'&#9989; You completed this quiz.':'&#128274; Quiz closed. You did not attempt.')+'</div>'+
       (reviewHtml||'')+
-      '<div class="quiz-question">'+_quizData.question+'</div>'+
+      '<div class="quiz-question">'+esc(_quizData.question)+'</div>'+
       '</div>';
     return;
   }
@@ -10349,8 +11013,8 @@ async function renderAgentQuiz(){
     choicesHtml='<div class="quiz-options">'+
       _quizData.choices_arr.map(function(ch,i){
         return '<label class="quiz-option" id="qopt_'+i+'">'+
-          '<input type="radio" name="quiz-answer" value="'+ch+'" onchange="selectQuizOption(\''+ch.replace(/'/g,"\\'")+'\')" style="accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;"/>'+
-          ch+'</label>';
+          '<input type="radio" name="quiz-answer" value="'+esc(ch)+'" onchange="selectQuizOption(\''+esc(ch).replace(/'/g,"\\'")+'\')" style="accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;"/>'+
+          esc(ch)+'</label>';
       }).join('')+
     '</div>';
   } else {
@@ -10362,7 +11026,7 @@ async function renderAgentQuiz(){
       '<span class="quiz-q-label">Daily Quiz &nbsp;&#8226;&nbsp; Attempt '+(attemptCount+1)+' of '+maxAttempts+'</span>'+
       '<span class="quiz-timer-badge" id="quiz-close-timer">Closes at '+qaFmtDateTime(_quizData.close_time)+'</span>'+
     '</div>'+
-    '<div class="quiz-question">'+_quizData.question+'</div>'+
+    '<div class="quiz-question">'+esc(_quizData.question)+'</div>'+
     choicesHtml+
     '<button class="quiz-submit-btn" id="quiz-submit-btn" onclick="submitQuiz()" disabled>Submit Answer</button>'+
   '</div>';
@@ -10379,7 +11043,7 @@ function selectQuizOption(val){
 function buildQuizReview(userAnswer){
   if(!_quizData)return'';
   if(_quizData.type==='essay'){
-    return '<div class="quiz-result-banner review">&#128221; Your essay answer: <em>'+userAnswer+'</em></div>';
+    return '<div class="quiz-result-banner review">&#128221; Your essay answer: <em>'+esc(userAnswer)+'</em></div>';
   }
   var html='<div class="quiz-options" style="pointer-events:none;">';
   _quizData.choices_arr.forEach(function(ch){
@@ -10388,13 +11052,13 @@ function buildQuizReview(userAnswer){
     var cls='quiz-option';
     if(isCorrect)cls+=' correct';
     else if(isUserAnswer&&!isCorrect)cls+=' wrong';
-    html+='<div class="'+cls+'">'+ch+(isCorrect?' &#9989;':'')+(isUserAnswer&&!isCorrect?' &#10060;':'')+'</div>';
+    html+='<div class="'+cls+'">'+esc(ch)+(isCorrect?' &#9989;':'')+(isUserAnswer&&!isCorrect?' &#10060;':'')+'</div>';
   });
   html+='</div>';
   if(userAnswer===_quizData.correct_answer){
     html='<div class="quiz-result-banner pass">&#127881; Correct! Well done.</div>'+html;
   } else {
-    html='<div class="quiz-result-banner" style="background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.25);color:var(--accent-red);">&#10060; Incorrect. The correct answer is: <strong>'+_quizData.correct_answer+'</strong></div>'+html;
+    html='<div class="quiz-result-banner" style="background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.25);color:var(--accent-red);">&#10060; Incorrect. The correct answer is: <strong>'+esc(_quizData.correct_answer)+'</strong></div>'+html;
   }
   return html;
 }
@@ -11380,13 +12044,13 @@ async function renderAgentAssessment(){
         var userAns=savedAnswers[q.id]||'(not answered)';
         var isCorrect=q.type==='essay'?null:(userAns===q.correct_answer);
         var choices=q.choices?JSON.parse(q.choices):[];
-        var choicesHtml=q.type==='essay'?'<div style="padding:.5rem .75rem;background:#F1F6FD;border-radius:6px;font-size:.85rem;">'+userAns+'</div>':
+        var choicesHtml=q.type==='essay'?'<div style="padding:.5rem .75rem;background:#F1F6FD;border-radius:6px;font-size:.85rem;">'+esc(userAns)+'</div>':
           '<div class="quiz-options" style="pointer-events:none;">'+choices.map(function(ch){
             var isc=ch===q.correct_answer, isu=ch===userAns;
             var cls='quiz-option'+(isc?' correct':isu&&!isc?' wrong':'');
-            return '<div class="'+cls+'">'+ch+(isc?' &#9989;':'')+(isu&&!isc?' &#10060;':'')+'</div>';
+            return '<div class="'+cls+'">'+esc(ch)+(isc?' &#9989;':'')+(isu&&!isc?' &#10060;':'')+'</div>';
           }).join('')+'</div>';
-        return '<div style="margin-bottom:1.5rem;"><div class="quiz-q-label" style="margin-bottom:.5rem;">Q'+(i+1)+'. <span style="color:var(--text-primary);font-size:.9rem;font-weight:500;">'+q.question+'</span></div>'+choicesHtml+'</div>';
+        return '<div style="margin-bottom:1.5rem;"><div class="quiz-q-label" style="margin-bottom:.5rem;">Q'+(i+1)+'. <span style="color:var(--text-primary);font-size:.9rem;font-weight:500;">'+esc(q.question)+'</span></div>'+choicesHtml+'</div>';
       }).join('')+'</div>';
     }
     content.innerHTML='<div class="quiz-card">'+
@@ -11461,22 +12125,22 @@ function renderAssessmentQuestion(){
         choices.map(function(ch){
           var sel=curAnswer===ch?' selected':'';
           return '<label class="quiz-option'+sel+'" style="cursor:pointer;">'+
-            '<input type="radio" name="ass-ans-'+q.id+'" value="'+ch.replace(/"/g,'&quot;')+'" '+
+            '<input type="radio" name="ass-ans-'+q.id+'" value="'+esc(ch)+'" '+
             (curAnswer===ch?'checked':'')+
-            ' onchange="selectAssessmentOption(\''+ch.replace(/'/g,"\\'").replace(/"/g,'&quot;')+'\',\''+q.id+'\')"'+
+            ' onchange="selectAssessmentOption(\''+esc(ch).replace(/'/g,"\\'")+'\',\''+q.id+'\')"'+
             ' style="accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;"/>'+
-            ch+'</label>';
+            esc(ch)+'</label>';
         }).join('')+
       '</div>';
     }else{
       answerHtml='<textarea class="quiz-essay" id="ass-essay-'+q.id+'" placeholder="Type your answer here..." '+
         'oninput="selectAssessmentOption(this.value,\''+q.id+'\')" style="margin-top:.6rem;">'+
-        (curAnswer||'')+
+        esc(curAnswer||'')+
       '</textarea>';
     }
     return '<div class="ass-q-block" id="ass-q-block-'+q.id+'">'+
       '<div class="ass-q-num">Q'+(i+1)+' <span style="font-weight:400;color:var(--text-muted);">'+q.type+'</span></div>'+
-      '<div class="ass-q-text">'+q.question+'</div>'+
+      '<div class="ass-q-text">'+esc(q.question)+'</div>'+
       answerHtml+
     '</div>';
   }).join('');
@@ -11484,7 +12148,7 @@ function renderAssessmentQuestion(){
   content.innerHTML=
     '<div class="quiz-card" style="padding:0;">'+
       '<div class="ass-sticky-header">'+
-        '<div style="font-size:.9rem;font-weight:600;color:var(--text-primary);">'+_assData.title+'</div>'+
+        '<div style="font-size:.9rem;font-weight:600;color:var(--text-primary);">'+esc(_assData.title)+'</div>'+
         '<div style="display:flex;align-items:center;gap:.75rem;">'+
           '<span style="font-size:.78rem;color:var(--text-muted);">'+total+' questions</span>'+
           '<span class="quiz-timer-badge" id="ass-timer">'+m+':'+(s<10?'0':'')+s+'</span>'+
@@ -11726,8 +12390,8 @@ async function loadAnnouncements(){
       '<div class="ann-icon">'+(a.pinned?'&#128204;':'&#128276;')+'</div>'+
       '<div class="ann-body">'+
         '<div class="ann-tag">'+(a.pinned?'Pinned Notice':'Announcement')+'</div>'+
-        '<div class="ann-text-main">'+a.text+'</div>'+
-        '<div class="ann-meta-sm">Posted by '+a.posted_by+' &nbsp;&middot;&nbsp; '+t+'</div>'+
+        '<div class="ann-text-main">'+esc(a.text)+'</div>'+
+        '<div class="ann-meta-sm">Posted by '+esc(a.posted_by)+' &nbsp;&middot;&nbsp; '+t+'</div>'+
       '</div>'+
     '</div>';
   }catch(e){console.warn('Announcements load failed:',e.message);}
@@ -11750,8 +12414,8 @@ async function loadAnnouncementsAdmin(){
       var t=mo[d.getMonth()]+' '+d.getDate()+' at '+h+':'+(m<10?'0':'')+m+' '+ap;
       html+='<div class="ann-item">';
       html+='<div style="flex:1;">';
-      html+='<div class="ann-item-text">'+(a.pinned?'&#128204; ':'')+a.text+'</div>';
-      html+='<div class="ann-item-meta">Posted by '+a.posted_by+' &nbsp;&middot;&nbsp; '+t+'</div>';
+      html+='<div class="ann-item-text">'+(a.pinned?'&#128204; ':'')+esc(a.text)+'</div>';
+      html+='<div class="ann-item-meta">Posted by '+esc(a.posted_by)+' &nbsp;&middot;&nbsp; '+t+'</div>';
       html+='</div>';
       html+='<div style="display:flex;gap:.5rem;flex-shrink:0;">';
       html+='<button class="ann-pin-btn'+(a.pinned?' pinned':'')+'" data-id="'+a.id+'" data-pinned="'+(a.pinned?'true':'false')+'" onclick="togglePin(this)">'+( a.pinned?'Unpin':'Pin')+'</button>';
@@ -13664,7 +14328,7 @@ async function dockLoadMsgs(userId){
 
 function dockRenderMsgs(out, rows, userId, scrollToBottom){
   if(!rows.length){
-    out.innerHTML='<div style="text-align:center;padding:1.5rem;font-size:.75rem;color:var(--text-dim);">🔒 Start a conversation</div>';
+    out.innerHTML='<div style="text-align:center;padding:1.5rem;font-size:.75rem;color:var(--text-dim);">💬 Start a conversation</div>';
     return;
   }
   var html='', lastDate='';
@@ -14176,9 +14840,9 @@ function msgRenderMessagesInPage(rows, isGroup){
   var area=document.getElementById('msg-messages-area');
   if(!rows.length){
     area.innerHTML='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.6rem;padding:2rem;">'+
-      '<div style="font-size:2.5rem;">🔒</div>'+
-      '<div style="font-size:.88rem;font-weight:600;color:var(--text-primary);">End-to-End Encrypted</div>'+
-      '<div style="font-size:.76rem;color:var(--text-muted);max-width:220px;line-height:1.6;">Only participants can read these messages. Auto-deletes in 24h.</div>'+
+      '<div style="font-size:2.5rem;">💬</div>'+
+      '<div style="font-size:.88rem;font-weight:600;color:var(--text-primary);">Team Direct Messaging</div>'+
+      '<div style="font-size:.76rem;color:var(--text-muted);max-width:260px;line-height:1.6;">Direct messages between team members. Transmitted securely over TLS and auto-deleted after 24h.</div>'+
     '</div>';
     return;
   }
@@ -17103,9 +17767,8 @@ function switchRosterMonth(key, silent){
 
 var _ctSource = 'crm'; // 'crm' or 'helpdesk'
 
-// VH config
+// VH config — API key is stored securely in Supabase Edge Functions
 var VH_URL     = 'https://support.k7computing.com';
-var VH_API_KEY = 'MFp5ZW9hbkZ5YWFoVXFXZ202aXN4YWVWVTluT3A4elEwbG5LbWFLbXlwYz0';
 
 // VH state
 var _vhTickets  = [];
@@ -17191,21 +17854,22 @@ CT.switchSource = function(src){
   CT.render();
 };
 
-// ── VH API fetch ──
+// ── VH API fetch (Secured via Supabase Edge Function) ──
 async function fetchVHTickets(){
   _vhLoading = true;
   try{
-    // Vision Helpdesk Get Tickets API
-    // GET /api/tickets.json?apikey=KEY&status=open
-    var url = VH_URL + '/api/tickets.json?apikey=' + encodeURIComponent(VH_API_KEY) +
-      '&status=open&count=200&sortby=lastactivity&sortorder=asc';
+    // Vision Helpdesk Tickets proxied securely via Supabase Edge Function
+    var url = SUPABASE_URL + '/functions/v1/vh-tickets?status=open&count=200&sortby=lastactivity&sortorder=asc';
 
     var res = await fetch(url, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' }
+      headers: sbHeaders({ 'Accept': 'application/json' })
     });
 
-    if(!res.ok) throw new Error('VH API error: '+res.status+' '+res.statusText);
+    if(!res.ok){
+      var errData = await res.json().catch(function(){ return {}; });
+      throw new Error(errData.error || ('VH API error: '+res.status+' '+res.statusText));
+    }
     var data = await res.json();
     _vhTickets = data.tickets || data || [];
     _vhLoaded = true;
@@ -18824,14 +19488,29 @@ async function cdAmbSchedDelete(id){
 
 
 var _cdPwResetUnlocked = false;
-function cdPwResetUnlock(){
+async function cdPwResetUnlock(){
   if(_cdPwResetUnlocked) return;
   var pinEl = document.getElementById('cd-pwreset-pin');
   var errEl = document.getElementById('cd-pwreset-pin-err');
   var pin = (pinEl ? pinEl.value : '').trim();
-  if(pin !== '7070'){
-    if(errEl){ errEl.style.display='inline'; setTimeout(function(){ errEl.style.display='none'; }, 2000); }
-    if(pinEl){ pinEl.value=''; pinEl.focus(); }
+  if(!pin){
+    if(errEl){ errEl.textContent='Please enter PIN.'; errEl.style.display='inline'; setTimeout(function(){ errEl.style.display='none'; }, 2000); }
+    return;
+  }
+  try{
+    var pr = await fetch(SUPABASE_URL + '/rest/v1/rpc/verify_admin_pin', {
+      method: 'POST',
+      headers: sbHeaders({'Content-Type': 'application/json'}),
+      body: JSON.stringify({ p_pin: pin })
+    });
+    var pinOk = pr.ok ? await pr.json() : false;
+    if(!pinOk){
+      if(errEl){ errEl.textContent='Wrong PIN.'; errEl.style.display='inline'; setTimeout(function(){ errEl.style.display='none'; }, 2000); }
+      if(pinEl){ pinEl.value=''; pinEl.focus(); }
+      return;
+    }
+  }catch(e){
+    if(errEl){ errEl.textContent='Verification error.'; errEl.style.display='inline'; setTimeout(function(){ errEl.style.display='none'; }, 2000); }
     return;
   }
   _cdPwResetUnlocked = true;
@@ -18877,7 +19556,11 @@ async function cdPwResetSave(userId, name){
   }
   try{
     var hashed = await hashPassword(newPw);
-    await sbUpdate('users','id',userId,{password:hashed});
+    await fetch(SUPABASE_URL + '/rest/v1/rpc/admin_reset_user_password', {
+      method: 'POST',
+      headers: sbHeaders({'Content-Type': 'application/json'}),
+      body: JSON.stringify({ p_user_id: userId, p_new_hash: hashed })
+    });
     inp.value = '';
     if(msg){ msg.style.display='block'; msg.textContent='✅ Password for '+name+' reset. New password: '+newPw; msg.style.color='var(--accent-green)'; setTimeout(function(){ msg.style.display='none'; }, 5000); }
   }catch(e){
@@ -18970,11 +19653,27 @@ async function checkCelebration(){
 // ════════════════════════════════════════════════════════
 //  K7 INTERCOM — Powered by Daily.co
 //  All calls (1-to-1 + Floor Channel) use Daily rooms.
-//  Server-side room creation goes via a tiny Supabase
-//  Edge Function so the API key never touches the client.
+//  Server-side room creation goes via a Supabase Edge Function
+//  so the API key never touches the client.
 // ════════════════════════════════════════════════════════
-var DAILY_API_KEY = '43a20a3fa3ef13362d92479c667e0725307f505701d797c0827bc7218a587ba1';
 var DAILY_DOMAIN  = 'raptordiwan';  // raptordiwan.daily.co
+
+// ── Validate that room URLs are legitimate HTTPS Daily.co endpoints ──
+function icIsValidRoomUrl(url){
+  if(!url || typeof url !== 'string') return false;
+  try{
+    var p = new URL(url);
+    if(p.protocol !== 'https:') return false;
+    var host = p.hostname.toLowerCase();
+    var allowedHost = (DAILY_DOMAIN + '.daily.co').toLowerCase();
+    if(host !== allowedHost && !host.endsWith('.daily.co')) return false;
+    var roomPath = p.pathname.replace(/^\/+/, '');
+    if(!roomPath || !/^[a-zA-Z0-9_\-\.]+$/.test(roomPath)) return false;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
 
 var IC = {
   agents: [],
@@ -18985,39 +19684,33 @@ var IC = {
   pollInterval: null
 };
 
-// ── Create a Daily room via API (called from client — ok for internal tool) ──
+// ── Create a Daily room via Supabase Edge Function (secure) ──
 async function icCreateRoom(roomName, expiryMins, videoEnabled){
   expiryMins = expiryMins || 120;
-  var exp = Math.floor(Date.now()/1000) + expiryMins*60;
-  var r = await fetch('https://api.daily.co/v1/rooms', {
+  var r = await fetch(SUPABASE_URL + '/functions/v1/daily-room', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + DAILY_API_KEY
-    },
+    headers: sbHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
+      action: 'create',
       name: roomName,
-      properties: {
-        exp: exp,
-        enable_chat: false,
-        enable_screenshare: !!videoEnabled,
-        enable_knocking: false,
-        start_video_off: !videoEnabled,   // audio-only unless video requested
-        start_audio_off: false,
-        lang: 'en'
-      }
+      expiryMins: expiryMins,
+      videoEnabled: !!videoEnabled
     })
   });
   if(!r.ok){ var t=await r.text(); throw new Error('Daily room error: '+t); }
   return await r.json();  // { url, name, ... }
 }
 
-// ── Delete a Daily room (cleanup after call ends) ──
+// ── Delete a Daily room via Supabase Edge Function (secure) ──
 async function icDeleteRoom(roomName){
   try{
-    await fetch('https://api.daily.co/v1/rooms/'+roomName, {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + DAILY_API_KEY }
+    await fetch(SUPABASE_URL + '/functions/v1/daily-room', {
+      method: 'POST',
+      headers: sbHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        action: 'delete',
+        name: roomName
+      })
     });
   }catch(e){ console.warn('IC: room delete failed', e.message); }
 }
@@ -19029,6 +19722,13 @@ function icRoomName(prefix){
 
 // ── Embed Daily call in a floating iframe overlay ──
 function icOpenFrame(roomUrl, isVideo){
+  // Security guard: Validate URL before loading inside an iframe with mic/cam permissions
+  if(!icIsValidRoomUrl(roomUrl)){
+    console.error('Blocked attempt to open untrusted call URL in iframe:', roomUrl);
+    alert('Security Alert: Untrusted or invalid call link rejected.');
+    return null;
+  }
+
   // Remove any existing frame
   icCloseFrame();
 
@@ -19052,6 +19752,7 @@ function icOpenFrame(roomUrl, isVideo){
   var iframe = document.createElement('iframe');
   iframe.id = 'ic-daily-frame';
   iframe.allow = 'microphone; camera; autoplay; display-capture';
+  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-modals');
   iframe.style.cssText = 'width:100%;height:'+frameHeight+';border:none;';
   // Append ?showLeaveButton=0&showFullscreenButton=0 to hide Daily's own buttons
   iframe.src = roomUrl + '?showLeaveButton=0&showFullscreenButton=0&showParticipantsBar=1&theme=dark';
@@ -19212,8 +19913,10 @@ function icStartIncomingPoll(){
         _icProcessed.add(r.id);
         if(_icProcessed.size > 200) _icProcessed.clear();
         var payload = {}; try{ payload=JSON.parse(r.payload); }catch(e){}
-        if(payload.url && !IC.activeCall && !IC.floorActive){
+        if(payload.url && icIsValidRoomUrl(payload.url) && !IC.activeCall && !IC.floorActive){
           icShowIncomingBanner(r.from_id, r.from_name, payload.url, payload.room, !!payload.video);
+        } else if(payload.url && !icIsValidRoomUrl(payload.url)){
+          console.warn('Rejected untrusted call invite URL from user ' + r.from_id + ':', payload.url);
         }
       });
     }catch(e){}
@@ -19269,7 +19972,7 @@ async function icAnswerCall(){
   var fromName = banner.getAttribute('data-from-name');
   var isVideo  = banner.getAttribute('data-video')==='1';
   banner.style.display = 'none';
-  if(!roomUrl){ alert('Call link missing.'); return; }
+  if(!roomUrl || !icIsValidRoomUrl(roomUrl)){ alert('Security Error: Invalid or untrusted call link.'); return; }
   IC.activeCall = { roomName: roomName, peerName: fromName, startTime: Date.now(), video: isVideo };
   icShowActiveBar(fromName);
   icOpenFrame(roomUrl, isVideo);
@@ -19344,8 +20047,10 @@ async function icJoinFloor(){
     var room;
     // Try to get existing room first, create if not found
     try{
-      var check = await fetch('https://api.daily.co/v1/rooms/'+floorName, {
-        headers:{'Authorization':'Bearer '+DAILY_API_KEY}
+      var check = await fetch(SUPABASE_URL + '/functions/v1/daily-room', {
+        method: 'POST',
+        headers: sbHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ action: 'get', name: floorName })
       });
       if(check.ok){ room = await check.json(); }
       else{ room = await icCreateRoom(floorName, 1440); } // 24h expiry
