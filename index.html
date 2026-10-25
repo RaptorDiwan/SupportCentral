@@ -390,8 +390,9 @@
     padding: 0;
     overflow: hidden;
     position: relative;
-    background: radial-gradient(circle at 82% 28%, rgba(255, 91, 61, 0.14) 0%, transparent 45%),
-                radial-gradient(circle at 18% 75%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    background: radial-gradient(circle at 75% 25%, rgba(255, 91, 61, 0.18) 0%, transparent 55%),
+                radial-gradient(circle at 18% 75%, rgba(59, 130, 246, 0.12) 0%, transparent 55%),
+                radial-gradient(circle at 50% 50%, rgba(255, 91, 61, 0.04) 0%, transparent 70%),
                 #0b0f19;
   }
   #login-view::after {
@@ -407,12 +408,11 @@
     position: relative;
     z-index: 2;
     background: transparent;
-    display: flex; flex-direction: column; justify-content: space-between;
+    display: flex; flex-direction: column; justify-content: flex-start;
     padding: 3.5rem 3.5rem;
-    overflow: hidden;
+    overflow: visible; /* allow orb glow to bleed across — no hard centre edge */
     color: #fff;
     min-height: 100%;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
   }
   .li-brand::before {
     content: ''; position: absolute; border-radius: 50%;
@@ -480,6 +480,7 @@
 
   .li-panel {
     flex: 1;
+    width: 100%;
     display: flex; align-items: center; justify-content: center;
     padding: 2.5rem;
     position: relative;
@@ -488,18 +489,26 @@
     perspective: 1200px;
   }
   .li-form-wrap {
-    width: 100%; max-width: 420px;
-    background: rgba(17, 24, 39, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 2.5rem 2.2rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 35px rgba(255, 91, 61, 0.06);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    width: 100%; max-width: 400px;
+    background: rgba(13, 18, 30, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 24px;
+    padding: 2.2rem 2.2rem;
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 91, 61, 0.08),
+                0 0 60px rgba(255, 91, 61, 0.07);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
     transform-style: preserve-3d;
     will-change: transform, box-shadow;
     position: relative;
     overflow: hidden;
-    transition: border-color 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .li-form-wrap:hover {
+    border-color: rgba(255, 91, 61, 0.18);
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 91, 61, 0.15),
+                0 0 80px rgba(255, 91, 61, 0.1);
   }
   .li-card-glare {
     position: absolute;
@@ -515,9 +524,27 @@
     opacity: 1;
   }
 
-  .li-form-head { margin-bottom: 2rem; text-align: left; }
-  .li-form-head h2 { font-size: 1.6rem; font-weight: 700; color: #f8fafc; font-family: 'DM Sans', sans-serif; letter-spacing: -0.02em; }
-  .li-form-head p { font-size: .86rem; color: #94a3b8; margin-top: .35rem; }
+  /* Logo + tagline inside card (Option B) */
+  .li-card-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .li-card-portal-tag {
+    text-align: center;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #4a5a6a;
+    margin-bottom: 2rem;
+  }
+
+  .li-form-head { margin-bottom: 1.8rem; text-align: center; }
+  .li-form-head h2 { font-size: 1.55rem; font-weight: 700; color: #f8fafc; font-family: 'DM Sans', sans-serif; letter-spacing: -0.02em; }
+  .li-form-head p { font-size: .84rem; color: #64748b; margin-top: .35rem; }
 
   .li-field { margin-bottom: 1.25rem; }
   .li-field label {
@@ -1874,6 +1901,12 @@
   .roster-nav-btn { padding:.38rem .7rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;color:var(--text-primary);transition:background .15s; }
   .roster-nav-btn:hover { background:var(--navy-hover); }
   .roster-today-btn { font-size:.72rem;padding:.38rem .65rem;color:var(--text-muted); }
+  /* View Toggle (Full Month vs Week) */
+  .roster-view-toggle { display:inline-flex;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:8px;padding:3px;gap:3px; }
+  .roster-vt-btn { background:transparent;border:none;padding:.38rem .75rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .18s;white-space:nowrap; }
+  .roster-vt-btn:hover { color:var(--text-primary); }
+  .roster-vt-btn.active { background:var(--navy-hover);color:var(--text-primary);box-shadow:0 1px 3px rgba(0,0,0,0.18); }
+  body.dark .roster-vt-btn.active { background:rgba(255,91,61,.18);color:#ff8a6a; }
   /* Table layout — proper horizontal scroll */
   .roster-grid-wrap { background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);overflow-x:auto;overflow-y:visible; }
   .roster-tbl { width:100%;border-collapse:collapse;min-width:580px; }
@@ -3230,33 +3263,17 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 <div id="login-view" class="view active">
   <canvas id="li-mesh-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;"></canvas>
 
-  <div class="li-brand">
-    <div class="li-brand-top">
-      <svg width="22" height="22" viewBox="0 0 200 120" style="flex-shrink:0;">
-        <polygon points="10,18 60,56 110,18 64,110" fill="#ff7a5c"/>
-        <text x="74" y="100" font-family="Arial, sans-serif" font-weight="700" font-size="100" fill="#fff">7</text>
-      </svg>
-      <div class="li-brand-word">K<span class="k7-seven">7</span>TeamCore</div>
-    </div>
-    <div class="li-brand-mid">
-      <div class="li-eyebrow">🛡️ Agent Operations Portal</div>
-      <h1>Built by us,<br/><span class="li-accent">Run by us.</span></h1>
-      <p>Unified command center for service operations, attendance, real-time queues, and performance metrics.</p>
-    </div>
-    <div class="li-brand-bottom">
-      <div class="li-stat"><div class="n">24/7</div><div class="l">Coverage</div></div>
-      <div class="li-stat"><div class="n">100%</div><div class="l">Team owned</div></div>
-      <div class="li-stat"><div class="n">40+</div><div class="l">Ideas shipped</div></div>
-    </div>
-  </div>
-
   <div class="li-panel">
     <div class="li-form-wrap" id="li-form-wrap">
       <div class="li-card-glare" id="li-card-glare"></div>
-      <div class="li-form-head">
-        <h2>Sign in</h2>
-        <p>Enter your details to access your dashboard.</p>
+      <div class="li-card-brand">
+        <svg width="26" height="26" viewBox="0 0 200 120" style="flex-shrink:0;">
+          <polygon points="10,18 60,56 110,18 64,110" fill="#ff7a5c"/>
+          <text x="74" y="100" font-family="Arial, sans-serif" font-weight="700" font-size="100" fill="#fff">7</text>
+        </svg>
+        <div class="li-brand-word" style="font-size:1.45rem;">K<span class="k7-seven">7</span>TeamCore</div>
       </div>
+      <div class="li-card-portal-tag">Agent Operations Portal</div>
 
       <div class="li-field">
         <label>Email</label>
@@ -3297,18 +3314,6 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
 
     <div class="topbar-right">
-      <!-- Live Weather World Clock (left of work clock) -->
-      <div id="wx-wrap" style="position:relative;display:none;">
-        <button id="wx-widget" class="wx-widget" onclick="wxToggleDropdown(event)" aria-label="World clock and weather">
-          <span class="wx-icon" id="wx-icon">🌤️</span>
-          <span class="wx-temp" id="wx-temp">--°</span>
-          <span class="wx-city-pill" id="wx-city-pill">Chennai</span>
-          <span class="wx-pill-sep">·</span>
-          <span class="wx-globe">🌐</span>
-          <span class="wx-arrow">▾</span>
-        </button>
-        <div id="wx-dropdown" class="wx-dropdown" style="display:none;"></div>
-      </div>
       <!-- Work Clock -->
       <div class="work-clock-wrap" id="work-clock-wrap">
         <span class="work-clock-time" id="work-clock-display">Not Started</span>
@@ -4059,13 +4064,17 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           </div>
           <div class="roster-controls">
             <input type="text" class="roster-search" id="roster-search" placeholder="&#128269; Search agent..." oninput="filterRoster(this.value)"/>
-            <div class="roster-week-nav">
+            <div class="roster-view-toggle" id="roster-view-toggle">
+              <button class="roster-vt-btn active" id="rvt-month" onclick="setRosterViewMode('month')">📅 Full Month</button>
+              <button class="roster-vt-btn" id="rvt-week" onclick="setRosterViewMode('week')">📆 Week View</button>
+            </div>
+            <div class="roster-week-nav" id="roster-week-nav" style="display:none;">
               <button class="roster-nav-btn" onclick="rosterNavWeek(-1)">&#8592;</button>
               <span class="roster-week-lbl" id="roster-week-lbl">This week</span>
               <button class="roster-nav-btn" onclick="rosterNavWeek(1)">&#8594;</button>
               <button class="roster-nav-btn roster-today-btn" id="roster-today-btn" onclick="rosterGoToday()">Today</button>
             </div>
-            <button class="roster-refresh-btn" onclick="loadRosterSummary()">
+            <button class="roster-refresh-btn" id="roster-sync-btn" onclick="loadRosterSummary()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               Sync Roster
             </button>
@@ -6488,14 +6497,12 @@ function showPage(id,elem){
   if(id==='changepass') resetChangePasswordForm();
   if(id==='reports'){loadReportAgents();initReportDates();}
   if(id==='roster'){
-    if(window._rosterActiveMonth && window._rosterCsvUrl){
-      // Month already selected — use cache or reload
-      loadRosterData();
-    } else if(window.rosterCache){
-      renderRosterPage(window.rosterCache, window._rosterTodayColGlobal||false);
-    } else {
-      loadRosterSummary();
+    // Show cached rows immediately if valid so there is zero delay
+    if(window.rosterCache && Array.isArray(window.rosterCache) && window.rosterCache.length > 2){
+      renderRosterPage(window.rosterCache, window._rosterTodayColGlobal || false);
     }
+    // Automatically perform the fresh Sync every time user opens Roster!
+    loadRosterSummary();
   }
   if(id==='moments') setTimeout(function(){_mLoadTab(_mActiveTab);},60);
   if(id==='quiz'){ loadAgentQuiz(); loadHallOfFame(); }
@@ -6642,6 +6649,17 @@ async function doChangePassword(){
     });
     var cpOk = cpRes.ok ? await cpRes.json() : false;
     if(!cpOk){errEl.textContent='Current password is incorrect.';errEl.style.display='block';return;}
+    if(currentUser){
+      currentUser.mustChangePassword = false;
+      saveSession(currentUser);
+      try {
+        await fetch(SUPABASE_URL + '/rest/v1/users?id=eq.' + currentUser.id, {
+          method: 'PATCH',
+          headers: sbHeaders({'Content-Type': 'application/json'}),
+          body: JSON.stringify({ must_change_password: false })
+        });
+      } catch(ign){}
+    }
     succEl.style.display='block';
     ['cp-current','cp-new','cp-confirm'].forEach(function(id){document.getElementById(id).value='';});
   }catch(e){errEl.textContent='Something went wrong. Please try again.';errEl.style.display='block';}
@@ -6912,18 +6930,71 @@ function updateRosterBanner(s){
   if(bar)bar.style.display=s.absent.length||s.wfh.length||s.halfDay.length?'flex':'none';
   updateAbsentStat(s.absent.length);
 }
-// ── Week navigation state ──
+// ── Roster View Mode (month = Full Month, week = 7-Day Week) ──
+var _rosterViewMode = 'month';
 var _rosterWeekOffset = 0;
+
+function setRosterViewMode(mode){
+  _rosterViewMode = mode;
+  var bMonth = document.getElementById('rvt-month');
+  var bWeek = document.getElementById('rvt-week');
+  var nav = document.getElementById('roster-week-nav');
+  if(bMonth) bMonth.classList.toggle('active', mode === 'month');
+  if(bWeek) bWeek.classList.toggle('active', mode === 'week');
+  if(nav) nav.style.display = (mode === 'month') ? 'none' : 'flex';
+  if(window._rosterAllRows){
+    renderRosterPage(window._rosterAllRows, window._rosterTodayColGlobal || false, null);
+  }
+}
 
 function rosterNavWeek(dir){
   _rosterWeekOffset += dir;
   _rosterPage = 0;
   if(window._rosterAllRows) renderRosterPage(window._rosterAllRows, window._rosterTodayColGlobal||false, null);
 }
+
 function rosterGoToday(){
   _rosterWeekOffset = 0;
   _rosterPage = 0;
   if(window._rosterAllRows) renderRosterPage(window._rosterAllRows, window._rosterTodayColGlobal||false, null);
+}
+
+// ── Smart Normalized Code Decoder ──
+function parseRosterStatus(rawVal, isWknd){
+  var v = String(rawVal || '').trim();
+  if(!v || v === '-' || v === '—' || v === 'N/A' || v === 'NA'){
+    return isWknd ? { type: 'off', label: 'Off', cls: 'rc-o' } : { type: 'empty', label: '—', cls: 'rc-o' };
+  }
+  var u = v.toUpperCase().replace(/[\s\-_/.]+/g, ' ');
+
+  // Weekly Off / Holiday
+  if(/^(WO|SH|H|OFF|WEEK OFF|WEEKOFF|WEEKEND|HOLIDAY)$/i.test(u) || u.indexOf('WEEK OFF') > -1 || u.indexOf('WEEKOFF') > -1){
+    return { type: 'off', label: 'Off', cls: 'rc-o' };
+  }
+
+  // Work From Home
+  if(u.indexOf('WFH') > -1 || u.indexOf('HOME') > -1){
+    var num = v.match(/(\d+)/);
+    return { type: 'wfh', label: num ? num[1] + ' WFH' : 'WFH', cls: 'rc-w' };
+  }
+
+  // Half Day
+  if(u.indexOf('HL') > -1 || u.indexOf('HALF') > -1 || u.indexOf('1/2') > -1 || u.indexOf('½') > -1){
+    var nm = v.match(/(\d+)/);
+    return { type: 'half', label: nm ? nm[1] + ' ½' : '½ Day', cls: 'rc-h' };
+  }
+
+  // Leave / Absent
+  if(
+    NOT_PRESENT_CODES.has(v.toUpperCase()) ||
+    /^(L|CO|W|EO|CL|SL|PL|ML|LEAVE|COMP OFF|CASUAL|SICK|ABSENT|LOP)$/i.test(u) ||
+    u.indexOf('LEAVE') > -1 || u.indexOf('COMP OFF') > -1 || u.indexOf('SICK') > -1
+  ){
+    return { type: 'leave', label: 'Leave', cls: 'rc-a' };
+  }
+
+  // Active Shift / Present
+  return { type: 'present', label: v, cls: 'rc-p' };
 }
 
 function renderRosterPage(rows, todayCol, error){
@@ -6935,41 +7006,46 @@ function renderRosterPage(rows, todayCol, error){
   if(!dateRow){ wrap.innerHTML='<div class="roster-empty">Could not find roster header row.</div>'; return; }
 
   var todayD = new Date().getDate();
-  // Use the month/year set by switchRosterMonth if available — otherwise default to current month
   var todayM = (window._rosterTodayM !== undefined) ? window._rosterTodayM : new Date().getMonth();
   var todayY = (window._rosterTodayY !== undefined) ? window._rosterTodayY : new Date().getFullYear();
 
   // All date columns
   var allDateCols = dateRow.slice(2).map(function(d,i){
     var num = Number(d);
-    // isToday only applies if viewing the actual current month
     var isActualToday = num===todayD && todayCol===i+2 && todayM===new Date().getMonth() && todayY===new Date().getFullYear();
     return { idx:i+2, day:num, isToday: isActualToday };
   }).filter(function(d){ return d.day>0; });
 
-  // Store globally
   window._rosterAllRows = rows;
   window._rosterTodayColGlobal = todayCol;
 
-  // Find today's position in dateCols
-  var todayPos = allDateCols.findIndex(function(d){ return d.isToday; });
-  if(todayPos < 0) todayPos = 0;
-
-  // 7-day window based on week offset
-  var weekStart = todayPos - (todayPos % 7) + (_rosterWeekOffset * 7);
-  weekStart = Math.max(0, Math.min(weekStart, allDateCols.length - 7));
-  var visibleCols = allDateCols.slice(weekStart, weekStart + 7);
+  var visibleCols;
+  if(_rosterViewMode === 'month'){
+    // Show Full Month (All days 1 to 31!)
+    visibleCols = allDateCols;
+  } else {
+    // 7-day window based on week offset
+    var todayPos = allDateCols.findIndex(function(d){ return d.isToday; });
+    if(todayPos < 0) todayPos = 0;
+    var weekStart = todayPos - (todayPos % 7) + (_rosterWeekOffset * 7);
+    weekStart = Math.max(0, Math.min(weekStart, Math.max(0, allDateCols.length - 7)));
+    visibleCols = allDateCols.slice(weekStart, weekStart + 7);
+  }
 
   // Update week label
   var lbl = document.getElementById('roster-week-lbl');
   var todayBtn = document.getElementById('roster-today-btn');
   if(lbl){
-    if(_rosterWeekOffset===0) lbl.textContent='This week';
-    else if(_rosterWeekOffset===-1) lbl.textContent='Last week';
-    else if(_rosterWeekOffset===1) lbl.textContent='Next week';
-    else { lbl.textContent = (visibleCols[0]?visibleCols[0].day:'')+'–'+(visibleCols[visibleCols.length-1]?visibleCols[visibleCols.length-1].day:''); }
+    if(_rosterViewMode === 'month'){
+      lbl.textContent = 'All Days (1 – ' + (allDateCols.length ? allDateCols[allDateCols.length - 1].day : 31) + ')';
+    } else {
+      if(_rosterWeekOffset===0) lbl.textContent='This week';
+      else if(_rosterWeekOffset===-1) lbl.textContent='Last week';
+      else if(_rosterWeekOffset===1) lbl.textContent='Next week';
+      else { lbl.textContent = (visibleCols[0]?visibleCols[0].day:'')+'–'+(visibleCols[visibleCols.length-1]?visibleCols[visibleCols.length-1].day:''); }
+    }
   }
-  if(todayBtn) todayBtn.style.opacity = _rosterWeekOffset===0?'.4':'1';
+  if(todayBtn) todayBtn.style.opacity = (_rosterWeekOffset===0 || _rosterViewMode === 'month')?'.4':'1';
 
   var agentRows = rosterAgentRows(rows);
 
@@ -6991,34 +7067,18 @@ function isWeekend(day, month, year){
 }
 
 function getRosterChip(val, isToday, day, month, year){
-  var v = String(val||'').toUpperCase().trim();
   var wknd = day ? isWeekend(day,month,year) : false;
-  if(!v||v==='-'||v==='') return wknd ? '<span class="rc rc-o">Off</span>' : '<span class="rc rc-o">—</span>';
-  if(v==='WO'||v==='SH'||v==='H') return '<span class="rc rc-o">Off</span>';
-  if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W'||v==='EO') return '<span class="rc rc-a">Leave</span>';
-  if(v.indexOf('WFH')>-1){
-    // Extract number if present e.g. "12-WFH"
-    var num = v.match(/(\d+)/); 
-    return '<span class="rc rc-w">'+(num?num[1]+' WFH':'WFH')+'</span>';
-  }
-  if(v.indexOf('HL')>-1){
-    var nm = v.match(/(\d+)/);
-    return '<span class="rc rc-h">'+(nm?nm[1]+' ½':'½ Day')+'</span>';
-  }
-  var display = String(val).trim();
-  return '<span class="rc '+(isToday?'rc-t':'rc-p')+'">'+display+'</span>';
+  var res = parseRosterStatus(val, wknd);
+  var cls = res.cls;
+  if(isToday && res.type === 'present') cls = 'rc-t';
+  return '<span class="rc '+cls+'">'+res.label+'</span>';
 }
 
 function getTodayStatusTag(val){
-  var v = String(val||'').toUpperCase().trim();
   var wd = new Date().getDay();
-  if(wd===0||wd===6) return '<span class="rc rc-o">Off</span>';
-  if(!v||v==='-') return '<span class="rc rc-o">—</span>';
-  if(v==='WO'||v==='SH'||v==='H') return '<span class="rc rc-o">Off</span>';
-  if(NOT_PRESENT_CODES.has(v)||v==='L'||v==='CO'||v==='W'||v==='EO') return '<span class="rc rc-a">Leave</span>';
-  if(v.indexOf('WFH')>-1) return '<span class="rc rc-w">WFH</span>';
-  if(v.indexOf('HL')>-1) return '<span class="rc rc-h">½ Day</span>';
-  return '<span class="rc rc-p">'+(val?String(val).trim():'P')+'</span>';
+  var isWknd = (wd===0||wd===6);
+  var res = parseRosterStatus(val, isWknd);
+  return '<span class="rc '+res.cls+'">'+res.label+'</span>';
 }
 
 var _rosterPage = 0;
@@ -7287,15 +7347,19 @@ async function loadRosterData(){
     return;
   }
   try{
-    var r = await fetch(url + '&cacheBust=' + now);
-    if(!r.ok) throw new Error('fail');
+    var sep = url.indexOf('?') > -1 ? '&' : '?';
+    var fetchUrl = url + sep + '_cb=' + now + '_' + Math.floor(Math.random() * 100000);
+    var r = await fetch(fetchUrl, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+    });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
     var rows = parseCsv(await r.text());
     window._rosterDataCache[url] = { rows: rows, timestamp: now };
     _processRosterRows(rows);
   }catch(e){
-    document.getElementById('absence-title').textContent='Roster sync unavailable';
-    document.getElementById('absence-detail').textContent='Could not read Google Sheets right now.';
-    renderRosterPage(null, null, e);
+    console.warn('loadRosterData error, falling back to full summary sync:', e.message);
+    loadRosterSummary();
   }
 }
 
@@ -7322,11 +7386,16 @@ function _processRosterRows(rows){
   var _absentDetails=[];
   rosterAgentRows(rows).forEach(function(row){
     var n=String(row[1]||'').trim();
-    var p=statusParts(row[dc]);
     var rawCode=String(row[dc]||'').trim();
-    if(p.some(function(x){return NOT_PRESENT_CODES.has(x);})){s.absent.push(n);_absentDetails.push({name:n,code:rawCode});}
-    if(p.indexOf('WFH')>-1)s.wfh.push(n);
-    if(p.indexOf('HL')>-1)s.halfDay.push(n);
+    var res = parseRosterStatus(rawCode, isWeekend(Number(today.getDate()), today.getMonth(), today.getFullYear()));
+    if(res.type === 'leave'){
+      s.absent.push(n);
+      _absentDetails.push({name:n, code:rawCode});
+    } else if(res.type === 'wfh'){
+      s.wfh.push(n);
+    } else if(res.type === 'half'){
+      s.halfDay.push(n);
+    }
   });
   // Store for absent modal
   window._rosterAbsent = _absentDetails;
@@ -7353,8 +7422,12 @@ async function loadRosterSummary(){
       }
     }catch(e2){}
     var now = Date.now();
-    // Always fetch fresh for dashboard summary — bypass in-memory cache
-    var r=await fetch(rosterUrl+'&cacheBust='+now+'&t='+Math.random());
+    var sep = rosterUrl.indexOf('?') > -1 ? '&' : '?';
+    var fetchUrl = rosterUrl + sep + '_cb=' + now + '_' + Math.floor(Math.random()*100000);
+    var r = await fetch(fetchUrl, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+    });
     if(!r.ok)throw new Error('fail');
     var rows=parseCsv(await r.text());
     window._rosterDataCache[rosterUrl]={rows:rows,timestamp:now};
@@ -20324,258 +20397,9 @@ async function siClearAll(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  LIVE WEATHER + WORLD CLOCK WIDGET
-//  Pill in topbar: shows local icon + temp
-//  Click → dropdown with 12 cities: live time + weather + work-hours dot
-//  Open-Meteo API — free, no key. Weather lazy-loads on first open.
-//  Auto rain/thunder ambient animation via existing ambApply()
+//  WEATHER + WORLD CLOCK (REMOVED)
 // ═══════════════════════════════════════════════════════════════
-(function(){
-
-  // ── 12 World Cities ──
-  var WX_CITIES = [
-    { key:'chennai',      iso:'in', name:'Chennai',      tz:'Asia/Kolkata',        lat:13.0827,  lon:80.2707  },
-    { key:'dubai',        iso:'ae', name:'Dubai',         tz:'Asia/Dubai',          lat:25.2048,  lon:55.2708  },
-    { key:'riyadh',       iso:'sa', name:'Riyadh',        tz:'Asia/Riyadh',         lat:24.7136,  lon:46.6753  },
-    { key:'kuwait',       iso:'kw', name:'Kuwait City',   tz:'Asia/Kuwait',         lat:29.3759,  lon:47.9774  },
-    { key:'tehran',       iso:'ir', name:'Tehran',        tz:'Asia/Tehran',         lat:35.6892,  lon:51.3890  },
-    { key:'moscow',       iso:'ru', name:'Moscow',        tz:'Europe/Moscow',       lat:55.7558,  lon:37.6173  },
-    { key:'london',       iso:'gb', name:'London',        tz:'Europe/London',       lat:51.5074,  lon:-0.1278  },
-    { key:'newyork',      iso:'us', name:'New York',      tz:'America/New_York',    lat:40.7128,  lon:-74.0060 },
-    { key:'johannesburg', iso:'za', name:'Johannesburg',  tz:'Africa/Johannesburg', lat:-26.2041, lon:28.0473  },
-    { key:'singapore',    iso:'sg', name:'Singapore',     tz:'Asia/Singapore',      lat:1.3521,   lon:103.8198 },
-    { key:'shanghai',     iso:'cn', name:'Shanghai',      tz:'Asia/Shanghai',       lat:31.2304,  lon:121.4737 },
-    { key:'tokyo',        iso:'jp', name:'Tokyo',         tz:'Asia/Tokyo',          lat:35.6762,  lon:139.6503 }
-  ];
-
-  var WX_HOME = WX_CITIES[0]; // default = Chennai, replaced by geolocation
-  var _wxInterval    = null;
-  var _wxClockTimer  = null;
-  var _wxOpen        = false;
-  var _wxWeatherCache = {}; // key → { icon, temp, fetched }
-  var _wxFetching     = {}; // key → true (in-flight guard)
-
-  // ── WMO code decoder ──
-  function wxDecode(code, isDay){
-    var d = isDay;
-    if(code === 0)  return { icon: d?'☀️':'🌙',  isRain:false, isThunder:false };
-    if(code <= 2)   return { icon: d?'⛅':'🌙',  isRain:false, isThunder:false };
-    if(code === 3)  return { icon:'☁️',           isRain:false, isThunder:false };
-    if(code <= 49)  return { icon:'🌫️',           isRain:false, isThunder:false };
-    if(code <= 57)  return { icon:'🌧️',           isRain:true,  isThunder:false };
-    if(code <= 67)  return { icon:'🌧️',           isRain:true,  isThunder:false };
-    if(code <= 77)  return { icon:'❄️',           isRain:false, isThunder:false };
-    if(code <= 82)  return { icon:'🌦️',           isRain:true,  isThunder:false };
-    if(code <= 86)  return { icon:'🌨️',           isRain:false, isThunder:false };
-    if(code <= 99)  return { icon:'⛈️',           isRain:true,  isThunder:true  };
-    return           { icon:'🌡️',                  isRain:false, isThunder:false };
-  }
-
-  // ── Fetch weather for one city, cache it ──
-  async function wxFetchCity(city){
-    if(_wxFetching[city.key]) return;
-    _wxFetching[city.key] = true;
-    try{
-      var url = 'https://api.open-meteo.com/v1/forecast?latitude='+city.lat+'&longitude='+city.lon+
-        '&current=temperature_2m,weathercode,is_day,precipitation&timezone=auto&forecast_days=1';
-      var resp = await fetch(url);
-      var data = await resp.json();
-      var cur  = data.current;
-      var info = wxDecode(cur.weathercode, cur.is_day === 1);
-      _wxWeatherCache[city.key] = {
-        icon: info.icon, temp: Math.round(cur.temperature_2m),
-        isRain: info.isRain, isThunder: info.isThunder,
-        precip: cur.precipitation || 0, fetched: Date.now()
-      };
-    }catch(e){ /* silent */ }
-    _wxFetching[city.key] = false;
-  }
-
-  // ── Fetch home city + trigger animation ──
-  async function wxFetchHome(){
-    await wxFetchCity(WX_HOME);
-    var wx = _wxWeatherCache[WX_HOME.key];
-    if(!wx) return;
-    // Update pill
-    var iconEl = document.getElementById('wx-icon');
-    var tempEl = document.getElementById('wx-temp');
-    var cityEl = document.getElementById('wx-city-pill');
-    if(iconEl) iconEl.textContent = wx.icon;
-    if(tempEl) tempEl.textContent = wx.temp + '°C';
-    if(cityEl) cityEl.textContent = WX_HOME.name;
-    // Show wrap
-    var wrap = document.getElementById('wx-wrap');
-    if(wrap) wrap.style.display = '';
-    // NOTE: automatic weather-triggered ambient rain/thunder has been disabled by request.
-    // Weather pill (icon/temp/city) still updates above; it just no longer drives ambApply().
-    // Refresh dropdown if open
-    if(_wxOpen) wxRenderDropdown();
-  }
-
-  // ── Fetch all cities (background, lazy) ──
-  function wxFetchAll(){
-    WX_CITIES.forEach(function(c){ wxFetchCity(c); });
-  }
-
-  // ── Format time for a timezone ──
-  function wxGetTime(tz){
-    try{
-      var now = new Date();
-      var parts = new Intl.DateTimeFormat('en-US',{
-        timeZone: tz, hour:'numeric', minute:'2-digit', second:'2-digit',
-        hour12: true
-      }).formatToParts(now);
-      var get = function(t){ var p=parts.find(function(p){return p.type===t;}); return p?p.value:''; };
-      var h = get('hour'), m = get('minute'), s = get('second'), period = get('dayPeriod');
-      var hour24 = new Intl.DateTimeFormat('en-GB',{ timeZone:tz, hour:'2-digit', hour12:false }).formatToParts(now).find(function(p){return p.type==='hour';});
-      return { time: h+':'+m+':'+s+' '+period, hour: hour24 ? parseInt(hour24.value) : 12 };
-    }catch(e){ return { time:'--:-- --', hour: 12 }; }
-  }
-
-  function wxGetDate(tz){
-    try{
-      return new Intl.DateTimeFormat('en-GB',{
-        timeZone: tz, weekday:'short', month:'short', day:'numeric'
-      }).format(new Date());
-    }catch(e){ return ''; }
-  }
-
-  // ── Render dropdown ──
-  function wxRenderDropdown(){
-    var drop = document.getElementById('wx-dropdown');
-    if(!drop) return;
-    var now = new Date();
-    var updStr = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'});
-    var html =
-      '<div class="wx-drop-header">'+
-        '<div class="wx-drop-header-left">'+
-          '<span class="wx-drop-htitle">World Clock &amp; Weather</span>'+
-        '</div>'+
-        '<span class="wx-drop-lastupd">Updated '+updStr+'</span>'+
-      '</div>'+
-      '<div class="wx-grid">';
-    WX_CITIES.forEach(function(c){
-      var t    = wxGetTime(c.tz);
-      var date = wxGetDate(c.tz);
-      var isWork = t.hour >= 9 && t.hour < 18;
-      var wx   = _wxWeatherCache[c.key];
-      var wIcon = wx ? wx.icon : '';
-      var wTemp = wx ? wx.temp+'°' : '';
-      // Split time into number + AM/PM
-      var timeParts = t.time.match(/^(.+?)\s*(AM|PM)$/i);
-      var timeNum = timeParts ? timeParts[1] : t.time;
-      var timePeriod = timeParts ? timeParts[2] : '';
-      var flagHtml = c.iso
-        ? '<img class="wx-city-flag" src="https://flagcdn.com/w40/'+c.iso+'.png" alt="'+c.name+'" loading="lazy"/>'
-        : '<span style="font-size:1.3rem;flex-shrink:0;">📍</span>';
-      html +=
-        '<div class="wx-city-card'+(isWork?' work-hours':'')+'" id="wxcard-'+c.key+'">'+
-          '<div class="wx-work-dot'+(isWork?' active':'')+'"></div>'+
-          flagHtml+
-          '<div class="wx-city-body">'+
-            '<div class="wx-city-name">'+c.name+'</div>'+
-            '<div class="wx-city-time" id="wxt-'+c.key+'">'+timeNum+'<span class="wx-city-ampm">'+timePeriod+'</span></div>'+
-            '<div class="wx-city-date">'+date+'</div>'+
-          '</div>'+
-          '<div class="wx-city-wx">'+
-            '<span class="wx-city-wicon">'+wIcon+'</span>'+
-            '<span class="wx-city-wtemp">'+wTemp+'</span>'+
-          '</div>'+
-        '</div>';
-    });
-    html += '</div>'+
-      '<div class="wx-drop-footer">'+
-        '<span style="width:6px;height:6px;border-radius:50%;background:#2EC56F;display:inline-block;box-shadow:0 0 5px rgba(46,197,111,.6);flex-shrink:0;"></span>'+
-        'Green dot = business hours (9 AM – 6 PM local) &nbsp;·&nbsp; Weather loads on first open'+
-      '</div>';
-    drop.innerHTML = html;
-  }
-
-  // ── Live clock tick (every second when dropdown open) ──
-  function wxStartClock(){
-    if(_wxClockTimer) return;
-    _wxClockTimer = setInterval(function(){
-      if(!_wxOpen){ clearInterval(_wxClockTimer); _wxClockTimer=null; return; }
-      WX_CITIES.forEach(function(c){
-        var el = document.getElementById('wxt-'+c.key);
-        if(el){
-          var t = wxGetTime(c.tz);
-          var timeParts = t.time.match(/^(.+?)\s*(AM|PM)$/i);
-          var timeNum = timeParts ? timeParts[1] : t.time;
-          var timePeriod = timeParts ? timeParts[2] : '';
-          el.innerHTML = timeNum+'<span class="wx-city-ampm">'+timePeriod+'</span>';
-        }
-      });
-    }, 1000);
-  }
-
-  // ── Toggle dropdown ──
-  window.wxToggleDropdown = function(e){
-    e.stopPropagation();
-    var drop = document.getElementById('wx-dropdown');
-    var btn  = document.getElementById('wx-widget');
-    if(!drop) return;
-    _wxOpen = drop.style.display === 'none' || drop.style.display === '';
-    if(_wxOpen){
-      // Fetch all cities weather in background on first open
-      wxFetchAll();
-      wxRenderDropdown();
-      drop.style.display = 'block';
-      btn.classList.add('open');
-      wxStartClock();
-    } else {
-      drop.style.display = 'none';
-      btn.classList.remove('open');
-    }
-  };
-
-  // Close on outside click
-  document.addEventListener('click', function(e){
-    if(!_wxOpen) return;
-    var wrap = document.getElementById('wx-wrap');
-    if(wrap && !wrap.contains(e.target)){
-      var drop = document.getElementById('wx-dropdown');
-      var btn  = document.getElementById('wx-widget');
-      if(drop) drop.style.display = 'none';
-      if(btn)  btn.classList.remove('open');
-      _wxOpen = false;
-    }
-  });
-
-  // ── Geolocation → home city ──
-  function wxStart(){
-    // Always start immediately with Chennai as default — no "Your Location" flash
-    wxFetchHome();
-    if(_wxInterval) clearInterval(_wxInterval);
-    _wxInterval = setInterval(wxFetchHome, 15*60*1000);
-
-    if(!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      function(pos){
-        var lat = pos.coords.latitude, lon = pos.coords.longitude;
-        // Only override if they're NOT in Chennai (>50km away)
-        var dLat = lat - 13.0827, dLon = lon - 80.2707;
-        var distKm = Math.sqrt(dLat*dLat + dLon*dLon) * 111;
-        if(distKm < 50) return; // close enough to Chennai — keep Chennai label
-        // They're elsewhere (e.g. Bangalore) — reverse geocode then update
-        fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json')
-          .then(function(r){ return r.json(); })
-          .then(function(geo){
-            var city = (geo.address && (geo.address.city || geo.address.town || geo.address.suburb)) || 'Your Location';
-            WX_HOME = { key:'home', flag:'📍', name:city, tz: Intl.DateTimeFormat().resolvedOptions().timeZone, lat:lat, lon:lon };
-            WX_CITIES[0] = WX_HOME;
-            // Re-fetch with correct coords and update pill
-            wxFetchHome();
-          }).catch(function(){});
-      },
-      function(){ /* denied — Chennai stays, already started */ },
-      { timeout:6000, maximumAge:3600000 }
-    );
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){ wxStart(); });
-
-})();
+window.wxToggleDropdown = function(){};
 
 </script>
 
