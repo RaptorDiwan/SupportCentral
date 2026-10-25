@@ -718,10 +718,46 @@
   }
 
   /* ══════════════════════════════
-     DASHBOARD LAYOUT
+     DASHBOARD LAYOUT & LIQUID MORPH
   ══════════════════════════════ */
   #dashboard-view {
     flex-direction: column;
+  }
+  #dashboard-view.liquid-morph-in {
+    animation: liquidMorphIn 0.70s cubic-bezier(0.18, 0.9, 0.26, 1.05) both;
+    transform-origin: 50% 40%;
+    will-change: transform, opacity, filter;
+  }
+  @keyframes liquidMorphIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.92) translateY(14px);
+      filter: blur(10px);
+    }
+    60% {
+      filter: blur(0);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  #dashboard-view.liquid-morph-in .topbar {
+    animation: lmTopbar 0.60s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes lmTopbar {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #dashboard-view.liquid-morph-in .dash-body {
+    animation: lmBody 0.70s cubic-bezier(0.18, 0.9, 0.26, 1.05) 0.05s both;
+  }
+  @keyframes lmBody {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   /* ─── TOPBAR ─── */
@@ -6380,7 +6416,16 @@ async function doLogout(){
 function enterDashboard(){
   if(window._liMeshStop) window._liMeshStop();
   document.getElementById('login-view').classList.remove('active');
-  document.getElementById('dashboard-view').classList.add('active');
+  var dbView = document.getElementById('dashboard-view');
+  dbView.classList.remove('liquid-morph-in');
+  dbView.classList.add('active');
+  // Trigger swift liquid morph animation
+  void dbView.offsetWidth;
+  dbView.classList.add('liquid-morph-in');
+  setTimeout(function(){
+    dbView.classList.remove('liquid-morph-in');
+  }, 800);
+
   // Show chat dock icon
   document.body.classList.add('logged-in');
 
