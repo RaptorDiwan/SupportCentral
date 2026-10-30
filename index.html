@@ -2530,8 +2530,25 @@
     .roster-search { width: 100%; }
 
     /* ── MODALS — slide up from bottom ── */
-    #stat-modal { max-width: 100% !important; margin: 0 !important; border-radius: var(--radius) var(--radius) 0 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; max-height: 75vh !important; }
-    #stat-modal-overlay { align-items: flex-end !important; }
+    #stat-modal-overlay { align-items: flex-end !important; z-index: 10000 !important; }
+    #stat-modal {
+      max-width: 100% !important;
+      margin: 0 !important;
+      border-radius: 20px 20px 0 0 !important;
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      max-height: 82vh !important;
+      z-index: 10001 !important;
+      box-shadow: 0 -12px 48px rgba(0,0,0,0.6) !important;
+    }
+    .stat-modal-drag-pill { display: block !important; }
+    #stat-modal-list {
+      padding-bottom: 1rem !important;
+      -webkit-overflow-scrolling: touch;
+      max-height: calc(82vh - 125px) !important;
+    }
 
     /* ── FORMS ── */
     .field-group input, .field-group select, .field-group textarea { width: 100%; box-sizing: border-box; }
@@ -2837,13 +2854,10 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
      CHAT SYSTEM — Facebook Bottom Dock
   ═══════════════════════════════════════ */
 
-  /* Bottom dock container */
-  #chat-dock{
-    position:fixed; bottom:0; right:16px; z-index:8500;
-    display:flex; align-items:flex-end; gap:8px;
-    pointer-events:none;
+  /* Bottom dock container — completely hidden to save Supabase API free quota */
+  #chat-dock, #chat-dock-icon, #chat-restore-btn {
+    display: none !important;
   }
-  #chat-dock.dock-hidden{ display:none; }
 
   /* Contacts list popup (opens above the icon) */
   #chat-contacts-popup{
@@ -3064,8 +3078,8 @@ body.dark .ts-input { background:#111827;border-color:#2D3748;color:#F1F5F9; }
     position:relative; margin-bottom:8px;
     transition:transform .2s, box-shadow .2s;
   }
-  #chat-dock-icon.visible{ display:flex; }
-  body.logged-in #chat-dock-icon{ display:flex; }
+  #chat-dock-icon.visible{ display:none !important; }
+  body.logged-in #chat-dock-icon{ display:none !important; }
   #chat-dock-icon:hover{ transform:scale(1.08); box-shadow:0 6px 20px rgba(239,73,60,.5); }
   #chat-dock-icon.bounce{ animation:dockBounce .5s cubic-bezier(.34,1.56,.64,1); }
   @keyframes dockBounce{0%{transform:scale(1)}40%{transform:scale(1.2)}70%{transform:scale(.92)}100%{transform:scale(1)}}
@@ -3787,7 +3801,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
       <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
 
-      <div class="login-footer">TeamCore v8.5.0 &nbsp;·&nbsp; Build 261030_1155 &nbsp;·&nbsp; For internal use only</div>
+      <div class="login-footer">TeamCore v8.5.3 &nbsp;·&nbsp; Build 261030_2135 &nbsp;·&nbsp; For internal use only</div>
     </div>
   </div>
 </div>
@@ -4037,7 +4051,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           <line x1="12" y1="8" x2="12" y2="12"/>
           <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        About <span style="font-size:.62rem;opacity:.55;margin-left:auto;font-variant-numeric:tabular-nums;">v8.5.0</span>
+        About <span style="font-size:.62rem;opacity:.55;margin-left:auto;font-variant-numeric:tabular-nums;">v8.5.3</span>
       </div>
 
       <div class="sidebar-section admin-only">Admin</div>
@@ -4154,44 +4168,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           </div>
         </div>
 
-        <!-- Stat Detail Modal -->
-        <div id="stat-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.55);backdrop-filter:blur(4px);z-index:9000;align-items:center;justify-content:center;" onclick="closeStatModal(event)">
-          <div id="stat-modal" style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);width:100%;max-width:420px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(7,13,45,.3);margin:1rem;">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--navy-border);">
-              <div style="display:flex;align-items:center;gap:.75rem;">
-                <div id="stat-modal-icon" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
-                <div>
-                  <div id="stat-modal-title" style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--text-primary);"></div>
-                  <div id="stat-modal-sub" style="font-size:.75rem;color:var(--text-muted);margin-top:.1rem;"></div>
-                </div>
-              </div>
-              <button onclick="closeStatModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:.25rem;line-height:1;flex-shrink:0;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-            </div>
-            <div id="stat-modal-list" style="overflow-y:auto;padding:.75rem .5rem;flex:1;"></div>
-          </div>
-        </div>
 
-        <!-- End Work Confirmation Modal -->
-        <div id="end-work-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.65);backdrop-filter:blur(4px);z-index:9200;align-items:center;justify-content:center;">
-          <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:380px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.25);">
-            <div style="width:52px;height:52px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            </div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">End Your Shift?</div>
-            <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:.4rem;">You are about to <strong style="color:var(--accent-red);">end your work session</strong> for today.</div>
-            <div style="font-size:.82rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:8px;padding:.65rem 1rem;color:var(--accent-red);font-weight:600;margin-bottom:1.4rem;">
-              ☕ If you want a break — click Cancel and use the Break button instead.
-            </div>
-            <div style="display:flex;gap:.75rem;justify-content:center;">
-              <button onclick="closeEndWorkModal()" style="padding:.6rem 1.4rem;background:transparent;border:1px solid var(--navy-border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--text-muted);">Cancel</button>
-              <button id="end-work-confirm-btn" onclick="confirmEndWork()" disabled style="padding:.6rem 1.4rem;background:rgba(239,73,60,.25);border:1px solid rgba(239,73,60,.3);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:not-allowed;color:#ff7f75;opacity:.5;">
-                End Shift (2s)
-              </button>
-            </div>
-          </div>
-        </div>
 
         <div class="home-two-col">
           <div style="display:flex;flex-direction:column;gap:1rem;">
@@ -4278,27 +4255,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                 </div>
               </div>
 
-              <!-- Roster URL Manager Modal -->
-              <div id="roster-url-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.55);backdrop-filter:blur(4px);z-index:9100;align-items:center;justify-content:center;" onclick="closeRosterUrlModal(event)">
-                <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);width:100%;max-width:480px;padding:1.5rem;box-shadow:0 24px 64px rgba(7,13,45,.3);margin:1rem;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
-                    <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--text-primary);">Update Roster URL</div>
-                    <button onclick="closeRosterUrlModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:.25rem;">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                  </div>
-                  <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.6;">
-                    Paste the <strong style="color:var(--text-secondary);">Google Sheets published CSV URL</strong> for the new month.<br>
-                    In Google Sheets → File → Share → Publish to web → CSV → Copy link.
-                  </div>
-                  <textarea id="roster-url-input" rows="3" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" style="width:100%;box-sizing:border-box;background:var(--navy-bg);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.75rem 1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text-primary);resize:vertical;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--gold-dim)'" onblur="this.style.borderColor='var(--navy-border)'"></textarea>
-                  <div id="roster-url-status" style="font-size:.78rem;min-height:1.2rem;margin-top:.5rem;"></div>
-                  <div style="display:flex;gap:.75rem;margin-top:1rem;justify-content:flex-end;">
-                    <button onclick="closeRosterUrlModal()" style="padding:.6rem 1.2rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;">Cancel</button>
-                    <button onclick="saveRosterUrl()" style="padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);color:#fff;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;">Save & Apply</button>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -4656,21 +4613,29 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
           <!-- ADMIN: UPLOAD MOMENT MODAL -->
           <div class="lightbox-overlay" id="moments-upload-overlay" onclick="mCloseUploadModal(event)" style="display:none;align-items:center;justify-content:center;z-index:9999;">
-            <div class="xc-card" onclick="event.stopPropagation()" style="width:90%;max-width:440px;margin:auto;box-shadow:0 24px 60px rgba(7,13,45,.6);background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.6rem;">
+            <div class="xc-card" onclick="event.stopPropagation()" style="width:92%;max-width:520px;margin:auto;box-shadow:0 24px 60px rgba(7,13,45,.6);background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);padding:1.6rem;max-height:90vh;overflow-y:auto;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;">
-                <div style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:var(--text-primary);">&#128247; Upload Team Moment</div>
+                <div style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:var(--text-primary);">&#128247; Upload Team Moments</div>
                 <button onclick="mCloseUploadModal()" style="background:none;border:none;color:var(--text-dim);font-size:1.25rem;cursor:pointer;padding:.2rem .4rem;">&#10005;</button>
               </div>
               <div style="display:flex;flex-direction:column;gap:.9rem;">
                 <!-- Dropzone -->
-                <div id="m-upload-dropzone" onclick="document.getElementById('m-file-input').click()" style="border:2px dashed var(--navy-border);border-radius:var(--radius-sm);padding:1.4rem;text-align:center;cursor:pointer;background:rgba(255,255,255,.02);transition:var(--transition);">
-                  <input type="file" id="m-file-input" accept="image/png,image/jpeg,image/webp,image/jpg" style="display:none;" onchange="mHandleFile(this)"/>
+                <div id="m-upload-dropzone" onclick="document.getElementById('m-file-input').click()" style="border:2px dashed var(--navy-border);border-radius:var(--radius-sm);padding:1.3rem;text-align:center;cursor:pointer;background:rgba(255,255,255,.02);transition:all .2s ease;">
+                  <input type="file" id="m-file-input" accept="image/png,image/jpeg,image/webp,image/jpg" multiple style="display:none;" onchange="mHandleFiles(this)"/>
                   <div id="m-preview-wrap">
                     <div style="font-size:1.9rem;margin-bottom:.25rem;">&#128444;&#65039;</div>
-                    <div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">Click to choose a photo</div>
-                    <div style="font-size:.72rem;color:var(--text-dim);margin-top:.2rem;">PNG, JPG, WebP (auto-optimized)</div>
+                    <div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">Click or Drag &amp; Drop photos here</div>
+                    <div style="font-size:.72rem;color:var(--text-dim);margin-top:.2rem;">Choose one or multiple photos (PNG, JPG, WebP &bull; auto-optimized)</div>
                   </div>
                 </div>
+
+                <!-- Multi-image thumbnails summary & grid -->
+                <div id="m-multi-summary" style="display:none;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--accent-green);font-weight:600;">
+                  <span id="m-multi-count-text">0 photos ready</span>
+                  <button type="button" onclick="document.getElementById('m-file-input').click()" style="background:none;border:none;color:var(--gold,#f59e0b);font-size:.72rem;cursor:pointer;font-weight:600;text-decoration:underline;">+ Add more</button>
+                </div>
+                <div id="m-multi-preview-grid" style="display:none;grid-template-columns:repeat(auto-fill, minmax(75px, 1fr));gap:8px;max-height:160px;overflow-y:auto;padding:6px;background:rgba(0,0,0,.25);border-radius:6px;border:1px solid rgba(255,255,255,.06);"></div>
+
                 <!-- Category -->
                 <div>
                   <label class="xc-label" style="font-size:.75rem;margin-bottom:.3rem;display:block;">Category / Album</label>
@@ -4678,7 +4643,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                     <option value="birthday">&#127874; Birthday</option>
                     <option value="outing">&#127957; Team Outing</option>
                     <option value="dinner">&#127869; Team Dinner</option>
-                    <option value="funfriday">&#127881; Fun Friday</option>
+                    <option value="funfriday" selected>&#127881; Fun Friday</option>
                   </select>
                 </div>
                 <!-- Caption -->
@@ -4686,11 +4651,23 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                   <label class="xc-label" style="font-size:.75rem;margin-bottom:.3rem;display:block;">Caption</label>
                   <input type="text" id="m-caption" class="xc-input" style="font-size:.8rem;" placeholder="e.g. Celebrating project milestone! &#127881;" maxlength="120"/>
                 </div>
-                <div id="m-upload-msg" style="font-size:.74rem;color:var(--accent-red);display:none;"></div>
+
+                <!-- Progress Bar -->
+                <div id="m-upload-progress-wrap" style="display:none;margin-top:.2rem;">
+                  <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-dim);margin-bottom:4px;">
+                    <span id="m-upload-progress-text">Uploading photos…</span>
+                    <span id="m-upload-progress-pct" style="font-weight:600;color:var(--text-primary);">0%</span>
+                  </div>
+                  <div style="width:100%;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+                    <div id="m-upload-progress-bar" style="width:0%;height:100%;background:linear-gradient(90deg, #f59e0b, #10b981);transition:width 0.2s;"></div>
+                  </div>
+                </div>
+
+                <div id="m-upload-msg" style="font-size:.74rem;display:none;"></div>
                 <!-- Actions -->
                 <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.4rem;">
                   <button class="ppl-cancel-btn" onclick="mCloseUploadModal()">Cancel</button>
-                  <button class="ppl-save-btn" id="m-save-btn" onclick="mSaveMoment()">Upload Moment</button>
+                  <button class="ppl-save-btn" id="m-save-btn" onclick="mSaveMoment()">Upload Moments</button>
                 </div>
               </div>
             </div>
@@ -4991,7 +4968,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-family:'DM Sans',-apple-system,sans-serif;font-size:1.45rem;font-weight:800;letter-spacing:-0.02em;color:var(--text-primary);line-height:1.2;">Team<span style="background:linear-gradient(135deg,#ff7a5c,#ffaa85);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Core</span></div>
-            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">V 8.5.0 &nbsp;·&nbsp; Build 261030_1155 &nbsp;·&nbsp; Designed &amp; Engineered by Diwan Chowthry</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">V 8.5.3 &nbsp;·&nbsp; Build 261030_2135 &nbsp;·&nbsp; Designed &amp; Engineered by Diwan Chowthry</div>
           </div>
           <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()" style="flex-shrink:0;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
@@ -5963,8 +5940,8 @@ async function hashPassword(p){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-const APP_VERSION = 'v8.5.0';
-const APP_BUILD   = '261030_1155';
+const APP_VERSION = 'v8.5.3';
+const APP_BUILD   = '261030_2135';
 window.TEAMCORE_VERSION = APP_VERSION;
 window.TEAMCORE_BUILD   = APP_BUILD;
 
@@ -6778,7 +6755,7 @@ function regCloseModal(){}
 var _inactivityTimer        = null;
 var _inactivityWarningTimer = null;
 var _inactivityWarningUp    = false;
-var INACTIVITY_LIMIT_MS     = 60 * 60 * 1000; // 60 minutes
+var INACTIVITY_LIMIT_MS     = 20 * 60 * 1000; // 20 minutes (protects break status, prevents overnight zombie sessions)
 
 function _inactIsOnBreak(){
   try{ for(var t in _breakState){ if(_breakState[t]&&_breakState[t].active) return true; } }catch(e){}
@@ -6791,7 +6768,7 @@ function _inactShowWarning(){
   var el = document.createElement('div');
   el.id = 'inactivity-warning-overlay';
   el.style.cssText = 'position:fixed;inset:0;background:rgba(7,13,45,.72);backdrop-filter:blur(5px);z-index:9995;display:flex;align-items:center;justify-content:center;';
-  el.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:360px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.35);"><div style="width:52px;height:52px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div style="font-family:Cormorant Garamond,serif;font-size:1.25rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">Still there?</div><div style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.2rem;">You have been inactive for 60 minutes. You will be signed out in <strong id="inact-countdown" style="color:var(--accent-red);">60</strong> seconds.</div><button onclick="inactStayLoggedIn()" style="padding:.6rem 1.8rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Stay Logged In</button></div>';
+  el.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:360px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.35);"><div style="width:52px;height:52px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div style="font-family:Cormorant Garamond,serif;font-size:1.25rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">Still there?</div><div style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.2rem;">You have been inactive for 20 minutes. You will be signed out in <strong id="inact-countdown" style="color:var(--accent-red);">60</strong> seconds.</div><button onclick="inactStayLoggedIn()" style="padding:.6rem 1.8rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Stay Logged In</button></div>';
   document.body.appendChild(el);
   var secs = 60;
   _inactivityWarningTimer = setInterval(function(){
@@ -6984,19 +6961,51 @@ function enterDashboard(){
   if(currentUser && (currentUser.role==='admin' || currentUser.role==='tl')){
     startAdminHeartbeat();
   }
-  // Auto-refresh live dashboard every 30 seconds so all agents see updated data without manual refresh
+  // Auto-refresh live dashboard relaxed to 90 seconds (saves 66% Supabase API quota)
   if(window._dashAutoRefreshInterval) clearInterval(window._dashAutoRefreshInterval);
-  window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 30 * 1000);
-  // Break stat refreshes on its own slower 4-minute cycle
+  window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 90 * 1000);
+  // Break stat refreshes on a 5-minute cycle
   if(window._breakStatInterval) clearInterval(window._breakStatInterval);
-  setTimeout(loadBreakStat, 600); // initial load shortly after dashboard
-  window._breakStatInterval = setInterval(function(){ loadBreakStat(); }, 4 * 60 * 1000);
-  // Start ambient theme poll
+  setTimeout(loadBreakStat, 800);
+  window._breakStatInterval = setInterval(function(){ loadBreakStat(); }, 5 * 60 * 1000);
+  // Bind tab visibility manager: freezes all background polling when tab is hidden or minimized
+  setupTabVisibilityManager();
+  // Start ambient theme (loads once on startup, zero continuous polling)
   ambStartPoll();
-  // Start inactivity watchdog — 60 min idle triggers logout warning
+  // Start inactivity watchdog (20 min idle timeout with break protection)
   inactStartWatching();
-  // Start K7 Intercom incoming-call listener
+  // K7 Intercom incoming-call listener (disabled for free quota)
   if(typeof icOnLogin==='function') icOnLogin();
+}
+
+function setupTabVisibilityManager(){
+  if(window._tabVisBound) return;
+  window._tabVisBound = true;
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      // Tab is minimized or hidden — immediately freeze background polling to eliminate overnight requests
+      if(window._dashAutoRefreshInterval){
+        clearInterval(window._dashAutoRefreshInterval);
+        window._dashAutoRefreshInterval = null;
+      }
+      if(window._breakStatInterval){
+        clearInterval(window._breakStatInterval);
+        window._breakStatInterval = null;
+      }
+    } else {
+      // Tab is active again — trigger one immediate refresh and resume relaxed 90s timer
+      if(currentUser && document.body.classList.contains('logged-in')){
+        if(typeof loadLiveDashboard === 'function') loadLiveDashboard();
+        if(typeof loadBreakStat === 'function') loadBreakStat();
+        if(!window._dashAutoRefreshInterval){
+          window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 90 * 1000);
+        }
+        if(!window._breakStatInterval){
+          window._breakStatInterval = setInterval(function(){ loadBreakStat(); }, 5 * 60 * 1000);
+        }
+      }
+    }
+  });
 }
 
 window.addEventListener('DOMContentLoaded', async function(){
@@ -8110,20 +8119,58 @@ async function _mFetchFromCloud(cloudName, tag){
   }
 }
 async function _mFetchCustom(tag){
+  var list = [];
+  // 1. Try dedicated team_moments table if available
   try{
-    var rows = await sbQuery('settings','key=eq.custom_team_moments&select=value');
-    if(!rows || !rows.length || !rows[0].value) return [];
-    var list = JSON.parse(rows[0].value);
-    if(!Array.isArray(list)) return [];
-    var targetTag = M_TAG_MAP[tag];
-    if(targetTag){
-      return list.filter(function(m){ return (m.tags||[]).indexOf(targetTag)>-1; });
+    var tRows = await sbQuery('team_moments','select=*&order=created_at.desc');
+    if(tRows && tRows.length){
+      list = tRows.map(function(r){
+        return {
+          public_id: r.public_id,
+          secure_url: r.secure_url,
+          created_at: r.created_at,
+          context: { custom: { caption: r.caption || '' } },
+          tags: [r.category || 'funfriday'],
+          author: r.author || 'Admin'
+        };
+      });
     }
-    return list;
-  }catch(e){
-    console.warn('Custom moments fetch error:', e.message);
-    return [];
+  }catch(eDb){}
+
+  // 2. Fall back to settings table key 'custom_team_moments'
+  if(!list.length){
+    try{
+      var rows = await sbQuery('settings','key=eq.custom_team_moments&select=value');
+      if(rows && rows.length && rows[0].value){
+        var parsed = JSON.parse(rows[0].value);
+        if(Array.isArray(parsed)) list = parsed;
+      }
+    }catch(e){
+      console.warn('Custom moments fetch error:', e.message);
+    }
   }
+
+  // 3. Merge locally cached moments (fallback if cloud DB RLS restricted writing)
+  try{
+    var localCached = JSON.parse(localStorage.getItem('k7tc_local_moments') || '[]');
+    if(Array.isArray(localCached) && localCached.length){
+      var seenPids = {};
+      list.forEach(function(m){ if(m.public_id) seenPids[m.public_id] = true; });
+      localCached.forEach(function(lm){
+        if(lm && lm.public_id && !seenPids[lm.public_id]){
+          seenPids[lm.public_id] = true;
+          list.unshift(lm);
+        }
+      });
+    }
+  }catch(eLocal){}
+
+  if(!list.length) return [];
+  var targetTag = M_TAG_MAP[tag];
+  if(targetTag){
+    return list.filter(function(m){ return (m.tags||[]).indexOf(targetTag)>-1; });
+  }
+  return list;
 }
 
 async function _mFetch(tag){
@@ -8235,6 +8282,32 @@ async function _mLoadTab(tag){
 function switchMomentsTab(tag,btn){_mActiveTab=tag;document.querySelectorAll('.mtab').forEach(function(t){t.classList.remove('active');});if(btn)btn.classList.add('active');_mLoadTab(tag);}
 
 // ── Admin: Upload Team Moment ──
+window._mPendingFiles = [];
+
+function mInitUploadDropzone(){
+  var dropzone = document.getElementById('m-upload-dropzone');
+  if(!dropzone || dropzone._dragBound) return;
+  dropzone._dragBound = true;
+  dropzone.addEventListener('dragover', function(e){
+    e.preventDefault(); e.stopPropagation();
+    dropzone.style.borderColor = 'var(--gold, #f59e0b)';
+    dropzone.style.background = 'rgba(245, 158, 11, 0.08)';
+  });
+  dropzone.addEventListener('dragleave', function(e){
+    e.preventDefault(); e.stopPropagation();
+    dropzone.style.borderColor = 'var(--navy-border)';
+    dropzone.style.background = 'rgba(255, 255, 255, .02)';
+  });
+  dropzone.addEventListener('drop', function(e){
+    e.preventDefault(); e.stopPropagation();
+    dropzone.style.borderColor = 'var(--navy-border)';
+    dropzone.style.background = 'rgba(255, 255, 255, .02)';
+    if(e.dataTransfer && e.dataTransfer.files){
+      mProcessFileList(e.dataTransfer.files);
+    }
+  });
+}
+
 function mOpenUploadModal(){
   if(typeof isAdminUser==='function' && !isAdminUser()){
     alert('Only administrators can upload team moments.');
@@ -8244,16 +8317,14 @@ function mOpenUploadModal(){
   var fileInput = document.getElementById('m-file-input');
   var caption = document.getElementById('m-caption');
   var msg = document.getElementById('m-upload-msg');
-  var previewWrap = document.getElementById('m-preview-wrap');
+  var progressWrap = document.getElementById('m-upload-progress-wrap');
   if(fileInput) fileInput.value = '';
   if(caption) caption.value = '';
-  if(msg){ msg.textContent = ''; msg.style.display = 'none'; }
-  if(previewWrap){
-    previewWrap.innerHTML = '<div style="font-size:1.9rem;margin-bottom:.25rem;">&#128444;&#65039;</div>' +
-      '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">Click to choose a photo</div>' +
-      '<div style="font-size:.72rem;color:var(--text-dim);margin-top:.2rem;">PNG, JPG, WebP (auto-optimized)</div>';
-  }
-  window._mPendingBlob = null;
+  if(msg){ msg.innerHTML = ''; msg.style.display = 'none'; }
+  if(progressWrap) progressWrap.style.display = 'none';
+  window._mPendingFiles = [];
+  mRenderPendingPreviews();
+  mInitUploadDropzone();
   if(overlay) overlay.style.display = 'flex';
 }
 
@@ -8261,129 +8332,312 @@ function mCloseUploadModal(e){
   if(!e || e.target === document.getElementById('moments-upload-overlay')){
     var overlay = document.getElementById('moments-upload-overlay');
     if(overlay) overlay.style.display = 'none';
-    window._mPendingBlob = null;
+    window._mPendingFiles = [];
   }
 }
 
-function mHandleFile(input){
-  var file = input.files && input.files[0];
-  var msg = document.getElementById('m-upload-msg');
-  if(!file) return;
-  if(msg) msg.style.display = 'none';
+function mHandleFiles(input){
+  if(input && input.files){
+    mProcessFileList(input.files);
+  }
+}
 
-  if(file.size > 15 * 1024 * 1024){
-    if(msg){ msg.textContent='Image is too large (max 15MB).'; msg.style.display='block'; }
-    input.value = '';
+function mProcessFileList(files){
+  var msg = document.getElementById('m-upload-msg');
+  if(msg) msg.style.display = 'none';
+  if(!files || !files.length) return;
+
+  var validFiles = Array.from(files).filter(function(f){
+    return /^image\/(png|jpeg|jpg|webp)$/i.test(f.type) || /\.(png|jpe?g|webp)$/i.test(f.name);
+  });
+
+  if(!validFiles.length){
+    if(msg){
+      msg.innerHTML = '<span style="color:var(--accent-red,#EF493C);">Please select valid image files (PNG, JPG, WebP).</span>';
+      msg.style.display = 'block';
+    }
     return;
   }
 
-  var reader = new FileReader();
-  reader.onload = function(e){
-    var img = new Image();
-    img.onload = function(){
-      var maxDim = 1200;
-      var w = img.width, h = img.height;
-      if(w > maxDim || h > maxDim){
-        if(w > h){
-          h = Math.round(h * (maxDim / w));
-          w = maxDim;
-        } else {
-          w = Math.round(w * (maxDim / h));
-          h = maxDim;
-        }
+  var maxDim = 1200;
+  var promises = validFiles.map(function(file){
+    return new Promise(function(resolve){
+      if(file.size > 25 * 1024 * 1024){
+        resolve(null); // skip files over 25MB
+        return;
       }
-      var canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      canvas.toBlob(function(blob){
-        if(!blob){
-          if(msg){ msg.textContent='Could not process photo.'; msg.style.display='block'; }
-          return;
-        }
-        window._mPendingBlob = blob;
-        var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        var previewWrap = document.getElementById('m-preview-wrap');
-        if(previewWrap){
-          previewWrap.innerHTML = '<img src="' + dataUrl + '" style="max-height:180px;max-width:100%;border-radius:6px;object-fit:contain;margin-bottom:.3rem;"/>' +
-            '<div style="font-size:.72rem;color:var(--accent-green);font-weight:600;">✓ Ready (' + Math.round(blob.size / 1024) + ' KB)</div>';
-        }
-      }, 'image/jpeg', 0.85);
-    };
-    img.onerror = function(){
-      if(msg){ msg.textContent='Invalid image file.'; msg.style.display='block'; }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var img = new Image();
+        img.onload = function(){
+          var w = img.width, h = img.height;
+          if(w > maxDim || h > maxDim){
+            if(w > h){ h = Math.round(h * (maxDim / w)); w = maxDim; }
+            else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob(function(blob){
+            if(!blob){ resolve(null); return; }
+            var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            resolve({
+              id: 'pf_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+              blob: blob,
+              dataUrl: dataUrl,
+              name: file.name,
+              size: blob.size
+            });
+          }, 'image/jpeg', 0.85);
+        };
+        img.onerror = function(){ resolve(null); };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  Promise.all(promises).then(function(results){
+    var validBlobs = results.filter(Boolean);
+    if(!validBlobs.length){
+      if(msg){
+        msg.innerHTML = '<span style="color:var(--accent-red,#EF493C);">Could not process selected photos.</span>';
+        msg.style.display = 'block';
+      }
+      return;
+    }
+    window._mPendingFiles = (window._mPendingFiles || []).concat(validBlobs);
+    mRenderPendingPreviews();
+  });
+}
+
+function mRenderPendingPreviews(){
+  var list = window._mPendingFiles || [];
+  var previewWrap = document.getElementById('m-preview-wrap');
+  var grid = document.getElementById('m-multi-preview-grid');
+  var summary = document.getElementById('m-multi-summary');
+  var countText = document.getElementById('m-multi-count-text');
+  var btn = document.getElementById('m-save-btn');
+
+  if(!list.length){
+    if(previewWrap){
+      previewWrap.innerHTML = '<div style="font-size:1.9rem;margin-bottom:.25rem;">&#128444;&#65039;</div>' +
+        '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">Click or Drag &amp; Drop photos here</div>' +
+        '<div style="font-size:.72rem;color:var(--text-dim);margin-top:.2rem;">Choose one or multiple photos (PNG, JPG, WebP &bull; auto-optimized)</div>';
+    }
+    if(grid){ grid.innerHTML = ''; grid.style.display = 'none'; }
+    if(summary) summary.style.display = 'none';
+    if(btn) btn.textContent = 'Upload Moments';
+    return;
+  }
+
+  var totalKb = Math.round(list.reduce(function(acc, x){ return acc + x.size; }, 0) / 1024);
+  var sizeStr = totalKb > 1024 ? (totalKb / 1024).toFixed(1) + ' MB' : totalKb + ' KB';
+
+  if(previewWrap){
+    previewWrap.innerHTML = '<div style="font-size:1.25rem;margin-bottom:.15rem;color:var(--accent-green,#10b981);">&#10003;</div>' +
+      '<div style="font-size:.82rem;font-weight:600;color:var(--text-primary);">' + list.length + ' photo' + (list.length > 1 ? 's' : '') + ' ready</div>' +
+      '<div style="font-size:.7rem;color:var(--text-dim);">Click dropzone to add more to batch</div>';
+  }
+
+  if(summary){
+    summary.style.display = 'flex';
+    if(countText) countText.textContent = list.length + ' photo' + (list.length > 1 ? 's' : '') + ' ready (' + sizeStr + ')';
+  }
+
+  if(grid){
+    grid.style.display = 'grid';
+    grid.innerHTML = list.map(function(item){
+      return '<div style="position:relative;width:100%;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.1);background:#070d2d;">' +
+        '<img src="' + item.dataUrl + '" style="width:100%;height:100%;object-fit:cover;display:block;" alt="preview"/>' +
+        '<button type="button" onclick="mRemovePendingFile(\'' + item.id + '\')" title="Remove photo" style="position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.75);color:#fff;border:none;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">&#10005;</button>' +
+        '</div>';
+    }).join('');
+  }
+
+  if(btn) btn.textContent = 'Upload ' + (list.length > 1 ? list.length + ' Moments' : 'Moment');
+}
+
+function mRemovePendingFile(id){
+  window._mPendingFiles = (window._mPendingFiles || []).filter(function(x){ return x.id !== id; });
+  mRenderPendingPreviews();
+}
+
+function mCopyRlsSql(btn){
+  var sql = 'ALTER TABLE settings ENABLE ROW LEVEL SECURITY;\nDROP POLICY IF EXISTS "Allow all on settings" ON settings;\nCREATE POLICY "Allow all on settings" ON settings FOR ALL USING (true) WITH CHECK (true);';
+  navigator.clipboard.writeText(sql).then(function(){
+    var old = btn.textContent;
+    btn.textContent = '\u2713 Copied!';
+    setTimeout(function(){ btn.textContent = old; }, 2000);
+  }).catch(function(){
+    alert('Please copy the SQL from the box above.');
+  });
 }
 
 async function mSaveMoment(){
   var btn = document.getElementById('m-save-btn');
   var msg = document.getElementById('m-upload-msg');
-  if(!window._mPendingBlob){
-    if(msg){ msg.textContent='Please select a photo to upload.'; msg.style.display='block'; }
+  var list = window._mPendingFiles || [];
+  if(!list.length){
+    if(msg){
+      msg.innerHTML = '<span style="color:var(--accent-red,#EF493C);">Please select at least one photo to upload.</span>';
+      msg.style.display = 'block';
+    }
     return;
   }
-  btn.disabled = true; btn.textContent = 'Uploading photo…';
+
+  btn.disabled = true;
   if(msg) msg.style.display = 'none';
+
+  var progressWrap = document.getElementById('m-upload-progress-wrap');
+  var progressBar = document.getElementById('m-upload-progress-bar');
+  var progressText = document.getElementById('m-upload-progress-text');
+  var progressPct = document.getElementById('m-upload-progress-pct');
+  if(progressWrap) progressWrap.style.display = 'block';
 
   try{
     var cat = (document.getElementById('m-category')||{}).value || 'funfriday';
     var tagKey = M_TAG_MAP[cat] || cat;
-    var caption = (document.getElementById('m-caption')||{}).value || '';
-    caption = caption.trim() || M_LABELS[cat] || 'Team Moment';
+    var captionInput = (document.getElementById('m-caption')||{}).value || '';
+    var baseCaption = captionInput.trim() || M_LABELS[cat] || 'Team Moment';
 
-    // 1. Upload to Supabase Storage
-    var timestamp = Date.now();
-    var filename = 'moment_' + timestamp + '_' + Math.random().toString(36).slice(2,7) + '.jpg';
-    var uploadUrl = SUPABASE_URL + '/storage/v1/object/profiles/moments/' + filename;
-    var r = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: Object.assign(sbHeaders(), { 'Content-Type': 'image/jpeg', 'x-upsert': 'true' }),
-      body: window._mPendingBlob
-    });
-    if(!r.ok){
-      var errText = await r.text();
-      throw new Error('Upload failed: ' + (errText || r.statusText));
+    var uploadedMoments = [];
+    var total = list.length;
+
+    // 1. Upload each photo to Supabase Storage bucket 'profiles/moments/'
+    for(var i = 0; i < total; i++){
+      var item = list[i];
+      var pct = Math.round((i / total) * 90);
+      if(progressText) progressText.textContent = 'Uploading photo ' + (i + 1) + ' of ' + total + '…';
+      if(progressPct) progressPct.textContent = pct + '%';
+      if(progressBar) progressBar.style.width = pct + '%';
+      btn.textContent = 'Uploading (' + (i + 1) + '/' + total + ')…';
+
+      var timestamp = Date.now() + i;
+      var rnd = Math.random().toString(36).slice(2,7);
+      var filename = 'moment_' + timestamp + '_' + rnd + '.jpg';
+      var uploadUrl = SUPABASE_URL + '/storage/v1/object/profiles/moments/' + filename;
+
+      var r = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: Object.assign(sbHeaders(), { 'Content-Type': 'image/jpeg', 'x-upsert': 'true' }),
+        body: item.blob
+      });
+
+      if(!r.ok){
+        var errText = await r.text();
+        throw new Error('Storage upload failed for image ' + (i + 1) + ': ' + (errText || r.statusText));
+      }
+
+      var publicUrl = SUPABASE_URL + '/storage/v1/object/public/profiles/moments/' + filename;
+      uploadedMoments.push({
+        public_id: 'cust__' + timestamp + '_' + rnd,
+        secure_url: publicUrl,
+        created_at: new Date(timestamp).toISOString(),
+        context: { custom: { caption: baseCaption } },
+        tags: [tagKey],
+        author: currentUser ? currentUser.name : 'Admin'
+      });
     }
-    var publicUrl = SUPABASE_URL + '/storage/v1/object/public/profiles/moments/' + filename;
 
-    // 2. Save metadata to Supabase settings table under 'custom_team_moments'
+    if(progressText) progressText.textContent = 'Saving details to database…';
+    if(progressPct) progressPct.textContent = '95%';
+    if(progressBar) progressBar.style.width = '95%';
     btn.textContent = 'Saving details…';
-    var ex = await sbQuery('settings', 'key=eq.custom_team_moments&select=value');
-    var currentList = [];
-    if(ex && ex.length && ex[0].value){
-      try{ currentList = JSON.parse(ex[0].value); }catch(e){}
-    }
-    var newMoment = {
-      public_id: 'cust__' + timestamp,
-      secure_url: publicUrl,
-      created_at: new Date().toISOString(),
-      context: { custom: { caption: caption } },
-      tags: [tagKey],
-      author: currentUser ? currentUser.name : 'Admin'
-    };
-    currentList.unshift(newMoment);
-    var jsonVal = JSON.stringify(currentList);
-    if(ex && ex.length){
-      await sbUpdate('settings', 'key', 'custom_team_moments', { value: jsonVal });
-    } else {
-      await sbInsert('settings', { key: 'custom_team_moments', value: jsonVal });
+
+    // 2. Persist metadata (Attempt team_moments table first, then fallback to settings)
+    var savedToDb = false;
+    var rlsErrorOccurred = false;
+
+    // Attempt 2a: Dedicated table 'team_moments'
+    try{
+      var dbRows = uploadedMoments.map(function(m){
+        return {
+          public_id: m.public_id,
+          secure_url: m.secure_url,
+          caption: baseCaption,
+          category: tagKey,
+          author: m.author,
+          created_at: m.created_at
+        };
+      });
+      await sbInsert('team_moments', dbRows);
+      savedToDb = true;
+    }catch(eTbl){}
+
+    // Attempt 2b: settings table 'custom_team_moments'
+    if(!savedToDb){
+      try{
+        var ex = await sbQuery('settings', 'key=eq.custom_team_moments&select=value');
+        var currentList = [];
+        if(ex && ex.length && ex[0].value){
+          try{ currentList = JSON.parse(ex[0].value); }catch(eParse){}
+        }
+        var mergedList = uploadedMoments.concat(currentList);
+        var jsonVal = JSON.stringify(mergedList);
+
+        if(ex && ex.length){
+          await sbUpdate('settings', 'key', 'custom_team_moments', { value: jsonVal });
+        } else {
+          await sbInsert('settings', { key: 'custom_team_moments', value: jsonVal });
+        }
+        savedToDb = true;
+      }catch(eSettings){
+        rlsErrorOccurred = true;
+      }
     }
 
-    // 3. Clear cache and reload tab
+    // Always cache in localStorage so uploaded photos appear immediately in this browser
+    try{
+      var localCached = JSON.parse(localStorage.getItem('k7tc_local_moments') || '[]');
+      var localMerged = uploadedMoments.concat(localCached);
+      localStorage.setItem('k7tc_local_moments', JSON.stringify(localMerged));
+    }catch(eLocal){}
+
+    // 3. Clear in-memory moments cache so new moments show up immediately
     window._momentsCache = {};
-    window._mPendingBlob = null;
-    var overlay = document.getElementById('moments-upload-overlay');
-    if(overlay) overlay.style.display = 'none';
+    window._mPendingFiles = [];
+
+    if(progressBar) progressBar.style.width = '100%';
+    if(progressPct) progressPct.textContent = '100%';
+
+    // Reload active moments tab to display newly uploaded photos immediately
     await _mLoadTab(_mActiveTab);
 
+    if(rlsErrorOccurred){
+      // Storage upload succeeded and photos are cached, but Supabase RLS blocked settings write
+      btn.disabled = false; btn.textContent = 'Uploaded with Warning';
+      if(msg){
+        msg.innerHTML = '<div style="background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.35);border-radius:8px;padding:.85rem;margin-top:.4rem;text-align:left;">' +
+          '<div style="font-weight:700;color:var(--accent-red,#EF493C);font-size:.8rem;margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem;">' +
+          '<span>\u26A0\uFE0F ' + total + ' Photo' + (total > 1 ? 's' : '') + ' Uploaded &mdash; Supabase RLS Permission Needed</span></div>' +
+          '<div style="font-size:.72rem;color:var(--text-secondary);line-height:1.45;margin-bottom:.55rem;">' +
+          'Your photos were uploaded to Supabase Storage and are visible in your current session. However, saving to the <code>settings</code> table was blocked by Row-Level Security policy (Error 42501). Run this SQL once in your Supabase SQL Editor to enable shared visibility for everyone:' +
+          '</div>' +
+          '<pre id="m-rls-sql-box" style="margin:0 0 .55rem 0;font-size:.68rem;background:rgba(0,0,0,.45);padding:.5rem .7rem;border-radius:6px;color:#f8fafc;font-family:monospace;white-space:pre-wrap;user-select:all;">ALTER TABLE settings ENABLE ROW LEVEL SECURITY;\nDROP POLICY IF EXISTS "Allow all on settings" ON settings;\nCREATE POLICY "Allow all on settings" ON settings FOR ALL USING (true) WITH CHECK (true);</pre>' +
+          '<div style="display:flex;gap:.5rem;align-items:center;">' +
+          '<button type="button" class="ppl-save-btn" onclick="mCopyRlsSql(this)" style="font-size:.7rem;padding:.3rem .75rem;">\uD83D\uDCCB Copy SQL Fix</button>' +
+          '<button type="button" class="ppl-cancel-btn" onclick="mCloseUploadModal()" style="font-size:.7rem;padding:.3rem .75rem;">Done</button>' +
+          '</div></div>';
+        msg.style.display = 'block';
+      }
+    } else {
+      // Complete success!
+      btn.disabled = false; btn.textContent = 'Upload Moments';
+      var overlay = document.getElementById('moments-upload-overlay');
+      if(overlay) overlay.style.display = 'none';
+    }
+
   }catch(e){
-    if(msg){ msg.textContent='Error: ' + e.message; msg.style.display='block'; }
+    if(msg){
+      msg.innerHTML = '<span style="color:var(--accent-red,#EF493C);">Error: ' + esc(e.message) + '</span>';
+      msg.style.display = 'block';
+    }
+    btn.disabled = false; btn.textContent = 'Upload Moments';
   }
-  btn.disabled = false; btn.textContent = 'Upload Moment';
 }
+var mSaveMoments = mSaveMoment; // alias for backwards compatibility
 function toggleMomentLike(safe){var was=_mliked[safe]||false;_mliked[safe]=!was;_mlikes[safe]=Math.max(0,(_mlikes[safe]||0)+(was?-1:1));var b=document.getElementById('lbtn_'+safe);var c=document.getElementById('lcnt_'+safe);if(b)b.classList.toggle('liked',!was);if(c)c.textContent=_mlikes[safe];}
 function openMomentLightbox(safe){
   var pid=(window._momentsPidMap&&window._momentsPidMap[safe])||safe;
@@ -15506,17 +15760,9 @@ async function dockSendGif(userId, url){
 // ── POLLING ──
 var _chatPollInterval=null;
 function chatStartPolling(){
+  // Polling disabled to preserve Supabase free quota (prevents 4-sec repetitive queries)
   if(_chatPollInterval) clearInterval(_chatPollInterval);
-  _chatPollInterval=setInterval(function(){
-    chatCheckUnread();
-    Object.keys(_dockWindows).forEach(function(uid){
-      if(!_dockWindows[uid].minimised) dockLoadMsgs(uid);
-    });
-    if(typeof msgPollMessages==='function'){
-      var mp=document.getElementById('page-messages');
-      if(mp&&mp.style.display!=='none') msgPollMessages();
-    }
-  },4000);
+  _chatPollInterval = null;
 }
 
 // ── UNREAD + NOTIFICATIONS ──
@@ -18382,8 +18628,8 @@ window.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ ES
      CHAT SYSTEM — Facebook Bottom Dock
 ═══════════════════════════════════ -->
 
-<!-- Bottom dock container -->
-<div id="chat-dock">
+<!-- Bottom dock container (disabled to preserve Supabase free quota) -->
+<div id="chat-dock" style="display:none !important;">
 
   <!-- Contacts list popup -->
   <div id="chat-contacts-popup" class="dock-hidden">
@@ -18409,12 +18655,107 @@ window.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ ES
 
 </div>
 
-<!-- Restore button (shown when dock is hidden) -->
-<button id="chat-restore-btn" onclick="dockRestore()" title="Show chat">💬</button>
+<!-- Restore button (disabled to preserve Supabase free quota) -->
+<button id="chat-restore-btn" onclick="dockRestore()" title="Show chat" style="display:none !important;">💬</button>
 
 <!-- Keep the old chat-wrap hidden for legacy badge elements -->
 <div id="chat-wrap" style="display:none;">
   <div class="chat-unread-badge" id="chat-badge" style="display:none;">0</div>
+</div>
+
+<!-- ═══════════════════════════════════
+     GLOBAL MODALS (BODY LEVEL)
+     Rendered at root <body> level with z-index >= 10000 so they
+     appear above .mobile-bottom-nav and are never trapped in .view stacking context
+═══════════════════════════════════ -->
+
+<!-- TeamCore Pro Feature Modal (Voice & Video Intercom, HD Calling) -->
+<div id="tc-pro-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:10005;align-items:center;justify-content:center;" onclick="closeProModal(event)">
+  <div class="xc-card" onclick="event.stopPropagation()" style="background:var(--navy-card,#121722);border:1px solid rgba(245,158,11,.35);border-radius:16px;max-width:440px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.6);position:relative;">
+    <div style="width:58px;height:58px;border-radius:14px;background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:1.8rem;">&#11088;</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:#fff;margin-bottom:.4rem;" id="tc-pro-feature-name">TeamCore Pro Feature</div>
+    <div style="font-size:.85rem;color:var(--text-secondary,#94a3b8);line-height:1.5;margin-bottom:1.4rem;">
+      HD Voice &amp; Video Intercom rooms are part of <b>TeamCore Pro</b> ($25 / month for up to 30 users).
+    </div>
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:1rem;margin-bottom:1.4rem;text-align:left;font-size:.78rem;color:#cbd5e1;line-height:1.6;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;color:#fbbf24;font-weight:600;">&#10003; Unlimited HD Audio &amp; Video Rooms</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;color:#fbbf24;font-weight:600;">&#10003; Instant Floor Broadcasting</div>
+      <div style="display:flex;align-items:center;gap:6px;color:#fbbf24;font-weight:600;">&#10003; Dedicated Low-Latency Media Gateway</div>
+    </div>
+    <div style="font-size:.75rem;color:var(--text-muted,#64748b);margin-bottom:1.2rem;">
+      Please contact your workspace administrator to activate this add-on for your team.
+    </div>
+    <button type="button" onclick="closeProModal()" style="padding:.65rem 2rem;background:linear-gradient(135deg,#f59e0b,#d97706);color:#0b0f17;border:none;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer;">Got It</button>
+  </div>
+</div>
+
+<!-- Stat Detail Modal (Logged In, On Break, Absent, Total Agents) -->
+<div id="stat-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:10000;align-items:center;justify-content:center;" onclick="closeStatModal(event)">
+  <div id="stat-modal" style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);width:100%;max-width:440px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(7,13,45,.4);margin:1rem;position:relative;">
+    <!-- Mobile drag handle indicator -->
+    <div class="stat-modal-drag-pill" style="display:none;width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,0.22);margin:8px auto 0;"></div>
+    <!-- Modal header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.3rem;border-bottom:1px solid var(--navy-border);">
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <div id="stat-modal-icon" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+        <div>
+          <div id="stat-modal-title" style="font-family:'Cormorant Garamond',serif;font-size:1.18rem;font-weight:600;color:var(--text-primary);"></div>
+          <div id="stat-modal-sub" style="font-size:.75rem;color:var(--text-muted);margin-top:.1rem;"></div>
+        </div>
+      </div>
+      <button type="button" onclick="closeStatModal()" aria-label="Close modal" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:.35rem;line-height:1;flex-shrink:0;border-radius:6px;transition:background .2s;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- Modal agent list -->
+    <div id="stat-modal-list" style="overflow-y:auto;padding:.75rem .6rem;flex:1;-webkit-overflow-scrolling:touch;"></div>
+    <!-- Modal footer for easy 1-thumb close on mobile -->
+    <div id="stat-modal-footer" style="padding:.65rem 1rem calc(.65rem + env(safe-area-inset-bottom, 0px));border-top:1px solid var(--navy-border);background:var(--navy-card);">
+      <button type="button" onclick="closeStatModal()" style="width:100%;padding:.65rem;border-radius:8px;background:var(--navy-hover);border:1px solid var(--navy-border);color:var(--text-primary);font-weight:600;font-size:.84rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- End Work Confirmation Modal -->
+<div id="end-work-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:10200;align-items:center;justify-content:center;">
+  <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:380px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.35);">
+    <div style="width:52px;height:52px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">End Your Shift?</div>
+    <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:.4rem;">You are about to <strong style="color:var(--accent-red);">end your work session</strong> for today.</div>
+    <div style="font-size:.82rem;background:rgba(239,73,60,.08);border:1px solid rgba(239,73,60,.2);border-radius:8px;padding:.65rem 1rem;color:var(--accent-red);font-weight:600;margin-bottom:1.4rem;">
+      ☕ If you want a break — click Cancel and use the Break button instead.
+    </div>
+    <div style="display:flex;gap:.75rem;justify-content:center;">
+      <button onclick="closeEndWorkModal()" style="padding:.6rem 1.4rem;background:transparent;border:1px solid var(--navy-border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--text-muted);">Cancel</button>
+      <button id="end-work-confirm-btn" onclick="confirmEndWork()" disabled style="padding:.6rem 1.4rem;background:rgba(239,73,60,.25);border:1px solid rgba(239,73,60,.3);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:not-allowed;color:#ff7f75;opacity:.5;">
+        End Shift (2s)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Roster URL Manager Modal -->
+<div id="roster-url-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,13,45,.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:10100;align-items:center;justify-content:center;" onclick="closeRosterUrlModal(event)">
+  <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);width:100%;max-width:480px;padding:1.5rem;box-shadow:0 24px 64px rgba(7,13,45,.3);margin:1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--text-primary);">Update Roster URL</div>
+      <button onclick="closeRosterUrlModal()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:.25rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.6;">
+      Paste the <strong style="color:var(--text-secondary);">Google Sheets published CSV URL</strong> for the new month.<br>
+      In Google Sheets → File → Share → Publish to web → CSV → Copy link.
+    </div>
+    <textarea id="roster-url-input" rows="3" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" style="width:100%;box-sizing:border-box;background:var(--navy-bg);border:1px solid var(--navy-border);border-radius:var(--radius-sm);padding:.75rem 1rem;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text-primary);resize:vertical;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='var(--gold-dim)'" onblur="this.style.borderColor='var(--navy-border)'"></textarea>
+    <div id="roster-url-status" style="font-size:.78rem;min-height:1.2rem;margin-top:.5rem;"></div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem;justify-content:flex-end;">
+      <button onclick="closeRosterUrlModal()" style="padding:.6rem 1.2rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:var(--radius-sm);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;">Cancel</button>
+      <button onclick="saveRosterUrl()" style="padding:.6rem 1.4rem;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius-sm);color:#fff;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;">Save & Apply</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -19239,7 +19580,7 @@ function aboutCheckUpdate(){
 
   setTimeout(function(){
     btn.className = 'about-update-check-btn up-to-date';
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 ' + (typeof APP_VERSION!=='undefined'?APP_VERSION:'v8.5.0');
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 ' + (typeof APP_VERSION!=='undefined'?APP_VERSION:'v8.5.3');
     // Reset after 5 seconds
     setTimeout(function(){
       btn.className = 'about-update-check-btn';
@@ -19692,13 +20033,12 @@ async function ambLoad(){
   }catch(e){}
 }
 
-// ── Poll for theme changes every 30s (so agents see it live) ──
+// ── Theme loads once on startup (polling disabled to preserve Supabase free quota) ──
 function ambStartPoll(){
   if(_ambPollInterval) clearInterval(_ambPollInterval);
-  _ambPollInterval = setInterval(ambLoad, 30000);
+  _ambPollInterval = null;
   ambLoadControls();
   ambLoad();
-  ambSchedStart();
 }
 
 // ── Apply a theme ──
@@ -20505,8 +20845,7 @@ var _ambSchedManualOverride = false; // true when admin manually set a theme, ig
 
 function ambSchedStart(){
   if(_ambSchedCheckInterval) clearInterval(_ambSchedCheckInterval);
-  _ambSchedCheckInterval = setInterval(ambSchedTick, 60000); // check every minute
-  ambSchedTick();
+  _ambSchedCheckInterval = null; // Minute polling disabled to stay within free quota
 }
 
 async function ambSchedTick(){
@@ -20999,10 +21338,8 @@ async function icPageInit(){
   if(!currentUser) return;
   icRenderAgents([]);
   icRenderFloor();
-  await icLoadAgents();
-  // Poll presence every 20s
-  if(IC.pollInterval) clearInterval(IC.pollInterval);
-  IC.pollInterval = setInterval(icLoadAgents, 20000);
+  if(IC.pollInterval){ clearInterval(IC.pollInterval); IC.pollInterval = null; }
+  showProModal('Voice & Video Intercom');
 }
 
 // ── Load agents ──
@@ -21119,32 +21456,13 @@ async function icSignalCall(toId, toName, roomUrl, roomName, isVideo){
   }catch(e){ console.warn('IC signal failed:', e.message); }
 }
 
-// ── Poll for incoming calls ──
+// ── Poll for incoming calls (disabled to stay 100% within Supabase Free Quota) ──
 var _icIncomingPoll = null;
 var _icProcessed = new Set();
 
 function icStartIncomingPoll(){
   if(_icIncomingPoll) clearInterval(_icIncomingPoll);
-  _icIncomingPoll = setInterval(async function(){
-    if(!currentUser) return;
-    try{
-      var since = new Date(Date.now()-12000).toISOString();
-      var rows = await sbQuery('voice_signals',
-        'to_id=eq.'+currentUser.id+'&type=eq.ic_call_invite&created_at=gt.'+encodeURIComponent(since)+'&order=created_at.desc&limit=5&select=id,from_id,from_name,payload,created_at');
-      if(!rows||!rows.length) return;
-      rows.forEach(function(r){
-        if(_icProcessed.has(r.id)) return;
-        _icProcessed.add(r.id);
-        if(_icProcessed.size > 200) _icProcessed.clear();
-        var payload = {}; try{ payload=JSON.parse(r.payload); }catch(e){}
-        if(payload.url && icIsValidRoomUrl(payload.url) && !IC.activeCall && !IC.floorActive){
-          icShowIncomingBanner(r.from_id, r.from_name, payload.url, payload.room, !!payload.video);
-        } else if(payload.url && !icIsValidRoomUrl(payload.url)){
-          console.warn('Rejected untrusted call invite URL from user ' + r.from_id + ':', payload.url);
-        }
-      });
-    }catch(e){}
-  }, 3000);
+  _icIncomingPoll = null;
 }
 
 // ── Incoming call banner ──
@@ -21359,9 +21677,23 @@ async function checkVHGlobalToggle(){
   }catch(e){}
 }
 
-// ── Start incoming poll on login ──
+// ── Start incoming poll on login (disabled to preserve Supabase Free Quota) ──
 function icOnLogin(){
-  icStartIncomingPoll();
+  // Background incoming polling disabled
+}
+
+// ── TeamCore Pro Feature Modal Handlers ──
+function showProModal(featureName){
+  var m = document.getElementById('tc-pro-modal-overlay');
+  var fnEl = document.getElementById('tc-pro-feature-name');
+  if(fnEl && featureName) fnEl.textContent = 'TeamCore Pro: ' + featureName;
+  if(m) m.style.display = 'flex';
+}
+function closeProModal(e){
+  if(!e || e.target === document.getElementById('tc-pro-modal-overlay') || e.target.tagName === 'BUTTON'){
+    var m = document.getElementById('tc-pro-modal-overlay');
+    if(m) m.style.display = 'none';
+  }
 }
 </script>
 
