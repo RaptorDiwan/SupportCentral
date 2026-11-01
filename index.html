@@ -3801,7 +3801,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
       <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
 
-      <div class="login-footer">TeamCore v8.5.3 &nbsp;·&nbsp; Build 261030_2135 &nbsp;·&nbsp; For internal use only</div>
+      <div class="login-footer">TeamCore v8.5.6 &nbsp;·&nbsp; Build 261101_2330 &nbsp;·&nbsp; For internal use only</div>
     </div>
   </div>
 </div>
@@ -4051,7 +4051,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           <line x1="12" y1="8" x2="12" y2="12"/>
           <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        About <span style="font-size:.62rem;opacity:.55;margin-left:auto;font-variant-numeric:tabular-nums;">v8.5.3</span>
+        About <span style="font-size:.62rem;opacity:.55;margin-left:auto;font-variant-numeric:tabular-nums;">v8.5.6</span>
       </div>
 
       <div class="sidebar-section admin-only">Admin</div>
@@ -4251,6 +4251,11 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                 <div class="hm-card" onclick="openRosterUrlDialogEnhanced()">
                   <div class="hm-icon" style="background:rgba(46,197,111,.08);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EC56F" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
                   <div class="hm-body"><div class="hm-title">Roster URL</div><div class="hm-sub">Update monthly roster Google Sheet link</div></div>
+                  <svg class="hm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                </div>
+                <div class="hm-card admin-only" onclick="openDatabaseManagerDialog()" style="display:none;" id="hm-card-db-manager">
+                  <div class="hm-icon" style="background:rgba(59,130,246,.08);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+                  <div class="hm-body"><div class="hm-title">Disaster Recovery & DB</div><div class="hm-sub">Failover status & standby database health</div></div>
                   <svg class="hm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
               </div>
@@ -4968,7 +4973,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-family:'DM Sans',-apple-system,sans-serif;font-size:1.45rem;font-weight:800;letter-spacing:-0.02em;color:var(--text-primary);line-height:1.2;">Team<span style="background:linear-gradient(135deg,#ff7a5c,#ffaa85);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Core</span></div>
-            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">V 8.5.3 &nbsp;·&nbsp; Build 261030_2135 &nbsp;·&nbsp; Designed &amp; Engineered by Diwan Chowthry</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">V 8.5.6 &nbsp;·&nbsp; Build 261101_2330 &nbsp;·&nbsp; Designed &amp; Engineered by Diwan Chowthry</div>
           </div>
           <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()" style="flex-shrink:0;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
@@ -5849,8 +5854,84 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 </div>
 
 <script>
-const SUPABASE_URL='https://sodvlpcjpnepohpoqicf.supabase.co';
-const SUPABASE_KEY='sb_publishable_nEbzsiR9Qhb31ZMc-Pg-cA_tJEzkmAf';
+// Database Connections: Primary + Automatic Hot-Standby Disaster Recovery
+const SUPABASE_PRIMARY_URL = 'https://sodvlpcjpnepohpoqicf.supabase.co';
+const SUPABASE_PRIMARY_KEY = 'sb_publishable_nEbzsiR9Qhb31ZMc-Pg-cA_tJEzkmAf';
+const SUPABASE_BACKUP_URL  = 'https://ussfdvdjzmvaigcolbex.supabase.co';
+const SUPABASE_BACKUP_KEY  = 'sb_publishable_YJ98jwWrgC5NLuuOwrM-pQ_plhYrMOP';
+
+let _activeDb = localStorage.getItem('tc_active_db') || 'primary';
+let SUPABASE_URL = (_activeDb === 'backup') ? SUPABASE_BACKUP_URL : SUPABASE_PRIMARY_URL;
+let SUPABASE_KEY = (_activeDb === 'backup') ? SUPABASE_BACKUP_KEY : SUPABASE_PRIMARY_KEY;
+
+function switchTeamCoreDb(target, notify){
+  if(target === 'backup'){
+    _activeDb = 'backup';
+    SUPABASE_URL = SUPABASE_BACKUP_URL;
+    SUPABASE_KEY = SUPABASE_BACKUP_KEY;
+    localStorage.setItem('tc_active_db', 'backup');
+    console.warn('[DB FAILOVER] Active Database switched to STANDBY BACKUP (ussfdvdjzmvaigcolbex)');
+    if(notify && typeof showToast === 'function'){
+      showToast('⚠️ Switched to Disaster Recovery Backup DB', 4000);
+    }
+  } else {
+    _activeDb = 'primary';
+    SUPABASE_URL = SUPABASE_PRIMARY_URL;
+    SUPABASE_KEY = SUPABASE_PRIMARY_KEY;
+    localStorage.setItem('tc_active_db', 'primary');
+    console.log('[DB] Active Database switched to PRIMARY (sodvlpcjpnepohpoqicf)');
+    if(notify && typeof showToast === 'function'){
+      showToast('Switched to Primary Database', 3000);
+    }
+  }
+}
+window.switchTeamCoreDb = switchTeamCoreDb;
+window.getTeamCoreDbStatus = function(){
+  return { active: _activeDb, primary: SUPABASE_PRIMARY_URL, backup: SUPABASE_BACKUP_URL };
+};
+
+// Global transparent fetch interceptor for automatic hot-standby failover
+(function(){
+  const _origFetch = window.fetch;
+  window.fetch = async function(resource, init){
+    let url = (typeof resource === 'string') ? resource : (resource && resource.url ? resource.url : '');
+    let isPrimary = url && (url.indexOf(SUPABASE_PRIMARY_URL) > -1);
+
+    if(!isPrimary){
+      return _origFetch.apply(this, arguments);
+    }
+
+    try {
+      const res = await _origFetch.apply(this, arguments);
+      // Auto-failover if primary returns server error (500, 502, 503, 504) or quota pause (429)
+      if(!res.ok && (res.status >= 500 || res.status === 429)){
+        console.warn('[DB AUTO-FAILOVER] Primary returned HTTP ' + res.status + '. Failing over to standby DB...');
+        switchTeamCoreDb('backup', true);
+        let newUrl = url.replace(SUPABASE_PRIMARY_URL, SUPABASE_BACKUP_URL);
+        let newInit = Object.assign({}, init || {});
+        if(newInit.headers){
+          newInit.headers = Object.assign({}, newInit.headers);
+          if(newInit.headers['apikey'] === SUPABASE_PRIMARY_KEY) newInit.headers['apikey'] = SUPABASE_BACKUP_KEY;
+          if(newInit.headers['Authorization'] === 'Bearer ' + SUPABASE_PRIMARY_KEY) newInit.headers['Authorization'] = 'Bearer ' + SUPABASE_BACKUP_KEY;
+        }
+        return _origFetch.call(this, newUrl, newInit);
+      }
+      return res;
+    } catch(err){
+      // Auto-failover on network timeout or connection refused (e.g. project paused by Supabase)
+      console.warn('[DB AUTO-FAILOVER] Primary DB connection failed (' + err.message + '). Failing over to standby DB...');
+      switchTeamCoreDb('backup', true);
+      let newUrl = url.replace(SUPABASE_PRIMARY_URL, SUPABASE_BACKUP_URL);
+      let newInit = Object.assign({}, init || {});
+      if(newInit.headers){
+        newInit.headers = Object.assign({}, newInit.headers);
+        if(newInit.headers['apikey'] === SUPABASE_PRIMARY_KEY) newInit.headers['apikey'] = SUPABASE_BACKUP_KEY;
+        if(newInit.headers['Authorization'] === 'Bearer ' + SUPABASE_PRIMARY_KEY) newInit.headers['Authorization'] = 'Bearer ' + SUPABASE_BACKUP_KEY;
+      }
+      return _origFetch.call(this, newUrl, newInit);
+    }
+  };
+})();
 
 function esc(s){
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -5940,8 +6021,8 @@ async function hashPassword(p){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-const APP_VERSION = 'v8.5.3';
-const APP_BUILD   = '261030_2135';
+const APP_VERSION = 'v8.5.6';
+const APP_BUILD   = '261101_2330';
 window.TEAMCORE_VERSION = APP_VERSION;
 window.TEAMCORE_BUILD   = APP_BUILD;
 
@@ -7528,7 +7609,7 @@ async function makeUserAdmin(userId, userName){
   }catch(e){ alert('Could not update role: '+e.message); }
 }
 
-const ROSTER_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRE80jgfcc5g_L8GNZsADwYJhE2WOJ1Ehe2LridB0f7EUh5TZKmq2mT2c-P6nRZg-U5UVc4tLAxEUCI/pub?output=csv';
+const ROSTER_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSLN_t4uIQpCdSd6O5QTGQCWH1It2Xpev64RMGC-W5SoJhnQqRvNmTzsvN6IyqSPDyAin88gYPpYEdy/pub?output=csv';
 const NOT_PRESENT_CODES=new Set(['L','CO','W']);
 window.rosterCache=null;
 // Agent rows = the block right after the DATE + DAY rows, up to the summary rows
@@ -7757,8 +7838,9 @@ function renderRosterGrid(agentRows, visibleCols, todayCol, search){
   var tbody = '<tbody>'+pageRows.map(function(row){
     var name = String(row[1]||'').trim();
     var ini = name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
-    var todayVal = todayCol>=0 ? (row[todayCol]||'') : '';
-    var todayTag = getTodayStatusTag(todayVal);
+    var hasValidToday = (typeof todayCol === 'number' && todayCol >= 2 && todayM === new Date().getMonth() && todayY === new Date().getFullYear());
+    var todayVal = hasValidToday ? (row[todayCol]||'') : '';
+    var todayTag = hasValidToday ? getTodayStatusTag(todayVal) : '<span class="rc rc-o">—</span>';
     var tv = String(todayVal).toUpperCase().trim();
     var ia = NOT_PRESENT_CODES.has(tv)||tv==='EO';
     var iw = tv.indexOf('WFH')>-1;
@@ -8011,8 +8093,10 @@ function _processRosterRows(rows){
   if(mi && mi.month!==undefined){ window._rosterTodayM = mi.month; window._rosterTodayY = mi.year; }
   var today = new Date();
   if(!mi||mi.month!==today.getMonth()||mi.year!==today.getFullYear()){
-    document.getElementById('absence-title').textContent='Roster loaded';
-    document.getElementById('absence-detail').textContent='Showing '+(mi?(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mi.month]+' '+mi.year):'this month')+' roster.';
+    var atEl = document.getElementById('absence-title');
+    if(atEl) atEl.textContent='Roster loaded';
+    var adEl = document.getElementById('absence-detail');
+    if(adEl) adEl.textContent='Showing '+(mi?(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mi.month]+' '+mi.year):'this month')+' roster.';
     renderRosterPage(rows, false); return;
   }
   var day = String(today.getDate());
@@ -8047,14 +8131,18 @@ async function loadRosterSummary(){
     var rosterUrl = ROSTER_CSV_URL;
     try{
       var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      var curMonth=monthNames[new Date().getMonth()];
+      var curMonth = _rosterActiveMonth || monthNames[new Date().getMonth()];
       var settings = await sbQuery('settings','key=ilike.roster_url*&select=key,value');
       if(settings && settings.length){
         // Try current month first
         var monthRow = settings.find(function(r){ return r.key==='roster_url_'+curMonth.toLowerCase(); });
         var genericRow = settings.find(function(r){ return r.key==='roster_url'; });
-        var best = (monthRow && monthRow.value) ? monthRow : genericRow;
+        var cfgMonth = (window.ROSTER_MONTHS && window.ROSTER_MONTHS[curMonth] && window.ROSTER_MONTHS[curMonth].gid && typeof getRosterMonthUrl === 'function') ? { value: getRosterMonthUrl(window.ROSTER_MONTHS[curMonth].gid) } : null;
+        var best = (monthRow && monthRow.value) ? monthRow : (cfgMonth || genericRow);
         if(best && best.value){ rosterUrl = best.value; window._rosterCsvUrl = best.value; }
+      } else if(window.ROSTER_MONTHS && window.ROSTER_MONTHS[curMonth] && window.ROSTER_MONTHS[curMonth].gid && typeof getRosterMonthUrl === 'function'){
+        rosterUrl = getRosterMonthUrl(window.ROSTER_MONTHS[curMonth].gid);
+        window._rosterCsvUrl = rosterUrl;
       }
     }catch(e2){}
     var now = Date.now();
@@ -17356,14 +17444,8 @@ var ESC = (function(){
     updateBadge();
     renderHomeWidget();
     refreshAgentMgmt(); // roster now lives on Control Deck, always keep it live
-    _pollTimer = setInterval(async function(){
-      await loadRows();
-      await loadAgents();
-      updateBadge();
-      renderHomeWidget();
-      refreshAgentMgmt();
-      if(pageActive()) render(); // render() (not refreshActivePanel) so any role drift self-corrects on every poll, not just on navigation
-    }, 8000);
+    // 8-second background polling disabled to save 8+ million queries/month on Supabase free tier
+    if(_pollTimer){ clearInterval(_pollTimer); _pollTimer = null; }
     _tickTimer = setInterval(function(){ if(pageActive()) updateTimers(); }, 1000);
   }
 
@@ -18519,8 +18601,16 @@ var ESC = (function(){
   };
 })();
 
-(function(){ var _o=showPage; showPage=function(id,elem){ _o(id,elem); if(id==='escalations'){ ESC.init().then(function(){ ESC.onNavigate(); }); } }; })();
-window.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ ESC.init(); },1300); });
+(function(){
+  var _o=showPage;
+  showPage=function(id,elem){
+    _o(id,elem);
+    if(id==='escalations'){
+      ESC.init().then(function(){ ESC.onNavigate(); });
+    }
+  };
+})();
+// Removed automatic startup DOMContentLoaded polling for escalations to save Supabase free quota
 
 </script>
 
@@ -18966,15 +19056,15 @@ var ROSTER_MONTHS = {
   'Apr': { label:'Apr 2026', gid:'1780653272' },
   'May': { label:'May 2026', gid:'574438143'  },
   'Jun': { label:'Jun 2026', gid:'914934387'  },
-  'Jul': { label:'Jul 2026', gid:''           },
-  'Aug': { label:'Aug 2026', gid:''           },
-  'Sep': { label:'Sep 2026', gid:''           },
-  'Oct': { label:'Oct 2026', gid:''           },
-  'Nov': { label:'Nov 2026', gid:''           },
+  'Jul': { label:'Jul 2026', gid:'536227151'  },
+  'Aug': { label:'Aug 2026', gid:'704984310'  },
+  'Sep': { label:'Sep 2026', gid:'713867698'  },
+  'Oct': { label:'Oct 2026', gid:'1649529869' },
+  'Nov': { label:'Nov 2026', gid:'1186737427' },
   'Dec': { label:'Dec 2026', gid:''           }
 };
 
-var _rosterBaseUrl = '2PACX-1vTGmLIzXLioRQFdy7h19uyav3E_LTEmmrde08fAwrCdPNfdV3sBR9EtV6AO8LjJocAz22Y_LDu4GQjM';
+var _rosterBaseUrl = '2PACX-1vSLN_t4uIQpCdSd6O5QTGQCWH1It2Xpev64RMGC-W5SoJhnQqRvNmTzsvN6IyqSPDyAin88gYPpYEdy';
 var _rosterActiveMonth = null;
 
 function getRosterMonthUrl(gid){
@@ -19438,6 +19528,105 @@ window.addEventListener('DOMContentLoaded', function(){
   }, 2000);
 });
 
+function openDatabaseManagerDialog(){
+  var active = _activeDb || 'primary';
+  var overlay = document.createElement('div');
+  overlay.id = 'tc-db-manager-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(7,13,45,.65);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+
+  var primaryBadge = (active === 'primary') 
+    ? '<span style="background:rgba(46,197,111,.15);color:#2EC56F;border:1px solid rgba(46,197,111,.3);padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:600;">ACTIVE (LIVE)</span>'
+    : '<span style="background:rgba(255,255,255,.05);color:var(--text-muted);border:1px solid rgba(255,255,255,.1);padding:2px 8px;border-radius:12px;font-size:.7rem;">STANDBY</span>';
+
+  var backupBadge = (active === 'backup')
+    ? '<span style="background:rgba(239,73,60,.15);color:#EF493C;border:1px solid rgba(239,73,60,.3);padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:600;">ACTIVE (FAILOVER)</span>'
+    : '<span style="background:rgba(59,130,246,.15);color:#3B82F6;border:1px solid rgba(59,130,246,.3);padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:600;">READY (HOT-STANDBY)</span>';
+
+  overlay.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:560px;width:100%;padding:1.5rem;box-shadow:0 20px 40px rgba(0,0,0,.4);">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">' +
+      '<div style="display:flex;align-items:center;gap:.6rem;">' +
+        '<span style="font-size:1.3rem;">🛡️</span>' +
+        '<div>' +
+          '<h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);margin:0;">Disaster Recovery & Database Manager</h3>' +
+          '<p style="font-size:.74rem;color:var(--text-muted);margin:2px 0 0 0;">Automatic hot-standby failover architecture</p>' +
+        '</div>' +
+      '</div>' +
+      '<button onclick="document.body.removeChild(this.closest(\'#tc-db-manager-modal\'))" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text-muted);padding:4px;">✕</button>' +
+    '</div>' +
+
+    '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1rem;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">' +
+        '<strong style="font-size:.85rem;color:var(--text-primary);">Primary Database</strong>' +
+        primaryBadge +
+      '</div>' +
+      '<div style="font-family:monospace;font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem;">' + SUPABASE_PRIMARY_URL + '</div>' +
+      '<div id="db-ping-primary" style="font-size:.74rem;color:var(--text-muted);">Status: Ready</div>' +
+    '</div>' +
+
+    '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1.2rem;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">' +
+        '<strong style="font-size:.85rem;color:var(--text-primary);">Backup Standby Database (Nov 11 Target)</strong>' +
+        backupBadge +
+      '</div>' +
+      '<div style="font-family:monospace;font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem;">' + SUPABASE_BACKUP_URL + '</div>' +
+      '<div id="db-ping-backup" style="font-size:.74rem;color:var(--text-muted);">Status: Seeded (23 users, 40 settings, 23 people, attendance/breaks synced)</div>' +
+    '</div>' +
+
+    '<div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:.8rem;font-size:.76rem;color:var(--text-muted);margin-bottom:1.2rem;line-height:1.4;">' +
+      '⚡ <strong>Auto-Failover Active:</strong> If the primary database reaches quota limit or is paused on Nov 11 (HTTP 503/429/timeout), TeamCore will automatically switch to the Standby Database without interrupting active user sessions.' +
+    '</div>' +
+
+    '<div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:flex-end;">' +
+      '<button id="btn-ping-dbs" onclick="pingBothDatabases(this)" class="xc-btn-sec" style="font-size:.78rem;">📡 Test Both DBs</button>' +
+      (active === 'primary' 
+        ? '<button onclick="switchTeamCoreDb(\'backup\', true); document.body.removeChild(this.closest(\'#tc-db-manager-modal\'));" class="xc-btn" style="background:#EF493C;border-color:#EF493C;font-size:.78rem;">Switch to Standby DB</button>'
+        : '<button onclick="switchTeamCoreDb(\'primary\', true); document.body.removeChild(this.closest(\'#tc-db-manager-modal\'));" class="xc-btn" style="background:#2EC56F;border-color:#2EC56F;font-size:.78rem;">Switch to Primary DB</button>'
+      ) +
+    '</div>' +
+  '</div>';
+
+  document.body.appendChild(overlay);
+}
+
+async function pingBothDatabases(btn){
+  btn.disabled = true; btn.textContent = 'Testing…';
+  var pEl = document.getElementById('db-ping-primary');
+  var bEl = document.getElementById('db-ping-backup');
+  if(pEl) pEl.innerHTML = '<span style="color:#f59e0b;">Pinging primary…</span>';
+  if(bEl) bEl.innerHTML = '<span style="color:#f59e0b;">Pinging backup…</span>';
+
+  // Test Primary
+  try {
+    var t0 = performance.now();
+    var pr = await fetch(SUPABASE_PRIMARY_URL + '/rest/v1/users?select=count', {
+      headers: { 'apikey': SUPABASE_PRIMARY_KEY, 'Authorization': 'Bearer ' + SUPABASE_PRIMARY_KEY }
+    });
+    var dtP = Math.round(performance.now() - t0);
+    if(pEl) pEl.innerHTML = pr.ok 
+      ? '<span style="color:#2EC56F;">✅ Online & Healthy (' + dtP + 'ms)</span>' 
+      : '<span style="color:#EF493C;">❌ HTTP ' + pr.status + ' (' + pr.statusText + ')</span>';
+  } catch(e) {
+    if(pEl) pEl.innerHTML = '<span style="color:#EF493C;">❌ Unreachable: ' + escHTML(e.message) + '</span>';
+  }
+
+  // Test Backup
+  try {
+    var t1 = performance.now();
+    var br = await fetch(SUPABASE_BACKUP_URL + '/rest/v1/users?select=count', {
+      headers: { 'apikey': SUPABASE_BACKUP_KEY, 'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY }
+    });
+    var dtB = Math.round(performance.now() - t1);
+    if(bEl) bEl.innerHTML = br.ok 
+      ? '<span style="color:#2EC56F;">✅ Standby Online & Healthy (' + dtB + 'ms)</span>' 
+      : '<span style="color:#EF493C;">❌ HTTP ' + br.status + ' (' + br.statusText + ')</span>';
+  } catch(e) {
+    if(bEl) bEl.innerHTML = '<span style="color:#EF493C;">❌ Unreachable: ' + escHTML(e.message) + '</span>';
+  }
+
+  btn.disabled = false; btn.textContent = '📡 Test Both DBs';
+}
+window.openDatabaseManagerDialog = openDatabaseManagerDialog;
+
 function escHTML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 </script>
@@ -19580,7 +19769,7 @@ function aboutCheckUpdate(){
 
   setTimeout(function(){
     btn.className = 'about-update-check-btn up-to-date';
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 ' + (typeof APP_VERSION!=='undefined'?APP_VERSION:'v8.5.3');
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 ' + (typeof APP_VERSION!=='undefined'?APP_VERSION:'v8.5.6');
     // Reset after 5 seconds
     setTimeout(function(){
       btn.className = 'about-update-check-btn';
