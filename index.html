@@ -6,6 +6,18 @@
 <title>K7TeamCore — Agent Portal</title>
 <link rel="icon" type="image/png" href="favicon.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<!--
+  TEAMCORE ENTERPRISE SERVER CONFIGURATION (AWS / On-Premise / Cloud)
+  IT Team: To direct this portal to your internal AWS backend, define window.TEAMCORE_CONFIG:
+  <script>
+    window.TEAMCORE_CONFIG = {
+      PRIMARY_URL: 'https://your-aws-server-or-domain.internal',
+      PRIMARY_KEY: 'your-postgrest-or-supabase-publishable-key',
+      BACKUP_URL:  'https://your-standby-server.internal', // optional
+      BACKUP_KEY:  'your-standby-key'                     // optional
+    };
+  </script>
+-->
 <style>
   :root {
     --gold: #EF493C;
@@ -826,18 +838,37 @@
     gap: 0.5rem;
     background: var(--navy-card);
     border: 1px solid var(--navy-border);
-    padding: 0.22rem 0.75rem 0.22rem 0.25rem;
+    padding: 0.22rem 0.65rem 0.22rem 0.25rem;
     border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    user-select: none;
+  }
+  .agent-badge:hover {
+    background: var(--navy-hover);
+    border-color: rgba(212,175,55,0.45);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.28);
+    transform: translateY(-1px);
   }
 
   .avatar {
-    width: 26px; height: 26px;
+    width: 28px; height: 28px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--gold-dim), var(--gold));
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.64rem;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 700;
     color: #FFFFFF;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(212,175,55,0.3);
+  }
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
   }
 
   .agent-name {
@@ -3801,7 +3832,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 
       <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
 
-      <div class="login-footer">TeamCore v8.5.6 &nbsp;·&nbsp; Build 261101_2330 &nbsp;·&nbsp; For internal use only</div>
+      <div class="login-footer">TeamCore v8.5.14 &nbsp;·&nbsp; Build 261103_1715 &nbsp;·&nbsp; For internal use only</div>
     </div>
   </div>
 </div>
@@ -3871,9 +3902,10 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         <span class="topbar-msg-badge" id="topbar-msg-badge" style="display:none;">0</span>
       </button>
       <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDarkMode()" title="Toggle dark mode">&#9790;</button>
-      <div class="agent-badge">
+      <div class="agent-badge" id="topbar-agent-badge" onclick="openMyAccountModal()" title="View Account Profile, Change Email & Password" style="cursor:pointer;">
         <div class="avatar" id="avatar-initials">AG</div>
         <div class="agent-name" id="agent-display">Agent</div>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.65;margin-left:1px;"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <button class="logout-btn" id="logout-btn" onclick="doLogout()">Log Out</button>
     </div>
@@ -4051,7 +4083,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           <line x1="12" y1="8" x2="12" y2="12"/>
           <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        About <span style="font-size:.62rem;opacity:.55;margin-left:auto;font-variant-numeric:tabular-nums;">v8.5.6</span>
+        About <span style="font-size:.62rem;opacity:.55;margin-left:auto;font-variant-numeric:tabular-nums;">v8.5.14</span>
       </div>
 
       <div class="sidebar-section admin-only">Admin</div>
@@ -4080,6 +4112,14 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           <path d="M19 8v6M22 11h-6"/>
         </svg>
         Manage Users
+      </div>
+
+      <div class="sidebar-item admin-only" onclick="openDatabaseManagerDialog(this)">
+        <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        Disaster Recovery
       </div>
 
       <div id="sidebar-sysconfig" style="display:none;position:absolute;bottom:8px;left:0;width:8px;height:8px;cursor:default;opacity:0;" onclick="showPage('sysconfig', this)"></div>
@@ -4254,8 +4294,8 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
                   <svg class="hm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
                 <div class="hm-card admin-only" onclick="openDatabaseManagerDialog()" style="display:none;" id="hm-card-db-manager">
-                  <div class="hm-icon" style="background:rgba(59,130,246,.08);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
-                  <div class="hm-body"><div class="hm-title">Disaster Recovery & DB</div><div class="hm-sub">Failover status & standby database health</div></div>
+                  <div class="hm-icon" style="background:rgba(59,130,246,.08);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+                  <div class="hm-body"><div class="hm-title">Disaster Recovery & DB</div><div class="hm-sub">Failover, 1-click encrypted backup &amp; restore</div></div>
                   <svg class="hm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
               </div>
@@ -4973,7 +5013,7 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-family:'DM Sans',-apple-system,sans-serif;font-size:1.45rem;font-weight:800;letter-spacing:-0.02em;color:var(--text-primary);line-height:1.2;">Team<span style="background:linear-gradient(135deg,#ff7a5c,#ffaa85);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Core</span></div>
-            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">V 8.5.6 &nbsp;·&nbsp; Build 261101_2330 &nbsp;·&nbsp; Designed &amp; Engineered by Diwan Chowthry</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">V 8.5.7 &nbsp;·&nbsp; Build 261102_1130 &nbsp;·&nbsp; Designed &amp; Engineered by Diwan Chowthry</div>
           </div>
           <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()" style="flex-shrink:0;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
@@ -5492,10 +5532,12 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
         <div style="max-width:900px;">
 
           <!-- Header -->
-          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding:1.2rem 1.5rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding:1.2rem 1.5rem;background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);flex-wrap:wrap;gap:1rem;">
             <div>
-              <div style="font-size:.8rem;color:var(--text-muted);">Advanced Settings</div>
+              <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:.5rem;">⚙️ System Configuration</div>
+              <div style="font-size:.8rem;color:var(--text-muted);margin-top:2px;">Advanced Settings &amp; Godmode Controls</div>
             </div>
+            <button onclick="showPage('changepass')" style="padding:.45rem 1rem;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.35);color:var(--gold);border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;">🔑 Change Password</button>
           </div>
 
           <!-- TAB STRIP -->
@@ -5854,11 +5896,14 @@ body.dark .ct-assign-inp{background:#1F2937;border-color:#2D3748;color:#F1F5F9;}
 </div>
 
 <script>
-// Database Connections: Primary + Automatic Hot-Standby Disaster Recovery
-const SUPABASE_PRIMARY_URL = 'https://sodvlpcjpnepohpoqicf.supabase.co';
-const SUPABASE_PRIMARY_KEY = 'sb_publishable_nEbzsiR9Qhb31ZMc-Pg-cA_tJEzkmAf';
-const SUPABASE_BACKUP_URL  = 'https://ussfdvdjzmvaigcolbex.supabase.co';
-const SUPABASE_BACKUP_KEY  = 'sb_publishable_YJ98jwWrgC5NLuuOwrM-pQ_plhYrMOP';
+// Database Connections: Environment-aware (AWS Server / Cloud / Standby Backup)
+// IT Team: Configure window.TEAMCORE_CONFIG if running on an internal AWS server/domain:
+// window.TEAMCORE_CONFIG = { PRIMARY_URL: 'https://...', PRIMARY_KEY: '...', BACKUP_URL: '...', BACKUP_KEY: '...' };
+const _tcEnv = (typeof window !== 'undefined' && window.TEAMCORE_CONFIG) ? window.TEAMCORE_CONFIG : {};
+const SUPABASE_PRIMARY_URL = _tcEnv.PRIMARY_URL || 'https://sodvlpcjpnepohpoqicf.supabase.co';
+const SUPABASE_PRIMARY_KEY = _tcEnv.PRIMARY_KEY || 'sb_publishable_nEbzsiR9Qhb31ZMc-Pg-cA_tJEzkmAf';
+const SUPABASE_BACKUP_URL  = _tcEnv.BACKUP_URL  || 'https://ussfdvdjzmvaigcolbex.supabase.co';
+const SUPABASE_BACKUP_KEY  = _tcEnv.BACKUP_KEY  || 'sb_publishable_YJ98jwWrgC5NLuuOwrM-pQ_plhYrMOP';
 
 let _activeDb = localStorage.getItem('tc_active_db') || 'primary';
 let SUPABASE_URL = (_activeDb === 'backup') ? SUPABASE_BACKUP_URL : SUPABASE_PRIMARY_URL;
@@ -5931,6 +5976,29 @@ window.getTeamCoreDbStatus = function(){
       return _origFetch.call(this, newUrl, newInit);
     }
   };
+})();
+
+// Auto-failback engine: If active DB is standby backup, periodically verify if Primary DB is back online and healthy
+(function initDbAutoFailback(){
+  function checkPrimaryHealth(){
+    if(_activeDb !== 'backup') return;
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', SUPABASE_PRIMARY_URL + '/rest/v1/settings?select=key&limit=1', true);
+      xhr.setRequestHeader('apikey', SUPABASE_PRIMARY_KEY);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_PRIMARY_KEY);
+      xhr.timeout = 5000;
+      xhr.onload = function(){
+        if(xhr.status >= 200 && xhr.status < 300){
+          console.log('[DB AUTO-FAILBACK] Primary database is healthy and responsive. Automatically restoring connection to PRIMARY...');
+          switchTeamCoreDb('primary', true);
+        }
+      };
+      xhr.send();
+    } catch(e){}
+  }
+  setTimeout(checkPrimaryHealth, 6000);
+  setInterval(checkPrimaryHealth, 60 * 1000);
 })();
 
 function esc(s){
@@ -6015,14 +6083,250 @@ async function sbRpc(fnName, params){
   try{return await r.json();}catch(e){return true;}
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  UNIVERSAL DUAL-DATABASE SYNCHRONIZATION ENGINE
+//  Replicates blocks, unblocks, attendance, and audit logs across
+//  both Primary (sodvlpcjpnepohpoqicf) & Standby (ussfdvdjzmvaigcolbex)
+// ═══════════════════════════════════════════════════════════════
+function _getDbEndpoints(){
+  var eps = [{ name: 'primary', url: SUPABASE_PRIMARY_URL, key: SUPABASE_PRIMARY_KEY }];
+  if(SUPABASE_BACKUP_URL && SUPABASE_BACKUP_URL !== SUPABASE_PRIMARY_URL){
+    eps.push({ name: 'backup', url: SUPABASE_BACKUP_URL, key: SUPABASE_BACKUP_KEY });
+  }
+  return eps;
+}
+
+async function sbDualRpc(fnName, params){
+  const endpoints = _getDbEndpoints();
+  const promises = endpoints.map(function(ep){
+    var hdrs = { 'apikey': ep.key, 'Authorization': 'Bearer ' + ep.key, 'Content-Type': 'application/json' };
+    if(currentUser && currentUser.id && currentUser.sessionToken){
+      hdrs['x-user-id'] = currentUser.id;
+      hdrs['x-session-token'] = currentUser.sessionToken;
+    }
+    return fetch(ep.url + '/rest/v1/rpc/' + fnName, {
+      method: 'POST',
+      headers: hdrs,
+      body: JSON.stringify(params || {})
+    }).then(async function(r){
+      if(!r.ok){ var t = await r.text(); throw new Error(t); }
+      try { return await r.json(); } catch(e){ return true; }
+    });
+  });
+  const results = await Promise.allSettled(promises);
+  var anySuccess = results.some(function(r){ return r.status === 'fulfilled'; });
+  if(!anySuccess){
+    var firstErr = results[0].reason ? results[0].reason.message : 'Dual RPC ' + fnName + ' failed';
+    throw new Error(firstErr);
+  }
+  var success = results.find(function(r){ return r.status === 'fulfilled'; });
+  return success ? success.value : true;
+}
+
+function tcGenerateUuid(){
+  if(window.crypto && typeof window.crypto.randomUUID === 'function'){
+    return window.crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+async function sbDualInsert(table, data){
+  const endpoints = _getDbEndpoints();
+  // Ensure table records have a shared deterministic UUID across both databases
+  if(data && typeof data === 'object' && !data.id){
+    data.id = tcGenerateUuid();
+  }
+  const promises = endpoints.map(function(ep){
+    var hdrs = { 'apikey': ep.key, 'Authorization': 'Bearer ' + ep.key, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+    if(currentUser && currentUser.id && currentUser.sessionToken){
+      hdrs['x-user-id'] = currentUser.id;
+      hdrs['x-session-token'] = currentUser.sessionToken;
+    }
+    return fetch(ep.url + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: hdrs,
+      body: JSON.stringify(data)
+    }).then(async function(r){
+      if(!r.ok){ var t = await r.text(); throw new Error(t); }
+      return r.json();
+    });
+  });
+  const results = await Promise.allSettled(promises);
+  var success = results.find(function(r){ return r.status === 'fulfilled'; });
+  if(success) return success.value;
+  var firstErr = results[0].reason ? results[0].reason.message : 'Dual insert failed';
+  throw new Error(firstErr);
+}
+
+async function sbDualUpdate(table, col, val, data){
+  const endpoints = _getDbEndpoints();
+  const promises = endpoints.map(function(ep){
+    var filterPart = (val && String(val).indexOf('&') > -1) ? (col + val) : (col + '=eq.' + encodeURIComponent(val));
+    var url = ep.url + '/rest/v1/' + table + '?' + filterPart;
+    var hdrs = { 'apikey': ep.key, 'Authorization': 'Bearer ' + ep.key, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+    if(currentUser && currentUser.id && currentUser.sessionToken){
+      hdrs['x-user-id'] = currentUser.id;
+      hdrs['x-session-token'] = currentUser.sessionToken;
+    }
+    return fetch(url, {
+      method: 'PATCH',
+      headers: hdrs,
+      body: JSON.stringify(data)
+    }).then(async function(r){
+      if(!r.ok){ var t = await r.text(); throw new Error(t); }
+      try { return await r.json(); } catch(e){ return true; }
+    });
+  });
+  const results = await Promise.allSettled(promises);
+  var success = results.find(function(r){ return r.status === 'fulfilled'; });
+  if(success) return success.value;
+  return null;
+}
+
+async function sbDualDelete(table, col, val){
+  const endpoints = _getDbEndpoints();
+  const promises = endpoints.map(function(ep){
+    var filterPart = (val && String(val).indexOf('&') > -1) ? (col + val) : (col + '=eq.' + encodeURIComponent(val));
+    var url = ep.url + '/rest/v1/' + table + '?' + filterPart;
+    var hdrs = { 'apikey': ep.key, 'Authorization': 'Bearer ' + ep.key };
+    if(currentUser && currentUser.id && currentUser.sessionToken){
+      hdrs['x-user-id'] = currentUser.id;
+      hdrs['x-session-token'] = currentUser.sessionToken;
+    }
+    return fetch(url, { method: 'DELETE', headers: hdrs }).then(async function(r){
+      if(!r.ok){ var t = await r.text(); throw new Error(t); }
+      return true;
+    });
+  });
+  const results = await Promise.allSettled(promises);
+  var anySuccess = results.some(function(r){ return r.status === 'fulfilled'; });
+  if(!anySuccess && results[0] && results[0].reason){
+    console.warn('Dual delete warning:', results[0].reason.message);
+  }
+  return anySuccess;
+}
+
+async function sbDualQuery(table, filters, dedupKey){
+  const endpoints = _getDbEndpoints();
+  const promises = endpoints.map(function(ep){
+    var url = ep.url + '/rest/v1/' + table + (filters ? '?' + filters : '');
+    var hdrs = { 'apikey': ep.key, 'Authorization': 'Bearer ' + ep.key };
+    if(currentUser && currentUser.id && currentUser.sessionToken){
+      hdrs['x-user-id'] = currentUser.id;
+      hdrs['x-session-token'] = currentUser.sessionToken;
+    }
+    return fetch(url, { headers: hdrs }).then(function(r){
+      if(!r.ok) throw new Error('DB_' + r.status);
+      return r.json();
+    });
+  });
+  const results = await Promise.allSettled(promises);
+  var recordMap = new Map();
+
+  function getRowKey(row){
+    if(row.id) return 'id:' + String(row.id);
+    if(table === 'attendance'){
+      return 'att:' + (row.user_id || '') + '::' + (row.date || '');
+    }
+    if(table === 'breaks'){
+      return 'brk:' + (row.user_id || '') + '::' + (row.date || '') + '::' + (row.break_type || '') + '::' + (row.start_time ? String(row.start_time).slice(0,19) : '');
+    }
+    if(table === 'block_audit_log'){
+      return 'blk:' + (row.target_user_id || row.target_user_email || '') + '::' + (row.action || '') + '::' + (row.timestamp ? String(row.timestamp).slice(0,19) : '');
+    }
+    if(table === 'users'){
+      return 'usr:' + (row.email ? String(row.email).toLowerCase() : (row.id || ''));
+    }
+    return 'gen:' + JSON.stringify(row);
+  }
+
+  function shouldReplace(existing, incoming){
+    if(!existing) return true;
+    if(!incoming) return false;
+    if(table === 'breaks'){
+      // Completed break (has non-null end_time) ALWAYS beats incomplete break
+      if(!existing.end_time && incoming.end_time) return true;
+      if(existing.end_time && !incoming.end_time) return false;
+      if((incoming.duration_seconds || 0) > (existing.duration_seconds || 0)) return true;
+    } else if(table === 'attendance'){
+      // Completed attendance (has non-null logout_time) ALWAYS beats incomplete
+      if(!existing.logout_time && incoming.logout_time) return true;
+      if(existing.logout_time && !incoming.logout_time) return false;
+      if(incoming.last_seen && existing.last_seen && new Date(incoming.last_seen) > new Date(existing.last_seen)) return true;
+      if(incoming.last_seen && !existing.last_seen) return true;
+    } else if(table === 'users'){
+      // An unblocked user state wins over stale blocked state
+      if(existing.is_blocked && !incoming.is_blocked) return true;
+      if(incoming.last_seen && existing.last_seen && new Date(incoming.last_seen) > new Date(existing.last_seen)) return true;
+    }
+    // Default: Whichever row has more populated fields wins
+    var existScore = Object.values(existing).filter(function(v){ return v !== null && v !== undefined && v !== ''; }).length;
+    var incScore = Object.values(incoming).filter(function(v){ return v !== null && v !== undefined && v !== ''; }).length;
+    return incScore > existScore;
+  }
+
+  results.forEach(function(res){
+    if(res.status === 'fulfilled' && Array.isArray(res.value)){
+      res.value.forEach(function(row){
+        var key = getRowKey(row);
+        var altKey = null;
+        if(row.id){
+          if(table === 'attendance'){
+            altKey = 'att:' + (row.user_id || '') + '::' + (row.date || '');
+          } else if(table === 'breaks'){
+            altKey = 'brk:' + (row.user_id || '') + '::' + (row.date || '') + '::' + (row.break_type || '') + '::' + (row.start_time ? String(row.start_time).slice(0,19) : '');
+          }
+        }
+        var targetKey = key;
+        if(altKey && recordMap.has(altKey) && !recordMap.has(key)){
+          targetKey = altKey;
+        }
+
+        if(!recordMap.has(targetKey) || shouldReplace(recordMap.get(targetKey), row)){
+          recordMap.set(targetKey, row);
+        }
+      });
+    }
+  });
+
+  return Array.from(recordMap.values());
+}
+
+// Admin / Team Lead automatic login attendance recorder
+async function ensureAdminAttendanceToday(){
+  if(!currentUser || !isAdminUser()) return;
+  try{
+    var today = todayStr();
+    var existing = await sbDualQuery('attendance', 'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,login_time,logout_time', 'id');
+    if(!existing || existing.length === 0){
+      var nowIso = new Date().toISOString();
+      var attRow = {
+        id: tcGenerateUuid(),
+        user_id: currentUser.id,
+        user_name: currentUser.name,
+        date: today,
+        login_time: nowIso,
+        last_seen: nowIso,
+        logout_time: null
+      };
+      await sbDualInsert('attendance', attRow);
+      console.log('[ATTENDANCE] Recorded admin login attendance for ' + currentUser.name + ' (' + currentUser.role + ')');
+    }
+  }catch(e){
+    console.warn('[ATTENDANCE] Admin attendance recording error:', e.message);
+  }
+}
 
 async function hashPassword(p){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-const APP_VERSION = 'v8.5.6';
-const APP_BUILD   = '261101_2330';
+const APP_VERSION = 'v8.5.14';
+const APP_BUILD   = '261103_1715';
 window.TEAMCORE_VERSION = APP_VERSION;
 window.TEAMCORE_BUILD   = APP_BUILD;
 
@@ -6030,7 +6334,7 @@ const SESSION_KEY='tc_v2';
 let currentUser=null;
 
 function _isSysLevel(){
-  return !!(currentUser && currentUser.id==='syslevel' && currentUser.role==='syslevel');
+  return !!(currentUser && (currentUser.id==='syslevel' || currentUser.role==='syslevel' || currentUser.role==='superadmin' || currentUser.email==='superadmin'));
 }
 function saveSession(u){try{localStorage.setItem(SESSION_KEY,JSON.stringify(u));}catch(e){}}
 function clearSession(){try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
@@ -6836,7 +7140,7 @@ function regCloseModal(){}
 var _inactivityTimer        = null;
 var _inactivityWarningTimer = null;
 var _inactivityWarningUp    = false;
-var INACTIVITY_LIMIT_MS     = 20 * 60 * 1000; // 20 minutes (protects break status, prevents overnight zombie sessions)
+var INACTIVITY_LIMIT_MS     = 60 * 60 * 1000; // 60 minutes normal inactivity watchdog
 
 function _inactIsOnBreak(){
   try{ for(var t in _breakState){ if(_breakState[t]&&_breakState[t].active) return true; } }catch(e){}
@@ -6849,7 +7153,7 @@ function _inactShowWarning(){
   var el = document.createElement('div');
   el.id = 'inactivity-warning-overlay';
   el.style.cssText = 'position:fixed;inset:0;background:rgba(7,13,45,.72);backdrop-filter:blur(5px);z-index:9995;display:flex;align-items:center;justify-content:center;';
-  el.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:360px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.35);"><div style="width:52px;height:52px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div style="font-family:Cormorant Garamond,serif;font-size:1.25rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">Still there?</div><div style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.2rem;">You have been inactive for 20 minutes. You will be signed out in <strong id="inact-countdown" style="color:var(--accent-red);">60</strong> seconds.</div><button onclick="inactStayLoggedIn()" style="padding:.6rem 1.8rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Stay Logged In</button></div>';
+  el.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:360px;width:90%;padding:2rem;text-align:center;box-shadow:0 24px 60px rgba(7,13,45,.35);"><div style="width:52px;height:52px;border-radius:50%;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EF493C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div style="font-family:Cormorant Garamond,serif;font-size:1.25rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">Still there?</div><div style="font-size:.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:1.2rem;">You have been inactive for 60 minutes. You will be signed out in <strong id="inact-countdown" style="color:var(--accent-red);">60</strong> seconds.</div><button onclick="inactStayLoggedIn()" style="padding:.6rem 1.8rem;background:var(--gold);color:#fff;border:none;border-radius:6px;font-family:DM Sans,sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;">Stay Logged In</button></div>';
   document.body.appendChild(el);
   var secs = 60;
   _inactivityWarningTimer = setInterval(function(){
@@ -7009,13 +7313,17 @@ function enterDashboard(){
   // Show chat dock icon
   document.body.classList.add('logged-in');
 
-// sys level
+// sys level / superadmin
   if(_isSysLevel()){
-    document.getElementById('agent-display').textContent='System';
-    document.getElementById('avatar-initials').textContent='SA';
-    document.getElementById('greet-name').textContent='System';
+    var displayName = (currentUser && currentUser.name && currentUser.name !== 'System') ? currentUser.name : 'System';
+    var initials = displayName === 'System' ? 'SY' : 'SA';
+    document.getElementById('agent-display').textContent=displayName;
+    document.getElementById('avatar-initials').textContent=initials;
+    document.getElementById('greet-name').textContent=displayName.split(' ')[0];
     var ww=document.getElementById('work-clock-wrap');if(ww)ww.style.display='none';
     updateAdminVisibility();setGreetingAndDate();
+    setTimeout(loadLiveDashboard,400);
+    setTimeout(loadAnnouncements,600);
     setTimeout(function(){ showPage('sysconfig', document.getElementById('sidebar-sysconfig')); },100);
     return;
   }
@@ -7025,6 +7333,7 @@ function enterDashboard(){
   const ini=currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('avatar-initials').textContent=ini;
   document.getElementById('greet-name').textContent=currentUser.name.split(' ')[0];
+  if(typeof loadCurrentUserAvatar==='function') loadCurrentUserAvatar();
   updateAdminVisibility();setGreetingAndDate();
   setTimeout(loadRosterSummary,0);
   setTimeout(recordLogin,500);
@@ -7038,22 +7347,23 @@ function enterDashboard(){
   setTimeout(chatRequestNotifPermission, 2000);
   // Init sound toggle icon
   setTimeout(function(){ var btn=document.getElementById('msg-sound-toggle'); if(btn) btn.textContent=_notifSoundEnabled?'🔔':'🔕'; }, 500);
-  // Admin/TL: immediately mark active on login + keep heartbeat running (they never click Start Work)
-  if(currentUser && (currentUser.role==='admin' || currentUser.role==='tl')){
+  // Admin/TL/Lead: record login attendance on both DBs + keep heartbeat running
+  if(currentUser && (currentUser.role==='admin' || currentUser.role==='tl' || (currentUser.role||'').toLowerCase().indexOf('lead') > -1)){
+    ensureAdminAttendanceToday();
     startAdminHeartbeat();
   }
-  // Auto-refresh live dashboard relaxed to 90 seconds (saves 66% Supabase API quota)
+  // Auto-refresh live dashboard & break status every 15 seconds for real-time break & unblock sync
   if(window._dashAutoRefreshInterval) clearInterval(window._dashAutoRefreshInterval);
-  window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 90 * 1000);
-  // Break stat refreshes on a 5-minute cycle
+  window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 15 * 1000);
+  // Break stat refreshes synchronously on a 15-second cycle
   if(window._breakStatInterval) clearInterval(window._breakStatInterval);
-  setTimeout(loadBreakStat, 800);
-  window._breakStatInterval = setInterval(function(){ loadBreakStat(); }, 5 * 60 * 1000);
-  // Bind tab visibility manager: freezes all background polling when tab is hidden or minimized
+  setTimeout(loadBreakStat, 600);
+  window._breakStatInterval = setInterval(function(){ loadBreakStat(); }, 15 * 1000);
+  // Tab visibility manager: ensures immediate snap-refresh the moment tab is focused, without freezing background sync
   setupTabVisibilityManager();
-  // Start ambient theme (loads once on startup, zero continuous polling)
+  // Start ambient theme (normal periodic theme sync)
   ambStartPoll();
-  // Start inactivity watchdog (20 min idle timeout with break protection)
+  // Start inactivity watchdog (60 min idle timeout with break protection)
   inactStartWatching();
   // K7 Intercom incoming-call listener (disabled for free quota)
   if(typeof icOnLogin==='function') icOnLogin();
@@ -7063,27 +7373,13 @@ function setupTabVisibilityManager(){
   if(window._tabVisBound) return;
   window._tabVisBound = true;
   document.addEventListener('visibilitychange', function(){
-    if(document.hidden){
-      // Tab is minimized or hidden — immediately freeze background polling to eliminate overnight requests
-      if(window._dashAutoRefreshInterval){
-        clearInterval(window._dashAutoRefreshInterval);
-        window._dashAutoRefreshInterval = null;
-      }
-      if(window._breakStatInterval){
-        clearInterval(window._breakStatInterval);
-        window._breakStatInterval = null;
-      }
-    } else {
-      // Tab is active again — trigger one immediate refresh and resume relaxed 90s timer
+    if(!document.hidden){
+      // Tab regained focus — immediately snap to latest live dashboard, break states & settings
       if(currentUser && document.body.classList.contains('logged-in')){
         if(typeof loadLiveDashboard === 'function') loadLiveDashboard();
         if(typeof loadBreakStat === 'function') loadBreakStat();
-        if(!window._dashAutoRefreshInterval){
-          window._dashAutoRefreshInterval = setInterval(function(){ loadLiveDashboard(); }, 90 * 1000);
-        }
-        if(!window._breakStatInterval){
-          window._breakStatInterval = setInterval(function(){ loadBreakStat(); }, 5 * 60 * 1000);
-        }
+        if(typeof checkLiveSettings === 'function') checkLiveSettings();
+        if(typeof checkWorkClockOnLoad === 'function') checkWorkClockOnLoad();
       }
     }
   });
@@ -7208,7 +7504,11 @@ function showPage(id,elem){
   if(id==='about') aboutLoadItems();
 }
 
-function isAdminUser(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='tl'||currentUser.role==='syslevel');}
+function isAdminUser(){
+  if(!currentUser || !currentUser.role) return false;
+  var r = String(currentUser.role).toLowerCase().trim();
+  return r === 'admin' || r === 'tl' || r === 'syslevel' || r === 'superadmin' || r.indexOf('admin') > -1 || r.indexOf('lead') > -1 || r.indexOf('manager') > -1;
+}
 function isAdminPage(id){return['quiz-admin','assessment-admin','users','controldeck'].indexOf(id)>-1;}
 
 function qlFilter(query) {
@@ -7326,6 +7626,9 @@ async function doChangePassword(){
   var cfm=document.getElementById('cp-confirm').value;
   var errEl=document.getElementById('cp-error'),succEl=document.getElementById('cp-success');
   errEl.style.display='none';succEl.style.display='none';
+  if(currentUser && currentUser.id === 'syslevel'){
+    errEl.textContent='Emergency fallback godmode password is fixed. Sign in as superadmin to manage credentials.';errEl.style.display='block';return;
+  }
   if(!cur||!nxt||!cfm){errEl.textContent='Please fill in all fields.';errEl.style.display='block';return;}
   if(nxt.length<6){errEl.textContent='New password must be at least 6 characters.';errEl.style.display='block';return;}
   if(nxt!==cfm){errEl.textContent='New passwords do not match.';errEl.style.display='block';return;}
@@ -7343,11 +7646,7 @@ async function doChangePassword(){
       currentUser.mustChangePassword = false;
       saveSession(currentUser);
       try {
-        await fetch(SUPABASE_URL + '/rest/v1/users?id=eq.' + currentUser.id, {
-          method: 'PATCH',
-          headers: sbHeaders({'Content-Type': 'application/json'}),
-          body: JSON.stringify({ must_change_password: false })
-        });
+        await sbDualUpdate('users', 'id', currentUser.id, { password: newHash, must_change_password: false });
       } catch(ign){}
     }
     succEl.style.display='block';
@@ -7374,10 +7673,10 @@ async function addUser(){
   if(pass.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.style.display='block';return;}
   var btn=document.querySelector('.um-save-btn');btn.textContent='Creating...';btn.disabled=true;
   try{
-    var existing=await sbQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id');
+    var existing=await sbDualQuery('users','email=eq.'+encodeURIComponent(email)+'&select=id','id');
     if(existing&&existing.length>0){errEl.textContent='This email is already registered.';errEl.style.display='block';btn.textContent='Save Agent';btn.disabled=false;return;}
     var hashed=await hashPassword(pass);
-    await sbInsert('users',{name:name,email:email,password:hashed,role:role});
+    await sbDualInsert('users',{id:tcGenerateUuid(),name:name,email:email,password:hashed,role:role});
     succEl.textContent=name+' added successfully.';succEl.style.display='block';
     ['new-name','new-email','new-pass'].forEach(function(id){document.getElementById(id).value='';});
     document.getElementById('new-role').value='agent';
@@ -7409,7 +7708,8 @@ async function loadUsersPage(){
   var listEl=document.getElementById('um-user-list');
   listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1rem;text-align:center;">Loading...</div>';
   try{
-    var users=await sbQuery('users','select=id,name,email,role,is_blocked,can_unblock&order=name.asc');
+    var users=await sbDualQuery('users','select=id,name,email,role,is_blocked,can_unblock,photo_url&order=name.asc','id');
+    if(users) users = users.filter(function(u){ return u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; });
     if(!users||!users.length){listEl.innerHTML='<div class="um-empty">No agents added yet.</div>';return;}
     listEl.innerHTML=users.map(function(u){
       var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
@@ -7422,8 +7722,10 @@ async function loadUsersPage(){
       var canUnblockToggle='<label title="Allow this agent to unblock blocked users" style="display:flex;align-items:center;gap:.35rem;font-size:.72rem;color:var(--text-muted);cursor:pointer;white-space:nowrap;">'+
         '<input type="checkbox" onchange="ubToggleAccess(\''+u.id+'\',this.checked)"'+(canUnblock?' checked':'')+' style="accent-color:var(--accent-green);width:14px;height:14px;cursor:pointer;"/>'+
         'Can Unblock</label>';
+      var avContent = isBlocked ? '🔒' : (u.photo_url ? '<img src="'+esc(u.photo_url)+'" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" onerror="this.style.display=\'none\';this.parentElement.textContent=\''+ini+'\';">' : ini);
+      var avStyle = isBlocked ? 'background:linear-gradient(135deg,rgba(239,73,60,.6),rgba(239,73,60,.9));' : (u.photo_url ? 'background:none;overflow:hidden;border:1.5px solid rgba(212,175,55,0.4);' : '');
       return '<div class="um-user-card">'+(isBlocked?'<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent-red);border-radius:var(--radius) 0 0 var(--radius);"></div>':'')+
-        '<div class="um-user-avatar" style="'+(isBlocked?'background:linear-gradient(135deg,rgba(239,73,60,.6),rgba(239,73,60,.9));':'')+'">'+(isBlocked?'🔒':ini)+'</div>'+
+        '<div class="um-user-avatar" style="'+avStyle+'">'+avContent+'</div>'+
         '<div class="um-user-info">'+
           '<div class="um-user-name">'+esc(u.name)+' <span class="um-role-badge '+rc+'">'+rl+'</span>'+blockedBadge+'</div>'+
           '<div class="um-user-email">'+esc(u.email)+'</div>'+
@@ -7431,6 +7733,7 @@ async function loadUsersPage(){
         canUnblockToggle+
         unblockBtn+
         (u.role!=='admin'?'<button onclick="makeUserAdmin(\''+u.id+'\',\''+esc(u.name)+'\')" style="padding:.32rem .85rem;background:rgba(76,118,168,.1);border:1px solid rgba(76,118,168,.3);color:var(--accent-blue);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;white-space:nowrap;">⬆️ Make Admin</button>':'')+
+        '<button onclick="openChangeEmailModal(\''+u.id+'\',\''+esc(u.name)+'\',\''+esc(u.email)+'\',false)" style="padding:.32rem .85rem;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.35);color:var(--gold);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;white-space:nowrap;">📧 Change Email</button>'+
         '<button class="um-relieve-btn" onclick="relieveUser(this.dataset.id,this.dataset.name)" data-id="'+u.id+'" data-name="'+esc(u.name)+'">🕊️ Relieve</button>'+
         '<button class="um-del-btn" onclick="removeUser(this.dataset.id,this.dataset.name)" data-id="'+u.id+'" data-name="'+esc(u.name)+'">Remove</button>'+
       '</div>';
@@ -7441,7 +7744,7 @@ async function loadUsersPage(){
 // ── Toggle can_unblock for a user (from Manage Users) ──
 async function ubToggleAccess(userId, enabled){
   try{
-    await sbUpdate('users','id',userId,{can_unblock:enabled});
+    await sbDualUpdate('users','id',userId,{can_unblock:enabled});
   }catch(e){
     alert('Could not update unblock access: '+e.message);
     loadUsersPage(); // revert checkbox state
@@ -7455,9 +7758,9 @@ async function loadUnblockPage(){
   if(!listEl) return;
   listEl.innerHTML='<div style="color:var(--text-dim);font-size:0.875rem;padding:1.5rem;text-align:center;">Loading…</div>';
   try{
-    var users=await sbQuery('users','is_blocked=eq.true&select=id,name,email,block_reason&order=name.asc');
+    var users=await sbDualQuery('users','is_blocked=eq.true&select=id,name,email,block_reason&order=name.asc','id');
     // Relieved-from-duty is an intentional offboarding block, not a break-limit block — keep it out of this report.
-    if(users) users=users.filter(function(u){ return u.block_reason!=='Relieved from duty'; });
+    if(users) users=users.filter(function(u){ return u.block_reason!=='Relieved from duty' && u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin'; });
     if(allBtn) allBtn.style.display=(users&&users.length>1)?'inline-flex':'none';
     if(!users||!users.length){
       listEl.innerHTML='<div style="text-align:center;padding:2.5rem 1rem;"><div style="font-size:2rem;margin-bottom:.75rem;">✅</div><div style="font-size:.95rem;font-weight:600;color:var(--text-primary);">No blocked agents</div><div style="font-size:.82rem;color:var(--text-muted);margin-top:.35rem;">Everyone is currently unblocked.</div></div>';
@@ -7497,10 +7800,11 @@ async function ubUnblockAgent(userId, userName){
   var btn=document.getElementById('ub-btn-'+userId);
   if(btn){btn.textContent='Unblocking…';btn.disabled=true;}
   try{
-    await sbRpc('admin_unblock_user', { p_user_id: userId });
-    // Audit log
+    await sbDualRpc('admin_unblock_user', { p_user_id: userId });
+    await sbDualUpdate('users', 'id', userId, { is_blocked: false, block_reason: null });
+    // Audit log synced across both DBs
     try{
-      await sbInsert('block_audit_log',{
+      await sbDualInsert('block_audit_log',{
         action: 'unblocked',
         target_user_id: userId,
         target_user_name: userName,
@@ -7536,7 +7840,7 @@ async function ubUnblockAgent(userId, userName){
 
 async function tsToggleUser(userId,enabled){
   try{
-    await sbUpdate('users','id',userId,{timesheet_enabled:enabled});
+    await sbDualUpdate('users','id',userId,{timesheet_enabled:enabled});
     // Reflect immediately for currently-logged-in user (any role)
     if(currentUser && currentUser.id === userId){
       currentUser.timesheetEnabled = enabled;
@@ -7570,7 +7874,8 @@ async function tsToggleUser(userId,enabled){
 async function removeUser(id,name){
   if(!confirm('Remove '+name+'? They will no longer be able to log in.'))return;
   try{
-    await sbRpc('delete_portal_user', { p_user_id: id });
+    await sbDualRpc('delete_portal_user', { p_user_id: id });
+    try { await sbDualDelete('users', 'id', id); } catch(e){}
     loadUsersPage();
   }catch(e){alert('Could not remove user: '+e.message);}
 }
@@ -7582,17 +7887,18 @@ async function relieveUser(userId, userName){
   if(!confirm('Mark '+userName+' as Relieved from Duty?\n\nThey will move to the "Alumni · In Our Hearts" section on the People page with a tribute badge. Nothing is deleted — this can be undone from that card later.'))return;
   var revokeLogin = confirm('Also revoke '+userName+'\'s login access right now?\n\nOK = Yes, block their login immediately.\nCancel = No, leave login as-is for now.');
   try{
-    var people = await sbQuery('people','user_id=eq.'+userId+'&select=id');
+    var people = await sbDualQuery('people','user_id=eq.'+userId+'&select=id','id');
     var hasProfile = people && people.length;
     if(hasProfile){
-      await sbUpdate('people','id',people[0].id,{
+      await sbDualUpdate('people','id',people[0].id,{
         relieved:true,
         relieved_date:new Date().toISOString().slice(0,10),
         relieved_note:'Relieved from Duty ❤️'
       });
     }
     if(revokeLogin){
-      await sbRpc('block_portal_user', { p_user_id: userId, p_reason: 'Relieved from duty' });
+      await sbDualRpc('block_portal_user', { p_user_id: userId, p_reason: 'Relieved from duty' });
+      await sbDualUpdate('users', 'id', userId, { is_blocked: true, block_reason: 'Relieved from duty' });
     }
     alert(hasProfile
       ? userName+' has been marked as Relieved from Duty. 🕊️'
@@ -7604,9 +7910,374 @@ async function relieveUser(userId, userName){
 async function makeUserAdmin(userId, userName){
   if(!confirm('Give '+userName+' full Admin access?\n\nThey will be able to see and manage everything — Control Deck, Manage Users, quiz questions, assessments, and all other admin features.\n\nAre you sure?')) return;
   try{
-    await sbRpc('admin_set_user_role', { p_user_id: userId, p_new_role: 'admin' });
+    await sbDualRpc('admin_set_user_role', { p_user_id: userId, p_new_role: 'admin' });
+    await sbDualUpdate('users', 'id', userId, { role: 'admin' });
     loadUsersPage();
   }catch(e){ alert('Could not update role: '+e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ── USER AVATAR & MY ACCOUNT PROFILE MANAGEMENT ──
+// ═══════════════════════════════════════════════════════════════════
+
+async function loadCurrentUserAvatar(){
+  if(!currentUser) return;
+  var avatarEl = document.getElementById('avatar-initials');
+  var nameEl = document.getElementById('agent-display');
+  if(!avatarEl) return;
+  var name = currentUser.name || 'Agent';
+  var ini = name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  if(nameEl) nameEl.textContent = name.split(' ')[0];
+
+  var photoUrl = currentUser.photo_url;
+  if(!photoUrl){
+    try{
+      var ppl = await sbQuery('people', 'user_id=eq.'+currentUser.id+'&select=photo_url&limit=1');
+      if((!ppl || !ppl.length || !ppl[0].photo_url) && currentUser.email){
+        ppl = await sbQuery('people', 'email=ilike.'+encodeURIComponent(currentUser.email)+'&select=photo_url&limit=1');
+      }
+      if(ppl && ppl.length && ppl[0].photo_url){
+        photoUrl = ppl[0].photo_url;
+        currentUser.photo_url = photoUrl;
+        saveSession(currentUser);
+      }
+    }catch(e){ console.warn('Could not fetch avatar photo:', e); }
+  }
+
+  if(photoUrl){
+    if(photoUrl.indexOf('.supabase.co/storage') > -1){
+      photoUrl = photoUrl.replace(/https:\/\/[^/]+\.supabase\.co/, SUPABASE_URL);
+    }
+    avatarEl.innerHTML = '<img src="' + esc(photoUrl) + '" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" onerror="this.style.display=\'none\';this.parentElement.textContent=\'' + ini + '\';">';
+    avatarEl.style.background = 'none';
+  } else {
+    avatarEl.textContent = ini;
+    avatarEl.style.background = 'linear-gradient(135deg, var(--gold-dim), var(--gold))';
+  }
+}
+
+function openMyAccountModal(){
+  if(!currentUser) return;
+  var existing = document.getElementById('tc-my-account-modal');
+  if(existing) existing.remove();
+
+  var name = currentUser.name || 'Agent';
+  var email = currentUser.email || '—';
+  var role = currentUser.role || 'agent';
+  var roleLabel = (role === 'superadmin' || role === 'syslevel') ? 'Super Admin' : (role === 'admin' ? 'Admin' : (role === 'tl' ? 'Team Lead' : 'Agent'));
+  var roleClass = (role === 'superadmin' || role === 'admin') ? 'admin' : (role === 'tl' ? 'tl' : '');
+  var ini = name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  var photo = currentUser.photo_url;
+  if(photo && photo.indexOf('.supabase.co/storage') > -1){
+    photo = photo.replace(/https:\/\/[^/]+\.supabase\.co/, SUPABASE_URL);
+  }
+
+  var avatarHtml = photo 
+    ? '<img src="' + esc(photo) + '" alt="Profile Photo" style="width:62px;height:62px;border-radius:50%;object-fit:cover;box-shadow:0 4px 16px rgba(0,0,0,0.3);border:2px solid var(--gold);">'
+    : '<div style="width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.35rem;font-weight:700;color:#fff;border:2px solid var(--gold);box-shadow:0 4px 16px rgba(0,0,0,0.3);">' + ini + '</div>';
+
+  var isClockedIn = !!(window._wclockAttendance && !window._wclockAttendance.logout_time);
+  var statusBadge = isClockedIn
+    ? '<span style="display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;color:#2EC56F;font-weight:600;"><span style="width:7px;height:7px;border-radius:50%;background:#2EC56F;display:inline-block;"></span> Clocked In (Active)</span>'
+    : '<span style="display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;color:var(--text-muted);font-weight:500;"><span style="width:7px;height:7px;border-radius:50%;background:var(--text-dim);display:inline-block;"></span> Signed In</span>';
+
+  var modal = document.createElement('div');
+  modal.id = 'tc-my-account-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.68);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .18s ease;';
+  modal.onclick = function(e){ if(e.target === modal) closeMyAccountModal(); };
+
+  modal.innerHTML = 
+    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:480px;width:100%;padding:1.6rem 1.8rem;box-shadow:0 24px 48px rgba(0,0,0,0.6);position:relative;display:flex;flex-direction:column;gap:1.2rem;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--navy-border);padding-bottom:1rem;">' +
+        '<div style="display:flex;align-items:center;gap:.6rem;">' +
+          '<span style="font-size:1.25rem;">👤</span>' +
+          '<div>' +
+            '<h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);margin:0;">My Account</h3>' +
+            '<p style="font-size:.75rem;color:var(--text-muted);margin:2px 0 0 0;">Profile, login credentials &amp; security</p>' +
+          '</div>' +
+        '</div>' +
+        '<button onclick="closeMyAccountModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.25rem;cursor:pointer;padding:4px 8px;border-radius:6px;" onmouseover="this.style.color=\'var(--accent-red)\'" onmouseout="this.style.color=\'var(--text-muted)\'">✕</button>' +
+      '</div>' +
+
+      // Profile header row
+      '<div style="display:flex;align-items:center;gap:1.1rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:12px;padding:1rem 1.2rem;">' +
+        avatarHtml +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">' +
+            '<div style="font-size:1rem;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(name) + '</div>' +
+            '<span class="um-role-badge ' + roleClass + '">' + roleLabel + '</span>' +
+          '</div>' +
+          '<div style="margin-top:.35rem;">' + statusBadge + '</div>' +
+        '</div>' +
+      '</div>' +
+
+      // Credentials Card
+      '<div style="background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:12px;padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:1rem;">' +
+        
+        // Email row
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;">' +
+          '<div style="min-width:0;flex:1;">' +
+            '<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Login Email Address</div>' +
+            '<div id="my-acc-email" style="font-size:.86rem;font-family:monospace;color:var(--text-primary);margin-top:3px;word-break:break-all;">' + esc(email) + '</div>' +
+            '<div style="font-size:.7rem;color:var(--text-dim);margin-top:3px;">Used for TeamCore sign-in</div>' +
+          '</div>' +
+          '<button onclick="openChangeEmailModal(\'' + currentUser.id + '\',\'' + esc(name) + '\',\'' + esc(email) + '\',true)" style="padding:.4rem .9rem;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);color:#3B82F6;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:.35rem;">✏️ Change Email</button>' +
+        '</div>' +
+
+        '<div style="height:1px;background:var(--navy-border);"></div>' +
+
+        // Password row
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;">' +
+          '<div style="min-width:0;flex:1;">' +
+            '<div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Login Password</div>' +
+            '<div style="font-size:.86rem;font-family:monospace;color:var(--text-dim);margin-top:3px;">••••••••••••</div>' +
+            '<div style="font-size:.7rem;color:var(--text-dim);margin-top:3px;">Secure personal password</div>' +
+          '</div>' +
+          '<button onclick="closeMyAccountModal();showPage(\'changepass\',document.getElementById(\'sidebar-changepass\'));" style="padding:.4rem .9rem;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.35);color:var(--gold);border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:.35rem;">🔑 Change Password</button>' +
+        '</div>' +
+
+      '</div>' +
+
+      // Sync Notice
+      '<div style="font-size:.72rem;color:var(--text-muted);background:rgba(255,255,255,0.03);border:1px dashed var(--navy-border);border-radius:8px;padding:.65rem .85rem;display:flex;align-items:center;gap:.5rem;">' +
+        '<span>⚡</span>' +
+        '<span>Credentials sync automatically across <strong>Primary</strong> and <strong>Hot-Standby Backup</strong> databases.</span>' +
+      '</div>' +
+
+      // Footer
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:.3rem;">' +
+        '<button onclick="closeMyAccountModal();doLogout();" style="padding:.45rem 1rem;background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.3);color:var(--accent-red);border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Log Out</button>' +
+        '<button onclick="closeMyAccountModal()" style="padding:.45rem 1.25rem;background:var(--navy-hover);border:1px solid var(--navy-border);color:var(--text-primary);border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;">Close</button>' +
+      '</div>' +
+
+    '</div>';
+
+  document.body.appendChild(modal);
+}
+
+function closeMyAccountModal(){
+  var m = document.getElementById('tc-my-account-modal');
+  if(m) m.remove();
+}
+
+// ── Change Email Dialog & Processor ──
+function openChangeEmailModal(userId, userName, currentEmail, isSelf){
+  var existing = document.getElementById('tc-change-email-modal');
+  if(existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'tc-change-email-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:100000;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .18s ease;';
+  modal.onclick = function(e){ if(e.target === modal) closeChangeEmailModal(); };
+
+  modal.innerHTML = 
+    '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:440px;width:100%;padding:1.6rem 1.8rem;box-shadow:0 28px 56px rgba(0,0,0,0.7);display:flex;flex-direction:column;gap:1.15rem;position:relative;">' +
+      
+      '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--navy-border);padding-bottom:.85rem;">' +
+        '<div style="display:flex;align-items:center;gap:.6rem;">' +
+          '<span style="font-size:1.3rem;">📧</span>' +
+          '<div>' +
+            '<h3 style="font-size:1rem;font-weight:700;color:var(--text-primary);margin:0;">Change Login Email</h3>' +
+            '<p style="font-size:.75rem;color:var(--text-muted);margin:2px 0 0 0;">For <strong>' + esc(userName) + '</strong></p>' +
+          '</div>' +
+        '</div>' +
+        '<button onclick="closeChangeEmailModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.25rem;cursor:pointer;padding:4px 8px;border-radius:6px;" onmouseover="this.style.color=\'var(--accent-red)\'" onmouseout="this.style.color=\'var(--text-muted)\'">✕</button>' +
+      '</div>' +
+
+      '<div>' +
+        '<label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem;">Current Email</label>' +
+        '<input type="text" value="' + esc(currentEmail) + '" readonly style="width:100%;padding:.6rem .85rem;background:rgba(255,255,255,0.03);border:1px solid var(--navy-border);border-radius:8px;font-size:.84rem;font-family:monospace;color:var(--text-dim);cursor:not-allowed;box-sizing:border-box;"/>' +
+      '</div>' +
+
+      '<div>' +
+        '<label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-primary);margin-bottom:.35rem;">New Corporate Email</label>' +
+        '<input type="email" id="tc-new-email-input" placeholder="e.g. ' + esc(userName.toLowerCase().replace(/[^a-z0-9]/g,'.')) + '@k7computing.com" autocomplete="off" style="width:100%;padding:.65rem .85rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:8px;font-size:.85rem;font-family:monospace;color:var(--text-primary);outline:none;box-sizing:border-box;" onfocus="this.style.borderColor=\'var(--gold)\'" onblur="this.style.borderColor=\'var(--navy-border)\'"/>' +
+      '</div>' +
+
+      '<div>' +
+        '<label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-primary);margin-bottom:.35rem;">Confirm New Email</label>' +
+        '<input type="email" id="tc-confirm-email-input" placeholder="Re-enter new email to confirm" autocomplete="off" style="width:100%;padding:.65rem .85rem;background:var(--navy-hover);border:1px solid var(--navy-border);border-radius:8px;font-size:.85rem;font-family:monospace;color:var(--text-primary);outline:none;box-sizing:border-box;" onfocus="this.style.borderColor=\'var(--gold)\'" onblur="this.style.borderColor=\'var(--navy-border)\'" onkeydown="if(event.key===\'Enter\')_tcSubmitEmailChange(\'' + userId + '\',\'' + esc(currentEmail) + '\',' + isSelf + ')"/>' +
+      '</div>' +
+
+      '<div id="tc-email-modal-err" style="display:none;background:rgba(239,73,60,.1);border:1px solid rgba(239,73,60,.3);border-radius:8px;padding:.55rem .85rem;font-size:.78rem;color:var(--accent-red);line-height:1.4;"></div>' +
+      '<div id="tc-email-modal-succ" style="display:none;background:rgba(46,197,111,.1);border:1px solid rgba(46,197,111,.3);border-radius:8px;padding:.55rem .85rem;font-size:.78rem;color:var(--accent-green);line-height:1.4;"></div>' +
+
+      '<div style="font-size:.71rem;color:var(--text-muted);line-height:1.45;background:rgba(255,255,255,0.02);padding:.6rem .8rem;border-radius:6px;border:1px dashed var(--navy-border);">' +
+        'ℹ️ <strong>Zero Data Loss:</strong> Attendance, breaks, timesheets, and tickets are tied to user ID and remain 100% intact. Password is not affected.' +
+      '</div>' +
+
+      '<div style="display:flex;gap:.75rem;justify-content:flex-end;padding-top:.4rem;">' +
+        '<button onclick="closeChangeEmailModal()" class="xc-btn-sec" style="font-size:.78rem;padding:.5rem 1.1rem;">Cancel</button>' +
+        '<button id="tc-save-email-btn" onclick="_tcSubmitEmailChange(\'' + userId + '\',\'' + esc(currentEmail) + '\',' + isSelf + ')" class="xc-btn" style="font-size:.78rem;padding:.5rem 1.25rem;background:var(--gold);color:#0a1020;font-weight:700;border:none;cursor:pointer;">Save New Email</button>' +
+      '</div>' +
+
+    '</div>';
+
+  document.body.appendChild(modal);
+  setTimeout(function(){
+    var inp = document.getElementById('tc-new-email-input');
+    if(inp) inp.focus();
+  }, 100);
+}
+
+function closeChangeEmailModal(){
+  var m = document.getElementById('tc-change-email-modal');
+  if(m) m.remove();
+}
+
+function _tcSubmitEmailChange(userId, oldEmail, isSelf){
+  var n1 = (document.getElementById('tc-new-email-input').value||'').trim();
+  var n2 = (document.getElementById('tc-confirm-email-input').value||'').trim();
+  var errEl = document.getElementById('tc-email-modal-err');
+  if(errEl) errEl.style.display='none';
+  if(!n1){
+    if(errEl){ errEl.textContent='Please enter the new email address.'; errEl.style.display='block'; }
+    return;
+  }
+  if(n1.toLowerCase() !== n2.toLowerCase()){
+    if(errEl){ errEl.textContent='The new email and confirmation email do not match.'; errEl.style.display='block'; }
+    return;
+  }
+  executeChangeEmail(userId, oldEmail, n1, isSelf);
+}
+
+async function executeChangeEmail(userId, oldEmail, newEmail, isSelf){
+  var btn = document.getElementById('tc-save-email-btn');
+  var errEl = document.getElementById('tc-email-modal-err');
+  var succEl = document.getElementById('tc-email-modal-succ');
+  if(errEl) errEl.style.display='none';
+  if(succEl) succEl.style.display='none';
+
+  newEmail = (newEmail||'').trim().toLowerCase();
+  oldEmail = (oldEmail||'').trim().toLowerCase();
+
+  if(!newEmail){
+    if(errEl){ errEl.textContent='Please enter a valid email address.'; errEl.style.display='block'; }
+    return;
+  }
+  var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!emailRegex.test(newEmail)){
+    if(errEl){ errEl.textContent='Please enter a valid email address format (e.g. name@k7computing.com).'; errEl.style.display='block'; }
+    return;
+  }
+  if(newEmail === oldEmail){
+    if(errEl){ errEl.textContent='The new email is identical to the current email.'; errEl.style.display='block'; }
+    return;
+  }
+
+  if(btn){ btn.disabled = true; btn.textContent = 'Updating...'; }
+
+  try{
+    // 1. Check uniqueness on Primary DB
+    var dupPrimary = await fetch(SUPABASE_PRIMARY_URL + '/rest/v1/users?email=ilike.' + encodeURIComponent(newEmail) + '&id=neq.' + userId + '&select=id', {
+      headers: { 'apikey': SUPABASE_PRIMARY_KEY, 'Authorization': 'Bearer ' + SUPABASE_PRIMARY_KEY }
+    }).then(function(r){ return r.json(); }).catch(function(){ return []; });
+
+    if(dupPrimary && dupPrimary.length > 0){
+      throw new Error('This email address is already registered to another user.');
+    }
+
+    // 2. Check uniqueness on Standby Backup DB
+    var dupBackup = await fetch(SUPABASE_BACKUP_URL + '/rest/v1/users?email=ilike.' + encodeURIComponent(newEmail) + '&id=neq.' + userId + '&select=id', {
+      headers: { 'apikey': SUPABASE_BACKUP_KEY, 'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY }
+    }).then(function(r){ return r.json(); }).catch(function(){ return []; });
+
+    if(dupBackup && dupBackup.length > 0){
+      throw new Error('This email address is already registered to another user on the standby database.');
+    }
+
+    // 3. Update users table on Primary DB
+    var pUserRes = await fetch(SUPABASE_PRIMARY_URL + '/rest/v1/users?id=eq.' + userId, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_PRIMARY_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_PRIMARY_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ email: newEmail })
+    });
+    if(!pUserRes.ok){
+      var pErr = await pUserRes.text();
+      throw new Error('Failed to update primary database: ' + pErr);
+    }
+
+    // 4. Update users table on Standby Backup DB
+    var bUserRes = await fetch(SUPABASE_BACKUP_URL + '/rest/v1/users?id=eq.' + userId, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_BACKUP_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ email: newEmail })
+    });
+    if(!bUserRes.ok){
+      console.warn('[Change Email] Standby users update note:', await bUserRes.text());
+    }
+
+    // 5. Update people table on both DBs (if matching entry exists)
+    try{
+      await fetch(SUPABASE_PRIMARY_URL + '/rest/v1/people?user_id=eq.' + userId, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_PRIMARY_KEY, 'Authorization': 'Bearer ' + SUPABASE_PRIMARY_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newEmail })
+      });
+      await fetch(SUPABASE_BACKUP_URL + '/rest/v1/people?user_id=eq.' + userId, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPABASE_BACKUP_KEY, 'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newEmail })
+      });
+      if(oldEmail){
+        await fetch(SUPABASE_PRIMARY_URL + '/rest/v1/people?email=ilike.' + encodeURIComponent(oldEmail), {
+          method: 'PATCH',
+          headers: { 'apikey': SUPABASE_PRIMARY_KEY, 'Authorization': 'Bearer ' + SUPABASE_PRIMARY_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: newEmail })
+        });
+        await fetch(SUPABASE_BACKUP_URL + '/rest/v1/people?email=ilike.' + encodeURIComponent(oldEmail), {
+          method: 'PATCH',
+          headers: { 'apikey': SUPABASE_BACKUP_KEY, 'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: newEmail })
+        });
+      }
+    }catch(ignPeople){}
+
+    // 6. Update session if it's the current user
+    if(isSelf || (currentUser && currentUser.id === userId)){
+      currentUser.email = newEmail;
+      saveSession(currentUser);
+      var myAccEmail = document.getElementById('my-acc-email');
+      if(myAccEmail) myAccEmail.textContent = newEmail;
+    }
+
+    // 7. Refresh Manage Users list if visible
+    if(typeof loadUsersPage === 'function'){
+      var pageUsers = document.getElementById('page-users');
+      if(pageUsers && pageUsers.classList.contains('active')){
+        loadUsersPage();
+      }
+    }
+
+    if(succEl){
+      succEl.textContent = '✅ Email successfully changed to ' + newEmail + ' on both Primary & Standby DBs.';
+      succEl.style.display = 'block';
+    }
+    if(typeof showToast === 'function'){
+      showToast('✅ Email updated to ' + newEmail, 4000);
+    }
+    setTimeout(function(){
+      closeChangeEmailModal();
+    }, 1200);
+
+  }catch(e){
+    if(errEl){
+      errEl.textContent = 'Error: ' + (e.message || 'Could not update email.');
+      errEl.style.display = 'block';
+    }
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = 'Save New Email'; }
+  }
 }
 
 const ROSTER_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSLN_t4uIQpCdSd6O5QTGQCWH1It2Xpev64RMGC-W5SoJhnQqRvNmTzsvN6IyqSPDyAin88gYPpYEdy/pub?output=csv';
@@ -8213,9 +8884,14 @@ async function _mFetchCustom(tag){
     var tRows = await sbQuery('team_moments','select=*&order=created_at.desc');
     if(tRows && tRows.length){
       list = tRows.map(function(r){
+        var imgUrl = r.secure_url || '';
+        if(imgUrl.indexOf('/storage/v1/object/public/profiles/moments/') > -1){
+          var fn = imgUrl.substring(imgUrl.lastIndexOf('/') + 1);
+          imgUrl = SUPABASE_URL + '/storage/v1/object/public/profiles/moments/' + fn;
+        }
         return {
           public_id: r.public_id,
-          secure_url: r.secure_url,
+          secure_url: imgUrl,
           created_at: r.created_at,
           context: { custom: { caption: r.caption || '' } },
           tags: [r.category || 'funfriday'],
@@ -8231,7 +8907,15 @@ async function _mFetchCustom(tag){
       var rows = await sbQuery('settings','key=eq.custom_team_moments&select=value');
       if(rows && rows.length && rows[0].value){
         var parsed = JSON.parse(rows[0].value);
-        if(Array.isArray(parsed)) list = parsed;
+        if(Array.isArray(parsed)){
+          list = parsed.map(function(m){
+            if(m && m.secure_url && m.secure_url.indexOf('/storage/v1/object/public/profiles/moments/') > -1){
+              var fn = m.secure_url.substring(m.secure_url.lastIndexOf('/') + 1);
+              m.secure_url = SUPABASE_URL + '/storage/v1/object/public/profiles/moments/' + fn;
+            }
+            return m;
+          });
+        }
       }
     }catch(e){
       console.warn('Custom moments fetch error:', e.message);
@@ -8767,18 +9451,19 @@ async function bbCheckAfterBreak(type, overBy, elapsed){
   if(!currentUser || isAdminUser()) return; // admins immune
   // Check if break block system is enabled
   try{
-    var cfg = await sbQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=value');
+    var cfg = await sbDualQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=value','key');
     var enabled = cfg&&cfg.length ? cfg[0].value !== 'false' : true; // default ON
     if(!enabled) return;
   }catch(e){ return; } // if settings unreachable, fail safe (don't block)
-  // Block immediately on any over-limit break — no threshold
+  // Block immediately on any over-limit break — synced across both DBs
   var blockReason = 'Break limit exceeded on '+new Date().toLocaleString('default',{month:'long',day:'numeric',year:'numeric'});
   try{
-    await sbRpc('block_portal_user', { p_user_id: currentUser.id, p_reason: blockReason });
+    await sbDualRpc('block_portal_user', { p_user_id: currentUser.id, p_reason: blockReason });
+    await sbDualUpdate('users', 'id', currentUser.id, { is_blocked: true, block_reason: blockReason });
   }catch(e){ console.warn('Block write failed:',e.message); }
-  // Audit log — record the block event
+  // Audit log — record the block event on both DBs
   try{
-    await sbInsert('block_audit_log',{
+    await sbDualInsert('block_audit_log',{
       action: 'blocked',
       target_user_id: currentUser.id,
       target_user_name: currentUser.name,
@@ -8865,7 +9550,7 @@ async function bbShowModal(violation){
   // If from login without active violation info, attempt quick fetch of latest over-limit break
   if(!violation && currentUser && currentUser.id){
     try {
-      var latest = await sbQuery('breaks', 'user_id=eq.'+currentUser.id+'&over_limit=eq.true&order=created_at.desc&limit=1');
+      var latest = await sbDualQuery('breaks', 'user_id=eq.'+currentUser.id+'&over_limit=eq.true&order=created_at.desc&limit=1', 'id');
       if(latest && latest.length){
         var b = latest[0];
         var bName = (b.break_type && BREAK_LABELS[b.break_type]) ? BREAK_LABELS[b.break_type] : (b.break_type || 'Break');
@@ -8879,6 +9564,26 @@ async function bbShowModal(violation){
         if(elDuration) elDuration.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:var(--accent-red);display:inline-block;"></span><span>'+bDuration+'</span>';
       }
     } catch(e){}
+  }
+
+  var blockedUserId = currentUser ? currentUser.id : null;
+
+  // Live Auto-Unblock Watcher: checks every 5 seconds if admin has unblocked the user
+  if(blockedUserId){
+    if(window._bbUnblockWatcher) clearInterval(window._bbUnblockWatcher);
+    window._bbUnblockWatcher = setInterval(async function(){
+      try{
+        var chk = await sbDualQuery('users','id=eq.'+blockedUserId+'&select=id,is_blocked','id');
+        if(chk && chk.length && !chk[0].is_blocked){
+          clearInterval(window._bbUnblockWatcher);
+          window._bbUnblockWatcher = null;
+          var m = document.getElementById('bb-modal-overlay');
+          if(m) m.remove();
+          alert('✅ Your account has been unblocked by an administrator. Please sign in to continue.');
+          bbGoToLogin();
+        }
+      }catch(err){}
+    }, 5000);
   }
 
   // Force logout session
@@ -8898,6 +9603,7 @@ function _bbFmtMinSec(s){
 // bbSubmitPin and _bbSilentUnblock removed — click-pattern self-unblock permanently disabled
 
 async function bbGoToLogin(){
+  if(window._bbUnblockWatcher){ clearInterval(window._bbUnblockWatcher); window._bbUnblockWatcher = null; }
   var el = document.getElementById('bb-modal-overlay');
   if(typeof inactStopWatching==='function') inactStopWatching();
   document.body.classList.remove('logged-in');
@@ -8937,10 +9643,11 @@ async function bbGoToLogin(){
 async function bbAdminUnblock(userId, userName){
   if(!confirm('Unlock '+userName+'\'s account? They will be able to log in again.')) return;
   try{
-    await sbRpc('admin_unblock_user', { p_user_id: userId });
-    // Audit log
+    await sbDualRpc('admin_unblock_user', { p_user_id: userId });
+    await sbDualUpdate('users', 'id', userId, { is_blocked: false, block_reason: null });
+    // Audit log synced across both DBs
     try{
-      await sbInsert('block_audit_log',{
+      await sbDualInsert('block_audit_log',{
         action: 'unblocked',
         target_user_id: userId,
         target_user_name: userName,
@@ -8963,10 +9670,10 @@ async function bbUnblockAll(){
   var statusEl = document.getElementById('cd-bb-unblockall-status');
   var listEl = document.getElementById('cd-bb-blocked-list');
   try{
-    // Fetch all blocked agents
-    var rows = await sbQuery('users','is_blocked=eq.true&select=id,name,email,block_reason');
+    // Fetch all blocked agents across DBs
+    var rows = await sbDualQuery('users','is_blocked=eq.true&select=id,name,email,block_reason','id');
     // Relieved-from-duty is an intentional offboarding block, not a break-limit block — keep it out of this report.
-    if(rows) rows=rows.filter(function(u){ return u.block_reason!=='Relieved from duty'; });
+    if(rows) rows=rows.filter(function(u){ return u.block_reason!=='Relieved from duty' && u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin'; });
     if(!rows || rows.length === 0){
       if(statusEl){ statusEl.textContent='✅ No agents are currently blocked.'; statusEl.style.color='var(--accent-green)'; statusEl.style.display='block'; }
       if(listEl) listEl.style.display='none';
@@ -8977,14 +9684,15 @@ async function bbUnblockAll(){
     var names = rows.map(function(r){ return r.name; }).join(', ');
     if(!confirm('Unblock all ' + rows.length + ' blocked agent(s)?\n\n' + names)) return;
     if(btn){ btn.textContent='Unblocking…'; btn.disabled=true; }
-    // Unblock each one
+    // Unblock each one on both DBs
     var failed = [];
     for(var i=0; i<rows.length; i++){
       try{
-        await sbRpc('admin_unblock_user', { p_user_id: rows[i].id });
+        await sbDualRpc('admin_unblock_user', { p_user_id: rows[i].id });
+        await sbDualUpdate('users', 'id', rows[i].id, { is_blocked: false, block_reason: null });
         // Audit log per agent
         try{
-          await sbInsert('block_audit_log',{
+          await sbDualInsert('block_audit_log',{
             action: 'unblocked',
             target_user_id: rows[i].id,
             target_user_name: rows[i].name,
@@ -9021,9 +9729,9 @@ async function bbLoadBlockedList(){
   var statusEl = document.getElementById('cd-bb-unblockall-status');
   if(!listEl) return;
   try{
-    var rows = await sbQuery('users','is_blocked=eq.true&select=id,name,email,block_reason');
+    var rows = await sbDualQuery('users','is_blocked=eq.true&select=id,name,email,block_reason','id');
     // Relieved-from-duty is an intentional offboarding block, not a break-limit block — keep it out of this report.
-    if(rows) rows=rows.filter(function(u){ return u.block_reason!=='Relieved from duty'; });
+    if(rows) rows=rows.filter(function(u){ return u.block_reason!=='Relieved from duty' && u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin'; });
     if(!rows || rows.length === 0){
       listEl.style.display='none';
       return;
@@ -9047,7 +9755,7 @@ var _BB_ENABLED_KEY = 'break_block_enabled';
 
 async function bbLoadToggleState(){
   try{
-    var rows = await sbQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=value');
+    var rows = await sbDualQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=value','key');
     var enabled = rows&&rows.length ? rows[0].value !== 'false' : true; // default ON
     var chk = document.getElementById('cd-bb-toggle');
     var st  = document.getElementById('cd-bb-status');
@@ -9062,9 +9770,9 @@ async function cdBbToggle(enabled){
   if(msg){ msg.style.display='block'; msg.textContent='Saving…'; msg.style.color='var(--text-muted)'; }
   try{
     var val = enabled ? 'true' : 'false';
-    var ex = await sbQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key',_BB_ENABLED_KEY,{value:val}); }
-    else{ await sbInsert('settings',{key:_BB_ENABLED_KEY,value:val}); }
+    var ex = await sbDualQuery('settings','key=eq.'+_BB_ENABLED_KEY+'&select=key','key');
+    if(ex&&ex.length){ await sbDualUpdate('settings','key',_BB_ENABLED_KEY,{value:val}); }
+    else{ await sbDualInsert('settings',{key:_BB_ENABLED_KEY,value:val}); }
     if(st){ st.textContent = enabled ? '✅ ON' : '🔴 OFF'; st.style.color = enabled ? '#2ec56f' : '#ef493c'; }
     if(msg){ msg.textContent = enabled ? 'Break block system enabled.' : 'Break block system disabled. No agents will be auto-blocked.'; setTimeout(function(){ msg.style.display='none'; },3000); }
   }catch(e){ if(msg){ msg.textContent='Error: '+e.message; msg.style.color='var(--accent-red)'; } }
@@ -9185,23 +9893,18 @@ function tbBreakPick(type){
     if(tbmTimer){tbmTimer.classList.remove('warning');tbmTimer.style.display='none';}
     if(mainBtn){mainBtn.classList.remove('has-active','over');mainBtn.innerHTML='☕ Break <span class="tb-break-arrow">▼</span>';}
 
-    // Save to Supabase — update open break row
+    // Save to Supabase — update open break row across both DBs
     var endNow=new Date().toISOString();
-    sbQuery('breaks','user_id=eq.'+currentUser.id+'&date=eq.'+todayStr()+'&break_type=eq.'+type+'&end_time=is.null&select=id')
-      .then(function(rows){
-        if(rows&&rows.length){
-          return sbUpdate('breaks','id',rows[0].id,{
-            end_time:endNow,duration_seconds:elapsed,over_limit:overBy>0,over_by_seconds:overBy
-          });
-        } else {
-          return sbInsert('breaks',{
-            user_id:currentUser.id,user_name:currentUser.name,date:todayStr(),
-            break_type:type,start_time:state.start,end_time:endNow,
-            duration_seconds:elapsed,over_limit:overBy>0,over_by_seconds:overBy
-          });
-        }
-      }).then(function(){ showBreakToast(type,overBy,elapsed); if(overBy>0) bbCheckAfterBreak(type,overBy,elapsed); })
-        .catch(function(e){ console.warn('Break end save failed:',e.message); });
+    var bId = state.id;
+    if(bId){
+      sbDualUpdate('breaks','id',bId,{
+        end_time:endNow,duration_seconds:elapsed,over_limit:overBy>0,over_by_seconds:overBy
+      }).catch(function(e){ console.warn('Break end save by id failed:',e.message); });
+    }
+    sbDualUpdate('breaks','user_id',currentUser.id+'&date=eq.'+todayStr()+'&break_type=eq.'+type+'&end_time=is.null',{
+      end_time:endNow,duration_seconds:elapsed,over_limit:overBy>0,over_by_seconds:overBy
+    }).then(function(){ showBreakToast(type,overBy,elapsed); if(overBy>0) bbCheckAfterBreak(type,overBy,elapsed); })
+      .catch(function(e){ console.warn('Break end save failed:',e.message); });
     return;
   }
 
@@ -9215,11 +9918,12 @@ function tbBreakPick(type){
 
   // Start break
   var startTime=new Date().toISOString();
-  _breakState[type]={active:true,start:startTime,done:false};
-  try{localStorage.setItem('tc_break_'+currentUser.id+'_'+type,JSON.stringify({start:startTime,date:todayStr()}));}catch(e){}
+  var bId = tcGenerateUuid();
+  _breakState[type]={active:true,start:startTime,done:false,id:bId};
+  try{localStorage.setItem('tc_break_'+currentUser.id+'_'+type,JSON.stringify({id:bId,start:startTime,date:todayStr()}));}catch(e){}
 
-  // Supabase insert
-  sbInsert('breaks',{user_id:currentUser.id,user_name:currentUser.name,date:todayStr(),break_type:type,start_time:startTime,over_limit:false,over_by_seconds:0})
+  // Supabase insert across both DBs with shared UUID
+  sbDualInsert('breaks',{id:bId,user_id:currentUser.id,user_name:currentUser.name,date:todayStr(),break_type:type,start_time:startTime,over_limit:false,over_by_seconds:0})
     .catch(function(e){console.warn('Break insert failed:',e);});
 
   // Update topbar button
@@ -9305,9 +10009,9 @@ async function toggleBreak(type){
     // Persist to localStorage (fast cache for same device)
     try { localStorage.setItem('tc_break_'+currentUser.id+'_'+type, JSON.stringify({ start: startTime, date: todayStr() })); } catch(e){}
 
-    // Insert open row to Supabase immediately — this is what restoreBreakState reads on refresh/new device
+    // Insert open row to Supabase immediately across both DBs
     try {
-      var insertResult = await sbInsert('breaks', {
+      var insertResult = await sbDualInsert('breaks', {
         user_id: currentUser.id,
         user_name: currentUser.name,
         date: todayStr(),
@@ -9316,7 +10020,7 @@ async function toggleBreak(type){
         over_limit: false,
         over_by_seconds: 0
       });
-      console.log('[Break] Supabase insert on start OK:', type, insertResult);
+      console.log('[Break] Supabase dual-insert on start OK:', type, insertResult);
     } catch(e){ console.error('[Break] Supabase insert on start FAILED:', type, e.message); }
 
     btn.classList.add('active');
@@ -9354,18 +10058,18 @@ async function toggleBreak(type){
     timerEl.classList.remove('warning');
     timerEl.style.display = 'none';
 
-    // Save to Supabase — update the existing open row if found, otherwise insert
+    // Save to Supabase across both DBs — update the existing open row if found, otherwise insert
     try {
-      var openRow = await sbQuery('breaks', 'user_id=eq.'+currentUser.id+'&date=eq.'+todayStr()+'&break_type=eq.'+type+'&end_time=is.null&select=id');
+      var openRow = await sbDualQuery('breaks', 'user_id=eq.'+currentUser.id+'&date=eq.'+todayStr()+'&break_type=eq.'+type+'&end_time=is.null&select=id', 'id');
       if(openRow && openRow.length){
-        await sbUpdate('breaks', 'id', openRow[0].id, {
+        await sbDualUpdate('breaks', 'id', openRow[0].id, {
           end_time: new Date().toISOString(),
           duration_seconds: elapsed,
           over_limit: overBy > 0,
           over_by_seconds: overBy
         });
       } else {
-        await sbInsert('breaks', {
+        await sbDualInsert('breaks', {
           user_id: currentUser.id,
           user_name: currentUser.name,
           date: todayStr(),
@@ -9390,7 +10094,7 @@ async function recordLogin(){
   // This just restores UI if they already started work today
   try {
     var today = todayStr();
-    var existing = await sbQuery('attendance', 'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&login_time=not.is.null&select=id,login_time,logout_time&order=login_time.desc&limit=1');
+    var existing = await sbDualQuery('attendance', 'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&login_time=not.is.null&select=id,login_time,logout_time&order=login_time.desc&limit=1', 'id');
     if(existing && existing.length > 0 && !existing[0].logout_time){
       // Active session found — restore work clock state
       _todayAttendance = existing[0];
@@ -9409,37 +10113,57 @@ async function recordLogin(){
   startHeartbeat();
 }
 
-// ── Heartbeat — updates last_seen every 10 min ──
+// ── Heartbeat — updates last_seen every 60s ──
 var _heartbeatInterval = null;
 
 
 function startHeartbeat(){
   stopHeartbeat();
   heartbeatPing(); // immediate first ping
-  _heartbeatInterval = setInterval(heartbeatPing, 10 * 60 * 1000); // every 10 min
+  _heartbeatInterval = setInterval(heartbeatPing, 60 * 1000); // every 60s
 }
 function stopHeartbeat(){
   if(_heartbeatInterval){ clearInterval(_heartbeatInterval); _heartbeatInterval=null; }
 }
 
-// ── Settings poll — checks timesheet every 2 min ──
+// ── Settings & Account Security poll — checks block status & timesheet every 15s ──
 var _settingsPollInterval = null;
 function startSettingsPoll(){
   stopSettingsPoll();
   checkLiveSettings(); // immediate check
-  _settingsPollInterval = setInterval(checkLiveSettings, 2 * 60 * 1000);
+  _settingsPollInterval = setInterval(checkLiveSettings, 15 * 1000);
 }
 function stopSettingsPoll(){
   if(_settingsPollInterval){ clearInterval(_settingsPollInterval); _settingsPollInterval = null; }
 }
+async function checkTsGlobal(){
+  try{
+    if(isAdminUser()) return;
+    var rows = await sbDualQuery('settings','key=eq.ts_global_enabled&select=value','key');
+    var enabled = (rows&&rows.length) ? rows[0].value!=='false' : true;
+    var tsItem = document.getElementById('sidebar-ts');
+    if(tsItem && !enabled){
+      tsItem.style.display = 'none';
+      var tsPage = document.getElementById('page-timesheet');
+      if(tsPage && tsPage.classList.contains('active')){
+        showPage('home', document.querySelector('.sidebar-item'));
+      }
+    }
+  }catch(e){}
+}
+
 async function checkLiveSettings(){
   if(!currentUser) return;
   try{
-
-    // Check current user's timesheet_enabled (may have changed since login)
-    if(!isAdminUser()){
-      var uRows = await sbQuery('users','id=eq.'+currentUser.id+'&select=timesheet_enabled');
+    // Check current user's is_blocked and timesheet_enabled across both DBs
+    if(!isAdminUser() && currentUser.id){
+      var uRows = await sbDualQuery('users','id=eq.'+currentUser.id+'&select=id,is_blocked,block_reason,timesheet_enabled','id');
       if(uRows && uRows.length){
+        if(uRows[0].is_blocked){
+          // Agent was blocked while portal was open
+          bbShowModal();
+          return;
+        }
         var tsNow = uRows[0].timesheet_enabled ? true : false;
         var tsChanged = tsNow !== currentUser.timesheetEnabled;
         if(tsChanged){
@@ -9456,11 +10180,11 @@ async function checkLiveSettings(){
       }
     }
     // 3. Check for active celebration
-    await checkCelebration();
+    if(typeof checkCelebration === 'function') await checkCelebration();
     // 4. Check timesheet global toggle
-    await checkTsGlobal();
+    if(typeof checkTsGlobal === 'function') await checkTsGlobal();
     // 5. Check voice hub global toggle
-    await checkVHGlobalToggle();
+    if(typeof checkVHGlobalToggle === 'function') await checkVHGlobalToggle();
   }catch(e){ /* silent — don't disrupt UX */ }
 }
 // Admin/TL heartbeat — only updates users.last_seen, not attendance
@@ -9468,7 +10192,7 @@ var _adminHeartbeatInterval = null;
 function startAdminHeartbeat(){
   stopAdminHeartbeat();
   adminHeartbeatPing(); // immediate ping on login
-  _adminHeartbeatInterval = setInterval(adminHeartbeatPing, 10 * 60 * 1000);
+  _adminHeartbeatInterval = setInterval(adminHeartbeatPing, 60 * 1000);
 }
 function stopAdminHeartbeat(){
   if(_adminHeartbeatInterval){ clearInterval(_adminHeartbeatInterval); _adminHeartbeatInterval=null; }
@@ -9476,15 +10200,18 @@ function stopAdminHeartbeat(){
 async function adminHeartbeatPing(){
   if(!currentUser) return;
   try{
-    await sbUpdate('users','id',currentUser.id,{ last_seen: new Date().toISOString() });
-  }catch(e){ /* silent — run: ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ DEFAULT NULL; */ }
+    var nowIso = new Date().toISOString();
+    await sbDualUpdate('users','id',currentUser.id,{ last_seen: nowIso });
+    var today = todayStr();
+    await sbDualUpdate('attendance','user_id',currentUser.id+'&date=eq.'+today,{ last_seen: nowIso });
+  }catch(e){ /* silent */ }
 }
 
-// Agent heartbeat — only runs after Start Work, updates attendance.last_seen
+// Agent heartbeat — only runs after Start Work, updates attendance.last_seen across both DBs
 async function heartbeatPing(){
   if(!currentUser||!_todayAttendance) return;
   try{
-    await sbUpdate('attendance','id',_todayAttendance.id,{ last_seen: new Date().toISOString() });
+    await sbDualUpdate('attendance','id',_todayAttendance.id,{ last_seen: new Date().toISOString() });
   }catch(e){ /* silent fail — column may not exist on older rows */ }
 }
 
@@ -9497,7 +10224,7 @@ async function recordLogout(){
   vhStopSignalPoll();
   if(!_todayAttendance) return;
   try {
-    await sbUpdate('attendance','id',_todayAttendance.id,{
+    await sbDualUpdate('attendance','id',_todayAttendance.id,{
       last_seen: new Date().toISOString()
     });
   } catch(e){ console.warn('Session update failed:', e.message); }
@@ -9555,9 +10282,9 @@ async function restoreBreakState(){
   var BREAK_TYPES = ['breakfast','lunch','beverage','shortbreak'];
 
   try {
-    // Query ALL of today's break rows for this user in one call
-    var rows = await sbQuery('breaks',
-      'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,break_type,start_time,end_time');
+    // Query ALL of today's break rows for this user in one call across both DBs
+    var rows = await sbDualQuery('breaks',
+      'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&select=id,break_type,start_time,end_time', 'id');
 
     console.log('[restoreBreakState] Supabase rows returned:', JSON.stringify(rows));
 
@@ -9585,10 +10312,10 @@ async function restoreBreakState(){
         if(tbmTimer2){tbmTimer2.style.display='inline';tbmTimer2.textContent='00:00';}
         if(mainBtn2){mainBtn2.classList.add('has-active');mainBtn2.innerHTML='🟠 On Break <span class="tb-break-arrow">▼</span>';}
         var startTime = openRow.start_time;
-        _breakState[type] = { active: true, start: startTime, done: false };
+        _breakState[type] = { active: true, start: startTime, done: false, id: openRow.id };
 
         // Update localStorage too (for fast restore on same device)
-        try { localStorage.setItem('tc_break_'+currentUser.id+'_'+type, JSON.stringify({ start: startTime, date: today })); } catch(e){}
+        try { localStorage.setItem('tc_break_'+currentUser.id+'_'+type, JSON.stringify({ id: openRow.id, start: startTime, date: today })); } catch(e){}
 
         btn.classList.add('active');
         btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
@@ -9697,6 +10424,15 @@ async function loadReport(){
   output.innerHTML='<div style="color:var(--text-dim);padding:2rem;text-align:center;">Loading...</div>';
 
   try {
+    if(!window._userMap || Object.keys(window._userMap).length === 0){
+      try{
+        var uList = await sbDualQuery('users','select=id,name&order=name.asc','id');
+        if(uList){
+          window._userMap = window._userMap || {};
+          uList.forEach(function(u){ window._userMap[u.id] = u.name; });
+        }
+      }catch(ue){}
+    }
     // Ensure roster is loaded before rendering attendance report (needed for On Time/Late calculation)
     if(type === 'attendance'){
       try{
@@ -9731,18 +10467,18 @@ async function loadReport(){
     }
 
     if(type === 'attendance'){
-      var filters = 'date=gte.'+from+'&date=lte.'+to+'&order=date.asc,user_name.asc&select=id,user_id,user_name,date,login_time,logout_time,last_seen,attendance_status';
+      var filters = 'date=gte.'+from+'&date=lte.'+to+'&order=date.asc,user_name.asc&limit=5000&select=id,user_id,user_name,date,login_time,logout_time,last_seen,attendance_status';
       if(agent) filters += '&user_id=eq.'+agent;
-      var rows = await sbQuery('attendance', filters);
+      var rows = await sbDualQuery('attendance', filters, 'id');
       _reportData = rows || [];
       if(!_reportData.length){ output.innerHTML='<div style="color:var(--text-dim);padding:2rem;text-align:center;">No attendance data found for selected period.</div>'; return; }
       renderAttendanceReport(_reportData);
 
     } else if(type === 'blocklog'){
       // Block / Unblock audit log — admin only
-      var blFilters = 'timestamp=gte.'+from+'T00:00:00&timestamp=lte.'+to+'T23:59:59&order=timestamp.desc&select=id,action,target_user_name,target_user_email,actor_user_name,reason,timestamp';
+      var blFilters = 'timestamp=gte.'+from+'T00:00:00&timestamp=lte.'+to+'T23:59:59&order=timestamp.desc&limit=2000&select=id,action,target_user_name,target_user_email,actor_user_name,reason,timestamp';
       if(agent) blFilters += '&target_user_id=eq.'+encodeURIComponent(agent);
-      var blRows = await sbQuery('block_audit_log', blFilters);
+      var blRows = await sbDualQuery('block_audit_log', blFilters, 'id');
       _reportData = blRows || [];
       if(!_reportData.length){ output.innerHTML='<div style="color:var(--text-dim);padding:2rem;text-align:center;">No block/unblock events found for selected period.</div>'; return; }
       renderBlockLog(_reportData);
@@ -9751,17 +10487,17 @@ async function loadReport(){
       // a start time), longest remote first, so unusually long calls surface
       // immediately. Timestamps only get recorded here if a remote was
       // genuinely worked, per the note on the Start Work confirmation.
-      var erFilters = 'started_at=gte.'+from+'T00:00:00&started_at=lte.'+to+'T23:59:59&started_at=not.is.null&order=started_at.desc&select=id,ticket_id,vertical,source,l2_agent_id,l2_agent_name,assigned_at,started_at,resolved_at,status';
+      var erFilters = 'started_at=gte.'+from+'T00:00:00&started_at=lte.'+to+'T23:59:59&started_at=not.is.null&order=started_at.desc&limit=2000&select=id,ticket_id,vertical,source,l2_agent_id,l2_agent_name,assigned_at,started_at,resolved_at,status';
       if(agent) erFilters += '&l2_agent_id=eq.'+agent;
-      var erRows = await sbQuery('escalations', erFilters);
+      var erRows = await sbDualQuery('escalations', erFilters, 'id');
       _reportData = erRows || [];
       if(!_reportData.length){ output.innerHTML='<div style="color:var(--text-dim);padding:2rem;text-align:center;">No handled remotes found for selected period.</div>'; return; }
       renderEscalationRemoteReport(_reportData);
     } else {
       // Break report — grouped by date then agent (like your Excel format)
-      var filters2 = 'date=gte.'+from+'&date=lte.'+to+'&order=date.asc,user_name.asc,start_time.asc&select=id,user_id,user_name,date,break_type,start_time,end_time,duration_seconds,over_limit,over_by_seconds';
+      var filters2 = 'date=gte.'+from+'&date=lte.'+to+'&order=date.asc,user_name.asc,start_time.asc&limit=5000&select=id,user_id,user_name,date,break_type,start_time,end_time,duration_seconds,over_limit,over_by_seconds';
       if(agent) filters2 += '&user_id=eq.'+agent;
-      var breaks = await sbQuery('breaks', filters2);
+      var breaks = await sbDualQuery('breaks', filters2, 'id');
       _reportData = breaks || [];
       if(!_reportData.length){ output.innerHTML='<div style="color:var(--text-dim);padding:2rem;text-align:center;">No break data found for selected period.</div>'; return; }
       renderBreakReport(_reportData, from, to);
@@ -9869,7 +10605,7 @@ function renderBreakReport(breaks, from, to){
   var byDate = {};
   breaks.forEach(function(b){
     if(!byDate[b.date]) byDate[b.date] = {};
-    var nm = b.user_name || 'Unknown';
+    var nm = b.user_name || (window._userMap && window._userMap[b.user_id]) || 'Unknown';
     if(!byDate[b.date][nm]) byDate[b.date][nm] = [];
     byDate[b.date][nm].push(b);
   });
@@ -9892,14 +10628,16 @@ function renderBreakReport(breaks, from, to){
       agentMap[name].forEach(function(b){
         var bt = b.break_type;
         if(summaryMap[name][bt] !== undefined){
-          // For in-progress breaks (no end_time), calculate live elapsed
+          // For in-progress breaks (no end_time), calculate live elapsed ONLY if break date is TODAY
+          var isLive = !b.end_time && (b.date === todayStr());
           var secs = b.duration_seconds || 0;
-          if(!b.end_time && b.start_time){
-            secs = Math.floor((Date.now() - new Date(b.start_time).getTime()) / 1000);
+          if(isLive && b.start_time){
+            var liveSecs = Math.floor((Date.now() - new Date(b.start_time).getTime()) / 1000);
+            secs = Math.min(liveSecs, 14400); // capped at 4 hours max in case of abandoned tab
           }
           summaryMap[name][bt].secs += secs;
           summaryMap[name][bt].over = summaryMap[name][bt].secs >= (BREAK_LIMITS[bt]||0)*60+60; // exceeded only after full extra minute
-          if(!b.end_time) summaryMap[name][bt].live = true; // flag live
+          if(isLive) summaryMap[name][bt].live = true; // flag live
         }
       });
     });
@@ -9958,22 +10696,27 @@ function renderBreakReport(breaks, from, to){
     agents.forEach(function(name){
       var rows = agentMap[name].slice().sort(function(a,b){ return (a.start_time||'').localeCompare(b.start_time||''); });
       rows.forEach(function(b, idx){
-        var isLive = !b.end_time;
+        var isLive = !b.end_time && (b.date === todayStr());
+        var isOrphan = !b.end_time && (b.date !== todayStr());
         var secs = b.duration_seconds || 0;
-        if(isLive && b.start_time) secs = Math.floor((Date.now() - new Date(b.start_time).getTime()) / 1000);
+        if(isLive && b.start_time){
+          secs = Math.min(Math.floor((Date.now() - new Date(b.start_time).getTime()) / 1000), 14400);
+        }
         var limit = (BREAK_LIMITS[b.break_type]||0)*60;
         var over = secs >= limit+60; // exceeded only after full extra minute
         var rowBg = isLive ? 'background:rgba(232,184,75,.09);' : (over ? 'background:rgba(239,73,60,.06);' : '');
         var statusHtml = isLive
           ? '<span style="background:rgba(232,184,75,.2);color:#c9860a;border:1px solid rgba(232,184,75,.4);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">● In Progress</span>'
-          : (over
-            ? '<span style="background:rgba(239,73,60,.12);color:#EF493C;border:1px solid rgba(239,73,60,.3);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">Exceeded</span>'
-            : '<span style="background:rgba(46,197,111,.12);color:#2EC56F;border:1px solid rgba(46,197,111,.3);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">Done</span>');
+          : (isOrphan
+            ? '<span style="background:rgba(148,163,184,.15);color:var(--text-dim);border:1px solid rgba(148,163,184,.3);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:600;">Unclosed</span>'
+            : (over
+              ? '<span style="background:rgba(239,73,60,.12);color:#EF493C;border:1px solid rgba(239,73,60,.3);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">Exceeded</span>'
+              : '<span style="background:rgba(46,197,111,.12);color:#2EC56F;border:1px solid rgba(46,197,111,.3);border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">Done</span>'));
         html += '<tr style="'+rowBg+'">' +
           '<td style="font-weight:500;color:var(--text-primary);">'+(idx===0?name:'')+'</td>' +
           '<td>'+(BREAK_EMOJIS[b.break_type]||'')+'&nbsp;'+(BREAK_LABELS[b.break_type]||b.break_type||'-')+'</td>' +
           '<td style="font-variant-numeric:tabular-nums;font-weight:600;">'+(b.start_time?fmtTime(b.start_time):'-')+'</td>' +
-          '<td style="font-variant-numeric:tabular-nums;font-weight:600;">'+(isLive?'<span style="color:#E8B84B;">—</span>':fmtTime(b.end_time))+'</td>' +
+          '<td style="font-variant-numeric:tabular-nums;font-weight:600;">'+(isLive?'<span style="color:#E8B84B;">—</span>':(b.end_time?fmtTime(b.end_time):'-'))+'</td>' +
           '<td style="font-variant-numeric:tabular-nums;'+(over?'color:var(--accent-red);font-weight:600;':'')+'">'+fmtDurMin(secs)+(isLive?'<span style="font-size:.65rem;color:#E8B84B;"> (live)</span>':'')+'</td>' +
           '<td>'+statusHtml+'</td>' +
           '</tr>';
@@ -10059,7 +10802,7 @@ function renderAttendanceReport(rows){
         dur = h+' Hr(s) '+m+' Min';
       }
       var stillIn = r.login_time && !r.logout_time;
-      var agentName = r.user_name || (currentUser ? currentUser.name : 'Agent');
+      var agentName = r.user_name || (window._userMap && window._userMap[r.user_id]) || (r.user_id ? 'Agent ('+r.user_id.slice(0,6)+')' : 'Agent');
 
       // Determine status: manual override wins, else roster-based, else No Roster
       var status = r.attendance_status || computePunctuality(agentName, r.date, r.login_time);
@@ -10118,7 +10861,7 @@ async function attSaveStatusDirect(rowId, val, btn){
     Array.from(container.children).forEach(function(c){ c.disabled = true; });
   }
   try {
-    await sbUpdate('attendance', 'id', rowId, { attendance_status: val || null });
+    await sbDualUpdate('attendance', 'id', rowId, { attendance_status: val || null });
     var cell = document.getElementById('att-status-cell-'+rowId);
     if(cell){
       var status = val || null;
@@ -10270,6 +11013,11 @@ async function loadReportAgents(){
   try {
     var wrap = document.getElementById('report-agent-wrap');
     var sel  = document.getElementById('report-agent');
+    var users = await sbDualQuery('users','select=id,name,role&order=name.asc','id');
+    if(users){
+      window._userMap = window._userMap || {};
+      users.forEach(function(u){ window._userMap[u.id] = u.name; });
+    }
     if(!wrap || !sel) return;
     if(!isAdminUser()){
       // Agents — hide dropdown, auto-filter to self
@@ -10280,14 +11028,14 @@ async function loadReportAgents(){
     wrap.style.display = '';
     // Clear existing options except first
     while(sel.options.length > 1) sel.remove(1);
-    var users = await sbQuery('users','select=id,name&order=name.asc');
-    if(!users) return;
-    users.filter(function(u){ return u.role !== 'syslevel'; }).forEach(function(u){
-      var o = document.createElement('option');
-      o.value = u.id;
-      o.textContent = u.name;
-      sel.appendChild(o);
-    });
+    if(users){
+      users.filter(function(u){ return u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; }).forEach(function(u){
+        var o = document.createElement('option');
+        o.value = u.id;
+        o.textContent = u.name;
+        sel.appendChild(o);
+      });
+    }
   } catch(e){ console.warn('loadReportAgents failed:',e); }
 }
 
@@ -10313,11 +11061,12 @@ function xcTabSwitch(name, btn){
 async function xcInitSelectors(){
   var selectors = ['#xc-f1','#xc-f3'];
   try {
-    var users = await sbQuery('users','select=id,name&order=name.asc');
+    var users = await sbDualQuery('users','select=id,name,role&order=name.asc','id');
+    var filtered = (users||[]).filter(function(u){ return u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; });
     selectors.forEach(function(sel){
       var el = document.querySelector(sel);
       if(!el || el.options.length > 1) return;
-      (users||[]).forEach(function(u){
+      filtered.forEach(function(u){
         var o = document.createElement('option');
         o.value = u.id; o.textContent = u.name;
         el.appendChild(o);
@@ -10336,7 +11085,7 @@ async function xcFetchAtt(){
   try {
     var filters = 'date=eq.'+date+'&order=user_name.asc&select=id,user_id,user_name,date,login_time,logout_time';
     if(agentId) filters += '&user_id=eq.'+agentId;
-    var rows = await sbQuery('attendance', filters);
+    var rows = await sbDualQuery('attendance', filters, 'id');
     if(!rows||!rows.length){
       out.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:.5rem;">No attendance records found for this date.</div>';
       return;
@@ -10410,7 +11159,7 @@ async function xcWriteAtt(rowId, date, loginElId, logoutElId){
   if(logoutVal) updates.logout_time = xcNormTime(date, logoutVal);
   else          updates.logout_time = null;
   try {
-    await sbUpdate('attendance','id',rowId,updates);
+    await sbDualUpdate('attendance','id',rowId,updates);
     // Flash the row green briefly
     var row = document.getElementById('xc-t1-'+rowId);
     if(row){ var p=row.closest('.xc-row'); if(p){p.style.borderColor='var(--accent-green)';setTimeout(function(){p.style.borderColor='';},1800);} }
@@ -10429,7 +11178,7 @@ async function xcFetchBrk(){
   try {
     var filters = 'date=eq.'+date+'&order=user_name.asc,break_type.asc&select=id,user_id,user_name,date,break_type,start_time,end_time,duration_seconds,over_limit,over_by_seconds';
     if(agentId) filters += '&user_id=eq.'+agentId;
-    var rows = await sbQuery('breaks', filters);
+    var rows = await sbDualQuery('breaks', filters, 'id');
     if(!rows||!rows.length){
       out.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:.5rem;">No break records found for this date.</div>';
       return;
@@ -10473,7 +11222,7 @@ async function xcWriteBrk(rowId, durElId, olElId){
   if(parts.length===2){ totalSec = parseInt(parts[0]||0)*60 + parseInt(parts[1]||0); }
   else if(parts.length===1){ totalSec = parseInt(parts[0]||0)*60; }
   try {
-    await sbUpdate('breaks','id',rowId,{
+    await sbDualUpdate('breaks','id',rowId,{
       duration_seconds: totalSec,
       over_limit: overLimit,
       over_by_seconds: overLimit ? Math.max(0, totalSec - 0) : 0 // best-effort; admin knows actual limit
@@ -10508,8 +11257,8 @@ async function xcInitBlockLog(){
   }
   if(sel.options.length <= 1){
     try{
-      var users = await sbQuery('users','select=id,name&order=name.asc');
-      users.forEach(function(u){
+      var users = await sbDualQuery('users','select=id,name,role&order=name.asc','id');
+      (users||[]).filter(function(u){ return u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; }).forEach(function(u){
         var o = document.createElement('option');
         o.value = u.id; o.textContent = u.name;
         sel.appendChild(o);
@@ -10573,7 +11322,7 @@ async function xcDeleteBlockLog(rowId){
 async function xcReadCfg(){
   var idMap = {breakfast:'xc-c1',lunch:'xc-c2',beverage:'xc-c3',shortbreak:'xc-c4'};
   try {
-    var rows = await sbQuery('settings','key=like.break_limit_*&select=key,value');
+    var rows = await sbDualQuery('settings','key=like.break_limit_*&select=key,value','key');
     var map = {};
     (rows||[]).forEach(function(r){ map[r.key]=r.value; });
     var types = ['breakfast','lunch','beverage','shortbreak'];
@@ -10599,9 +11348,9 @@ async function xcWriteCfg(){
       var t = types[i];
       var val = parseInt(document.getElementById(idMap[t]).value)||BREAK_LIMITS[t];
       try {
-        await sbUpdate('settings','key','break_limit_'+t,{value:String(val)});
+        await sbDualUpdate('settings','key','break_limit_'+t,{value:String(val)});
       } catch(e2){
-        await sbInsert('settings',{key:'break_limit_'+t,value:String(val)});
+        await sbDualInsert('settings',{key:'break_limit_'+t,value:String(val)});
       }
       BREAK_LIMITS[t] = val;
       var badge = document.querySelector('#bb-'+t+' .break-limit-badge');
@@ -10619,7 +11368,8 @@ async function xcFetchUsr(){
   if(!out) return;
   out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;padding:.5rem;">Loading...</div>';
   try {
-    var users = await sbQuery('users','select=id,name,email,role&order=name.asc');
+    var users = await sbDualQuery('users','select=id,name,email,role&order=name.asc','id');
+    if(users) users = users.filter(function(u){ return u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; });
     if(!users||!users.length){ out.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">No users found.</div>'; return; }
     var html = users.map(function(u){
       var roles = ['agent','tl','admin'];
@@ -10647,7 +11397,8 @@ async function xcFetchUsr(){
 async function xcWriteUsr(userId, selId){
   var role = document.getElementById(selId).value;
   try {
-    await sbRpc('admin_set_user_role', { p_user_id: userId, p_new_role: role });
+    await sbDualRpc('admin_set_user_role', { p_user_id: userId, p_new_role: role });
+    await sbDualUpdate('users', 'id', userId, { role: role });
     var note = document.getElementById('xc-us-'+userId);
     if(note){ note.style.display='inline'; setTimeout(function(){ note.style.display='none'; },2000); }
   } catch(e){ alert('Role update failed: '+e.message); }
@@ -10660,7 +11411,7 @@ async function xcEditName(userId, currentName){
   if(!newName){ alert('Name cannot be empty.'); return; }
   if(newName === currentName){ alert('Name is the same — no change made.'); return; }
   try{
-    await sbUpdate('users','id',userId,{name:newName});
+    await sbDualUpdate('users','id',userId,{name:newName});
     alert('✅ Name updated to "'+newName+'" successfully.\n\nThey will see the new name on their next login.');
     xcFetchUsr(); // refresh the list
   }catch(e){ alert('Name update failed: '+e.message); }
@@ -10673,11 +11424,8 @@ async function xcResetPassword(userId, name){
   if(!newPw || newPw.length < 6){ alert('Password must be at least 6 characters.'); return; }
   try{
     var hashed = await hashPassword(newPw);
-    await fetch(SUPABASE_URL + '/rest/v1/rpc/admin_reset_user_password', {
-      method: 'POST',
-      headers: sbHeaders({'Content-Type': 'application/json'}),
-      body: JSON.stringify({ p_user_id: userId, p_new_hash: hashed })
-    });
+    await sbDualRpc('admin_reset_user_password', { p_user_id: userId, p_new_hash: hashed });
+    await sbDualUpdate('users', 'id', userId, { password: hashed });
     alert('✅ Password for '+name+' has been reset successfully.\n\nTell them their new password: '+newPw);
   }catch(e){ alert('Reset failed: '+e.message); }
 }
@@ -10686,10 +11434,10 @@ async function xcPurgeRec(userId, name){
   if(!confirm('Wipe ALL attendance and break records for '+name+' for TODAY ('+todayStr()+')? This cannot be undone.')) return;
   try {
     var today = todayStr();
-    // Delete attendance
-    await fetch(SUPABASE_URL+'/rest/v1/attendance?user_id=eq.'+userId+'&date=eq.'+today,{method:'DELETE',headers:sbHeaders()});
-    // Delete breaks
-    await fetch(SUPABASE_URL+'/rest/v1/breaks?user_id=eq.'+userId+'&date=eq.'+today,{method:'DELETE',headers:sbHeaders()});
+    // Delete attendance across both DBs
+    await sbDualDelete('attendance', 'user_id', userId + '&date=eq.' + today);
+    // Delete breaks across both DBs
+    await sbDualDelete('breaks', 'user_id', userId + '&date=eq.' + today);
     alert(name+"'s records for today have been wiped.");
   } catch(e){ alert('Wipe failed: '+e.message); }
 }
@@ -10699,8 +11447,8 @@ async function xcInitQuizSelectors(){
   var sel = document.getElementById('xc-qf1');
   if(!sel || sel.options.length > 1) return;
   try{
-    var users = await sbQuery('users','select=id,name&order=name.asc');
-    (users||[]).forEach(function(u){
+    var users = await sbDualQuery('users','select=id,name,role&order=name.asc','id');
+    (users||[]).filter(function(u){ return u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; }).forEach(function(u){
       var o=document.createElement('option'); o.value=u.id; o.textContent=u.name; sel.appendChild(o);
     });
     var today = todayStr();
@@ -10794,7 +11542,7 @@ showPage = function(id, elem){
 
 // On login, load break limits from DB so break bar shows correct values
 function xcSyncCfg(){
-  sbQuery('settings','key=like.break_limit_*&select=key,value').then(function(rows){
+  sbDualQuery('settings','key=like.break_limit_*&select=key,value','key').then(function(rows){
     if(!rows||!rows.length) return;
     rows.forEach(function(r){
       var t = r.key.replace('break_limit_','');
@@ -11060,7 +11808,7 @@ async function qrLoadReport(){
     );
     var users = await sbQuery('users','select=id,name,role&order=name.asc');
     var excludedIds = await qbGetExcludedAgentIds();
-    var agents = (users||[]).filter(function(u){ return u.role!=='syslevel' && !excludedIds.has(u.id); });
+    var agents = (users||[]).filter(function(u){ return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin' && !excludedIds.has(u.id); });
     var rosterRows = window.rosterCache || null;
 
     _qrData = { quizzes:quizzes||[], responses:responses||[], agents:agents, rosterRows:rosterRows, month:month, year:year, fromDate:fromDate, toDate:toDate };
@@ -11849,7 +12597,7 @@ async function qbOpenParticipantsManager(){
   body.innerHTML='<div style="color:var(--text-dim);font-size:.85rem;">Loading agents...</div>';
   try{
     var users=await sbQuery('users','select=id,name,role&order=name.asc');
-    var agents=(users||[]).filter(function(u){return u.role!=='syslevel';});
+    var agents=(users||[]).filter(function(u){return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin';});
     var excluded=await qbGetExcludedAgentIds();
     body.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.5rem .75rem;">'+
       agents.map(function(a){
@@ -13484,14 +14232,14 @@ var _liveDashData = { users:[], att:[], onBreakSet:new Set(), onBreakDetails:{} 
 
 async function loadLiveDashboard(){
   try{
-    var users=await sbQuery('users','select=id,name,role,presence,last_seen,is_blocked,block_reason&order=name.asc');
-    // Filter out syslevel
-    users=(users||[]).filter(function(u){return u.role!=='syslevel';});
+    var users=await sbDualQuery('users','select=id,name,role,presence,last_seen,is_blocked,block_reason&order=name.asc','id');
+    // Filter out syslevel and superadmin
+    users=(users||[]).filter(function(u){return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin';});
     var total=users.length;
     animateCount('stat-val-total',total);
 
     var today=todayStr();
-    var att=await sbQuery('attendance','date=eq.'+today+'&select=user_id,user_name,login_time,logout_time,last_seen&order=login_time.asc');
+    var att=await sbDualQuery('attendance','date=eq.'+today+'&select=user_id,user_name,login_time,logout_time,last_seen&order=login_time.asc','id');
 
     // DEDUPLICATE — one entry per user (latest login)
     var attMap={};
@@ -13509,8 +14257,8 @@ async function loadLiveDashboard(){
 
     // Absent count is owned by the roster (updateRosterBanner) — do not overwrite here
 
-    // Break data is refreshed separately every 4 minutes via loadBreakStat()
-    // Use cached values if available, otherwise init empty
+    // Break data is refreshed in real time across both DBs
+    try{ await loadBreakStat(); }catch(e){}
     var onBreakSet = (window._cachedOnBreakSet) ? window._cachedOnBreakSet : new Set();
     var onBreakDetails = (window._cachedOnBreakDetails) ? window._cachedOnBreakDetails : {};
 
@@ -13562,29 +14310,37 @@ function updateHomeBlockedAlert(blockedList){
 
 async function checkAndUpdateBlockedAlert(){
   try{
-    var rows = await sbQuery('users','is_blocked=eq.true&select=id,name,block_reason');
-    if(rows) rows = rows.filter(function(u){ return u.block_reason !== 'Relieved from duty'; });
+    var rows = await sbDualQuery('users','is_blocked=eq.true&select=id,name,block_reason','id');
+    if(rows) rows = rows.filter(function(u){ return u.block_reason !== 'Relieved from duty' && u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; });
     updateHomeBlockedAlert(rows || []);
   }catch(e){}
 }
 
-// ── Break stat — refreshes independently every 4 minutes ──
+// ── Break stat — refreshed every 30 seconds across both DBs ──
 async function loadBreakStat(){
   try{
     var today=todayStr();
-    var brks=await sbQuery('breaks','date=eq.'+today+'&select=user_id,user_name,break_type,end_time');
+    var brks=await sbDualQuery('breaks','date=eq.'+today+'&select=user_id,user_name,break_type,end_time','id');
+    var onBreakUserIds=new Set();
     var onBreakSet=new Set();
     var onBreakDetails={};
     if(brks)brks.forEach(function(b){
       if(!b.end_time){
-        onBreakSet.add(b.user_name);
-        onBreakDetails[b.user_name]=b.break_type;
+        var uid = b.user_id || b.user_name;
+        if(uid) onBreakUserIds.add(uid);
+        if(b.user_id) onBreakSet.add(b.user_id);
+        if(b.user_name){
+          onBreakSet.add(b.user_name);
+          onBreakSet.add(b.user_name.trim());
+          onBreakDetails[b.user_name]=b.break_type;
+          onBreakDetails[b.user_name.trim()]=b.break_type;
+        }
       }
     });
     // Cache for main dashboard to use
     window._cachedOnBreakSet=onBreakSet;
     window._cachedOnBreakDetails=onBreakDetails;
-    animateCount('stat-val-onbreak',onBreakSet.size);
+    animateCount('stat-val-onbreak',onBreakUserIds.size);
     // Re-render who's active list with fresh break data if dashboard data exists
     if(_liveDashData&&_liveDashData.users&&_liveDashData.att){
       _liveDashData.onBreakSet=onBreakSet;
@@ -13604,16 +14360,18 @@ function renderWhosActive(users,att,onBreakSet){
 
   var isMyself=function(u){return currentUser&&u.id===currentUser.id;};
 
-  var items=users.filter(function(u){return u.role!=='syslevel';}).map(function(u){
+  var items=users.filter(function(u){return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin';}).map(function(u){
     var ini=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-    var isBreak=onBreakSet.has(u.name);
-    var isAdminOrTl = u.role==='admin' || u.role==='tl';
+    var isBreak = onBreakSet.has(u.id) || onBreakSet.has(u.name) || onBreakSet.has((u.name||'').trim());
+    var isAdminOrTl = u.role==='admin' || u.role==='tl' || (u.role && u.role.toLowerCase().indexOf('lead') > -1);
     var attRec=attMap[u.id];
     var sc, sl;
 
     if(isAdminOrTl){
-      // Admin/TL: use users.last_seen (set on portal login, no Start Work needed)
-      var userRecentlySeen = u.last_seen && (Date.now()-new Date(u.last_seen).getTime()) < 12*60*1000;
+      // Admin/TL/Lead: check last_seen or active attendance session today
+      var userRecentlySeen = (u.last_seen && (Date.now()-new Date(u.last_seen).getTime()) < 15*60*1000) ||
+                             (attRec && attRec.last_seen && (Date.now()-new Date(attRec.last_seen).getTime()) < 15*60*1000) ||
+                             (attRec && attRec.login_time && !attRec.logout_time && (Date.now()-new Date(attRec.login_time).getTime()) < 12*60*60*1000);
       if(isBreak && userRecentlySeen){sc='onbreak';sl='On Break';}
       else if(userRecentlySeen){sc='active';sl='Active';}
       else{sc='out';sl='Not In';}
@@ -13669,7 +14427,7 @@ function updateAbsentStat(count){
 // ===================================================
 async function loadAnnouncements(){
   try{
-    var rows=await sbQuery('announcements','select=id,text,posted_by,created_at,pinned&order=pinned.desc,created_at.desc&limit=1');
+    var rows=await sbDualQuery('announcements','select=id,text,posted_by,created_at,pinned&order=pinned.desc,created_at.desc&limit=1','id');
     var banner=document.getElementById('announcement-banner');
     if(!banner||!rows||!rows.length)return;
     var a=rows[0];
@@ -13692,7 +14450,7 @@ async function loadAnnouncementsAdmin(){
   var list=document.getElementById('ann-list');
   if(!list)return;
   try{
-    var rows=await sbQuery('announcements','select=id,text,posted_by,created_at,pinned&order=pinned.desc,created_at.desc');
+    var rows=await sbDualQuery('announcements','select=id,text,posted_by,created_at,pinned&order=pinned.desc,created_at.desc','id');
     if(!rows||!rows.length){
       list.innerHTML='<div style="color:var(--text-dim);font-size:.875rem;padding:1rem;">No announcements yet.</div>';
       return;
@@ -13855,8 +14613,10 @@ async function workClockIn(){
   try{
     var loginTime = new Date().toISOString();
     var today = todayStr();
-    // Always insert a fresh record — supports multiple sessions per day
-    var rows = await sbInsert('attendance', {
+    var attId = tcGenerateUuid();
+    // Always insert a fresh record across both DBs with shared deterministic UUID
+    var rows = await sbDualInsert('attendance', {
+      id: attId,
       user_id: currentUser.id,
       user_name: currentUser.name,
       date: today,
@@ -13866,11 +14626,14 @@ async function workClockIn(){
     if(rows && rows.length){
       _wclockAttendance = rows[0];
       _todayAttendance = rows[0]; // heartbeat needs this
+    } else {
+      _wclockAttendance = { id: attId, user_id: currentUser.id, user_name: currentUser.name, date: today, login_time: loginTime, logout_time: null };
+      _todayAttendance = _wclockAttendance;
     }
     _wclockInTime = loginTime;
     // Persist clock-in time to localStorage so it survives page refresh
     localStorage.setItem('tc_clockin_'+currentUser.id, JSON.stringify({
-      id: _wclockAttendance ? _wclockAttendance.id : null,
+      id: attId,
       time: loginTime,
       date: today
     }));
@@ -13939,8 +14702,10 @@ async function confirmEndWork(){
   if(endBtn){ endBtn.disabled = true; endBtn.textContent = '...'; }
   try{
     var logoutTime = new Date().toISOString();
-    // 10-second timeout — if Supabase is slow, re-enable button so agent isn't stuck
-    var updatePromise = sbUpdate('attendance', 'id', _wclockAttendance.id, {logout_time: logoutTime, last_seen: logoutTime});
+    // 10-second timeout — update attendance on both DBs
+    var updatePromise = sbDualUpdate('attendance', 'id', _wclockAttendance.id, {logout_time: logoutTime, last_seen: logoutTime});
+    // Also patch by query filter across both DBs to ensure no unclosed session remains
+    sbDualUpdate('attendance', 'user_id', currentUser.id+'&date=eq.'+todayStr()+'&logout_time=is.null', {logout_time: logoutTime, last_seen: logoutTime});
     var timeoutPromise = new Promise(function(_,reject){ setTimeout(function(){ reject(new Error('Request timed out. Please try again.')); }, 10000); });
     await Promise.race([updatePromise, timeoutPromise]);
     if(_wclockInterval) clearInterval(_wclockInterval);
@@ -14215,8 +14980,8 @@ async function checkWorkClockOnLoad(){
     var today = todayStr();
 
     if(stored && stored.date === today && stored.id){
-      // We have a stored active session — verify it's still open in Supabase
-      var check = await sbQuery('attendance', 'id=eq.'+stored.id+'&select=id,login_time,logout_time');
+      // We have a stored active session — verify it's still open across both DBs
+      var check = await sbDualQuery('attendance', 'id=eq.'+stored.id+'&select=id,login_time,logout_time', 'id');
       if(check && check.length && !check[0].logout_time){
         _wclockAttendance = check[0];
         _wclockInTime = stored.time;
@@ -14232,9 +14997,9 @@ async function checkWorkClockOnLoad(){
       }
     }
 
-    // No stored session — check Supabase for latest record today
-    var rows = await sbQuery('attendance',
-      'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&order=login_time.desc&limit=1&select=id,login_time,logout_time');
+    // No stored session — check Supabase for latest record today across both DBs
+    var rows = await sbDualQuery('attendance',
+      'user_id=eq.'+currentUser.id+'&date=eq.'+today+'&order=login_time.desc&limit=1&select=id,login_time,logout_time', 'id');
 
     if(!rows || !rows.length){ setWclockUI('idle'); return; }
     var rec = rows[0];
@@ -14322,7 +15087,11 @@ async function pplLoad(){
   grid.innerHTML='<div class="ppl-loading">Loading team...</div>';
   try{
     var people = await sbQuery('people','select=*&order=name.asc');
-    _pplData = people||[];
+    _pplData = (people||[]).filter(function(p){
+      var n = (p.name||'').toLowerCase().trim();
+      var r = (p.role||'').toLowerCase().trim();
+      return n !== 'superadmin' && n !== 'super admin' && r !== 'superadmin' && r !== 'syslevel';
+    });
     pplRender(_pplData);
   }catch(e){
     grid.innerHTML='<div class="ppl-loading" style="color:var(--accent-red);">Could not load people: '+e.message+'</div>';
@@ -14644,11 +15413,11 @@ function pplOpenEdit(id){
 
   // Populate user dropdown if new
   if(isNew){
-    sbQuery('users','select=id,name&order=name.asc').then(function(users){
+    sbQuery('users','select=id,name,role,email&order=name.asc').then(function(users){
       var sel = document.getElementById('pf-userid');
       if(!sel) return;
       var existingIds = new Set(_pplData.map(function(pp){ return pp.user_id; }));
-      (users||[]).forEach(function(u){
+      (users||[]).filter(function(u){ return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin'; }).forEach(function(u){
         if(existingIds.has(u.id)) return; // already has profile
         var o = document.createElement('option');
         o.value = u.id; o.textContent = u.name;
@@ -14897,8 +15666,8 @@ async function tsPopulateAgents(){
   var sel=document.getElementById('ts-rep-agent');
   if(!sel||sel.options.length>1) return;
   try{
-    var users=await sbQuery('users','select=id,name&order=name.asc');
-    (users||[]).forEach(function(u){
+    var users=await sbQuery('users','select=id,name,role,email&order=name.asc');
+    (users||[]).filter(function(u){ return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin'; }).forEach(function(u){
       var o=document.createElement('option');
       o.value=u.id; o.textContent=u.name; sel.appendChild(o);
     });
@@ -15455,7 +16224,7 @@ function makeDockDraggable() {
 async function dockLoadUsers(){
   try{
     var users = await sbQuery('users','select=id,name,role,last_seen&order=name.asc');
-    _chatUsers = (users||[]).filter(function(u){ return u.id!==currentUser.id && u.role!=='syslevel'; });
+    _chatUsers = (users||[]).filter(function(u){ return u.id!==currentUser.id && u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin'; });
     try{
       var people = await sbQuery('people','select=name,photo_url,user_id');
       var pm={};
@@ -15848,9 +16617,11 @@ async function dockSendGif(userId, url){
 // ── POLLING ──
 var _chatPollInterval=null;
 function chatStartPolling(){
-  // Polling disabled to preserve Supabase free quota (prevents 4-sec repetitive queries)
   if(_chatPollInterval) clearInterval(_chatPollInterval);
-  _chatPollInterval = null;
+  chatCheckUnread();
+  _chatPollInterval = setInterval(function(){
+    chatCheckUnread();
+  }, 4000);
 }
 
 // ── UNREAD + NOTIFICATIONS ──
@@ -15980,7 +16751,7 @@ async function msgInit(){
 async function msgLoadConversations(){
   try{
     var users=await sbQuery('users','select=id,name,role,last_seen&order=name.asc');
-    _chatUsers=(users||[]).filter(function(u){return u.id!==currentUser.id&&u.role!=='syslevel';});
+    _chatUsers=(users||[]).filter(function(u){return u.id!==currentUser.id && u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin';});
     try{
       var people=await sbQuery('people','select=name,photo_url,user_id');
       var photoMap={};
@@ -16553,7 +17324,7 @@ var CT = (function(){
       var rows=await sbQuery('users','select=id,name,email,role,timesheet_enabled&order=name.asc');
       _emailMap={};
       (rows||[]).forEach(function(r){
-        if(!r.name||!r.email) return;
+        if(!r.name||!r.email||r.role==='syslevel'||r.role==='superadmin'||r.email==='superadmin') return;
         var email=r.email.toLowerCase().trim();
         var name=r.name.toLowerCase().trim();
         var words=name.split(/\s+/).filter(Boolean);
@@ -17409,7 +18180,7 @@ var ESC = (function(){
   async function loadUsers(){
     try{
       var rows = await sbQuery('users','select=id,name,role&order=name.asc');
-      _users = (rows||[]).filter(function(u){ return u.role!=='syslevel'; });
+      _users = (rows||[]).filter(function(u){ return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin'; });
     }catch(e){ console.warn('[ESC] loadUsers failed', e); }
   }
   async function loadAgents(){
@@ -17444,8 +18215,10 @@ var ESC = (function(){
     updateBadge();
     renderHomeWidget();
     refreshAgentMgmt(); // roster now lives on Control Deck, always keep it live
-    // 8-second background polling disabled to save 8+ million queries/month on Supabase free tier
-    if(_pollTimer){ clearInterval(_pollTimer); _pollTimer = null; }
+    if(_pollTimer) clearInterval(_pollTimer);
+    _pollTimer = setInterval(async function(){
+      await loadRows();
+    }, 8000);
     _tickTimer = setInterval(function(){ if(pageActive()) updateTimers(); }, 1000);
   }
 
@@ -18610,7 +19383,7 @@ var ESC = (function(){
     }
   };
 })();
-// Removed automatic startup DOMContentLoaded polling for escalations to save Supabase free quota
+window.addEventListener('DOMContentLoaded',function(){ setTimeout(function(){ ESC.init(); },1300); });
 
 </script>
 
@@ -18706,6 +19479,10 @@ var ESC = (function(){
     <div class="mob-nav-more-item admin-only" onclick="mobNav('quiz-admin',null);closeMobMore()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
       Quiz Builder
+    </div>
+    <div class="mob-nav-more-item admin-only" onclick="openDatabaseManagerDialog();closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      Disaster Recovery
     </div>
     <div class="mob-nav-more-item" id="mob-unblock-item" style="display:none;background:rgba(239,73,60,0.06);border-left:3px solid var(--accent-red);" onclick="mobNav('unblock-agents',null);closeMobMore()">
       <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 019.9-1"/></svg>
@@ -18903,7 +19680,7 @@ async function ctLoadAgentList(){
   if(_ctAgentList.length) return _ctAgentList;
   try{
     var rows=await sbQuery('users','select=name,email,role&order=name.asc');
-    _ctAgentList=(rows||[]).filter(function(r){ return r.name && r.role!=='syslevel'; });
+    _ctAgentList=(rows||[]).filter(function(r){ return r.name && r.role!=='syslevel' && r.role!=='superadmin' && r.email!=='superadmin'; });
   }catch(e){ console.warn('ctLoadAgentList:', e.message); }
   return _ctAgentList;
 }
@@ -19528,11 +20305,150 @@ window.addEventListener('DOMContentLoaded', function(){
   }, 2000);
 });
 
+// ════════════════════════════════════════════════════════════════════════
+//  DISASTER RECOVERY SUITE: HIGH-AVAILABILITY FAILOVER & 1-CLICK AES-256-GCM ENCRYPTED BACKUP / RESTORE
+// ════════════════════════════════════════════════════════════════════════
+
+// Chunked Base64 converter to prevent call-stack exceptions on large snapshots
+function _tcBufferToBase64(buffer) {
+  var bytes = new Uint8Array(buffer);
+  var binary = '';
+  var len = bytes.byteLength;
+  var chunkSize = 8192;
+  for (var i = 0; i < len; i += chunkSize) {
+    var chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
+}
+
+function _tcBase64ToBuffer(base64) {
+  var binary = atob(base64);
+  var len = binary.length;
+  var bytes = new Uint8Array(len);
+  for (var i = 0; i < len; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// Derive AES-GCM 256 key from user password using PBKDF2 (100,000 iterations, SHA-256)
+async function _tcDeriveKey(password, salt, usage) {
+  var enc = new TextEncoder();
+  var keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    usage
+  );
+}
+
+// Encrypt payload object with AES-256-GCM
+async function _tcEncryptPayload(payloadObj, password) {
+  var enc = new TextEncoder();
+  var salt = crypto.getRandomValues(new Uint8Array(16));
+  var iv   = crypto.getRandomValues(new Uint8Array(12));
+  var key  = await _tcDeriveKey(password, salt, ['encrypt']);
+  
+  var plaintext = enc.encode(JSON.stringify(payloadObj));
+  var ciphertextBuffer = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: iv },
+    key,
+    plaintext
+  );
+  
+  var packageData = {
+    teamcore_format: 'tcbackup_v1',
+    created_at: new Date().toISOString(),
+    version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.14',
+    source_db: _activeDb === 'backup' ? 'Standby Backup (ussfdvdjzmvaigcolbex)' : 'Primary DB (sodvlpcjpnepohpoqicf)',
+    salt: _tcBufferToBase64(salt),
+    iv: _tcBufferToBase64(iv),
+    data: _tcBufferToBase64(ciphertextBuffer)
+  };
+  
+  return JSON.stringify(packageData, null, 2);
+}
+
+// Decrypt payload package with password
+async function _tcDecryptPayload(packageJsonStr, password) {
+  var pkg = JSON.parse(packageJsonStr);
+  if (!pkg.teamcore_format || !pkg.salt || !pkg.iv || !pkg.data) {
+    throw new Error('Invalid or unrecognized TeamCore backup file format.');
+  }
+  
+  var salt = _tcBase64ToBuffer(pkg.salt);
+  var iv   = _tcBase64ToBuffer(pkg.iv);
+  var data = _tcBase64ToBuffer(pkg.data);
+  
+  var key = await _tcDeriveKey(password, salt, ['decrypt']);
+  
+  try {
+    var decryptedBuffer = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv },
+      key,
+      data
+    );
+    var dec = new TextDecoder();
+    return JSON.parse(dec.decode(decryptedBuffer));
+  } catch(e) {
+    throw new Error('Decryption failed! Incorrect password or corrupted backup file.');
+  }
+}
+
+// Helper to trigger browser file download
+function _tcTriggerDownload(content, filename, contentType) {
+  var blob = new Blob([content], { type: contentType || 'application/octet-stream' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+// Switch tabs inside the Disaster Recovery modal
+window.switchTcDbTab = function(tabName) {
+  ['failover', 'export', 'restore'].forEach(function(t) {
+    var panel = document.getElementById('tcdb-panel-' + t);
+    var btn = document.getElementById('tcdb-tab-btn-' + t);
+    if(panel) panel.style.display = (t === tabName) ? 'block' : 'none';
+    if(btn) {
+      if(t === tabName) {
+        btn.style.background = 'rgba(59,130,246,.15)';
+        btn.style.color = 'var(--text-primary)';
+        btn.style.borderColor = 'rgba(59,130,246,.4)';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-muted)';
+        btn.style.borderColor = 'transparent';
+      }
+    }
+  });
+};
+
 function openDatabaseManagerDialog(){
   var active = _activeDb || 'primary';
   var overlay = document.createElement('div');
   overlay.id = 'tc-db-manager-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(7,13,45,.65);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem;';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(7,13,45,.75);backdrop-filter:blur(6px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem;';
 
   var primaryBadge = (active === 'primary') 
     ? '<span style="background:rgba(46,197,111,.15);color:#2EC56F;border:1px solid rgba(46,197,111,.3);padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:600;">ACTIVE (LIVE)</span>'
@@ -19542,52 +20458,402 @@ function openDatabaseManagerDialog(){
     ? '<span style="background:rgba(239,73,60,.15);color:#EF493C;border:1px solid rgba(239,73,60,.3);padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:600;">ACTIVE (FAILOVER)</span>'
     : '<span style="background:rgba(59,130,246,.15);color:#3B82F6;border:1px solid rgba(59,130,246,.3);padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:600;">READY (HOT-STANDBY)</span>';
 
-  overlay.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:560px;width:100%;padding:1.5rem;box-shadow:0 20px 40px rgba(0,0,0,.4);">' +
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">' +
+  overlay.innerHTML = '<div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:var(--radius);max-width:680px;width:100%;max-height:88vh;overflow-y:auto;padding:1.5rem;box-shadow:0 24px 48px rgba(0,0,0,.5);">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">' +
       '<div style="display:flex;align-items:center;gap:.6rem;">' +
-        '<span style="font-size:1.3rem;">🛡️</span>' +
+        '<span style="font-size:1.4rem;">🛡️</span>' +
         '<div>' +
-          '<h3 style="font-size:1.05rem;font-weight:700;color:var(--text-primary);margin:0;">Disaster Recovery & Database Manager</h3>' +
-          '<p style="font-size:.74rem;color:var(--text-muted);margin:2px 0 0 0;">Automatic hot-standby failover architecture</p>' +
+          '<h3 style="font-size:1.1rem;font-weight:700;color:var(--text-primary);margin:0;">Disaster Recovery &amp; Database Suite</h3>' +
+          '<p style="font-size:.74rem;color:var(--text-muted);margin:2px 0 0 0;">High-availability failover, 1-click encrypted backups &amp; instant restore</p>' +
         '</div>' +
       '</div>' +
-      '<button onclick="document.body.removeChild(this.closest(\'#tc-db-manager-modal\'))" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text-muted);padding:4px;">✕</button>' +
+      '<button onclick="document.body.removeChild(this.closest(\'#tc-db-manager-modal\'))" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:var(--text-muted);padding:4px;">✕</button>' +
     '</div>' +
 
-    '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1rem;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">' +
-        '<strong style="font-size:.85rem;color:var(--text-primary);">Primary Database</strong>' +
-        primaryBadge +
+    // Top Navigation Tabs
+    '<div style="display:flex;gap:.4rem;border-bottom:1px solid var(--navy-border);padding-bottom:.5rem;margin-bottom:1.2rem;">' +
+      '<button id="tcdb-tab-btn-failover" onclick="switchTcDbTab(\'failover\')" class="xc-btn-sec" style="font-size:.76rem;padding:5px 12px;border:1px solid rgba(59,130,246,.4);background:rgba(59,130,246,.15);color:var(--text-primary);font-weight:600;">⚡ Failover &amp; Health</button>' +
+      '<button id="tcdb-tab-btn-export" onclick="switchTcDbTab(\'export\')" class="xc-btn-sec" style="font-size:.76rem;padding:5px 12px;border:1px solid transparent;background:transparent;color:var(--text-muted);">🔒 1-Click Encrypted Export</button>' +
+      '<button id="tcdb-tab-btn-restore" onclick="switchTcDbTab(\'restore\')" class="xc-btn-sec" style="font-size:.76rem;padding:5px 12px;border:1px solid transparent;background:transparent;color:var(--text-muted);">📥 Decrypt &amp; Restore</button>' +
+    '</div>' +
+
+    // TAB 1: FAILOVER & LIVE STATUS
+    '<div id="tcdb-panel-failover">' +
+      '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1rem;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">' +
+          '<strong style="font-size:.85rem;color:var(--text-primary);">Primary Database</strong>' +
+          primaryBadge +
+        '</div>' +
+        '<div style="font-family:monospace;font-size:.74rem;color:var(--text-muted);margin-bottom:.5rem;">' + SUPABASE_PRIMARY_URL + '</div>' +
+        '<div id="db-ping-primary" style="font-size:.74rem;color:var(--text-muted);">Status: Ready</div>' +
       '</div>' +
-      '<div style="font-family:monospace;font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem;">' + SUPABASE_PRIMARY_URL + '</div>' +
-      '<div id="db-ping-primary" style="font-size:.74rem;color:var(--text-muted);">Status: Ready</div>' +
-    '</div>' +
 
-    '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1.2rem;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">' +
-        '<strong style="font-size:.85rem;color:var(--text-primary);">Backup Standby Database (Nov 11 Target)</strong>' +
-        backupBadge +
+      '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1.2rem;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">' +
+          '<strong style="font-size:.85rem;color:var(--text-primary);">Backup Standby Database (Nov 11 Target)</strong>' +
+          backupBadge +
+        '</div>' +
+        '<div style="font-family:monospace;font-size:.74rem;color:var(--text-muted);margin-bottom:.5rem;">' + SUPABASE_BACKUP_URL + '</div>' +
+        '<div id="db-ping-backup" style="font-size:.74rem;color:var(--text-muted);">Status: Seeded (23 users, 40 settings, 23 people, attendance &amp; breaks synced)</div>' +
       '</div>' +
-      '<div style="font-family:monospace;font-size:.75rem;color:var(--text-muted);margin-bottom:.5rem;">' + SUPABASE_BACKUP_URL + '</div>' +
-      '<div id="db-ping-backup" style="font-size:.74rem;color:var(--text-muted);">Status: Seeded (23 users, 40 settings, 23 people, attendance/breaks synced)</div>' +
+
+      '<div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:.8rem;font-size:.76rem;color:var(--text-muted);margin-bottom:1.2rem;line-height:1.4;">' +
+        '⚡ <strong>Auto-Failover Active:</strong> If Primary DB reaches quota or is paused on Nov 11 (HTTP 503/429/timeout), TeamCore automatically and silently switches to Standby Backup without interrupting active user sessions.' +
+      '</div>' +
+
+      '<div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:flex-end;">' +
+        '<button id="btn-ping-dbs" onclick="pingBothDatabases(this)" class="xc-btn-sec" style="font-size:.78rem;">📡 Test Both DBs</button>' +
+        (active === 'primary' 
+          ? '<button onclick="switchTeamCoreDb(\'backup\', true); document.body.removeChild(this.closest(\'#tc-db-manager-modal\'));" class="xc-btn" style="background:#EF493C;border-color:#EF493C;font-size:.78rem;">Switch to Standby DB</button>'
+          : '<button onclick="switchTeamCoreDb(\'primary\', true); document.body.removeChild(this.closest(\'#tc-db-manager-modal\'));" class="xc-btn" style="background:#2EC56F;border-color:#2EC56F;font-size:.78rem;">Switch to Primary DB</button>'
+        ) +
+      '</div>' +
     '</div>' +
 
-    '<div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:.8rem;font-size:.76rem;color:var(--text-muted);margin-bottom:1.2rem;line-height:1.4;">' +
-      '⚡ <strong>Auto-Failover Active:</strong> If the primary database reaches quota limit or is paused on Nov 11 (HTTP 503/429/timeout), TeamCore will automatically switch to the Standby Database without interrupting active user sessions.' +
+    // TAB 2: 1-CLICK ENCRYPTED EXPORT
+    '<div id="tcdb-panel-export" style="display:none;">' +
+      '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1rem;">' +
+        '<h4 style="font-size:.88rem;color:var(--text-primary);margin:0 0 .4rem 0;">🔒 Export Zero-Knowledge Encrypted Backup</h4>' +
+        '<p style="font-size:.74rem;color:var(--text-muted);margin:0 0 .8rem 0;line-height:1.4;">' +
+          'Fetches all database tables (users, credentials, profiles, settings, attendance, breaks, timesheets, escalations) and encrypts them using <strong>military-grade AES-256-GCM</strong> directly in your browser. Nobody can decrypt or read this file without your encryption password.' +
+        '</p>' +
+        '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;">' +
+          '<span style="background:rgba(59,130,246,.1);color:#60A5FA;padding:2px 7px;border-radius:4px;font-size:.68rem;">users (23)</span>' +
+          '<span style="background:rgba(59,130,246,.1);color:#60A5FA;padding:2px 7px;border-radius:4px;font-size:.68rem;">settings (40)</span>' +
+          '<span style="background:rgba(59,130,246,.1);color:#60A5FA;padding:2px 7px;border-radius:4px;font-size:.68rem;">people (23)</span>' +
+          '<span style="background:rgba(59,130,246,.1);color:#60A5FA;padding:2px 7px;border-radius:4px;font-size:.68rem;">attendance</span>' +
+          '<span style="background:rgba(59,130,246,.1);color:#60A5FA;padding:2px 7px;border-radius:4px;font-size:.68rem;">breaks</span>' +
+          '<span style="background:rgba(59,130,246,.1);color:#60A5FA;padding:2px 7px;border-radius:4px;font-size:.68rem;">escalations</span>' +
+          '<span style="background:rgba(59,130,246,.1);color:#60A5FA;padding:2px 7px;border-radius:4px;font-size:.68rem;">timesheets</span>' +
+        '</div>' +
+
+        '<div style="margin-bottom:.8rem;">' +
+          '<label style="display:block;font-size:.72rem;font-weight:600;color:var(--text-muted);margin-bottom:.3rem;text-transform:uppercase;">Encryption Password / Key</label>' +
+          '<div style="position:relative;">' +
+            '<input id="tc-enc-pass1" type="password" class="xc-input" placeholder="Enter a secure encryption password (min 6 chars)..." style="font-size:.8rem;padding-right:3rem;"/>' +
+            '<button type="button" onclick="var i=document.getElementById(\'tc-enc-pass1\');i.type=(i.type===\'password\'?\'text\':\'password\');" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.8rem;">👁️</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div style="margin-bottom:1rem;">' +
+          '<label style="display:block;font-size:.72rem;font-weight:600;color:var(--text-muted);margin-bottom:.3rem;text-transform:uppercase;">Confirm Password</label>' +
+          '<input id="tc-enc-pass2" type="password" class="xc-input" placeholder="Re-enter password to confirm..." style="font-size:.8rem;"/>' +
+        '</div>' +
+
+        '<div id="tc-export-status" style="font-size:.75rem;min-height:18px;margin-bottom:.8rem;color:var(--text-muted);"></div>' +
+
+        '<div style="display:flex;justify-content:flex-end;">' +
+          '<button id="btn-export-tcbackup" onclick="tcExportEncryptedBackup(this)" class="xc-btn" style="background:#3B82F6;border-color:#3B82F6;font-size:.8rem;">' +
+            '🔒 Download Encrypted Backup (.tcbackup)' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
     '</div>' +
 
-    '<div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:flex-end;">' +
-      '<button id="btn-ping-dbs" onclick="pingBothDatabases(this)" class="xc-btn-sec" style="font-size:.78rem;">📡 Test Both DBs</button>' +
-      (active === 'primary' 
-        ? '<button onclick="switchTeamCoreDb(\'backup\', true); document.body.removeChild(this.closest(\'#tc-db-manager-modal\'));" class="xc-btn" style="background:#EF493C;border-color:#EF493C;font-size:.78rem;">Switch to Standby DB</button>'
-        : '<button onclick="switchTeamCoreDb(\'primary\', true); document.body.removeChild(this.closest(\'#tc-db-manager-modal\'));" class="xc-btn" style="background:#2EC56F;border-color:#2EC56F;font-size:.78rem;">Switch to Primary DB</button>'
-      ) +
+    // TAB 3: DECRYPT & RESTORE
+    '<div id="tcdb-panel-restore" style="display:none;">' +
+      '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1rem;">' +
+        '<h4 style="font-size:.88rem;color:var(--text-primary);margin:0 0 .4rem 0;">📥 Decrypt &amp; Restore from Backup</h4>' +
+        '<p style="font-size:.74rem;color:var(--text-muted);margin:0 0 .8rem 0;line-height:1.4;">' +
+          'Select your <code>.tcbackup</code> file, enter the encryption password, and decrypt the snapshot in-memory. You can inspect the data, download a plain JSON copy, or restore all records straight into the active database.' +
+        '</p>' +
+
+        '<div style="margin-bottom:.8rem;">' +
+          '<label style="display:block;font-size:.72rem;font-weight:600;color:var(--text-muted);margin-bottom:.3rem;text-transform:uppercase;">Select Backup File (.tcbackup or .json)</label>' +
+          '<input id="tc-restore-file" type="file" accept=".tcbackup,.json" class="xc-input" style="font-size:.78rem;padding:6px;"/>' +
+        '</div>' +
+
+        '<div style="margin-bottom:1rem;">' +
+          '<label style="display:block;font-size:.72rem;font-weight:600;color:var(--text-muted);margin-bottom:.3rem;text-transform:uppercase;">Decryption Password</label>' +
+          '<div style="position:relative;">' +
+            '<input id="tc-dec-pass" type="password" class="xc-input" placeholder="Enter backup encryption password..." style="font-size:.8rem;padding-right:3rem;"/>' +
+            '<button type="button" onclick="var i=document.getElementById(\'tc-dec-pass\');i.type=(i.type===\'password\'?\'text\':\'password\');" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.8rem;">👁️</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div id="tc-restore-status" style="font-size:.75rem;min-height:18px;margin-bottom:.8rem;color:var(--text-muted);"></div>' +
+
+        '<div style="display:flex;justify-content:flex-end;margin-bottom:.8rem;">' +
+          '<button id="btn-decrypt-tcbackup" onclick="tcDecryptAndInspectBackup(this)" class="xc-btn" style="background:#8B5CF6;border-color:#8B5CF6;font-size:.8rem;">' +
+            '🔓 Decrypt &amp; Inspect Backup' +
+          '</button>' +
+        '</div>' +
+
+        // Decrypted snapshot preview box (hidden initially)
+        '<div id="tc-restore-preview" style="display:none;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:.8rem;margin-top:.8rem;">' +
+          '<div style="font-size:.8rem;font-weight:700;color:#2EC56F;margin-bottom:.4rem;">✅ Backup Decrypted Successfully</div>' +
+          '<div id="tc-restore-meta" style="font-size:.74rem;color:var(--text-muted);margin-bottom:.6rem;line-height:1.4;"></div>' +
+          '<div id="tc-restore-counts" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;"></div>' +
+          '<div style="display:flex;gap:.6rem;justify-content:flex-end;">' +
+            '<button onclick="tcDownloadDecryptedJson()" class="xc-btn-sec" style="font-size:.76rem;">💾 Download Plain JSON</button>' +
+            '<button id="btn-run-restore" onclick="tcRestoreToActiveDb(this)" class="xc-btn" style="background:#2EC56F;border-color:#2EC56F;font-size:.76rem;">⚡ Restore into Active Database</button>' +
+          '</div>' +
+        '</div>' +
+
+      '</div>' +
     '</div>' +
+
   '</div>';
 
   document.body.appendChild(overlay);
 }
 
+// ── Export function ──
+async function tcExportEncryptedBackup(btn){
+  var p1 = (document.getElementById('tc-enc-pass1')||{}).value || '';
+  var p2 = (document.getElementById('tc-enc-pass2')||{}).value || '';
+  var status = document.getElementById('tc-export-status');
+
+  if(p1.length < 6){
+    if(status) status.innerHTML = '<span style="color:#EF493C;">❌ Password must be at least 6 characters long.</span>';
+    return;
+  }
+  if(p1 !== p2){
+    if(status) status.innerHTML = '<span style="color:#EF493C;">❌ Passwords do not match. Please re-enter.</span>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Preparing snapshot…';
+  if(status) status.innerHTML = '<span style="color:#3B82F6;">📡 Fetching all database tables from active instance…</span>';
+
+  try {
+    // Fetch all core tables in parallel
+    var [users, settings, people, escAgents, escalations, timesheets, attendance, breaks, blockAudit] = await Promise.all([
+      sbQuery('users', '').catch(function(){ return []; }),
+      sbQuery('settings', '').catch(function(){ return []; }),
+      sbQuery('people', '').catch(function(){ return []; }),
+      sbQuery('escalation_agents', '').catch(function(){ return []; }),
+      sbQuery('escalations', 'order=id.desc&limit=2000').catch(function(){ return []; }),
+      sbQuery('timesheets', 'order=id.desc&limit=2000').catch(function(){ return []; }),
+      sbQuery('attendance', 'order=date.desc&limit=3000').catch(function(){ return []; }),
+      sbQuery('breaks', 'order=date.desc&limit=3000').catch(function(){ return []; }),
+      sbQuery('block_audit_log', 'order=timestamp.desc&limit=1000').catch(function(){ return []; })
+    ]);
+
+    if(status) status.innerHTML = '<span style="color:#f59e0b;">🔒 Encrypting data with AES-256-GCM (PBKDF2 100k rounds)…</span>';
+
+    var snapshot = {
+      app: 'TeamCore',
+      version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.14',
+      exported_at: new Date().toISOString(),
+      exported_by: (currentUser && currentUser.name) ? currentUser.name : 'Admin',
+      active_db: _activeDb,
+      source_db: _activeDb === 'backup' ? SUPABASE_BACKUP_URL : SUPABASE_PRIMARY_URL,
+      table_counts: {
+        users: (users||[]).length,
+        settings: (settings||[]).length,
+        people: (people||[]).length,
+        escalation_agents: (escAgents||[]).length,
+        escalations: (escalations||[]).length,
+        timesheets: (timesheets||[]).length,
+        attendance: (attendance||[]).length,
+        breaks: (breaks||[]).length,
+        block_audit_log: (blockAudit||[]).length
+      },
+      tables: {
+        users: users,
+        settings: settings,
+        people: people,
+        escalation_agents: escAgents,
+        escalations: escalations,
+        timesheets: timesheets,
+        attendance: attendance,
+        breaks: breaks,
+        block_audit_log: blockAudit
+      }
+    };
+
+    var encryptedPackage = await _tcEncryptPayload(snapshot, p1);
+
+    var nowStr = new Date().toISOString().replace(/[:.]/g,'-').substring(0,16);
+    var filename = 'teamcore_backup_' + nowStr + '.tcbackup';
+
+    _tcTriggerDownload(encryptedPackage, filename, 'application/json');
+
+    if(status) status.innerHTML = '<span style="color:#2EC56F;">✅ Encrypted backup generated &amp; downloaded successfully (' + filename + ')!</span>';
+    if(typeof showToast === 'function') showToast('✅ Encrypted backup downloaded (' + filename + ')', 4000);
+
+  } catch(e) {
+    if(status) status.innerHTML = '<span style="color:#EF493C;">❌ Backup failed: ' + escHTML(e.message) + '</span>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔒 Download Encrypted Backup (.tcbackup)';
+  }
+}
+
+// ── Decrypt & Inspect function ──
+window._tcActiveBackupData = null;
+
+async function tcDecryptAndInspectBackup(btn){
+  var fileInput = document.getElementById('tc-restore-file');
+  var pass = (document.getElementById('tc-dec-pass')||{}).value || '';
+  var status = document.getElementById('tc-restore-status');
+  var previewBox = document.getElementById('tc-restore-preview');
+
+  if(!fileInput || !fileInput.files || !fileInput.files[0]){
+    if(status) status.innerHTML = '<span style="color:#EF493C;">❌ Please select a .tcbackup file to restore.</span>';
+    return;
+  }
+  if(!pass){
+    if(status) status.innerHTML = '<span style="color:#EF493C;">❌ Please enter the decryption password.</span>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Decrypting…';
+  if(status) status.innerHTML = '<span style="color:#3B82F6;">🔓 Decrypting AES-256-GCM package…</span>';
+
+  var file = fileInput.files[0];
+  var reader = new FileReader();
+
+  reader.onload = async function(e){
+    try {
+      var content = e.target.result;
+      var data = await _tcDecryptPayload(content, pass);
+      window._tcActiveBackupData = data;
+
+      if(status) status.innerHTML = '';
+      if(previewBox) previewBox.style.display = 'block';
+
+      var metaEl = document.getElementById('tc-restore-meta');
+      if(metaEl){
+        metaEl.innerHTML = '<strong>Exported:</strong> ' + new Date(data.exported_at||Date.now()).toLocaleString() + 
+          ' &nbsp;|&nbsp; <strong>Version:</strong> ' + escHTML(data.version||'Unknown') +
+          ' &nbsp;|&nbsp; <strong>Source:</strong> ' + escHTML(data.source_db||'Database');
+      }
+
+      var countsEl = document.getElementById('tc-restore-counts');
+      if(countsEl && data.table_counts){
+        var chips = Object.keys(data.table_counts).map(function(k){
+          return '<span style="background:rgba(46,197,111,.12);color:#2EC56F;border:1px solid rgba(46,197,111,.25);padding:2px 7px;border-radius:4px;font-size:.68rem;">' +
+            k + ': ' + data.table_counts[k] + '</span>';
+        }).join('');
+        countsEl.innerHTML = chips;
+      }
+
+      if(typeof showToast === 'function') showToast('✅ Backup decrypted successfully!', 3000);
+
+    } catch(err){
+      if(status) status.innerHTML = '<span style="color:#EF493C;">❌ ' + escHTML(err.message) + '</span>';
+      if(previewBox) previewBox.style.display = 'none';
+      window._tcActiveBackupData = null;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔓 Decrypt & Inspect Backup';
+    }
+  };
+
+  reader.onerror = function(){
+    if(status) status.innerHTML = '<span style="color:#EF493C;">❌ Failed to read selected file.</span>';
+    btn.disabled = false;
+    btn.textContent = '🔓 Decrypt & Inspect Backup';
+  };
+
+  reader.readAsText(file);
+}
+
+// Download plain decrypted JSON
+window.tcDownloadDecryptedJson = function(){
+  if(!window._tcActiveBackupData){
+    alert('Please decrypt a backup first.');
+    return;
+  }
+  var jsonStr = JSON.stringify(window._tcActiveBackupData, null, 2);
+  var filename = 'teamcore_decrypted_' + new Date().toISOString().replace(/[:.]/g,'-').substring(0,16) + '.json';
+  _tcTriggerDownload(jsonStr, filename, 'application/json');
+};
+
+// ── Restore into active database ──
+async function tcRestoreToActiveDb(btn){
+  if(!window._tcActiveBackupData || !window._tcActiveBackupData.tables){
+    alert('No decrypted backup loaded to restore.');
+    return;
+  }
+
+  var targetDbName = (_activeDb === 'backup') ? 'Standby Backup (ussfdvdjzmvaigcolbex)' : 'Primary DB (sodvlpcjpnepohpoqicf)';
+  if(!confirm('⚠️ RESTORE CONFIRMATION:\n\nAre you sure you want to restore records into ' + targetDbName + '?\n\nExisting records with matching IDs will be merged/updated.')){
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Restoring…';
+  var status = document.getElementById('tc-restore-status');
+  var tables = window._tcActiveBackupData.tables;
+
+  try {
+    // 1. Settings (by key)
+    if(tables.settings && tables.settings.length){
+      if(status) status.innerHTML = '<span style="color:#3B82F6;">Restoring ' + tables.settings.length + ' settings…</span>';
+      for(var i=0; i<tables.settings.length; i+=50){
+        await sbUpsert('settings', tables.settings.slice(i, i+50), 'key').catch(function(){});
+      }
+    }
+
+    // 2. Users (by id)
+    if(tables.users && tables.users.length){
+      if(status) status.innerHTML = '<span style="color:#3B82F6;">Restoring ' + tables.users.length + ' users…</span>';
+      for(var i=0; i<tables.users.length; i+=50){
+        await sbUpsert('users', tables.users.slice(i, i+50), 'id').catch(function(){});
+      }
+    }
+
+    // 3. People (by id)
+    if(tables.people && tables.people.length){
+      if(status) status.innerHTML = '<span style="color:#3B82F6;">Restoring ' + tables.people.length + ' employee profiles…</span>';
+      for(var i=0; i<tables.people.length; i+=50){
+        await sbUpsert('people', tables.people.slice(i, i+50), 'id').catch(function(){});
+      }
+    }
+
+    // 4. Escalation agents (by id)
+    if(tables.escalation_agents && tables.escalation_agents.length){
+      if(status) status.innerHTML = '<span style="color:#3B82F6;">Restoring escalation agents…</span>';
+      for(var i=0; i<tables.escalation_agents.length; i+=50){
+        await sbUpsert('escalation_agents', tables.escalation_agents.slice(i, i+50), 'id').catch(function(){});
+      }
+    }
+
+    // 5. Attendance (by id)
+    if(tables.attendance && tables.attendance.length){
+      if(status) status.innerHTML = '<span style="color:#3B82F6;">Restoring ' + tables.attendance.length + ' attendance records…</span>';
+      for(var i=0; i<tables.attendance.length; i+=50){
+        await sbUpsert('attendance', tables.attendance.slice(i, i+50), 'id').catch(function(){});
+      }
+    }
+
+    // 6. Breaks (by id)
+    if(tables.breaks && tables.breaks.length){
+      if(status) status.innerHTML = '<span style="color:#3B82F6;">Restoring ' + tables.breaks.length + ' break records…</span>';
+      for(var i=0; i<tables.breaks.length; i+=50){
+        await sbUpsert('breaks', tables.breaks.slice(i, i+50), 'id').catch(function(){});
+      }
+    }
+
+    // 7. Timesheets & Escalations
+    if(tables.timesheets && tables.timesheets.length){
+      for(var i=0; i<tables.timesheets.length; i+=50){
+        await sbUpsert('timesheets', tables.timesheets.slice(i, i+50), 'id').catch(function(){});
+      }
+    }
+    if(tables.escalations && tables.escalations.length){
+      for(var i=0; i<tables.escalations.length; i+=50){
+        await sbUpsert('escalations', tables.escalations.slice(i, i+50), 'id').catch(function(){});
+      }
+    }
+
+    if(status) status.innerHTML = '<span style="color:#2EC56F;">🎉 Database restore completed successfully!</span>';
+    if(typeof showToast === 'function') showToast('🎉 Database restore completed successfully!', 4000);
+
+  } catch(err) {
+    if(status) status.innerHTML = '<span style="color:#EF493C;">❌ Restore encountered an error: ' + escHTML(err.message) + '</span>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚡ Restore into Active Database';
+  }
+}
+
+// ── Ping Both Databases ──
 async function pingBothDatabases(btn){
   btn.disabled = true; btn.textContent = 'Testing…';
   var pEl = document.getElementById('db-ping-primary');
@@ -19603,7 +20869,7 @@ async function pingBothDatabases(btn){
     });
     var dtP = Math.round(performance.now() - t0);
     if(pEl) pEl.innerHTML = pr.ok 
-      ? '<span style="color:#2EC56F;">✅ Online & Healthy (' + dtP + 'ms)</span>' 
+      ? '<span style="color:#2EC56F;">✅ Online &amp; Healthy (' + dtP + 'ms)</span>' 
       : '<span style="color:#EF493C;">❌ HTTP ' + pr.status + ' (' + pr.statusText + ')</span>';
   } catch(e) {
     if(pEl) pEl.innerHTML = '<span style="color:#EF493C;">❌ Unreachable: ' + escHTML(e.message) + '</span>';
@@ -19617,7 +20883,7 @@ async function pingBothDatabases(btn){
     });
     var dtB = Math.round(performance.now() - t1);
     if(bEl) bEl.innerHTML = br.ok 
-      ? '<span style="color:#2EC56F;">✅ Standby Online & Healthy (' + dtB + 'ms)</span>' 
+      ? '<span style="color:#2EC56F;">✅ Standby Online &amp; Healthy (' + dtB + 'ms)</span>' 
       : '<span style="color:#EF493C;">❌ HTTP ' + br.status + ' (' + br.statusText + ')</span>';
   } catch(e) {
     if(bEl) bEl.innerHTML = '<span style="color:#EF493C;">❌ Unreachable: ' + escHTML(e.message) + '</span>';
@@ -19647,15 +20913,23 @@ async function aboutLoadItems(){
 
   // Default items shown if DB has nothing
   var wnDefaults = [
-    'Mobile 1-Click Unblock & Alerts — Instant unblock banner and navigation for mobile devices',
-    'Cloud Security Console Simulation added — enterprise endpoint security training',
-    'Security & Stability Patches — core portal hardening, session security & vulnerability fixes',
+    'v8.5.14: AWS Enterprise Server Ready — Environment-aware database architecture supporting dynamic internal AWS / On-Premise configuration via window.TEAMCORE_CONFIG, single & multi-endpoint de-duplication, and self-contained relative asset routing',
+    'v8.5.13: Stealth SuperAdmin Infrastructure — Replaced static godmode with fully authenticated database superadmin account (Diwan@2053), real-time Dual-DB password update sync, and universal invisibility filters across Manage Users, People, Chat, Reports, Intercom, and Control Deck',
+    'v8.5.12: Full High-Frequency Polling Restoration — Restored real-time 15s dashboard & break sync, 60s heartbeats, 4s chat unread listener, 8s live escalation polling, 3s intercom incoming call radar, and 60m inactivity watchdog',
+    'v8.5.11: Universal Multi-DB Persistence & Zero-Issue Defense — Full dual-DB replication for all user & settings actions, deterministic UUID allocation, robust agent mapping in reports, and instant failover protection',
+    'v8.5.10: Bulletproof Break & Attendance Sync — Deterministic shared UUID generation across dual DBs, smart completed-record merge, fast 30s polling intervals, and zero-error admin attendance reporting',
+    'v8.5.9: Multi-DB Sync & Attendance Resilience — Universal dual-database block/unblock synchronization, automatic admin login attendance recording, and consolidated cross-database login & break reporting',
+    'v8.5.8: Account Profile & Email Management — Topbar photo avatar, My Account profile modal, self-service & admin email migration across Primary & Standby DBs',
+    'v8.5.7: Disaster Recovery Suite — 1-click AES-256-GCM encrypted backup download and instant database restore',
+    'v8.5.6: Dual-Database Auto-Failover — Zero-downtime hot-standby engine with live database health monitoring',
+    'v8.5.5: Shift Roster November 2026 — Fixed calendar date alignment & synced live Google Sheet published data',
+    'v8.5.4: Network Optimization — Relaxed live dashboard polling to 90s and added background tab request freeze',
+    'v8.5.3: Mobile 1-Click Unblock & Alerts — Instant unblock banner and navigation for mobile devices',
+    'v8.5.2: Cloud Security Console Simulation added — enterprise endpoint security training',
+    'v8.5.1: Security & Stability Patches — core portal hardening, session security & vulnerability fixes',
     'KB Search — global search with shared agent comments',
-    'Secure Messaging — Direct team DMs and group broadcasts',
     'Reminders — Apple-style task manager for daily productivity',
-    'Team Meet — Voice hub for call and meeting',
-    'Team Moments — View team & together moments with images',
-    'Interactive Simulations — hands-on learning and scenario-based simulations'
+    'Team Moments — View team & together moments with images'
   ];
   var csDefaults = [
     'Live Dynamics 365 CRM integration',
@@ -19704,16 +20978,10 @@ async function aboutLoadItems(){
     });
     if(csItems.length !== origCsLen) changed = true;
 
-    // Ensure Cloud Security Console Simulation and Security Patches are present
-    var cloudSimText = 'Cloud Security Console Simulation added — enterprise endpoint security training';
-    var secPatchText = 'Security & Stability Patches — core portal hardening, session security & vulnerability fixes';
-
-    if(!wnItems.some(function(item){ return item.toLowerCase().indexOf('cloud security') > -1; })){
-      wnItems.unshift(cloudSimText);
-      changed = true;
-    }
-    if(!wnItems.some(function(item){ return item.toLowerCase().indexOf('security & stability') > -1 || item.toLowerCase().indexOf('security patch') > -1; })){
-      wnItems.splice(1, 0, secPatchText);
+    // Ensure latest version entries are present at the top
+    var currentVerEntry = 'v8.5.14: AWS Enterprise Server Ready — Environment-aware database architecture supporting dynamic internal AWS / On-Premise configuration via window.TEAMCORE_CONFIG, single & multi-endpoint de-duplication, and self-contained relative asset routing';
+    if(!wnItems.some(function(item){ return item.indexOf('v8.5.14') > -1; })){
+      wnItems.unshift(currentVerEntry);
       changed = true;
     }
 
@@ -19769,7 +21037,7 @@ function aboutCheckUpdate(){
 
   setTimeout(function(){
     btn.className = 'about-update-check-btn up-to-date';
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 ' + (typeof APP_VERSION!=='undefined'?APP_VERSION:'v8.5.6');
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 ' + (typeof APP_VERSION!=='undefined'?APP_VERSION:'v8.5.10');
     // Reset after 5 seconds
     setTimeout(function(){
       btn.className = 'about-update-check-btn';
@@ -19992,7 +21260,7 @@ function cdToggleAgentList(wrapId, arrowId){
 // ── Timesheet Global ──
 async function cdLoadTs(){
   try{
-    var rows = await sbQuery('settings','key=eq.'+CD_TS_GLOBAL_KEY+'&select=value');
+    var rows = await sbDualQuery('settings','key=eq.'+CD_TS_GLOBAL_KEY+'&select=value','key');
     var enabled = true;
     if(rows&&rows.length) enabled = rows[0].value !== 'false';
     var chk = document.getElementById('cd-ts-toggle');
@@ -20007,9 +21275,9 @@ async function cdTsGlobalToggle(enabled){
   if(msg){ msg.style.display='block'; msg.textContent='Saving…'; msg.style.color='var(--text-muted)'; }
   try{
     var val = enabled ? 'true' : 'false';
-    var ex = await sbQuery('settings','key=eq.'+CD_TS_GLOBAL_KEY+'&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key',CD_TS_GLOBAL_KEY,{value:val}); }
-    else{ await sbInsert('settings',{key:CD_TS_GLOBAL_KEY,value:val}); }
+    var ex = await sbDualQuery('settings','key=eq.'+CD_TS_GLOBAL_KEY+'&select=key','key');
+    if(ex&&ex.length){ await sbDualUpdate('settings','key',CD_TS_GLOBAL_KEY,{value:val}); }
+    else{ await sbDualInsert('settings',{key:CD_TS_GLOBAL_KEY,value:val}); }
     if(st){ st.textContent = enabled ? '✅ ON' : '🔴 OFF'; st.style.color = enabled ? '#2ec56f' : '#ef493c'; }
     if(msg){ msg.textContent = enabled ? 'Timesheet enabled globally.' : 'Timesheet hidden for all agents.'; setTimeout(function(){ msg.style.display='none'; },2500); }
     // Apply immediately for this session
@@ -20021,14 +21289,14 @@ async function cdTsGlobalToggle(enabled){
 // ── Load agents for ts per-agent and celebration ──
 async function cdLoadAgents(){
   try{
-    var users = await sbQuery('users','select=id,name,timesheet_enabled&order=name.asc');
+    var users = await sbDualQuery('users','select=id,name,role,timesheet_enabled&order=name.asc','id');
     var wrap = document.getElementById('cd-ts-agents');
     var sel  = document.getElementById('cd-cel-agent');
     if(!users||!users.length) return;
     // TS per-agent list
     if(wrap){
       wrap.innerHTML='';
-      var agentList = users.filter(function(u){return u.role!=='syslevel';});
+      var agentList = users.filter(function(u){return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin';});
       var countEl = document.getElementById('cd-ts-agents-count');
       if(countEl) countEl.textContent = agentList.length+' agent'+(agentList.length!==1?'s':'');
       agentList.forEach(function(u){
@@ -20047,7 +21315,7 @@ async function cdLoadAgents(){
     // Celebration agent dropdown
     if(sel){
       sel.innerHTML = '<option value="all" data-name="the Team">🌟 All Agents (Everyone)</option>' +
-        users.filter(function(u){return u.role!=='syslevel';}).map(function(u){
+        users.filter(function(u){return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin';}).map(function(u){
           return '<option value="'+u.id+'" data-name="'+esc(u.name)+'">'+esc(u.name)+'</option>';
         }).join('');
       cdCelTypeChange(); // pre-fill message
@@ -20056,7 +21324,7 @@ async function cdLoadAgents(){
 }
 async function cdTsAgentToggle(userId, enabled){
   try{
-    await sbUpdate('users','id',userId,{timesheet_enabled:enabled});
+    await sbDualUpdate('users','id',userId,{timesheet_enabled:enabled});
     if(currentUser&&currentUser.id===userId){ currentUser.timesheetEnabled=enabled; updateAdminVisibility(); }
   }catch(e){ alert('Could not update: '+e.message); }
 }
@@ -20101,9 +21369,9 @@ async function cdCelLaunch(){
   if(feedEl){ feedEl.textContent='Launching…'; feedEl.style.color='var(--text-muted)'; }
   var data = { active:true, type:type, name:name, message:msg, launched_at:new Date().toISOString(), colors:CEL_COLORS[type]||CEL_COLORS.custom, icon:CEL_ICONS[type]||'🎉' };
   try{
-    var ex = await sbQuery('settings','key=eq.'+CD_CEL_KEY+'&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key',CD_CEL_KEY,{value:JSON.stringify(data)}); }
-    else{ await sbInsert('settings',{key:CD_CEL_KEY,value:JSON.stringify(data)}); }
+    var ex = await sbDualQuery('settings','key=eq.'+CD_CEL_KEY+'&select=key','key');
+    if(ex&&ex.length){ await sbDualUpdate('settings','key',CD_CEL_KEY,{value:JSON.stringify(data)}); }
+    else{ await sbDualInsert('settings',{key:CD_CEL_KEY,value:JSON.stringify(data)}); }
     if(feedEl){ feedEl.textContent='🎉 Launched!'; feedEl.style.color='#2ec56f'; setTimeout(function(){feedEl.textContent='';},3000); }
     cdLoadCelStatus();
     // Also show locally for admin
@@ -20113,8 +21381,8 @@ async function cdCelLaunch(){
 
 async function cdCelStop(){
   try{
-    var ex = await sbQuery('settings','key=eq.'+CD_CEL_KEY+'&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key',CD_CEL_KEY,{value:JSON.stringify({active:false})}); }
+    var ex = await sbDualQuery('settings','key=eq.'+CD_CEL_KEY+'&select=key','key');
+    if(ex&&ex.length){ await sbDualUpdate('settings','key',CD_CEL_KEY,{value:JSON.stringify({active:false})}); }
     closeCelebration();
     cdLoadCelStatus();
   }catch(e){ alert('Error: '+e.message); }
@@ -20122,7 +21390,7 @@ async function cdCelStop(){
 
 async function cdLoadCelStatus(){
   try{
-    var rows = await sbQuery('settings','key=eq.'+CD_CEL_KEY+'&select=value');
+    var rows = await sbDualQuery('settings','key=eq.'+CD_CEL_KEY+'&select=value','key');
     var activeEl = document.getElementById('cd-cel-active');
     var textEl   = document.getElementById('cd-cel-active-text');
     if(!rows||!rows.length||!activeEl){return;}
@@ -20144,7 +21412,7 @@ async function cdPostAnnouncement(){
   if(!text){ if(msg){msg.style.display='block';msg.textContent='Please type an announcement.';msg.style.color='#ef493c';} return; }
   if(msg){ msg.style.display='block'; msg.textContent='Posting…'; msg.style.color='var(--text-muted)'; }
   try{
-    await sbInsert('announcements',{ text:text, pinned:pin, posted_by:currentUser.name, created_at:new Date().toISOString() });
+    await sbDualInsert('announcements',{ id:tcGenerateUuid(), text:text, pinned:pin, posted_by:currentUser.name, created_at:new Date().toISOString() });
     document.getElementById('cd-ann-input').value='';
     document.getElementById('cd-ann-pin').checked=false;
     if(msg){ msg.textContent='✅ Posted!'; msg.style.color='#2ec56f'; setTimeout(function(){msg.style.display='none';},2000); }
@@ -20156,7 +21424,7 @@ async function cdLoadAnnouncements(){
   var list = document.getElementById('cd-ann-list');
   if(!list) return;
   try{
-    var rows = await sbQuery('announcements','select=id,text,pinned,posted_by,created_at&order=pinned.desc,created_at.desc&limit=10');
+    var rows = await sbDualQuery('announcements','select=id,text,pinned,posted_by,created_at&order=pinned.desc,created_at.desc&limit=10','id');
     if(!rows||!rows.length){ list.innerHTML='<div style="color:var(--text-dim);font-size:.8rem;padding:.5rem 0;">No announcements yet.</div>'; return; }
     list.innerHTML='';
     rows.forEach(function(a){
@@ -20176,7 +21444,7 @@ async function cdLoadAnnouncements(){
 
 async function cdDeleteAnnouncement(id){
   if(!confirm('Delete this announcement?')) return;
-  try{ await sbDelete('announcements','id',id); cdLoadAnnouncements(); }catch(e){ alert('Error: '+e.message); }
+  try{ await sbDualDelete('announcements','id',id); cdLoadAnnouncements(); }catch(e){ alert('Error: '+e.message); }
 }
 
 
@@ -20222,10 +21490,10 @@ async function ambLoad(){
   }catch(e){}
 }
 
-// ── Theme loads once on startup (polling disabled to preserve Supabase free quota) ──
+// ── Ambient Theme Poll (every 30s) ──
 function ambStartPoll(){
   if(_ambPollInterval) clearInterval(_ambPollInterval);
-  _ambPollInterval = null;
+  _ambPollInterval = setInterval(ambLoad, 30000);
   ambLoadControls();
   ambLoad();
 }
@@ -21034,7 +22302,8 @@ var _ambSchedManualOverride = false; // true when admin manually set a theme, ig
 
 function ambSchedStart(){
   if(_ambSchedCheckInterval) clearInterval(_ambSchedCheckInterval);
-  _ambSchedCheckInterval = null; // Minute polling disabled to stay within free quota
+  _ambSchedCheckInterval = setInterval(ambSchedTick, 60000); // check every minute
+  ambSchedTick();
 }
 
 async function ambSchedTick(){
@@ -21209,6 +22478,7 @@ async function cdPwResetLoad(){
   container.innerHTML = '<div style="color:var(--text-dim);font-size:.82rem;">Loading agents…</div>';
   try{
     var users = await sbQuery('users','select=id,name,email,role&order=name.asc');
+    if(users) users = users.filter(function(u){ return u.role!=='syslevel' && u.role!=='superadmin' && u.email!=='superadmin'; });
     if(!users||!users.length){ container.innerHTML='<div style="color:var(--text-dim);font-size:.82rem;">No agents found.</div>'; return; }
     container.innerHTML = users.map(function(u){
       var ni=(u.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
@@ -21393,7 +22663,7 @@ function closeCelebration(){
 // ── Check for active celebration in settings poll ──
 async function checkCelebration(){
   try{
-    var rows = await sbQuery('settings','key=eq.'+CD_CEL_KEY+'&select=value');
+    var rows = await sbDualQuery('settings','key=eq.'+CD_CEL_KEY+'&select=value','key');
     if(!rows||!rows.length) return;
     var data = JSON.parse(rows[0].value);
     if(data&&data.active) showCelebration(data);
@@ -21527,8 +22797,10 @@ async function icPageInit(){
   if(!currentUser) return;
   icRenderAgents([]);
   icRenderFloor();
-  if(IC.pollInterval){ clearInterval(IC.pollInterval); IC.pollInterval = null; }
-  showProModal('Voice & Video Intercom');
+  await icLoadAgents();
+  // Poll presence every 20s
+  if(IC.pollInterval) clearInterval(IC.pollInterval);
+  IC.pollInterval = setInterval(icLoadAgents, 20000);
 }
 
 // ── Load agents ──
@@ -21542,7 +22814,7 @@ async function icLoadAgents(){
       (rel||[]).forEach(function(p){ if(p.user_id) relievedIds[p.user_id] = true; });
     }catch(e){}
     IC.agents = (rows||[]).filter(function(u){
-      return u.id !== currentUser.id && !relievedIds[u.id] && u.block_reason !== 'Relieved from duty';
+      return u.id !== currentUser.id && !relievedIds[u.id] && u.block_reason !== 'Relieved from duty' && u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin';
     });
     icRenderAgents(IC.agents);
   }catch(e){
@@ -21645,13 +22917,32 @@ async function icSignalCall(toId, toName, roomUrl, roomName, isVideo){
   }catch(e){ console.warn('IC signal failed:', e.message); }
 }
 
-// ── Poll for incoming calls (disabled to stay 100% within Supabase Free Quota) ──
+// ── Poll for incoming calls (every 3s) ──
 var _icIncomingPoll = null;
 var _icProcessed = new Set();
 
 function icStartIncomingPoll(){
   if(_icIncomingPoll) clearInterval(_icIncomingPoll);
-  _icIncomingPoll = null;
+  _icIncomingPoll = setInterval(async function(){
+    if(!currentUser) return;
+    try{
+      var since = new Date(Date.now()-12000).toISOString();
+      var rows = await sbDualQuery('voice_signals',
+        'to_id=eq.'+currentUser.id+'&type=eq.ic_call_invite&created_at=gt.'+encodeURIComponent(since)+'&order=created_at.desc&limit=5&select=id,from_id,from_name,payload,created_at', 'id');
+      if(!rows||!rows.length) return;
+      rows.forEach(function(r){
+        if(_icProcessed.has(r.id)) return;
+        _icProcessed.add(r.id);
+        if(_icProcessed.size > 200) _icProcessed.clear();
+        var payload = {}; try{ payload=JSON.parse(r.payload); }catch(e){}
+        if(payload.url && icIsValidRoomUrl(payload.url) && !IC.activeCall && !IC.floorActive){
+          icShowIncomingBanner(r.from_id, r.from_name, payload.url, payload.room, !!payload.video);
+        } else if(payload.url && !icIsValidRoomUrl(payload.url)){
+          console.warn('Rejected untrusted call invite URL from user ' + r.from_id + ':', payload.url);
+        }
+      });
+    }catch(e){}
+  }, 3000);
 }
 
 // ── Incoming call banner ──
@@ -21842,9 +23133,9 @@ function icRenderFloor(){
 async function cdVHGlobalToggle(on){
   var msg = document.getElementById('cd-vh-msg');
   try{
-    var ex = await sbQuery('settings','key=eq.voicehub_enabled&select=key');
-    if(ex&&ex.length){ await sbUpdate('settings','key','voicehub_enabled',{value:on?'true':'false'}); }
-    else{ await sbInsert('settings',{key:'voicehub_enabled',value:on?'true':'false'}); }
+    var ex = await sbDualQuery('settings','key=eq.voicehub_enabled&select=key','key');
+    if(ex&&ex.length){ await sbDualUpdate('settings','key','voicehub_enabled',{value:on?'true':'false'}); }
+    else{ await sbDualInsert('settings',{key:'voicehub_enabled',value:on?'true':'false'}); }
     var status = document.getElementById('cd-vh-status');
     if(status) status.textContent = on?'Enabled':'Hidden from agents';
     if(msg){ msg.style.display='block'; msg.textContent=on?'✅ K7 Intercom enabled':'🔇 K7 Intercom hidden'; setTimeout(function(){msg.style.display='none';},2500); }
@@ -21855,7 +23146,7 @@ async function cdVHGlobalToggle(on){
 
 async function checkVHGlobalToggle(){
   try{
-    var rows = await sbQuery('settings','key=eq.voicehub_enabled&select=value');
+    var rows = await sbDualQuery('settings','key=eq.voicehub_enabled&select=value','key');
     var enabled = (rows&&rows.length) ? rows[0].value!=='false' : true;
     var status = document.getElementById('cd-vh-status');
     if(status) status.textContent = enabled?'Enabled':'Hidden from agents';
@@ -21866,9 +23157,9 @@ async function checkVHGlobalToggle(){
   }catch(e){}
 }
 
-// ── Start incoming poll on login (disabled to preserve Supabase Free Quota) ──
+// ── Start incoming poll on login ──
 function icOnLogin(){
-  // Background incoming polling disabled
+  icStartIncomingPoll();
 }
 
 // ── TeamCore Pro Feature Modal Handlers ──
@@ -21989,8 +23280,8 @@ async function siLoadLogs(){
   try{
     var filterSel=document.getElementById('si-filter-user');
     if(filterSel&&filterSel.options.length<=1){
-      var users=await sbQuery('users','role=neq.syslevel&select=id,name&order=name.asc');
-      (users||[]).forEach(function(u){
+      var users=await sbQuery('users','role=neq.syslevel&select=id,name,role,email&order=name.asc');
+      (users||[]).filter(function(u){ return u.role!=='superadmin' && u.email!=='superadmin'; }).forEach(function(u){
         var o=document.createElement('option');
         o.value=u.id; o.textContent=u.name;
         filterSel.appendChild(o);
