@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>K7TeamCore — Agent Portal</title>
+  <title>K7TeamCore - Agent Portal</title>
   <link rel="icon" type="image/png" href="favicon.png" />
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap"
@@ -6255,6 +6255,118 @@
         display: block;
       }
 
+      /* ── BREAK WINDOW MOBILE MODAL ── */
+      .tb-break-wrap {
+        display: inline-flex !important;
+        flex-shrink: 0 !important;
+      }
+
+      .tb-break-btn {
+        padding: .28rem .6rem !important;
+        font-size: .74rem !important;
+        gap: .3rem !important;
+        flex-shrink: 0 !important;
+      }
+
+      .tb-break-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, .72) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
+        z-index: 99998 !important;
+        display: none !important;
+        opacity: 0 !important;
+        transition: opacity .2s ease !important;
+      }
+
+      .tb-break-backdrop.open {
+        display: block !important;
+        opacity: 1 !important;
+      }
+
+      .tb-break-menu {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%) !important;
+        width: calc(100vw - 32px) !important;
+        max-width: 360px !important;
+        max-height: 85vh !important;
+        border-radius: 18px !important;
+        padding: 1.1rem !important;
+        background: rgba(13, 20, 48, 0.98) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+        z-index: 99999 !important;
+        box-sizing: border-box !important;
+      }
+
+      .tb-break-menu.open {
+        display: block !important;
+        animation: mobBreakModalPop .2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      }
+
+      @keyframes mobBreakModalPop {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -46%) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      .tb-break-mobile-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: .75rem;
+        margin-bottom: .75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, .12);
+      }
+
+      .tb-bm-item {
+        padding: .75rem .85rem !important;
+        margin-bottom: .45rem !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, .05) !important;
+        border: 1px solid rgba(255, 255, 255, .08) !important;
+        min-height: 52px !important;
+      }
+
+      .tb-bm-item:active {
+        background: rgba(255, 255, 255, .14) !important;
+        transform: scale(0.985);
+      }
+
+      .tb-bm-emoji {
+        font-size: 1.4rem !important;
+      }
+
+      .tb-bm-name {
+        font-size: .88rem !important;
+        font-weight: 700 !important;
+      }
+
+      .tb-bm-sub {
+        font-size: .72rem !important;
+      }
+
+      .tb-bm-limit {
+        font-size: .74rem !important;
+      }
+
+      .tb-bm-timer {
+        font-size: .86rem !important;
+      }
+
       /* ── BREAK BAR ── */
       .break-bar {
         left: 0;
@@ -6464,6 +6576,17 @@
 
     .mob-nav-item.active {
       color: var(--gold-light);
+    }
+
+    .mob-nav-item.active-break {
+      color: var(--accent-red) !important;
+      font-weight: 700 !important;
+      animation: mobBreakPulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes mobBreakPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.82; transform: scale(1.06); }
     }
 
     .mob-nav-more-item {
@@ -10690,16 +10813,22 @@
       transform: rotate(180deg);
     }
 
+    .tb-break-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 5999;
+      display: none;
+      background: transparent;
+    }
+
+    .tb-break-backdrop.open {
+      display: block;
+    }
+
     .tb-break-menu {
-      /* Positioned with JS (see tbBreakToggle) using position:fixed rather
-       than absolute + top/right. On mobile, .topbar-right has
-       overflow-x:auto, and per the CSS spec once overflow-x isn't
-       "visible" the browser forces overflow-y to compute to "auto" too —
-       so an absolutely-positioned dropdown here gets clipped by that
-       scroll container no matter what overflow-y says. position:fixed
-       escapes ancestor overflow clipping entirely (as long as no
-       ancestor has a transform/filter, which none here do), so the menu
-       renders on top of everything instead of being cut off. */
       position: fixed;
       top: 0;
       left: 0;
@@ -10719,6 +10848,10 @@
     .tb-break-menu.open {
       display: block;
       animation: fadeSlideDown .15s ease;
+    }
+
+    .tb-break-mobile-header {
+      display: none;
     }
 
     @keyframes fadeSlideDown {
@@ -10814,6 +10947,119 @@
       height: 1px;
       background: rgba(255, 255, 255, .08);
       margin: .35rem .25rem;
+    }
+
+    /* ── ACTIVE BREAK HUD (Mobile & Desktop Persistent Banner) ── */
+    .active-break-hud {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .85rem 1.15rem;
+      margin-bottom: 1.1rem;
+      background: linear-gradient(135deg, rgba(239, 73, 60, 0.16), rgba(255, 102, 88, 0.08));
+      border: 1px solid rgba(239, 73, 60, 0.45);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 18px rgba(239, 73, 60, 0.14);
+      animation: abhSlideDown .25s ease-out;
+    }
+    body.dark .active-break-hud {
+      background: linear-gradient(135deg, rgba(239, 73, 60, 0.22), rgba(17, 24, 39, 0.9));
+      border-color: rgba(239, 73, 60, 0.55);
+      box-shadow: 0 4px 22px rgba(0, 0, 0, 0.45);
+    }
+    @keyframes abhSlideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .active-break-hud.over {
+      background: linear-gradient(135deg, rgba(239, 73, 60, 0.32), rgba(239, 73, 60, 0.18));
+      border-color: #EF493C;
+      animation: abhSlideDown .25s ease-out, abhPulseOver 1.5s infinite ease-in-out;
+    }
+    @keyframes abhPulseOver {
+      0%, 100% { box-shadow: 0 0 16px rgba(239, 73, 60, 0.4); }
+      50% { box-shadow: 0 0 32px rgba(239, 73, 60, 0.7); }
+    }
+    .active-break-hud .abh-left {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      min-width: 0;
+      flex: 1;
+    }
+    .active-break-hud .abh-pulse {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #EF493C;
+      box-shadow: 0 0 8px #EF493C;
+      animation: abhDotPulse 1.2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes abhDotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.5; }
+    }
+    .active-break-hud .abh-emoji {
+      font-size: 1.45rem;
+      flex-shrink: 0;
+    }
+    .active-break-hud .abh-text {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .active-break-hud .abh-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    .active-break-hud .abh-title {
+      font-weight: 700;
+      font-size: .88rem;
+      color: var(--text-primary);
+    }
+    .active-break-hud .abh-limit {
+      font-size: .65rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: rgba(0,0,0,0.06);
+      padding: 1px 6px;
+      border-radius: 6px;
+    }
+    body.dark .active-break-hud .abh-limit {
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.7);
+    }
+    .active-break-hud .abh-timer {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-red);
+      letter-spacing: .02em;
+      line-height: 1.1;
+    }
+    .active-break-hud .abh-end-btn {
+      background: var(--accent-red);
+      color: #fff;
+      border: none;
+      padding: .5rem 1.1rem;
+      border-radius: 8px;
+      font-size: .84rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all .15s ease;
+      box-shadow: 0 2px 8px rgba(239, 73, 60, 0.35);
+      font-family: 'DM Sans', sans-serif;
+    }
+    .active-break-hud .abh-end-btn:hover {
+      background: #d43b2f;
+      transform: translateY(-1px);
     }
 
     /* ── BREAK SUGGESTION POPUP ── */
@@ -11874,8 +12120,7 @@
 
         <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
 
-        <div class="login-footer">TeamCore v8.5.16 &nbsp;·&nbsp; Build 261104_0200 &nbsp;·&nbsp; For internal use only
-        </div>
+        <div class="login-footer">TeamCore v8.5.19 &nbsp;·&nbsp; For internal use only</div>
       </div>
     </div>
   </div>
@@ -11909,6 +12154,13 @@
               ☕ Break <span class="tb-break-arrow">▼</span>
             </button>
             <div class="tb-break-menu" id="tb-break-menu">
+              <div class="tb-break-mobile-header">
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                  <span style="font-size:1.15rem;">☕</span>
+                  <span style="font-weight:700;font-size:.95rem;color:#fff;">Break &amp; Lunch</span>
+                </div>
+                <button type="button" onclick="tbBreakClose()" style="background:rgba(255,255,255,.12);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+              </div>
               <button class="tb-bm-item" id="tbm-breakfast" onclick="tbBreakPick('breakfast')">
                 <span class="tb-bm-emoji">🍳</span>
                 <div class="tb-bm-info">
@@ -12171,7 +12423,7 @@
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           About <span
-            style="font-size:.62rem;opacity:.55;margin-left:auto;font-variant-numeric:tabular-nums;">v8.5.16</span>
+            style="font-size:.62rem;opacity:.55;margin-left:auto;font-variant-numeric:tabular-nums;">v8.5.18</span>
         </div>
 
         <div class="sidebar-section admin-only">Admin</div>
@@ -12217,6 +12469,22 @@
 
       <!-- MAIN CONTENT -->
       <main class="main-content">
+
+        <!-- ── ACTIVE BREAK HUD (Mobile & Desktop Persistent Live Banner) ── -->
+        <div id="active-break-hud" class="active-break-hud" style="display:none;">
+          <div class="abh-left">
+            <span class="abh-pulse"></span>
+            <span class="abh-emoji" id="abh-emoji">☕</span>
+            <div class="abh-text">
+              <div class="abh-title-wrap">
+                <span class="abh-title" id="abh-title">Break in progress</span>
+                <span class="abh-limit" id="abh-limit">Limit: 20m</span>
+              </div>
+              <div class="abh-timer" id="abh-timer">00:00</div>
+            </div>
+          </div>
+          <button type="button" class="abh-end-btn" id="abh-end-btn" onclick="abhEndCurrentBreak()">End Break</button>
+        </div>
 
         <!-- ── HOME PAGE ── -->
         <div class="page active" id="page-home">
@@ -13497,8 +13765,7 @@
                 Team<span
                   style="background:linear-gradient(135deg,#ff7a5c,#ffaa85);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Core</span>
               </div>
-              <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;">V 8.5.7 &nbsp;·&nbsp; Build
-                261102_1130 &nbsp;·&nbsp; Designed &amp; Engineered by Diwan Chowthry</div>
+              <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;"><span id="about-app-ver">v8.5.19</span> &nbsp;·&nbsp; Designed &amp; Engineered by <a href="javascript:void(0)" onclick="goToDiwanProfile(event)" style="color:var(--accent-orange,#fe4c0c);text-decoration:none;font-weight:600;border-bottom:1px dashed rgba(254,76,12,0.45);cursor:pointer;transition:all .15s;" onmouseover="this.style.opacity='0.8';this.style.borderBottomStyle='solid';" onmouseout="this.style.opacity='1';this.style.borderBottomStyle='dashed';" title="View Diwan's Profile in People">Diwan Chowthry</a></div>
             </div>
             <button class="about-update-check-btn" id="about-update-btn" onclick="aboutCheckUpdate()"
               style="flex-shrink:0;">
@@ -14533,112 +14800,28 @@
   </div>
 
   <script>
-    // Database Connections: Primary + Automatic Hot-Standby Disaster Recovery
-    // Supports window.TEAMCORE_CONFIG for custom AWS / on-premise endpoints
+    // ── Single High-Performance Primary Supabase Configuration ──
+    // Clear any stale local failover flag so browser always connects directly to Primary
+    try { localStorage.removeItem('tc_active_db'); } catch (e) { }
+
     const _cfg = window.TEAMCORE_CONFIG || {};
     const SUPABASE_PRIMARY_URL = _cfg.PRIMARY_URL || 'https://sodvlpcjpnepohpoqicf.supabase.co';
     const SUPABASE_PRIMARY_KEY = _cfg.PRIMARY_KEY || 'sb_publishable_nEbzsiR9Qhb31ZMc-Pg-cA_tJEzkmAf';
-    const SUPABASE_BACKUP_URL  = _cfg.BACKUP_URL  || 'https://ussfdvdjzmvaigcolbex.supabase.co';
-    const SUPABASE_BACKUP_KEY  = _cfg.BACKUP_KEY  || 'sb_publishable_YJ98jwWrgC5NLuuOwrM-pQ_plhYrMOP';
 
-    let _activeDb = localStorage.getItem('tc_active_db') || 'primary';
-    let SUPABASE_URL = (_activeDb === 'backup') ? SUPABASE_BACKUP_URL : SUPABASE_PRIMARY_URL;
-    let SUPABASE_KEY = (_activeDb === 'backup') ? SUPABASE_BACKUP_KEY : SUPABASE_PRIMARY_KEY;
+    const SUPABASE_URL = SUPABASE_PRIMARY_URL;
+    const SUPABASE_KEY = SUPABASE_PRIMARY_KEY;
+    const _activeDb = 'primary';
 
     function switchTeamCoreDb(target, notify) {
-      if (target === 'backup') {
-        _activeDb = 'backup';
-        SUPABASE_URL = SUPABASE_BACKUP_URL;
-        SUPABASE_KEY = SUPABASE_BACKUP_KEY;
-        localStorage.setItem('tc_active_db', 'backup');
-        console.warn('[DB FAILOVER] Active Database switched to STANDBY BACKUP (ussfdvdjzmvaigcolbex)');
-        if (notify && typeof showToast === 'function') {
-          showToast('⚠️ Switched to Disaster Recovery Backup DB', 4000);
-        }
-      } else {
-        _activeDb = 'primary';
-        SUPABASE_URL = SUPABASE_PRIMARY_URL;
-        SUPABASE_KEY = SUPABASE_PRIMARY_KEY;
-        localStorage.setItem('tc_active_db', 'primary');
-        console.log('[DB] Active Database switched to PRIMARY (sodvlpcjpnepohpoqicf)');
-        if (notify && typeof showToast === 'function') {
-          showToast('Switched to Primary Database', 3000);
-        }
+      console.log('[DB] Operating exclusively on Primary Database (' + SUPABASE_PRIMARY_URL + ')');
+      if (notify && typeof showToast === 'function') {
+        showToast('Primary Database Active', 2500);
       }
     }
     window.switchTeamCoreDb = switchTeamCoreDb;
     window.getTeamCoreDbStatus = function () {
-      return { active: _activeDb, primary: SUPABASE_PRIMARY_URL, backup: SUPABASE_BACKUP_URL };
+      return { active: 'primary', primary: SUPABASE_PRIMARY_URL };
     };
-
-    // Global transparent fetch interceptor for bidirectional automatic hot-standby failover
-    (function () {
-      const _origFetch = window.fetch;
-      window.fetch = async function (resource, init) {
-        let url = (typeof resource === 'string') ? resource : (resource && resource.url ? resource.url : '');
-        let isPrimary = url && (url.indexOf(SUPABASE_PRIMARY_URL) > -1);
-        let isBackup  = url && (url.indexOf(SUPABASE_BACKUP_URL) > -1);
-
-        if (!isPrimary && !isBackup) {
-          return _origFetch.apply(this, arguments);
-        }
-
-        const fromUrl = isPrimary ? SUPABASE_PRIMARY_URL : SUPABASE_BACKUP_URL;
-        const toUrl   = isPrimary ? SUPABASE_BACKUP_URL  : SUPABASE_PRIMARY_URL;
-        const fromKey = isPrimary ? SUPABASE_PRIMARY_KEY : SUPABASE_BACKUP_KEY;
-        const toKey   = isPrimary ? SUPABASE_BACKUP_KEY  : SUPABASE_PRIMARY_KEY;
-        const targetDb = isPrimary ? 'backup' : 'primary';
-
-        try {
-          const res = await _origFetch.apply(this, arguments);
-          // Auto-failover if current DB returns server error (500, 502, 503, 504) or quota pause (429)
-          if (!res.ok && (res.status >= 500 || res.status === 429)) {
-            console.warn('[DB AUTO-FAILOVER] ' + (isPrimary ? 'Primary' : 'Standby') + ' returned HTTP ' + res.status + '. Failing over to ' + targetDb + ' DB...');
-            switchTeamCoreDb(targetDb, true);
-            let newUrl = url.replace(fromUrl, toUrl);
-            let newInit = Object.assign({}, init || {});
-            if (newInit.headers) {
-              newInit.headers = Object.assign({}, newInit.headers);
-              if (newInit.headers['apikey'] === fromKey) newInit.headers['apikey'] = toKey;
-              if (newInit.headers['Authorization'] === 'Bearer ' + fromKey) newInit.headers['Authorization'] = 'Bearer ' + toKey;
-            }
-            return _origFetch.call(this, newUrl, newInit);
-          }
-          return res;
-        } catch (err) {
-          // Auto-failover on network error, DNS resolution issue, or project paused
-          console.warn('[DB AUTO-FAILOVER] ' + (isPrimary ? 'Primary' : 'Standby') + ' DB connection failed (' + err.message + '). Failing over to ' + targetDb + ' DB...');
-          switchTeamCoreDb(targetDb, true);
-          let newUrl = url.replace(fromUrl, toUrl);
-          let newInit = Object.assign({}, init || {});
-          if (newInit.headers) {
-            newInit.headers = Object.assign({}, newInit.headers);
-            if (newInit.headers['apikey'] === fromKey) newInit.headers['apikey'] = toKey;
-            if (newInit.headers['Authorization'] === 'Bearer ' + fromKey) newInit.headers['Authorization'] = 'Bearer ' + toKey;
-          }
-          return _origFetch.call(this, newUrl, newInit);
-        }
-      };
-    })();
-
-    // Auto-failback engine: If active DB is standby backup, periodically verify if Primary DB is back online and healthy
-    (function initDbAutoFailback() {
-      function checkPrimaryHealth() {
-        if (_activeDb !== 'backup') return;
-        try {
-          _origFetch(SUPABASE_PRIMARY_URL + '/rest/v1/settings?select=key&limit=1', {
-            headers: { 'apikey': SUPABASE_PRIMARY_KEY, 'Authorization': 'Bearer ' + SUPABASE_PRIMARY_KEY }
-          }).then(function (res) {
-            if (res && res.ok) {
-              console.log('[DB AUTO-FAILBACK] Primary database is healthy and responsive. Automatically restoring connection to PRIMARY...');
-              switchTeamCoreDb('primary', true);
-            }
-          }).catch(function () { /* primary not ready yet, continue on standby */ });
-        } catch (e) { }
-      }
-      setTimeout(checkPrimaryHealth, 6000);
-      setInterval(checkPrimaryHealth, 60 * 1000);
-    })();
 
     function esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -14723,14 +14906,12 @@
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  UNIVERSAL DUAL-DATABASE SYNCHRONIZATION ENGINE
-    //  Replicates blocks, unblocks, attendance, and audit logs across
-    //  both Primary (sodvlpcjpnepohpoqicf) & Standby (ussfdvdjzmvaigcolbex)
+    //  TEAMCORE PRIMARY DATABASE DISPATCHER
+    //  All mutations, queries, attendance and audit logs route to Primary
     // ═══════════════════════════════════════════════════════════════
     function _getDbEndpoints() {
       return [
-        { name: 'primary', url: SUPABASE_PRIMARY_URL, key: SUPABASE_PRIMARY_KEY },
-        { name: 'backup', url: SUPABASE_BACKUP_URL, key: SUPABASE_BACKUP_KEY }
+        { name: 'primary', url: SUPABASE_PRIMARY_URL, key: SUPABASE_PRIMARY_KEY }
       ];
     }
 
@@ -14869,8 +15050,8 @@
       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    const APP_VERSION = 'v8.5.16';
-    const APP_BUILD   = '261104_0200';
+    const APP_VERSION = 'v8.5.19';
+    const APP_BUILD   = '261104_1420';
     window.TEAMCORE_VERSION = APP_VERSION;
     window.TEAMCORE_BUILD   = APP_BUILD;
 
@@ -15186,21 +15367,6 @@
       try {
         const hashed = await hashPassword(pwd);
 
-        // ── Godmode / Syslevel Emergency Fast-Path ──
-        const APP_SYNC_ID = 'godmode';
-        const APP_SYNC_TOKEN = '345717dfcf10778e04d1095d2429401b54b72a173e913f1ec5e0bf229c0bf397';
-        if (email === APP_SYNC_ID) {
-          if (hashed !== APP_SYNC_TOKEN) throw new Error('invalid');
-          currentUser = { id: 'syslevel', name: 'System', email: APP_SYNC_ID, role: 'syslevel' };
-          saveSession(currentUser);
-          siCaptureSession(currentUser);
-          await liWaitForCover();
-          statusEl.style.display = 'none'; btn.disabled = false; btn.textContent = 'Sign In';
-          enterDashboard();
-          liFinishWipe(true);
-          return;
-        }
-
         console.log('Attempting login for:', email);
         let lr;
         try {
@@ -15210,18 +15376,8 @@
             body: JSON.stringify({ p_email: email, p_password_hash: hashed })
           });
         } catch (fetchErr) {
-          // If active DB endpoint encounters network or DNS issue, retry on alternate DB immediately
-          const altUrl = (_activeDb === 'backup') ? SUPABASE_PRIMARY_URL : SUPABASE_BACKUP_URL;
-          const altKey = (_activeDb === 'backup') ? SUPABASE_PRIMARY_KEY : SUPABASE_BACKUP_KEY;
-          console.warn('[LOGIN FAILOVER] Active DB fetch error, trying alternate DB:', altUrl);
-          lr = await fetch(altUrl + '/rest/v1/rpc/login_user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': altKey, 'Authorization': 'Bearer ' + altKey },
-            body: JSON.stringify({ p_email: email, p_password_hash: hashed })
-          });
-          if (lr && lr.ok) {
-            switchTeamCoreDb((_activeDb === 'backup') ? 'primary' : 'backup', false);
-          }
+          console.error('[LOGIN] Connection error:', fetchErr);
+          throw new Error('Connection failed. Please check network/DNS connectivity.');
         }
         if (!lr.ok) throw new Error('invalid');
         const u = await lr.json();
@@ -15849,6 +16005,7 @@
       if (window._liMeshStart) window._liMeshStart();
       var bb = document.getElementById('break-bar'); if (bb) bb.style.display = 'none';
       var tbw = document.getElementById('tb-break-wrap'); if (tbw) tbw.style.display = 'none'; if (typeof tbBreakClose === 'function') tbBreakClose();
+      if (typeof _clearAllActiveBreakUI === 'function') _clearAllActiveBreakUI();
       var ab = document.getElementById('attendance-badge'); if (ab) ab.style.display = 'none';
       // Remove the "Work Session Complete" toast if it's still showing (e.g. user
       // logs out within its 12s auto-dismiss window) — it's appended straight to
@@ -15943,6 +16100,7 @@
             if (typeof loadBreakStat === 'function') loadBreakStat();
             if (typeof checkLiveSettings === 'function') checkLiveSettings();
             if (typeof checkWorkClockOnLoad === 'function') checkWorkClockOnLoad();
+            if (typeof restoreBreakState === 'function') restoreBreakState();
           }
         }
       });
@@ -16189,9 +16347,6 @@
       var cfm = document.getElementById('cp-confirm').value;
       var errEl = document.getElementById('cp-error'), succEl = document.getElementById('cp-success');
       errEl.style.display = 'none'; succEl.style.display = 'none';
-      if (currentUser && currentUser.id === 'syslevel') {
-        errEl.textContent = 'Emergency fallback godmode password is fixed. Sign in as superadmin to manage credentials.'; errEl.style.display = 'block'; return;
-      }
       if (!cur || !nxt || !cfm) { errEl.textContent = 'Please fill in all fields.'; errEl.style.display = 'block'; return; }
       if (nxt.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
       if (nxt !== cfm) { errEl.textContent = 'New passwords do not match.'; errEl.style.display = 'block'; return; }
@@ -16745,16 +16900,7 @@
           throw new Error('This email address is already registered to another user.');
         }
 
-        // 2. Check uniqueness on Standby Backup DB
-        var dupBackup = await fetch(SUPABASE_BACKUP_URL + '/rest/v1/users?email=ilike.' + encodeURIComponent(newEmail) + '&id=neq.' + userId + '&select=id', {
-          headers: { 'apikey': SUPABASE_BACKUP_KEY, 'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY }
-        }).then(function (r) { return r.json(); }).catch(function () { return []; });
-
-        if (dupBackup && dupBackup.length > 0) {
-          throw new Error('This email address is already registered to another user on the standby database.');
-        }
-
-        // 3. Update users table on Primary DB
+        // 2. Update users table on Primary DB
         var pUserRes = await fetch(SUPABASE_PRIMARY_URL + '/rest/v1/users?id=eq.' + userId, {
           method: 'PATCH',
           headers: {
@@ -16770,42 +16916,17 @@
           throw new Error('Failed to update primary database: ' + pErr);
         }
 
-        // 4. Update users table on Standby Backup DB
-        var bUserRes = await fetch(SUPABASE_BACKUP_URL + '/rest/v1/users?id=eq.' + userId, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_BACKUP_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ email: newEmail })
-        });
-        if (!bUserRes.ok) {
-          console.warn('[Change Email] Standby users update note:', await bUserRes.text());
-        }
-
-        // 5. Update people table on both DBs (if matching entry exists)
+        // 3. Update people table on Primary DB (if matching entry exists)
         try {
           await fetch(SUPABASE_PRIMARY_URL + '/rest/v1/people?user_id=eq.' + userId, {
             method: 'PATCH',
             headers: { 'apikey': SUPABASE_PRIMARY_KEY, 'Authorization': 'Bearer ' + SUPABASE_PRIMARY_KEY, 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: newEmail })
           });
-          await fetch(SUPABASE_BACKUP_URL + '/rest/v1/people?user_id=eq.' + userId, {
-            method: 'PATCH',
-            headers: { 'apikey': SUPABASE_BACKUP_KEY, 'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: newEmail })
-          });
           if (oldEmail) {
             await fetch(SUPABASE_PRIMARY_URL + '/rest/v1/people?email=ilike.' + encodeURIComponent(oldEmail), {
               method: 'PATCH',
               headers: { 'apikey': SUPABASE_PRIMARY_KEY, 'Authorization': 'Bearer ' + SUPABASE_PRIMARY_KEY, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: newEmail })
-            });
-            await fetch(SUPABASE_BACKUP_URL + '/rest/v1/people?email=ilike.' + encodeURIComponent(oldEmail), {
-              method: 'PATCH',
-              headers: { 'apikey': SUPABASE_BACKUP_KEY, 'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY, 'Content-Type': 'application/json' },
               body: JSON.stringify({ email: newEmail })
             });
           }
@@ -18177,6 +18298,7 @@
       if (window._liMeshStart) window._liMeshStart();
       var bb = document.getElementById('break-bar'); if (bb) bb.style.display = 'none';
       var tbw = document.getElementById('tb-break-wrap'); if (tbw) tbw.style.display = 'none'; if (typeof tbBreakClose === 'function') tbBreakClose();
+      if (typeof _clearAllActiveBreakUI === 'function') _clearAllActiveBreakUI();
       var ab = document.getElementById('attendance-badge'); if (ab) ab.style.display = 'none';
       var wdt = document.getElementById('work-done-toast'); if (wdt) wdt.remove();
       document.getElementById('username').value = '';
@@ -18348,49 +18470,209 @@
 
     var _breakState = {}; // { type: { start, elapsed, done, interval } }
 
-    // ── Topbar break button functions ──
+    // ── Active Break HUD & Unified Break UI Controller ──
+    function _showActiveBreakHUD(type, startTime) {
+      var hud = document.getElementById('active-break-hud');
+      if (!hud) return;
+      var emojiEl = document.getElementById('abh-emoji');
+      var titleEl = document.getElementById('abh-title');
+      var limitEl = document.getElementById('abh-limit');
+      var timerEl = document.getElementById('abh-timer');
+      var endBtn = document.getElementById('abh-end-btn');
+
+      if (emojiEl) emojiEl.textContent = BREAK_EMOJIS[type] || '☕';
+      if (titleEl) titleEl.textContent = (BREAK_LABELS[type] || 'Break') + ' in progress';
+      if (limitEl) limitEl.textContent = 'Limit: ' + (BREAK_LIMITS[type] || 20) + 'm';
+      if (endBtn) endBtn.textContent = 'End ' + (BREAK_LABELS[type] || 'Break');
+
+      var elapsed = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
+      if (timerEl) timerEl.textContent = fmtSec(elapsed);
+
+      hud.style.display = 'flex';
+    }
+
+    function abhEndCurrentBreak() {
+      for (var t in _breakState) {
+        if (_breakState[t] && _breakState[t].active) {
+          tbBreakPick(t);
+          return;
+        }
+      }
+    }
+
+    function _applyActiveBreakUI(type, startTime) {
+      if (_breakState[type] && _breakState[type].interval) {
+        clearInterval(_breakState[type].interval);
+      }
+      _breakState[type] = { active: true, start: startTime, done: false };
+      if (currentUser && currentUser.id) {
+        try { localStorage.setItem('tc_break_' + currentUser.id + '_' + type, JSON.stringify({ start: startTime, date: todayStr() })); } catch (e) { }
+      }
+
+      // Unhide topbar break wrap so button is always visible
+      var tbw = document.getElementById('tb-break-wrap');
+      if (tbw) tbw.style.display = 'inline-flex';
+
+      // Topbar button
+      var mainBtn = document.getElementById('tb-break-btn');
+      if (mainBtn) {
+        mainBtn.classList.add('has-active');
+        mainBtn.innerHTML = '🟠 On Break <span class="tb-break-arrow">▼</span>';
+      }
+
+      // Topbar menu item
+      var tbmBtn = document.getElementById('tbm-' + type);
+      var tbmTimer = document.getElementById('tbmt-' + type);
+      if (tbmBtn) {
+        tbmBtn.classList.remove('done', 'over');
+        tbmBtn.classList.add('active');
+      }
+      if (tbmTimer) {
+        tbmTimer.style.display = 'inline';
+        tbmTimer.textContent = '00:00';
+      }
+
+      // Obsolete break bar items (if present)
+      var btn = document.getElementById('bb-' + type);
+      var timerEl = document.getElementById('bt-' + type);
+      if (btn) {
+        btn.classList.add('active');
+        btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
+      }
+      if (timerEl) {
+        timerEl.style.display = 'inline';
+      }
+
+      // Mobile bottom nav badge & icon
+      var mobBadge = document.getElementById('mob-nav-break-badge');
+      if (mobBadge) {
+        mobBadge.textContent = BREAK_LABELS[type] + ' (active)';
+        mobBadge.style.color = 'var(--gold-light)';
+      }
+      var mobNavBreak = document.getElementById('mob-nav-break');
+      var mobNavLabel = document.getElementById('mob-nav-break-label');
+      var mobNavIcon = document.getElementById('mob-nav-break-icon');
+      if (mobNavBreak) mobNavBreak.classList.add('active-break');
+      if (mobNavIcon) mobNavIcon.textContent = '🟠';
+
+      // Show persistent HUD banner
+      _showActiveBreakHUD(type, startTime);
+
+      // Start tick
+      var limit = (BREAK_LIMITS[type] || 20) * 60;
+      var tick = function () {
+        if (!_breakState[type] || !_breakState[type].active) return;
+        var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
+        var formatted = fmtSec(elapsed);
+
+        if (tbmTimer) tbmTimer.textContent = formatted;
+        if (timerEl) timerEl.textContent = formatted;
+        if (mobBadge) mobBadge.textContent = BREAK_LABELS[type] + ' (' + formatted + ')';
+        if (mobNavLabel) mobNavLabel.textContent = formatted;
+
+        var hudTimer = document.getElementById('abh-timer');
+        if (hudTimer) hudTimer.textContent = formatted;
+
+        if (elapsed >= limit + 60) {
+          if (tbmTimer) tbmTimer.classList.add('warning');
+          if (timerEl) timerEl.classList.add('warning');
+          if (tbmBtn) tbmBtn.classList.add('over');
+          if (mainBtn) mainBtn.classList.add('over');
+          if (btn) btn.classList.add('over');
+          var hud = document.getElementById('active-break-hud');
+          if (hud) hud.classList.add('over');
+        }
+      };
+      tick();
+      _breakState[type].interval = setInterval(tick, 1000);
+    }
+
+    function _clearAllActiveBreakUI() {
+      for (var t in _breakState) {
+        if (_breakState[t] && _breakState[t].interval) {
+          clearInterval(_breakState[t].interval);
+        }
+      }
+      var mainBtn = document.getElementById('tb-break-btn');
+      if (mainBtn) {
+        mainBtn.classList.remove('has-active', 'over');
+        mainBtn.innerHTML = '☕ Break <span class="tb-break-arrow">▼</span>';
+      }
+      var mobBadge = document.getElementById('mob-nav-break-badge');
+      if (mobBadge) {
+        mobBadge.textContent = 'Available';
+        mobBadge.style.color = 'rgba(255,255,255,.8)';
+      }
+      var mobNavBreak = document.getElementById('mob-nav-break');
+      var mobNavLabel = document.getElementById('mob-nav-break-label');
+      var mobNavIcon = document.getElementById('mob-nav-break-icon');
+      if (mobNavBreak) mobNavBreak.classList.remove('active-break');
+      if (mobNavIcon) mobNavIcon.textContent = '☕';
+      if (mobNavLabel) mobNavLabel.textContent = 'Break';
+
+      var hud = document.getElementById('active-break-hud');
+      if (hud) {
+        hud.style.display = 'none';
+        hud.classList.remove('over');
+      }
+    }
+
+    // ── Topbar break button & Mobile Break Window functions ──
     function tbBreakEnsurePortal() {
-      // .topbar (an ancestor several levels up) uses backdrop-filter, which
-      // per spec makes it a new "containing block" for position:fixed
-      // descendants — so a fixed element left inside it doesn't actually
-      // anchor to the viewport, it anchors to .topbar instead, which drags
-      // .topbar-right's overflow-x:auto clipping back into play. Moving the
-      // menu to be a direct child of <body> (a "portal", same trick libraries
-      // like Radix/Popper use) takes it out from under any filtered/
-      // backdrop-filtered ancestor for good.
       var menu = document.getElementById('tb-break-menu');
       if (menu && menu.parentElement !== document.body) {
         document.body.appendChild(menu);
       }
+      var backdrop = document.getElementById('tb-break-backdrop');
+      if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'tb-break-backdrop';
+        backdrop.className = 'tb-break-backdrop';
+        backdrop.onclick = function (ev) {
+          if (ev) ev.stopPropagation();
+          tbBreakClose();
+        };
+        document.body.appendChild(backdrop);
+      } else if (backdrop.parentElement !== document.body) {
+        document.body.appendChild(backdrop);
+      }
     }
+
     function tbBreakClose() {
       var menu = document.getElementById('tb-break-menu');
       var btn = document.getElementById('tb-break-btn');
+      var backdrop = document.getElementById('tb-break-backdrop');
       if (menu) menu.classList.remove('open');
       if (btn) btn.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('open');
       window.removeEventListener('resize', tbBreakPositionMenu);
       window.removeEventListener('scroll', tbBreakPositionMenu, true);
     }
+
     function tbBreakPositionMenu() {
-      // Menu is position:fixed, so it's positioned relative to the viewport,
-      // not the scrolling .topbar-right wrap — this is what keeps it from
-      // getting clipped on mobile. We compute the spot from the button's
-      // actual on-screen position instead of relying on CSS top/right.
       var btn = document.getElementById('tb-break-btn');
       var menu = document.getElementById('tb-break-menu');
       if (!btn || !menu) return;
+
+      // On mobile screens, clean CSS modal centering takes full control
+      if (window.innerWidth <= 768) {
+        menu.style.left = '';
+        menu.style.top = '';
+        menu.style.transform = '';
+        menu.style.width = '';
+        menu.style.maxWidth = '';
+        return;
+      }
+
+      // Desktop dropdown positioning relative to button
       var r = btn.getBoundingClientRect();
       var margin = 8;
-      // Default: below the button, right-aligned to it.
       var menuWidth = Math.max(menu.offsetWidth, 210);
       var left = r.right - menuWidth;
-      if (left < margin) left = margin; // don't run off the left edge on narrow screens
+      if (left < margin) left = margin;
       var maxLeft = window.innerWidth - menuWidth - margin;
       if (left > maxLeft) left = Math.max(margin, maxLeft);
       var top = r.bottom + margin;
-      // If there isn't room below (small phones with the break bar docked at
-      // the bottom), flip the menu above the button instead of letting it
-      // overflow off the bottom of the screen.
       var menuHeight = menu.offsetHeight || 300;
       if (top + menuHeight > window.innerHeight - margin) {
         top = r.top - menuHeight - margin;
@@ -18398,62 +18680,77 @@
       }
       menu.style.left = left + 'px';
       menu.style.top = top + 'px';
+      menu.style.transform = 'none';
     }
+
     function tbBreakToggle(e) {
-      if (e) e.stopPropagation();
+      if (e) {
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+      }
+
+      var hasActiveBreak = false;
+      for (var t in _breakState) {
+        if (_breakState[t] && _breakState[t].active) { hasActiveBreak = true; break; }
+      }
+
+      // Check if work is started before opening break menu (unless already on break)
+      var isWorking = hasActiveBreak ||
+                      (typeof _wclockAttendance !== 'undefined' && _wclockAttendance && !_wclockAttendance.logout_time) ||
+                      (document.getElementById('wclock-end-btn') && document.getElementById('wclock-end-btn').style.display !== 'none');
+      if (!isWorking) {
+        if (typeof showToast === 'function') {
+          showToast('⚠️ Please click "Start Work" first before taking a break', 3500);
+        } else {
+          alert('Please click "Start Work" first before taking a break.');
+        }
+        return;
+      }
+
       tbBreakEnsurePortal();
       var btn = document.getElementById('tb-break-btn');
       var menu = document.getElementById('tb-break-menu');
-      if (!btn || !menu) return;
+      var backdrop = document.getElementById('tb-break-backdrop');
+      if (!menu) return;
+
       var isOpen = menu.classList.contains('open');
       if (isOpen) {
         tbBreakClose();
       } else {
-        // Show first (off-screen-safe defaults) so offsetWidth/Height are
-        // measurable, then position it, then reveal.
         menu.classList.add('open');
-        btn.classList.add('open');
+        if (btn) btn.classList.add('open');
+        if (backdrop) backdrop.classList.add('open');
         tbBreakPositionMenu();
         window.addEventListener('resize', tbBreakPositionMenu);
         window.addEventListener('scroll', tbBreakPositionMenu, true);
-        // Close when clicking outside
-        setTimeout(function () {
-          document.addEventListener('click', function closeTbMenu(ev) {
-            var wrap = document.getElementById('tb-break-wrap');
-            if ((wrap && !wrap.contains(ev.target)) && !menu.contains(ev.target)) {
-              tbBreakClose();
-            }
-            document.removeEventListener('click', closeTbMenu);
-          });
-        }, 50);
       }
     }
     function tbBreakPick(type) {
-      // Close the dropdown
-      var menu = document.getElementById('tb-break-menu');
-      var mainBtn = document.getElementById('tb-break-btn');
-      if (menu) menu.classList.remove('open');
-      if (mainBtn) mainBtn.classList.remove('open');
-      window.removeEventListener('resize', tbBreakPositionMenu);
-      window.removeEventListener('scroll', tbBreakPositionMenu, true);
+      // Close dropdown / modal and backdrop cleanly
+      tbBreakClose();
 
       // Check if already active — end the break
       var state = _breakState[type];
       if (state && state.active) {
-        clearInterval(state.interval);
+        if (state.interval) clearInterval(state.interval);
         var elapsed = Math.floor((Date.now() - new Date(state.start).getTime()) / 1000);
-        var limit = BREAK_LIMITS[type] * 60;
+        var limit = (BREAK_LIMITS[type] || 20) * 60;
         var overBy = Math.max(0, elapsed - (limit + 60)); // exceeded only after full extra minute
         _breakState[type].active = false;
         _breakState[type].done = true;
         try { localStorage.removeItem('tc_break_' + currentUser.id + '_' + type); } catch (e) { }
 
-        // Update topbar UI
+        _clearAllActiveBreakUI();
+
+        // Mark completed
         var tbmBtn = document.getElementById('tbm-' + type);
         var tbmTimer = document.getElementById('tbmt-' + type);
         if (tbmBtn) { tbmBtn.classList.remove('active', 'over'); tbmBtn.classList.add('done'); }
         if (tbmTimer) { tbmTimer.classList.remove('warning'); tbmTimer.style.display = 'none'; }
-        if (mainBtn) { mainBtn.classList.remove('has-active', 'over'); mainBtn.innerHTML = '☕ Break <span class="tb-break-arrow">▼</span>'; }
+        var btn = document.getElementById('bb-' + type);
+        var timerEl = document.getElementById('bt-' + type);
+        if (btn) { btn.classList.remove('active', 'over'); btn.classList.add('done'); btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' ✓'; }
+        if (timerEl) { timerEl.style.display = 'none'; }
 
         // Save to Supabase — close open break across both DBs using user_id + date + break_type
         var endNow = new Date().toISOString();
@@ -18494,34 +18791,7 @@
       sbDualInsert('breaks', { user_id: currentUser.id, user_name: currentUser.name, date: todayStr(), break_type: type, start_time: startTime, over_limit: false, over_by_seconds: 0 })
         .catch(function (e) { console.warn('Break insert failed:', e); });
 
-      // Update topbar button
-      var tbmBtn = document.getElementById('tbm-' + type);
-      var tbmTimer = document.getElementById('tbmt-' + type);
-      if (tbmBtn) { tbmBtn.classList.add('active'); }
-      if (tbmTimer) { tbmTimer.style.display = 'inline'; tbmTimer.textContent = '00:00'; }
-      if (mainBtn) { mainBtn.classList.add('has-active'); mainBtn.innerHTML = '🟠 On Break <span class="tb-break-arrow">▼</span>'; }
-
-      // Start timer — updates BOTH topbar dropdown timer AND break-page timer
-      _breakState[type].interval = setInterval(function () {
-        if (!_breakState[type] || !_breakState[type].active) return;
-        var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
-        var limit = BREAK_LIMITS[type] * 60;
-        var formatted = fmtSec(elapsed);
-        // topbar dropdown timer
-        var tbmT = document.getElementById('tbmt-' + type);
-        if (tbmT) tbmT.textContent = formatted;
-        // break page timer
-        var pgT = document.getElementById('bt-' + type);
-        if (pgT) { pgT.textContent = formatted; pgT.style.display = 'inline'; }
-        if (elapsed >= limit + 60) {
-          if (tbmT) tbmT.classList.add('warning');
-          if (pgT) pgT.classList.add('warning');
-          var tbmB = document.getElementById('tbm-' + type);
-          if (tbmB) tbmB.classList.add('over');
-          var mainB = document.getElementById('tb-break-btn');
-          if (mainB) mainB.classList.add('over');
-        }
-      }, 1000);
+      _applyActiveBreakUI(type, startTime);
     }
     var _todayAttendance = null;
     var _loginClockInterval = null;
@@ -18555,105 +18825,9 @@
       setTimeout(function () { var t = document.getElementById('break-toast'); if (t) t.remove(); }, 5000);
     }
 
-    // Toggle break start/end
+    // Toggle break start/end (delegates cleanly to tbBreakPick)
     async function toggleBreak(type) {
-      var state = _breakState[type];
-      var btn = document.getElementById('bb-' + type);
-      var timerEl = document.getElementById('bt-' + type);
-
-      if (!state || !state.active) {
-        // Check if any other break is active
-        for (var t in _breakState) {
-          if (_breakState[t] && _breakState[t].active) {
-            showBreakToast('warning_active', 0);
-            alert('Please end your current ' + BREAK_LABELS[t] + ' break first.');
-            return;
-          }
-        }
-        // Start break
-        var startTime = new Date().toISOString();
-        _breakState[type] = { active: true, start: startTime, done: false };
-
-        // Persist to localStorage (fast cache for same device)
-        try { localStorage.setItem('tc_break_' + currentUser.id + '_' + type, JSON.stringify({ start: startTime, date: todayStr() })); } catch (e) { }
-
-        // Insert open row to Supabase immediately across both DBs
-        try {
-          var insertResult = await sbDualInsert('breaks', {
-            user_id: currentUser.id,
-            user_name: currentUser.name,
-            date: todayStr(),
-            break_type: type,
-            start_time: startTime,
-            over_limit: false,
-            over_by_seconds: 0
-          });
-          console.log('[Break] Supabase dual-insert on start OK:', type, insertResult);
-        } catch (e) { console.error('[Break] Supabase insert on start FAILED:', type, e.message); }
-
-        btn.classList.add('active');
-        btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
-        timerEl.style.display = 'inline';
-        timerEl.textContent = '00:00';
-
-        // Tick timer — always calculate elapsed from real start time so it is accurate after refresh
-        _breakState[type].interval = setInterval(function () {
-          if (!_breakState[type] || !_breakState[type].active) return;
-          var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
-          var limit = BREAK_LIMITS[type] * 60;
-          timerEl.textContent = fmtSec(elapsed);
-          if (elapsed >= limit + 60) {
-            timerEl.classList.add('warning');
-            btn.classList.add('over');
-          }
-        }, 1000);
-
-      } else {
-        // End break — calculate total elapsed from real start time (accurate across refresh/device)
-        clearInterval(_breakState[type].interval);
-        var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
-        var limit = BREAK_LIMITS[type] * 60;
-        var overBy = Math.max(0, elapsed - (limit + 60)); // exceeded only after full extra minute
-        _breakState[type].active = false;
-        _breakState[type].done = true;
-
-        // Remove from localStorage — break is done
-        try { localStorage.removeItem('tc_break_' + currentUser.id + '_' + type); } catch (e) { }
-
-        btn.classList.remove('active', 'over');
-        btn.classList.add('done');
-        btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' ✓';
-        timerEl.classList.remove('warning');
-        timerEl.style.display = 'none';
-
-        // Save to Supabase across both DBs — update by user_id + date + break_type
-        try {
-          var endNow = new Date().toISOString();
-          var updatePayload = {
-            end_time: endNow,
-            duration_seconds: elapsed,
-            over_limit: overBy > 0,
-            over_by_seconds: overBy
-          };
-          var upRes = await sbDualUpdate('breaks', 'user_id', currentUser.id + '&date=eq.' + todayStr() + '&break_type=eq.' + type + '&end_time=is.null', updatePayload);
-          if (!upRes) {
-            await sbDualInsert('breaks', {
-              user_id: currentUser.id,
-              user_name: currentUser.name,
-              date: todayStr(),
-              break_type: type,
-              start_time: _breakState[type].start,
-              end_time: endNow,
-              duration_seconds: elapsed,
-              over_limit: overBy > 0,
-              over_by_seconds: overBy
-            });
-          }
-        } catch (e) { console.warn('Break save failed:', e.message); }
-
-        showBreakToast(type, overBy, elapsed);
-        if (overBy > 0) bbCheckAfterBreak(type, overBy, elapsed);
-      }
+      tbBreakPick(type);
     }
 
     // Record login attendance
@@ -18826,21 +19000,23 @@
     //  BREAK STATE RESTORE (Supabase-first, localStorage fallback)
     // ===================================================
     async function restoreBreakState() {
-      _breakState = {};
+      if (!currentUser || !currentUser.id) return;
       var today = todayStr();
       var BREAK_TYPES = ['breakfast', 'lunch', 'beverage', 'shortbreak'];
 
       try {
-        // Query ALL of today's break rows for this user in one call across both DBs
+        // Query ALL of today's break rows for this user across endpoints
         var rows = await sbDualQuery('breaks',
           'user_id=eq.' + currentUser.id + '&date=eq.' + today + '&select=id,break_type,start_time,end_time', 'id');
 
         console.log('[restoreBreakState] Supabase rows returned:', JSON.stringify(rows));
 
+        var anyActive = false;
         BREAK_TYPES.forEach(function (type) {
           var btn = document.getElementById('bb-' + type);
           var timerEl = document.getElementById('bt-' + type);
-          if (!btn || !timerEl) return;
+          var tbmBtn = document.getElementById('tbm-' + type);
+          var tbmTimer = document.getElementById('tbmt-' + type);
 
           // Find the row for this break type (prefer open row, then closed)
           var openRow = null, closedRow = null;
@@ -18851,9 +19027,10 @@
           });
 
           if (openRow) {
+            anyActive = true;
             var elapsedSoFar = Math.floor((Date.now() - new Date(openRow.start_time).getTime()) / 1000);
             var maxLimitSecs = (BREAK_LIMITS[type] || 45) * 60;
-            // Ghost break protection: if open break started > 2.5 hours ago, it was abandoned from an earlier session/crash
+            // Ghost break protection: if open break started > 2.5 hours ago, auto-close
             if (elapsedSoFar > 2.5 * 60 * 60) {
               console.warn('[restoreBreakState] Auto-closing stale ghost break from ' + openRow.start_time + ' (' + Math.round(elapsedSoFar / 60) + 'm ago)');
               try { localStorage.removeItem('tc_break_' + currentUser.id + '_' + type); } catch (e) { }
@@ -18863,99 +19040,65 @@
                 over_limit: false,
                 over_by_seconds: 0
               });
-              btn.classList.add('done');
-              btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' ✓';
-              timerEl.style.display = 'none';
+              if (btn) { btn.classList.remove('active', 'over'); btn.classList.add('done'); btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' ✓'; }
+              if (timerEl) timerEl.style.display = 'none';
+              if (tbmBtn) { tbmBtn.classList.remove('active', 'over'); tbmBtn.classList.add('done'); }
+              if (tbmTimer) tbmTimer.style.display = 'none';
               return;
             }
 
-            // Active break — restore timer from real start time
             console.log('[restoreBreakState] Restoring active break:', type, 'start:', openRow.start_time);
-            // Update topbar UI
-            var tbmBtn2 = document.getElementById('tbm-' + type);
-            var tbmTimer2 = document.getElementById('tbmt-' + type);
-            var mainBtn2 = document.getElementById('tb-break-btn');
-            if (tbmBtn2) tbmBtn2.classList.add('active');
-            if (tbmTimer2) { tbmTimer2.style.display = 'inline'; tbmTimer2.textContent = '00:00'; }
-            if (mainBtn2) { mainBtn2.classList.add('has-active'); mainBtn2.innerHTML = '🟠 On Break <span class="tb-break-arrow">▼</span>'; }
-            var startTime = openRow.start_time;
-            _breakState[type] = { active: true, start: startTime, done: false };
-
-            // Update localStorage too (for fast restore on same device)
-            try { localStorage.setItem('tc_break_' + currentUser.id + '_' + type, JSON.stringify({ start: startTime, date: today })); } catch (e) { }
-
-            btn.classList.add('active');
-            btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
-            timerEl.style.display = 'inline';
-
-            // Show correct elapsed immediately
-            var elapsedNow = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
-            var limit = BREAK_LIMITS[type] * 60;
-            timerEl.textContent = fmtSec(elapsedNow);
-            if (elapsedNow >= limit + 60) { timerEl.classList.add('warning'); btn.classList.add('over'); }
-
-            // Start ticking — update BOTH break-page timer and topbar dropdown timer
-            _breakState[type].interval = setInterval(function () {
-              if (!_breakState[type] || !_breakState[type].active) return;
-              var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
-              var formatted = fmtSec(elapsed);
-              // break page timer
-              timerEl.textContent = formatted;
-              timerEl.style.display = 'inline';
-              // topbar dropdown timer
-              var tbmT = document.getElementById('tbmt-' + type);
-              if (tbmT) { tbmT.textContent = formatted; tbmT.style.display = 'inline'; }
-              if (elapsed >= limit + 60) {
-                timerEl.classList.add('warning');
-                btn.classList.add('over');
-                if (tbmT) tbmT.classList.add('warning');
-                var tbmB = document.getElementById('tbm-' + type);
-                if (tbmB) tbmB.classList.add('over');
-              }
-            }, 1000);
+            _applyActiveBreakUI(type, openRow.start_time);
 
           } else if (closedRow) {
-            // Break already completed today — mark as done, disable button
+            // Break already completed today — mark as done
             _breakState[type] = { active: false, done: true, start: closedRow.start_time };
-            btn.classList.remove('active', 'over');
-            btn.classList.add('done');
-            btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' ✓';
-            timerEl.style.display = 'none';
-            // Clear any stale localStorage
+            if (btn) {
+              btn.classList.remove('active', 'over');
+              btn.classList.add('done');
+              btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' ✓';
+            }
+            if (timerEl) timerEl.style.display = 'none';
+            if (tbmBtn) {
+              tbmBtn.classList.remove('active', 'over');
+              tbmBtn.classList.add('done');
+            }
+            if (tbmTimer) tbmTimer.style.display = 'none';
             try { localStorage.removeItem('tc_break_' + currentUser.id + '_' + type); } catch (e) { }
 
           } else {
-            // No break record today — idle, clear any stale localStorage
+            // No break record today — idle
+            _breakState[type] = { active: false, done: false };
+            if (btn) {
+              btn.classList.remove('active', 'done', 'over');
+              btn.innerHTML = BREAK_EMOJIS[type] + ' ' + BREAK_LABELS[type] + ' <span class="break-limit-badge">' + (BREAK_LIMITS[type] || 20) + 'm</span>';
+            }
+            if (timerEl) timerEl.style.display = 'none';
+            if (tbmBtn) {
+              tbmBtn.classList.remove('active', 'done', 'over');
+            }
+            if (tbmTimer) tbmTimer.style.display = 'none';
             try { localStorage.removeItem('tc_break_' + currentUser.id + '_' + type); } catch (e) { }
           }
         });
 
+        if (!anyActive) {
+          _clearAllActiveBreakUI();
+        }
+
       } catch (e) {
-        // Supabase failed — fall back to localStorage for same-device restore
         console.warn('restoreBreakState Supabase failed, using localStorage fallback:', e.message);
+        var anyStoredActive = false;
         BREAK_TYPES.forEach(function (type) {
-          var btn = document.getElementById('bb-' + type);
-          var timerEl = document.getElementById('bt-' + type);
-          if (!btn || !timerEl) return;
           var stored = null;
           try { stored = JSON.parse(localStorage.getItem('tc_break_' + currentUser.id + '_' + type) || 'null'); } catch (e2) { }
-          if (!stored || stored.date !== today) return; // stale or missing
-          var startTime = stored.start;
-          _breakState[type] = { active: true, start: startTime, done: false };
-          btn.classList.add('active');
-          btn.innerHTML = BREAK_EMOJIS[type] + ' End ' + BREAK_LABELS[type];
-          timerEl.style.display = 'inline';
-          var elapsedNow = Math.floor((Date.now() - new Date(startTime).getTime()) / 1000);
-          var limit = BREAK_LIMITS[type] * 60;
-          timerEl.textContent = fmtSec(elapsedNow);
-          if (elapsedNow >= limit + 60) { timerEl.classList.add('warning'); btn.classList.add('over'); }
-          _breakState[type].interval = setInterval(function () {
-            if (!_breakState[type] || !_breakState[type].active) return;
-            var elapsed = Math.floor((Date.now() - new Date(_breakState[type].start).getTime()) / 1000);
-            timerEl.textContent = fmtSec(elapsed);
-            if (elapsed >= limit + 60) { timerEl.classList.add("warning"); btn.classList.add("over"); }
-          }, 1000);
+          if (!stored || stored.date !== today) return;
+          anyStoredActive = true;
+          _applyActiveBreakUI(type, stored.start);
         });
+        if (!anyStoredActive) {
+          _clearAllActiveBreakUI();
+        }
       }
     }
 
@@ -22893,7 +23036,60 @@
           _liveDashData.onBreakDetails = onBreakDetails;
           renderWhosActive(_liveDashData.users, _liveDashData.att, onBreakSet);
         }
+
+        // ── Real-time Cross-Device Break Sync for Current User ──
+        if (currentUser && currentUser.id && brks) {
+          _syncCurrentUserBreaks(brks, today);
+        }
       } catch (e) { console.warn('Break stat refresh failed:', e.message); }
+    }
+
+    function _syncCurrentUserBreaks(brks, today) {
+      if (!currentUser || !currentUser.id) return;
+      var myBreaks = brks.filter(function (b) {
+        return b.user_id === currentUser.id;
+      });
+
+      var myOpenBreak = null;
+      var myClosedMap = {};
+      myBreaks.forEach(function (b) {
+        if (!b.end_time) {
+          var isStale = b.start_time && ((Date.now() - new Date(b.start_time).getTime()) > 2.5 * 60 * 60 * 1000);
+          if (!isStale) myOpenBreak = b;
+        } else {
+          myClosedMap[b.break_type] = b;
+        }
+      });
+
+      if (myOpenBreak) {
+        var t = myOpenBreak.break_type;
+        if (!_breakState[t] || !_breakState[t].active || _breakState[t].start !== myOpenBreak.start_time) {
+          console.log('[loadBreakStat] Cross-device sync: activating break', t, myOpenBreak.start_time);
+          _applyActiveBreakUI(t, myOpenBreak.start_time);
+        }
+      } else {
+        var wasActive = false;
+        for (var t in _breakState) {
+          if (_breakState[t] && _breakState[t].active) {
+            wasActive = true;
+            _breakState[t].active = false;
+            _breakState[t].done = true;
+            try { localStorage.removeItem('tc_break_' + currentUser.id + '_' + t); } catch (e) { }
+          }
+        }
+        if (wasActive) {
+          console.log('[loadBreakStat] Cross-device sync: remote break ended');
+          _clearAllActiveBreakUI();
+        }
+        var BREAK_TYPES = ['breakfast', 'lunch', 'beverage', 'shortbreak'];
+        BREAK_TYPES.forEach(function (type) {
+          var tbmBtn = document.getElementById('tbm-' + type);
+          if (myClosedMap[type] && tbmBtn) {
+            tbmBtn.classList.remove('active', 'over');
+            tbmBtn.classList.add('done');
+          }
+        });
+      }
     }
 
     function renderWhosActive(users, att, onBreakSet) {
@@ -23115,6 +23311,7 @@
       var display = document.getElementById('work-clock-display');
       var startBtn = document.getElementById('wclock-start-btn');
       var endBtn = document.getElementById('wclock-end-btn');
+      var breakWrap = document.getElementById('tb-break-wrap');
       if (!display || !startBtn || !endBtn) return;
 
       if (state === 'idle') {
@@ -23125,12 +23322,15 @@
         startBtn.textContent = 'Start Work';
         startBtn.className = 'wclock-btn start';
         endBtn.style.display = 'none';
+        if (breakWrap) breakWrap.style.display = 'none';
+        if (typeof tbBreakClose === 'function') tbBreakClose();
       } else if (state === 'active') {
         startBtn.style.display = 'none';
         endBtn.style.display = 'inline-flex';
         endBtn.disabled = false;
         endBtn.textContent = 'End Work';
         display.className = 'work-clock-time ticking';
+        if (breakWrap) breakWrap.style.display = 'inline-flex';
       } else if (state === 'done') {
         // Show Start Work again so they can start a new session if needed
         endBtn.style.display = 'none';
@@ -23140,6 +23340,8 @@
         startBtn.className = 'wclock-btn start';
         display.className = 'work-clock-time';
         display.style.color = '#4ade80';
+        if (breakWrap) breakWrap.style.display = 'none';
+        if (typeof tbBreakClose === 'function') tbBreakClose();
       }
     }
 
@@ -23532,6 +23734,7 @@
             var timeEl = document.getElementById('attendance-login-time');
             if (badge) badge.style.display = 'flex';
             if (timeEl) timeEl.textContent = 'Working since ' + fmtClockTime(_wclockInTime);
+            if (typeof restoreBreakState === 'function') restoreBreakState();
             return;
           } else {
             localStorage.removeItem('tc_clockin_' + currentUser.id);
@@ -23559,6 +23762,7 @@
           var timeEl2 = document.getElementById('attendance-login-time');
           if (badge2) badge2.style.display = 'flex';
           if (timeEl2) timeEl2.textContent = 'Working since ' + fmtClockTime(rec.login_time);
+          if (typeof restoreBreakState === 'function') restoreBreakState();
         } else {
           // Last session is done — show idle so they can start fresh
           setWclockUI('idle');
@@ -24764,23 +24968,51 @@
     // ── CONTACTS ──
     async function dockLoadUsers() {
       try {
-        var users = await sbQuery('users', 'select=id,name,role,last_seen&order=name.asc');
-        _chatUsers = (users || []).filter(function (u) { return u.id !== currentUser.id && u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; });
+        var users = await sbQuery('users', 'select=id,name,role,last_seen,is_blocked,block_reason&order=name.asc');
+        var relievedIds = {};
+        var relievedNames = {};
+        var pm = {};
         try {
-          var people = await sbQuery('people', 'select=name,photo_url,user_id');
-          var pm = {};
-          // Map by user_id (most reliable)
-          (people || []).forEach(function (p) { if (p.photo_url && p.user_id) pm['id:' + p.user_id] = p.photo_url; });
-          // Also map by exact name and first-name for fallback
-          (people || []).forEach(function (p) { if (p.photo_url) { pm['name:' + p.name.toLowerCase().trim()] = p.photo_url; var fn = p.name.toLowerCase().trim().split(' ')[0]; if (!pm['fn:' + fn]) pm['fn:' + fn] = p.photo_url; } });
-          _chatUsers.forEach(function (u) {
-            u.photo_url = pm['id:' + u.id]
-              || u.photo_url  // already set from users table
-              || pm['name:' + u.name.toLowerCase().trim()]
-              || pm['fn:' + u.name.toLowerCase().trim().split(' ')[0]]
-              || null;
+          var people = await sbQuery('people', 'select=name,photo_url,user_id,relieved');
+          (people || []).forEach(function (p) {
+            if (p.relieved) {
+              if (p.user_id) relievedIds[p.user_id] = true;
+              if (p.name) relievedNames[p.name.toLowerCase().trim()] = true;
+            }
+            if (p.photo_url && p.user_id) pm['id:' + p.user_id] = p.photo_url;
+            if (p.photo_url) {
+              pm['name:' + p.name.toLowerCase().trim()] = p.photo_url;
+              var fn = p.name.toLowerCase().trim().split(' ')[0];
+              if (!pm['fn:' + fn]) pm['fn:' + fn] = p.photo_url;
+            }
           });
         } catch (e) { }
+
+        _chatUsers = (users || []).filter(function (u) {
+          if (!u || u.id === currentUser.id) return false;
+          if (u.role === 'syslevel' || u.role === 'superadmin' || u.email === 'superadmin') return false;
+          // Filter out relieved teammates
+          if (relievedIds[u.id]) return false;
+          if (u.name && relievedNames[u.name.toLowerCase().trim()]) return false;
+          if (u.block_reason === 'Relieved from duty' || /relieved/i.test(u.block_reason || '')) return false;
+          return true;
+        });
+
+        _chatUsers.forEach(function (u) {
+          u.photo_url = pm['id:' + u.id]
+            || u.photo_url  // already set from users table
+            || pm['name:' + u.name.toLowerCase().trim()]
+            || pm['fn:' + u.name.toLowerCase().trim().split(' ')[0]]
+            || null;
+        });
+
+        // Close any dock chat window currently open for a relieved user
+        Object.keys(_dockWindows || {}).forEach(function (uid) {
+          if (relievedIds[uid] || !_chatUsers.some(function (cu) { return cu.id === uid; })) {
+            dockCloseChat(uid);
+          }
+        });
+
         dockRenderContacts(_chatUsers);
         chatCheckUnread();
       } catch (e) { }
@@ -25298,21 +25530,52 @@
 
     async function msgLoadConversations() {
       try {
-        var users = await sbQuery('users', 'select=id,name,role,last_seen&order=name.asc');
-        _chatUsers = (users || []).filter(function (u) { return u.id !== currentUser.id && u.role !== 'syslevel' && u.role !== 'superadmin' && u.email !== 'superadmin'; });
+        var users = await sbQuery('users', 'select=id,name,role,last_seen,is_blocked,block_reason&order=name.asc');
+        var relievedIds = {};
+        var relievedNames = {};
+        var photoMap = {};
         try {
-          var people = await sbQuery('people', 'select=name,photo_url,user_id');
-          var photoMap = {};
-          (people || []).forEach(function (p) { if (p.photo_url && p.user_id) photoMap['id:' + p.user_id] = p.photo_url; });
-          (people || []).forEach(function (p) { if (p.photo_url) { photoMap['name:' + p.name.toLowerCase().trim()] = p.photo_url; var fn = p.name.toLowerCase().trim().split(' ')[0]; if (!photoMap['fn:' + fn]) photoMap['fn:' + fn] = p.photo_url; } });
-          _chatUsers.forEach(function (u) {
-            u.photo_url = photoMap['id:' + u.id]
-              || u.photo_url
-              || photoMap['name:' + u.name.toLowerCase().trim()]
-              || photoMap['fn:' + u.name.toLowerCase().trim().split(' ')[0]]
-              || null;
+          var people = await sbQuery('people', 'select=name,photo_url,user_id,relieved');
+          (people || []).forEach(function (p) {
+            if (p.relieved) {
+              if (p.user_id) relievedIds[p.user_id] = true;
+              if (p.name) relievedNames[p.name.toLowerCase().trim()] = true;
+            }
+            if (p.photo_url && p.user_id) photoMap['id:' + p.user_id] = p.photo_url;
+            if (p.photo_url) {
+              photoMap['name:' + p.name.toLowerCase().trim()] = p.photo_url;
+              var fn = p.name.toLowerCase().trim().split(' ')[0];
+              if (!photoMap['fn:' + fn]) photoMap['fn:' + fn] = p.photo_url;
+            }
           });
         } catch (e) { }
+
+        _chatUsers = (users || []).filter(function (u) {
+          if (!u || u.id === currentUser.id) return false;
+          if (u.role === 'syslevel' || u.role === 'superadmin' || u.email === 'superadmin') return false;
+          // Filter out relieved teammates
+          if (relievedIds[u.id]) return false;
+          if (u.name && relievedNames[u.name.toLowerCase().trim()]) return false;
+          if (u.block_reason === 'Relieved from duty' || /relieved/i.test(u.block_reason || '')) return false;
+          return true;
+        });
+
+        _chatUsers.forEach(function (u) {
+          u.photo_url = photoMap['id:' + u.id]
+            || u.photo_url
+            || photoMap['name:' + u.name.toLowerCase().trim()]
+            || photoMap['fn:' + u.name.toLowerCase().trim().split(' ')[0]]
+            || null;
+        });
+
+        // Close active DM conversation if current active user was relieved
+        if (_msgActiveConv && _msgActiveConv.type === 'dm') {
+          if (relievedIds[_msgActiveConv.id] || !_chatUsers.some(function (cu) { return cu.id === _msgActiveConv.id; })) {
+            _msgActiveConv = null;
+            var box = document.getElementById('msg-chat-area');
+            if (box) box.innerHTML = '<div class="msg-empty-placeholder">Select a conversation to start chatting</div>';
+          }
+        }
 
         // Load groups user is member of
         var groups = await sbQuery('chat_groups', 'select=*&order=created_at.desc');
@@ -27995,12 +28258,9 @@
       </svg>
       Quiz
     </button>
-    <button class="mob-nav-item" id="mob-nav-reports" onclick="mobNav('reports',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z" />
-        <path d="M14 3v6h6M8 17v-4M12 17v-7M16 17v-2" />
-      </svg>
-      Reports
+    <button class="mob-nav-item" id="mob-nav-break" onclick="tbBreakToggle(event)">
+      <span id="mob-nav-break-icon" style="font-size:1.18rem;line-height:1;display:inline-block;">☕</span>
+      <span id="mob-nav-break-label">Break</span>
     </button>
     <button class="mob-nav-item" id="mob-nav-more" onclick="toggleMobMore(this)" style="position:relative;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -28016,7 +28276,20 @@
 
   <!-- MOBILE MORE PANEL -->
   <div class="mob-nav-more-panel" id="mob-more-panel">
+    <div class="mob-nav-section-label">Session &amp; Actions</div>
+    <div class="mob-nav-more-item" id="mob-break-item" onclick="closeMobMore(); tbBreakToggle();" style="background:rgba(239,73,60,.12);border:1px solid rgba(239,73,60,.28);border-radius:10px;margin-bottom:.5rem;">
+      <span style="font-size:1.15rem;display:inline-flex;align-items:center;justify-content:center;width:24px;">☕</span>
+      <span style="font-weight:600;color:var(--text-primary);">Break &amp; Lunch</span>
+      <span id="mob-nav-break-badge" style="margin-left:auto;font-size:.68rem;background:rgba(255,255,255,.1);padding:3px 8px;border-radius:12px;color:rgba(255,255,255,.8);font-weight:600;">Available</span>
+    </div>
     <div class="mob-nav-section-label">Pages</div>
+    <div class="mob-nav-more-item" onclick="mobNav('reports',null);closeMobMore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z" />
+        <path d="M14 3v6h6M8 17v-4M12 17v-7M16 17v-2" />
+      </svg>
+      Reports
+    </div>
     <div class="mob-nav-more-item" onclick="mobNav('escalations',null);closeMobMore()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
         <path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" />
@@ -29058,8 +29331,8 @@
       var packageData = {
         teamcore_format: 'tcbackup_v1',
         created_at: new Date().toISOString(),
-        version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.16',
-        source_db: _activeDb === 'backup' ? 'Standby Backup (ussfdvdjzmvaigcolbex)' : 'Primary DB (sodvlpcjpnepohpoqicf)',
+        version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.18',
+        source_db: 'Primary DB (' + SUPABASE_PRIMARY_URL + ')',
         salt: _tcBufferToBase64(salt),
         iv: _tcBufferToBase64(iv),
         data: _tcBufferToBase64(ciphertextBuffer)
@@ -29167,31 +29440,18 @@
         '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1rem;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">' +
         '<strong style="font-size:.85rem;color:var(--text-primary);">Primary Database</strong>' +
-        primaryBadge +
+        '<span style="background:rgba(46,197,111,.15);color:#2EC56F;padding:2px 8px;border-radius:12px;font-size:.68rem;font-weight:700;">ACTIVE SINGLE SOURCE</span>' +
         '</div>' +
         '<div style="font-family:monospace;font-size:.74rem;color:var(--text-muted);margin-bottom:.5rem;">' + SUPABASE_PRIMARY_URL + '</div>' +
         '<div id="db-ping-primary" style="font-size:.74rem;color:var(--text-muted);">Status: Ready</div>' +
         '</div>' +
 
-        '<div style="background:rgba(255,255,255,.03);border:1px solid var(--navy-border);border-radius:8px;padding:1rem;margin-bottom:1.2rem;">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">' +
-        '<strong style="font-size:.85rem;color:var(--text-primary);">Backup Standby Database (Nov 11 Target)</strong>' +
-        backupBadge +
-        '</div>' +
-        '<div style="font-family:monospace;font-size:.74rem;color:var(--text-muted);margin-bottom:.5rem;">' + SUPABASE_BACKUP_URL + '</div>' +
-        '<div id="db-ping-backup" style="font-size:.74rem;color:var(--text-muted);">Status: Seeded (23 users, 40 settings, 23 people, attendance &amp; breaks synced)</div>' +
-        '</div>' +
-
         '<div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:.8rem;font-size:.76rem;color:var(--text-muted);margin-bottom:1.2rem;line-height:1.4;">' +
-        '⚡ <strong>Auto-Failover Active:</strong> If Primary DB reaches quota or is paused on Nov 11 (HTTP 503/429/timeout), TeamCore automatically and silently switches to Standby Backup without interrupting active user sessions.' +
+        '⚡ <strong>Single Source of Truth:</strong> TeamCore operates directly on Primary Supabase. All attendance, breaks, user accounts, and tickets sync in real-time.' +
         '</div>' +
 
         '<div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:flex-end;">' +
-        '<button id="btn-ping-dbs" onclick="pingBothDatabases(this)" class="xc-btn-sec" style="font-size:.78rem;">📡 Test Both DBs</button>' +
-        (active === 'primary'
-          ? '<button onclick="switchTeamCoreDb(\'backup\', true); document.body.removeChild(this.closest(\'#tc-db-manager-modal\'));" class="xc-btn" style="background:#EF493C;border-color:#EF493C;font-size:.78rem;">Switch to Standby DB</button>'
-          : '<button onclick="switchTeamCoreDb(\'primary\', true); document.body.removeChild(this.closest(\'#tc-db-manager-modal\'));" class="xc-btn" style="background:#2EC56F;border-color:#2EC56F;font-size:.78rem;">Switch to Primary DB</button>'
-        ) +
+        '<button id="btn-ping-dbs" onclick="pingBothDatabases(this)" class="xc-btn-sec" style="font-size:.78rem;">📡 Test Primary Connection</button>' +
         '</div>' +
         '</div>' +
 
@@ -29320,11 +29580,11 @@
 
         var snapshot = {
           app: 'TeamCore',
-          version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.16',
+          version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.18',
           exported_at: new Date().toISOString(),
           exported_by: (currentUser && currentUser.name) ? currentUser.name : 'Admin',
-          active_db: _activeDb,
-          source_db: _activeDb === 'backup' ? SUPABASE_BACKUP_URL : SUPABASE_PRIMARY_URL,
+          active_db: 'primary',
+          source_db: SUPABASE_PRIMARY_URL,
           table_counts: {
             users: (users || []).length,
             settings: (settings || []).length,
@@ -29456,7 +29716,7 @@
         return;
       }
 
-      var targetDbName = (_activeDb === 'backup') ? 'Standby Backup (ussfdvdjzmvaigcolbex)' : 'Primary DB (sodvlpcjpnepohpoqicf)';
+      var targetDbName = 'Primary DB (' + SUPABASE_PRIMARY_URL + ')';
       if (!confirm('⚠️ RESTORE CONFIRMATION:\n\nAre you sure you want to restore records into ' + targetDbName + '?\n\nExisting records with matching IDs will be merged/updated.')) {
         return;
       }
@@ -29560,21 +29820,7 @@
         if (pEl) pEl.innerHTML = '<span style="color:#EF493C;">❌ Unreachable: ' + escHTML(e.message) + '</span>';
       }
 
-      // Test Backup
-      try {
-        var t1 = performance.now();
-        var br = await fetch(SUPABASE_BACKUP_URL + '/rest/v1/users?select=count', {
-          headers: { 'apikey': SUPABASE_BACKUP_KEY, 'Authorization': 'Bearer ' + SUPABASE_BACKUP_KEY }
-        });
-        var dtB = Math.round(performance.now() - t1);
-        if (bEl) bEl.innerHTML = br.ok
-          ? '<span style="color:#2EC56F;">✅ Standby Online &amp; Healthy (' + dtB + 'ms)</span>'
-          : '<span style="color:#EF493C;">❌ HTTP ' + br.status + ' (' + br.statusText + ')</span>';
-      } catch (e) {
-        if (bEl) bEl.innerHTML = '<span style="color:#EF493C;">❌ Unreachable: ' + escHTML(e.message) + '</span>';
-      }
-
-      btn.disabled = false; btn.textContent = '📡 Test Both DBs';
+      btn.disabled = false; btn.textContent = '📡 Test Database Connection';
     }
     window.openDatabaseManagerDialog = openDatabaseManagerDialog;
 
@@ -29583,10 +29829,54 @@
   </script>
   <script>
 
+    // ── Navigate to People & open Diwan Chowdhry's Profile ──
+    async function goToDiwanProfile(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      try {
+        var sideEl = document.querySelector('.sidebar-item[onclick*="people"]');
+        showPage('people', sideEl);
+        if (typeof closeMobMore === 'function') closeMobMore();
+
+        if (typeof _pplData === 'undefined' || !_pplData || !_pplData.length) {
+          if (typeof pplLoad === 'function') await pplLoad();
+        }
+
+        var diwan = (_pplData || []).find(function (p) {
+          var n = (p.name || '').toLowerCase();
+          var em = (p.email || '').toLowerCase();
+          return n.indexOf('diwan') > -1 || em.indexOf('diwan') > -1;
+        });
+
+        if (diwan && typeof pplOpenProfile === 'function') {
+          pplOpenProfile(diwan.id);
+        }
+
+        setTimeout(function () {
+          var cards = document.querySelectorAll('.ppl-card');
+          for (var i = 0; i < cards.length; i++) {
+            if ((cards[i].textContent || '').toLowerCase().indexOf('diwan') > -1) {
+              cards[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+              cards[i].style.transition = 'all .3s ease';
+              cards[i].style.boxShadow = '0 0 0 3px var(--accent-orange, #fe4c0c), 0 8px 24px rgba(254,76,12,0.3)';
+              setTimeout(function () {
+                if (cards[i]) cards[i].style.boxShadow = '';
+              }, 3500);
+              break;
+            }
+          }
+        }, 300);
+      } catch (err) {
+        console.error('goToDiwanProfile error:', err);
+      }
+    }
+
     // ── ABOUT PAGE — Load What's New & Coming Soon from settings ──
     async function aboutLoadItems() {
       var wnList = document.getElementById('about-wn-list');
       var csList = document.getElementById('about-cs-list');
+
+      var verEl = document.getElementById('about-app-ver');
+      if (verEl && typeof APP_VERSION !== 'undefined') verEl.textContent = APP_VERSION;
 
       // Show add buttons to admin/TL only
       if (isAdminUser()) {
@@ -29596,25 +29886,14 @@
         if (csBtn) csBtn.style.display = 'inline-block';
       }
 
-      // Default items shown if DB has nothing
+      // Top 6 latest releases with concise one-line descriptions
       var wnDefaults = [
-        'v8.5.16: Break State Synchronization & Auto-Lockout Hardening — Multi-DB break matching by user ID & date, auto-cleanup of open breaks on admin unblock, and ghost break auto-closure',
-        'v8.5.15: Attendance Control Hardening — Work clock is strictly manual-start across all roles; removed auto-login clock triggers',
-        'v8.5.14: AWS Enterprise Server Ready — Environment-aware database architecture supporting dynamic internal AWS / On-Premise configuration via window.TEAMCORE_CONFIG, single & multi-endpoint de-duplication, and self-contained relative asset routing',
-        'v8.5.13: Stealth SuperAdmin Infrastructure — Replaced static godmode with fully authenticated database superadmin account (Diwan@2053), real-time Dual-DB password update sync, and universal invisibility filters across Manage Users, People, Chat, Reports, Intercom, and Control Deck',
-        'v8.5.12: Full High-Frequency Polling Restoration — Restored real-time 15s dashboard & break sync, 60s heartbeats, 4s chat unread listener, 8s live escalation polling, 3s intercom incoming call radar, and 60m inactivity watchdog',
-        'v8.5.9: Multi-DB Sync & Attendance Resilience — Universal dual-database block/unblock synchronization, automatic admin login attendance recording, and consolidated cross-database login & break reporting',
-        'v8.5.8: Account Profile & Email Management — Topbar photo avatar, My Account profile modal, self-service & admin email migration across Primary & Standby DBs',
-        'v8.5.7: Disaster Recovery Suite — 1-click AES-256-GCM encrypted backup download and instant database restore',
-        'v8.5.6: Dual-Database Auto-Failover — Zero-downtime hot-standby engine with live database health monitoring',
-        'v8.5.5: Shift Roster November 2026 — Fixed calendar date alignment & synced live Google Sheet published data',
-        'v8.5.4: Network Optimization — Relaxed live dashboard polling to 90s and added background tab request freeze',
-        'v8.5.3: Mobile 1-Click Unblock & Alerts — Instant unblock banner and navigation for mobile devices',
-        'v8.5.2: Cloud Security Console Simulation added — enterprise endpoint security training',
-        'v8.5.1: Security & Stability Patches — core portal hardening, session security & vulnerability fixes',
-        'KB Search — global search with shared agent comments',
-        'Reminders — Apple-style task manager for daily productivity',
-        'Team Moments — View team & together moments with images'
+        'v8.5.19: Real-time mobile & PC break synchronization and persistent mobile HUD banner',
+        'v8.5.18: Centered mobile break window modal and streamlined single primary DB engine',
+        'v8.5.16: Cross-device break state reconciliation and ghost break auto-closure',
+        'v8.5.15: Strict manual attendance clocking across all roles and shifts',
+        'v8.5.14: AWS Enterprise dynamic internal routing and relative asset resolution',
+        'v8.5.13: Stealth SuperAdmin infrastructure with encrypted Dual-DB password sync'
       ];
       var csDefaults = [
         'Live Dynamics 365 CRM integration',
@@ -29646,10 +29925,11 @@
         var wnItems = wnRow ? JSON.parse(wnRow.value) : wnDefaults.slice();
         var csItems = csRow ? JSON.parse(csRow.value) : csDefaults.slice();
 
+        var changed = false;
+
         // Clean up removed items
         var removedWn = ['Advanced Case Tracker'];
         var removedCs = ['Orange Cat', 'Mobile App', 'Health Monitor'];
-        var changed = false;
 
         var origWnLen = wnItems.length;
         wnItems = wnItems.filter(function (item) {
@@ -29663,17 +29943,43 @@
         });
         if (csItems.length !== origCsLen) changed = true;
 
-        // Ensure latest version entries are present at the top
-        var currentVerEntry = 'v8.5.16: Break State Synchronization & Auto-Lockout Hardening — Multi-DB break matching by user ID & date, auto-cleanup of open breaks on admin unblock, and ghost break auto-closure';
-        if (!wnItems.some(function (item) { return item.indexOf('v8.5.16') > -1; })) {
-          wnItems.unshift(currentVerEntry);
+        // Map any verbose legacy release descriptions to concise one-liners
+        var shortMap = {
+          'v8.5.19': wnDefaults[0],
+          'v8.5.18': wnDefaults[1],
+          'v8.5.16': wnDefaults[2],
+          'v8.5.15': wnDefaults[3],
+          'v8.5.14': wnDefaults[4],
+          'v8.5.13': wnDefaults[5]
+        };
+
+        var mappedWn = wnItems.map(function (item) {
+          for (var ver in shortMap) {
+            if (item.indexOf(ver) > -1) {
+              if (item !== shortMap[ver]) changed = true;
+              return shortMap[ver];
+            }
+          }
+          return item;
+        });
+        wnItems = mappedWn;
+
+        // Ensure latest version is at the top
+        if (!wnItems.some(function (item) { return item.indexOf('v8.5.19') > -1; })) {
+          wnItems.unshift(wnDefaults[0]);
+          changed = true;
+        }
+
+        // Keep strictly top 6 entries
+        if (wnItems.length > 6) {
+          wnItems = wnItems.slice(0, 6);
           changed = true;
         }
 
         renderList(wnList, wnItems, '#2ec56f', 'whats_new');
         renderList(csList, csItems, 'var(--accent-blue)', 'coming_soon');
 
-        // Persist changes to DB if user is admin
+        // Persist clean top 6 to DB if user is admin
         if (changed && isAdminUser()) {
           try {
             await sbUpdate('settings', 'key', 'about_whats_new', { value: JSON.stringify(wnItems) });
@@ -29722,7 +30028,7 @@
 
       setTimeout(function () {
         btn.className = 'about-update-check-btn up-to-date';
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 ' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.9');
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> You\'re up to date \u2014 ' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.19');
         // Reset after 5 seconds
         setTimeout(function () {
           btn.className = 'about-update-check-btn';
@@ -29777,7 +30083,7 @@
         'Issue Type: ' + type +
         '\nPage/Feature: ' + (page || 'Not specified') +
         '\nReported by: ' + reporter +
-        '\nBuild: v5.2.0 (Build 2605.28)' +
+        '\nVersion: ' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v8.5.19') +
         '\n\nDescription:\n' + desc +
         '\n\n— Sent from K7TeamCore About page'
       );
